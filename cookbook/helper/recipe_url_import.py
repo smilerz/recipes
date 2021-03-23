@@ -90,7 +90,7 @@ def find_recipe_json(ld_json, url, space):
         ld_json['image'] = ""
 
     if 'description' in ld_json:
-        ld_json['description'] = normalize_string(ld_json['description'] )
+        ld_json['description'] = normalize_string(ld_json['description'])
     else:
         ld_json['description'] = ""
 
@@ -347,6 +347,7 @@ def parse_servings(servings):
         except KeyError:
             servings = 1
     return servings
+
 
 def parse_cooktime(cooktime):
     if type(cooktime) not in [int, float]:
