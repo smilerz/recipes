@@ -18,29 +18,19 @@
     }
     function initBookmarklet() {
         (window.bookmarkletTandoor = function() {
-            let recipe = document.documentElement.innerHTML
-            let windowName = "ImportRecipe"
-            let url = localStorage.getItem('importURL')
-            let redirect = localStorage.getItem('redirectURL')
-            let token = localStorage.getItem('token')
-            let params = { 'url': window.location.protocol + '//' + window.location.host + window.location.pathname, 'html' : recipe}; 
+            r = confirm('Click OK to import recipe automatically, click Cancel to import the recipe manually.'); 
+            if (r) {
+                auto=true
+            } else {
+                auto=false
+            }
             
-            const xhr = new XMLHttpRequest();
-            xhr.open('POST', url, true);
-            xhr.setRequestHeader('Content-Type', 'application/json');
-            xhr.setRequestHeader('Authorization', 'Token ' + token);
+            var newIframe = document.createElement('iframe');
+            newIframe.width = '200';newIframe.height = '200';
+            newIframe.src = localStorage.getItem('importURL'); 
+            document.body.appendChild(newIframe);
 
-            // listen for `onload` event
-            xhr.onload = () => {
-                // process response
-                if (xhr.readyState == 4 && xhr.status == 201) {
-                    // parse JSON data
-                    window.open(redirect.concat('?id=', JSON.parse(xhr.response).id) )
-                } else {
-                    console.error('Error!');
-                }
-            };
-            xhr.send(JSON.stringify(params));
+
             }
         )();
     }
