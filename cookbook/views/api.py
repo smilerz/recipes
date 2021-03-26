@@ -55,9 +55,10 @@ from cookbook.serializer import (FoodSerializer, IngredientSerializer,
                                  StorageSerializer, SyncLogSerializer,
                                  SyncSerializer, UnitSerializer,
                                  UserNameSerializer, UserPreferenceSerializer,
-                                 ViewLogSerializer, CookLogSerializer, RecipeBookEntrySerializer,
-                                 RecipeOverviewSerializer, SupermarketSerializer, ImportLogSerializer,
-                                 BookmarkletImportSerializer, SupermarketCategorySerializer, UserFileSerializer)
+                                 ViewLogSerializer, CookLogSerializer, 
+                                 RecipeBookEntrySerializer, RecipeOverviewSerializer, 
+                                 SupermarketSerializer, ImportLogSerializer, BookmarkletImportSerializer)
+from recipes.settings import DEMO
 
 
 class StandardFilterMixin(ViewSetMixin):
@@ -773,13 +774,3 @@ def ingredient_from_string(request):
         },
         status=200
     )
-
-
-@group_required('user')
-@csrf_exempt
-def bookmarklet(request):
-    if request.method == "POST":
-        if 'recipe' in request.POST:
-            recipe_json, recipe_tree, recipe_html, images = get_recipe_from_source(request.POST['recipe'], request.POST['url'], request.space)
-        return render(request, 'url_import.html', {'recipe_json': recipe_json, 'recipe_tree': recipe_tree, 'recipe_html': recipe_html, 'preview': 'true'})
-    return HttpResponseRedirect(reverse('view_search'))
