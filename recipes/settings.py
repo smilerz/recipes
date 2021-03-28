@@ -15,6 +15,7 @@ import random
 import re
 import string
 
+from corsheaders.defaults import default_headers
 from django.contrib import messages
 from django.contrib.staticfiles.storage import staticfiles_storage
 from django.utils.translation import gettext_lazy as _
@@ -94,6 +95,7 @@ INSTALLED_APPS = [
     'django.contrib.postgres',
     'django_prometheus',
     'django_tables2',
+    'corsheaders',
     'django_filters',
     'crispy_forms',
     'emoji_picker',
@@ -125,6 +127,7 @@ ENABLE_SIGNUP = bool(int(os.getenv('ENABLE_SIGNUP', False)))
 ENABLE_METRICS = bool(int(os.getenv('ENABLE_METRICS', False)))
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -346,5 +349,17 @@ STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 TEST_RUNNER = "cookbook.helper.CustomTestRunner.CustomTestRunner"
 
-# future versions of django will make undeclared default django.db.models.BigAutoField which will force migrations on all models
-DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
+
+# settings for cross site origin (CORS)
+# all origins allowed to support bookmarklet
+# all of this may or may not work with nginx or other web servers
+# TODO make this user configureable - enable or disable bookmarklets
+# TODO since token auth is enabled - this all should be https by default
+CORS_ORIGIN_ALLOW_ALL = True
+
+# django rest_framework requires authentication header
+#CORS_ALLOW_HEADERS = list(default_headers) + ['authentication',]
+
+# enable CORS only for bookmarklet api and only for posts, get and options
+CORS_URLS_REGEX = r'^/api/bookmarklet-import.*$'
+CORS_ALLOW_METHODS = ['GET', 'OPTIONS', 'POST']
