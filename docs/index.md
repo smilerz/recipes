@@ -6,6 +6,7 @@
   <br>
 </h1>
 
+<h4 align="center">This is my personal beta of vabene's excellent recipe app.  It includes many of the new features I've developed and should be considered experimental.</h4>
 <h4 align="center">The recipe manager that allows you to manage your ever growing collection of digital recipes.</h4>
 
 <p align="center">
