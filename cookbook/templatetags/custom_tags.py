@@ -7,8 +7,10 @@ from cookbook.helper.mdx_urlize import UrlizeExtension
 from cookbook.models import Space, get_model_name
 from django import template
 from django.db.models import Avg
+from django.templatetags.static import static
 from django.urls import NoReverseMatch, reverse
 from recipes import settings
+from rest_framework.authtoken.models import Token
 from gettext import gettext as _
 
 register = template.Library()
