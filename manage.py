@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 import os
+import ptvsd
 import sys
 
 if __name__ == "__main__":
@@ -13,3 +14,4 @@ if __name__ == "__main__":
             "forget to activate a virtual environment?"
         ) from exc
     execute_from_command_line(sys.argv)
+    ptvsd.enable_attach(address=('0.0.0.0', 3000))
