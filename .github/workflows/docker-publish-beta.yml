@@ -22,5 +22,5 @@ jobs:
           publish: true
           imageName: smilerz/recipes
           tag: beta
-          dockerHubUser: ${{ secrets.DOCKER_USERNAME }}
-          dockerHubPassword: ${{ secrets.DOCKER_PASSWORD }}
+          dockerUser: ${{ secrets.DOCKER_USERNAME }}
+          dockerPassword: ${{ secrets.DOCKER_PASSWORD }}
