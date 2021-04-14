@@ -36,3 +36,4 @@ django-scopes==1.2.0
 pytest==6.2.2
 pytest-django==4.1.0
 django-cors-headers==3.7.0
+debugpy==1.2.1
