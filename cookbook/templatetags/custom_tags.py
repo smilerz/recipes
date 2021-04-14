@@ -13,6 +13,7 @@ from recipes import settings
 from rest_framework.authtoken.models import Token
 from gettext import gettext as _
 
+
 register = template.Library()
 
 
