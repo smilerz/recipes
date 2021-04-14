@@ -349,7 +349,6 @@ STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 TEST_RUNNER = "cookbook.helper.CustomTestRunner.CustomTestRunner"
 
-
 # settings for cross site origin (CORS)
 # all origins allowed to support bookmarklet
 # all of this may or may not work with nginx or other web servers
@@ -363,3 +362,5 @@ CORS_ORIGIN_ALLOW_ALL = True
 # enable CORS only for bookmarklet api and only for posts, get and options
 CORS_URLS_REGEX = r'^/api/bookmarklet-import.*$'
 CORS_ALLOW_METHODS = ['GET', 'OPTIONS', 'POST']
+# future versions of django will make undeclared default django.db.models.BigAutoField which will force migrations on all models
+DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
