@@ -2,7 +2,7 @@ name: publish beta image docker
 on:
   push:
     branches:
-      - 'beta'
+      - 'working'
 jobs:
   build:
     runs-on: ubuntu-latest
