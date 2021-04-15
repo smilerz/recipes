@@ -659,6 +659,10 @@ def recipe_from_source(request):
     mode = request.POST.get('mode', None)
     auto = request.POST.get('auto', 'true')
 
+    HEADERS = {
+        "User-Agent": "Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.9.0.7) Gecko/2009021910 Firefox/3.0.7"
+    }
+
     if (not url and not data) or (mode == 'url' and not url) or (mode == 'source' and not data):
         return JsonResponse(
             {
@@ -701,6 +705,8 @@ def recipe_from_source(request):
                 return JsonResponse({"recipe_json": get_from_scraper(scrape, request.space)})
 
     if (mode == 'source') or (mode == 'url' and auto == 'false'):
+        if not data or data == 'undefined':
+            data = requests.get(url, headers=HEADERS).content
         recipe_json, recipe_tree, recipe_html, images = get_recipe_from_source(data, url, request.space)
         if len(recipe_tree) == 0 and len(recipe_json) == 0:
             return JsonResponse(
@@ -719,12 +725,12 @@ def recipe_from_source(request):
             })
 
     return JsonResponse(
-            {
-                'error': True,
-                'msg': _('I couldn\'t find anything to do.')
-            },
-            status=400
-        )
+        {
+            'error': True,
+            'msg': _('I couldn\'t find anything to do.')
+        },
+        status=400
+    )
 
 
 @group_required('admin')
