@@ -68,7 +68,7 @@ def get_recipe_from_source(text, url, space):
                 'servings': '',
                 'prepTime': '',
                 'cookTime': ''
-                }
+    }
     recipe_tree = []
     parse_list = []
     html_data = []

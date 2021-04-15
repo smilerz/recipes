@@ -2,8 +2,7 @@ name: Make Docs
 on:
   push:
     branches:
-      - master
-      - develop
+      - working
 
 jobs:
   deploy:

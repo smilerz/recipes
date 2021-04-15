@@ -1,6 +1,5 @@
 import json
 from recipe_scrapers._abstract import AbstractScraper
-from recipe_scrapers._utils import normalize_string
 
 
 class CooksIllustrated(AbstractScraper):
@@ -45,11 +44,12 @@ class CooksIllustrated(AbstractScraper):
     def instructions(self):
         if not self.recipe:
             self.get_recipe()
-        return "\n".join([self.recipe['whyThisWorks']] +
-                    [
-                        instruction['fields']['content']
-                        for instruction in self.recipe['instructions']
-                    ]
+        return "\n".join(
+            [self.recipe['whyThisWorks']]
+            + [
+                instruction['fields']['content']
+                for instruction in self.recipe['instructions']
+            ]
         )
 
     def nutrients(self):

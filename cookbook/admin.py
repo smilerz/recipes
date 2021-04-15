@@ -11,7 +11,7 @@ from .models import (Comment, CookLog, Food, Ingredient, InviteLink, Keyword,
                      RecipeBook, RecipeBookEntry, RecipeImport, ShareLink,
                      ShoppingList, ShoppingListEntry, ShoppingListRecipe,
                      Space, Step, Storage, Sync, SyncLog, Unit, UserPreference,
-                     ViewLog, Supermarket, SupermarketCategory, SupermarketCategoryRelation, 
+                     ViewLog, Supermarket, SupermarketCategory, SupermarketCategoryRelation,
                      ImportLog, TelegramBot, BookmarkletImport)
 
 from cookbook.managers import DICTIONARY
