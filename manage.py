@@ -1,9 +1,6 @@
 #!/usr/bin/env python
 import os
-import debugpy
 import sys
-debugpy.listen(("0.0.0.0", 3000))
-debugpy.wait_for_client()
 
 if __name__ == "__main__":
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "recipes.settings")
