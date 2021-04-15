@@ -15,7 +15,6 @@ import random
 import re
 import string
 
-from corsheaders.defaults import default_headers
 from django.contrib import messages
 from django.contrib.staticfiles.storage import staticfiles_storage
 from django.utils.translation import gettext_lazy as _
@@ -357,7 +356,7 @@ TEST_RUNNER = "cookbook.helper.CustomTestRunner.CustomTestRunner"
 CORS_ORIGIN_ALLOW_ALL = True
 
 # django rest_framework requires authentication header
-#CORS_ALLOW_HEADERS = list(default_headers) + ['authentication',]
+# CORS_ALLOW_HEADERS = list(default_headers) + ['authentication',]
 
 # enable CORS only for bookmarklet api and only for posts, get and options
 CORS_URLS_REGEX = r'^/api/bookmarklet-import.*$'
