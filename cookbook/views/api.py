@@ -668,7 +668,7 @@ def recipe_from_source(request):
             status=400
         )
 
-    if mode == 'url':
+    if mode == 'url' and auto == 'true':
         if auto == 'true':
             try:
                 scrape = scrape_me(url)
@@ -699,30 +699,7 @@ def recipe_from_source(request):
                     status=400)
             else:
                 return JsonResponse({"recipe_json": get_from_scraper(scrape, request.space)})
-        else:
-            headers = {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.106 Safari/537.36'  # noqa: E501
-            }
-            try:
-                response = requests.get(url, headers=headers)
-            except requests.exceptions.ConnectionError:
-                return JsonResponse(
-                    {
-                        'error': True,
-                        'msg': _('The requested page could not be found.')
-                    },
-                    status=400
-                )
 
-            if response.status_code == 403:
-                return JsonResponse(
-                    {
-                        'error': True,
-                        'msg': _('The requested page refused to provide any information (Status Code 403).')
-                    },
-                    status=400
-                )
-            data = response.text
     if (mode == 'source') or (mode == 'url' and auto == 'false'):
         recipe_json, recipe_tree, recipe_html, images = get_recipe_from_source(data, url, request.space)
         if len(recipe_tree) == 0 and len(recipe_json) == 0:

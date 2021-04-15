@@ -1,5 +1,6 @@
 import json
 from recipe_scrapers._abstract import AbstractScraper
+from recipe_scrapers._utils import normalize_string
 
 
 class CooksIllustrated(AbstractScraper):

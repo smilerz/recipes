@@ -730,7 +730,6 @@
                     this.error = undefined
                     this.loading = true
                     this.$http.get("{% url 'api:bookmarkletimport-list' %}?id=" + id_bkmk ).then((response) => {
-                        console.log(response.data)
                         this.automatic = false
                         this.source_data = response.data[0]['html']
                         this.remote_url = response.data[0]['url']
