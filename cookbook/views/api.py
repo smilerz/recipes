@@ -13,11 +13,9 @@ from django.contrib.postgres.search import TrigramSimilarity
 from django.core.exceptions import FieldError, ValidationError
 from django.core.files import File
 from django.db.models import Q
-from django.http import FileResponse, HttpResponse, JsonResponse, HttpResponseRedirect
-from django.shortcuts import redirect, render, get_object_or_404
-from django.urls import reverse
+from django.http import FileResponse, HttpResponse, JsonResponse
+from django.shortcuts import redirect, get_object_or_404
 from django.utils.translation import gettext as _
-from django.views.decorators.csrf import csrf_exempt
 from icalendar import Calendar, Event
 from recipe_scrapers import scrape_me, WebsiteNotImplementedError, NoSchemaFoundInWildMode
 from rest_framework import decorators, viewsets
@@ -33,14 +31,14 @@ from cookbook.helper.ingredient_parser import parse
 from cookbook.helper.permission_helper import (CustomIsAdmin, CustomIsGuest,
                                                CustomIsOwner, CustomIsShare,
                                                CustomIsShared, CustomIsUser,
-                                               group_required)
+                                               group_required, share_link_valid)
 from cookbook.helper.recipe_html_import import get_recipe_from_source
 from cookbook.helper.recipe_url_import import get_from_scraper
 from cookbook.models import (CookLog, Food, Ingredient, Keyword, MealPlan,
                              MealType, Recipe, RecipeBook, ShoppingList,
                              ShoppingListEntry, ShoppingListRecipe, Step,
                              Storage, Sync, SyncLog, Unit, UserPreference,
-                             ViewLog, RecipeBookEntry, Supermarket, ImportLog, BookmarkletImport, SupermarketCategory, UserFile)
+                             ViewLog, RecipeBookEntry, Supermarket, ImportLog)
 from cookbook.provider.dropbox import Dropbox
 from cookbook.provider.local import Local
 from cookbook.provider.nextcloud import Nextcloud
@@ -55,9 +53,7 @@ from cookbook.serializer import (FoodSerializer, IngredientSerializer,
                                  StorageSerializer, SyncLogSerializer,
                                  SyncSerializer, UnitSerializer,
                                  UserNameSerializer, UserPreferenceSerializer,
-                                 ViewLogSerializer, CookLogSerializer,
-                                 RecipeBookEntrySerializer, RecipeOverviewSerializer,
-                                 SupermarketSerializer, ImportLogSerializer, BookmarkletImportSerializer)
+                                 ViewLogSerializer, CookLogSerializer, RecipeBookEntrySerializer, RecipeOverviewSerializer, SupermarketSerializer, ImportLogSerializer)
 from recipes.settings import DEMO
 
 
@@ -518,27 +514,6 @@ class ImportLogViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         return self.queryset.filter(space=self.request.space).all()
-
-
-class BookmarkletImportViewSet(viewsets.ModelViewSet):
-    queryset = BookmarkletImport.objects
-    serializer_class = BookmarkletImportSerializer
-    permission_classes = [CustomIsUser]
-
-    def get_queryset(self):
-        return self.queryset.filter(space=self.request.space).all()
-
-
-
-class UserFileViewSet(viewsets.ModelViewSet, StandardFilterMixin):
-    queryset = UserFile.objects
-    serializer_class = UserFileSerializer
-    permission_classes = [CustomIsUser]
-    parser_classes = [MultiPartParser]
-
-    def get_queryset(self):
-        self.queryset = self.queryset.filter(space=self.request.space).all()
-        return super().get_queryset()
 
 
 # -------------- non django rest api views --------------------

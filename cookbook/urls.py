@@ -37,8 +37,6 @@ router.register(r'recipe-book-entry', api.RecipeBookEntryViewSet)
 router.register(r'supermarket', api.SupermarketViewSet)
 router.register(r'supermarket-category', api.SupermarketCategoryViewSet)
 router.register(r'import-log', api.ImportLogViewSet)
-router.register(r'bookmarklet-import', api.BookmarkletImportViewSet)
-router.register(r'user-file', api.UserFileViewSet)
 
 urlpatterns = [
     path('', views.index, name='index'),
@@ -68,6 +66,7 @@ urlpatterns = [
     path('test2/', views.test2, name='view_test2'),
 
     path('import/', import_export.import_recipe, name='view_import'),
+    path('import-response/<int:pk>/', import_export.import_response, name='view_import_response'),
     path('export/', import_export.export_recipe, name='view_export'),
 
     path('view/recipe/<int:pk>', views.recipe_view, name='view_recipe'),
