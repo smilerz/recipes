@@ -12,7 +12,6 @@ from recipe_scrapers._utils import get_minutes, normalize_string
 
 def get_from_scraper(scrape, space):
     # converting the scrape_me object to the existing json format based on ld+json
-
     recipe_json = {}
     try:
         recipe_json['name'] = parse_name(scrape.title() or scrape.schema.data.get('name') or '')

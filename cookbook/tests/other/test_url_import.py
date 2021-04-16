@@ -10,7 +10,6 @@ from ._recipes import (
     COOKS_COUNTRY, DELISH, FOOD_NETWORK, GIALLOZAFFERANO, JOURNAL_DES_FEMMES,
     MADAME_DESSERT, MARMITON, TASTE_OF_HOME, TUDOGOSTOSO)
 
-
 IMPORT_SOURCE_URL = 'api_recipe_from_source'
 DATA_DIR = "cookbook/tests/other/test_data/"
 # These were chosen arbitrarily from:
