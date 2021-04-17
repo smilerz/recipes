@@ -17,6 +17,12 @@
 - Heirarchical Ingredients
 - Faceted Search
 - What Can I Make Now?
+- Better ingredient/unit matching on import
+- Custom word replacement on import (e.g. 'grams' automatically imported as 'g')
+- improved ingredient parser (items in parens moved to notes)
+- quick view ingredients
+- quick view associated recipe
+- favorite recipes
 
 <h4 align="center">The recipe manager that allows you to manage your ever growing collection of digital recipes.</h4>
 
