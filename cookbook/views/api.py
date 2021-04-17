@@ -17,10 +17,8 @@ from django.http import FileResponse, HttpResponse, JsonResponse
 from django.shortcuts import redirect, get_object_or_404
 from django.utils.translation import gettext as _
 from icalendar import Calendar, Event
-from recipe_scrapers import scrape_me, WebsiteNotImplementedError, NoSchemaFoundInWildMode
 from rest_framework import decorators, viewsets
 from rest_framework.exceptions import APIException, PermissionDenied
-from rest_framework.pagination import PageNumberPagination
 from rest_framework.parsers import MultiPartParser
 from rest_framework.response import Response
 from rest_framework.schemas.openapi import AutoSchema
@@ -692,7 +690,7 @@ def recipe_from_source(request):
                 },
                 status=400
             )
-        if len(scrape.schema.data) == 0:
+        if len(scrape.ingredients()) and len(scrape.instructions()) == 0:
             return JsonResponse(
                 {
                     'error': True,
