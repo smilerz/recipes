@@ -694,7 +694,6 @@
                                 'data': this.source_data, 
                                 'auto':this.automatic, 
                                 'mode':this.mode}, {emulateJSON: true}).then((response) => {
-                        console.log(response.data)
                         this.recipe_json = response.data['recipe_json'];
                         this.recipe_tree = response.data['recipe_tree'];
                         this.recipe_html = response.data['recipe_html'];
@@ -791,7 +790,6 @@
                         formData.append('files', this.recipe_files[i]);
                     }
                     this.$http.post("{% url 'view_import' %}", formData, {headers: {'Content-Type': 'multipart/form-data'}}).then((response) => {
-                        console.log(response.data)
                         window.location.href = "{% url 'view_import_response' 1237654 %}".replace('1237654', response.data['import_id'])
                     }).catch((err) => {
                         this.error = err.data
@@ -901,11 +899,9 @@
 
                 },
                 htmlDragStart: function (e) {
-                    console.log(e.target.innerText)
                     e.dataTransfer.setData('value', e.target.innerText)
                 },
                 imageDragStart: function (e) {
-                    console.log(e.target.src)
                     e.dataTransfer.setData('value', e.target.src)
                 },
                 replacePreview: function(field, e) {
@@ -939,7 +935,6 @@
                             break;
                         case 'ingredients':
                             this.$http.post('{% url 'api_ingredient_from_string' %}', {text: v}, {emulateJSON: true}).then((response) => {
-                                console.log(response)
                                 let new_ingredient={
                                 unit: {id: Math.random() * 1000, text: response.body.unit},
                                 amount: String(response.body.amount),
