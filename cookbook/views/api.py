@@ -17,8 +17,10 @@ from django.http import FileResponse, HttpResponse, JsonResponse
 from django.shortcuts import redirect, get_object_or_404
 from django.utils.translation import gettext as _
 from icalendar import Calendar, Event
+from recipe_scrapers import scrape_me, WebsiteNotImplementedError, NoSchemaFoundInWildMode
 from rest_framework import decorators, viewsets
 from rest_framework.exceptions import APIException, PermissionDenied
+from rest_framework.pagination import PageNumberPagination
 from rest_framework.parsers import MultiPartParser
 from rest_framework.response import Response
 from rest_framework.schemas.openapi import AutoSchema
@@ -29,9 +31,10 @@ from cookbook.helper.ingredient_parser import parse
 from cookbook.helper.permission_helper import (CustomIsAdmin, CustomIsGuest,
                                                CustomIsOwner, CustomIsShare,
                                                CustomIsShared, CustomIsUser,
-                                               group_required, share_link_valid)
-from cookbook.helper.recipe_html_import import get_recipe_from_source
+                                               group_required)
+from cookbook.helper.recipe_search import search_recipes
 from cookbook.helper.recipe_url_import import get_from_scraper
+from cookbook.helper.recipe_html_import import get_recipe_from_source
 from cookbook.models import (CookLog, Food, Ingredient, Keyword, MealPlan,
                              MealType, Recipe, RecipeBook, ShoppingList,
                              ShoppingListEntry, ShoppingListRecipe, Step,
@@ -393,7 +396,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
         if not (share and self.detail):
             self.queryset = self.queryset.filter(space=self.request.space)
 
-        self.queryset = search_recipes(self.request, self.queryset, self.request.GET)
+        self.queryset = search_recipes(self.queryset, self.request.GET)
 
         return super().get_queryset()
 

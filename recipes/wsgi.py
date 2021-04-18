@@ -17,6 +17,8 @@ _application = get_wsgi_application()
 
 
 # allows proxy servers to serve application at a subfolder
+# NGINX config example is included in nginx/conf.d
+
 def application(environ, start_response):
     # http://flask.pocoo.org/snippets/35/
     script_name = environ.get('HTTP_X_SCRIPT_NAME', '')

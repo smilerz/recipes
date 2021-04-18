@@ -136,3 +136,10 @@ def bookmarklet(request):
             r=\'+Math.floor(Math.random()*999999999);}})();"
 
     return re.sub(r"[\n\t\s]*", "", bookmark)
+
+
+def base_path(request, path_type):
+    if path_type == 'base':
+        return request._current_scheme_host + '/' + request.headers.get('HTTP_X_SCRIPT_NAME', '')
+    elif path_type == 'script':
+        return request.headers.get('HTTP_X_SCRIPT_NAME', '/')

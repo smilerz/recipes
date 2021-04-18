@@ -13,8 +13,6 @@
   "convert_internal": "Convert to internal recipe",
   "show_only_internal": "Show only internal recipes",
 
-
-
   "Log_Recipe_Cooking": "Log Recipe Cooking",
   "External_Recipe_Image": "External Recipe Image",
   "Add_to_Book": "Add to Book",
@@ -31,8 +29,6 @@
   "New_Recipe": "New Recipe",
   "Url_Import": "Url Import",
   "Reset_Search": "Reset Search",
-  "Recently_Viewed": "Recently Viewed",
-  "Load_More": "Load More",
 
   "Keywords": "Keywords",
   "Books": "Books",
@@ -72,7 +68,6 @@
   "Search": "Search",
   "Import": "Import",
   "Print": "Print",
-  "Settings": "Settings",
   "or": "or",
   "and": "and",
   "Information": "Information",
