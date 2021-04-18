@@ -138,6 +138,7 @@ def bookmarklet(request):
     return re.sub(r"[\n\t\s]*", "", bookmark)
 
 
+@register.simple_tag
 def base_path(request, path_type):
     if path_type == 'base':
         return request._current_scheme_host + '/' + request.headers.get('HTTP_X_SCRIPT_NAME', '')
