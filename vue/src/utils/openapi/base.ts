@@ -20,7 +20,7 @@ import globalAxios, { AxiosPromise, AxiosInstance } from 'axios';
 
 //export const BASE_PATH = location.protocol + '//' + location.host; //TODO manually edited. Find good solution to automate later, remove from openapi-generator-ignore afterwards
 export let BASE_PATH = typeof window !== 'undefined' ? localStorage.getItem('BASE_PATH') || '' : location.protocol + '//' + location.host;
-console.log(BASE_PATH)
+
 /**
  *
  * @export
