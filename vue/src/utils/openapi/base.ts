@@ -18,7 +18,7 @@ import { Configuration } from "./configuration";
 // @ts-ignore
 import globalAxios, { AxiosPromise, AxiosInstance } from 'axios';
 
-export const BASE_PATH = localStorage.getItem('base_path'); //TODO manually edited. Find good solution to automate later, remove from openapi-generator-ignore afterwards
+export const BASE_PATH = localStorage.getItem('base_path') || location.protocol + '//' + location.host; //TODO manually edited. Find good solution to automate later, remove from openapi-generator-ignore afterwards
 
 /**
  *
