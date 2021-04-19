@@ -140,11 +140,7 @@ def bookmarklet(request):
 
 @register.simple_tag
 def base_path(request, path_type):
-    for header in request.headers:
-        print(header)
-    for meta in request.META:
-        print(meta)
     if path_type == 'base':
-        return request._current_scheme_host + '/' + request.META.get('SCRIPT_NAME', '')
+        return request._current_scheme_host + request.META.get('HTTP_X_SCRIPT_NAME', '') + '/'
     elif path_type == 'script':
-        return request.headers.get('SCRIPT_NAME', '/')
+        return request.META.get('HTTP_X_SCRIPT_NAME', '')
