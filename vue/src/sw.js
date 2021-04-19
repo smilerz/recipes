@@ -5,8 +5,9 @@ import {CacheFirst, NetworkFirst, StaleWhileRevalidate} from 'workbox-strategies
 import {ExpirationPlugin} from 'workbox-expiration';
 
 
+let script_name = localStorage.getItem('base_path') || '/'
 const OFFLINE_CACHE_NAME = 'offline-html';
-const OFFLINE_PAGE_URL = '/offline/';
+var OFFLINE_PAGE_URL = script_name + 'offline/';
 
 self.addEventListener('install', async (event) => {
     event.waitUntil(
