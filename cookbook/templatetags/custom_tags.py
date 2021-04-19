@@ -143,4 +143,4 @@ def base_path(request, path_type):
     if path_type == 'base':
         return request._current_scheme_host + request.META.get('HTTP_X_SCRIPT_NAME', '') + '/'
     elif path_type == 'script':
-        return request.META.get('HTTP_X_SCRIPT_NAME', '')
+        return request.headers.get('HTTP_X_SCRIPT_NAME', '/') + '/'
