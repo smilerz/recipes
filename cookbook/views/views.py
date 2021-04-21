@@ -56,6 +56,9 @@ def index(request):
         return HttpResponseRedirect(reverse('view_search'))
 
 
+# faceting
+# unaccent / likely will perform full table scan
+# create tests
 def search(request):
     if has_group_permission(request.user, ('guest',)):
         if request.user.userpreference.search_style == UserPreference.NEW:

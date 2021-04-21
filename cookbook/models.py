@@ -424,8 +424,7 @@ class Recipe(ExportModelOperationsMixin('recipe'), models.Model, PermissionModel
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
-    name_search_vector = SearchVectorField(null=True)
-    desc_search_vector = SearchVectorField(null=True)
+    search_vector = SearchVectorField(null=True)
     space = models.ForeignKey(Space, on_delete=models.CASCADE)
 
     # load custom manager for full text search if postgress is available
@@ -438,7 +437,7 @@ class Recipe(ExportModelOperationsMixin('recipe'), models.Model, PermissionModel
         return self.name
 
     class Meta():
-        indexes = (GinIndex(fields=["name_search_vector", "desc_search_vector"]), Index(fields=['id', 'name', 'description']), )
+        indexes = (GinIndex(fields=["search_vector"]),)
 
 
 class Comment(ExportModelOperationsMixin('comment'), models.Model, PermissionModelMixin):

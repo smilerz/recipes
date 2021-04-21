@@ -34,8 +34,8 @@ class RecipeSearchManager(models.Manager):
         )
         search_vectors = (
             SearchVector('search_vector')
-            + SearchVector(StringAgg('steps__ingredients__food__name__unaccent', delimiter=' '), weight='B', config=language)
-            + SearchVector(StringAgg('keywords__name__unaccent', delimiter=' '), weight='B', config=language))
+            + SearchVector(StringAgg('steps__ingredients__food__name', delimiter=' '), weight='B', config=language)
+            + SearchVector(StringAgg('keywords__name', delimiter=' '), weight='B', config=language))
         search_rank = SearchRank(search_vectors, search_query)
         # USING TRIGRAM BREAKS WEB SEARCH
         # ADDING MULTIPLE TRIGRAMS CREATES DUPLICATE RESULTS
@@ -53,7 +53,7 @@ class RecipeSearchManager(models.Manager):
             .annotate(
                 search=search_vectors,
                 rank=search_rank,
-                # trigram=trigram_name+trigram_description+trigram_food+trigram_keyword
+                #trigram=trigram_name+trigram_description+trigram_food+trigram_keyword
                 # trigram_name=trigram_name,
                 # trigram_description=trigram_description,
                 # trigram_food=trigram_food,
