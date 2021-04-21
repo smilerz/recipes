@@ -56,7 +56,7 @@ def search_recipes(queryset, params):
             queryset.annotate(
                 search=search_vectors,
                 rank=search_rank,
-                trigram_name=trigram_name,)
+            )
             .filter(
                 search_vector=search_query
                 # | Q(name__unaccent__icontains=search_string)
