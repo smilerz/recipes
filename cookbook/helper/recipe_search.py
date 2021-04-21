@@ -43,14 +43,14 @@ def search_recipes(queryset, params):
         language = DICTIONARY.get(translation.get_language(), 'simple')
         search_query = SearchQuery(
             search_string,
+            search_type="websearch",
             config=language,
-            search_type="websearch"
         )
         search_vectors = (
             SearchVector('search_vector')
             + SearchVector(StringAgg('steps__ingredients__food__name', delimiter=' '), weight='B', config=language)
             + SearchVector(StringAgg('keywords__name', delimiter=' '), weight='B', config=language))
-        trigram_name = (TrigramSimilarity('name', search_string))
+        # trigram_name = (TrigramSimilarity('name', search_string))
         search_rank = SearchRank(search_vectors, search_query)
         queryset = (
             queryset.annotate(
@@ -58,8 +58,9 @@ def search_recipes(queryset, params):
                 rank=search_rank,
                 trigram_name=trigram_name,)
             .filter(
-                Q(search=search_query)
-                | Q(trigram_name__gt=0.1))
+                search_vector=search_query
+                # | Q(name__unaccent__icontains=search_string)
+            )
             .order_by('-rank'))
     else:
         queryset = queryset.filter(name__icontains=search_string)

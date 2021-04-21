@@ -98,6 +98,7 @@ def search(request):
             return HttpResponseRedirect(reverse('account_login') + '?next=' + request.path)
 
 
+@group_required('guest')
 def search_v2(request):
     return render(request, 'search.html', {})
 
