@@ -50,16 +50,18 @@ def search_recipes(queryset, params):
             SearchVector('search_vector')
             + SearchVector(StringAgg('steps__ingredients__food__name', delimiter=' '), weight='B', config=language)
             + SearchVector(StringAgg('keywords__name', delimiter=' '), weight='B', config=language))
-        # trigram_name = (TrigramSimilarity('name', search_string))
+        trigram = (
+            TrigramSimilarity('name', search_string)
+            + TrigramSimilarity('description', search_string)
+        )
         search_rank = SearchRank(search_vectors, search_query)
         queryset = (
             queryset.annotate(
                 search=search_vectors,
-                rank=search_rank,
+                rank=search_rank + trigram,
             )
             .filter(
                 search_vector=search_query
-                # | Q(name__unaccent__icontains=search_string)
             )
             .order_by('-rank'))
     else:
