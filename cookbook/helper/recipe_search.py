@@ -8,6 +8,9 @@ from django.contrib.postgres.search import (
 from django.db.models import Q
 from django.utils import translation
 
+from cookbook.models import ViewLog
+from recipes import settings
+
 
 DICTIONARY = {
     # TODO find custom dictionaries - maybe from here https://www.postgresql.org/message-id/CAF4Au4x6X_wSXFwsQYE8q5o0aQZANrvYjZJ8uOnsiHDnOVPPEg%40mail.gmail.com
@@ -24,8 +27,8 @@ DICTIONARY = {
 }
 
 
-def search_recipes(queryset, params):
-    search_string = params.get('query', '').strip()
+def search_recipes(request, queryset, params):
+    search_string = params.get('query', '')
     search_keywords = params.getlist('keywords', [])
     search_foods = params.getlist('foods', [])
     search_books = params.getlist('books', [])
@@ -36,6 +39,13 @@ def search_recipes(queryset, params):
 
     search_internal = params.get('internal', None)
     search_random = params.get('random', False)
+    search_last_viewed = int(params.get('last_viewed', 0))
+
+    if search_last_viewed > 0:
+        last_viewed_recipes = ViewLog.objects.filter(created_by=request.user, space=request.space).values_list('recipe__pk', flat=True).distinct()
+        # TODO filter by created by in last two weeks and re add limit to recipe selection (after reversing the order)
+        # Distinct does not work with order by
+        return queryset.filter(pk__in=list(set(last_viewed_recipes)))
 
     if settings.DATABASES['default']['ENGINE'] in ['django.db.backends.postgresql_psycopg2', 'django.db.backends.postgresql'] and search_string != '':
         # queryset = queryset.annotate(similarity=TrigramSimilarity('name', search_string), )
@@ -64,8 +74,6 @@ def search_recipes(queryset, params):
                 search_vector=search_query
             )
             .order_by('-rank'))
-    else:
-        queryset = queryset.filter(name__icontains=search_string)
 
     if len(search_keywords) > 0:
         if search_keywords_or == 'true':
