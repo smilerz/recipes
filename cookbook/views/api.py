@@ -59,6 +59,9 @@ from cookbook.serializer import (FoodSerializer, IngredientSerializer,
                                  BookmarkletImportSerializer)
 from recipes.settings import DEMO
 
+
+class StandardFilterMixin(ViewSetMixin):
+
     def get_queryset(self):
         queryset = self.queryset
         query = self.request.query_params.get('query', None)
