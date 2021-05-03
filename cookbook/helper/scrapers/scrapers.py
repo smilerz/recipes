@@ -1,6 +1,6 @@
 from bs4 import BeautifulSoup
 from json import JSONDecodeError
-from recipe_scrapers import SCRAPERS, get_domain, _exception_handling
+from recipe_scrapers import SCRAPERS, get_host_name
 from recipe_scrapers._factory import SchemaScraperFactory
 from recipe_scrapers._schemaorg import SchemaOrg
 
@@ -17,7 +17,7 @@ SCRAPERS.update(CUSTOM_SCRAPERS)
 def text_scraper(text, url=None):
     domain = None
     if url:
-        domain = get_domain(url)
+        domain = get_host_name(url)
     if domain in SCRAPERS:
         scraper_class = SCRAPERS[domain]
     else:

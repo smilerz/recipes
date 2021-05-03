@@ -58,7 +58,7 @@
 
                   </div>
 
-                  <button id="id_settings_button" class="btn btn-primary"><i class="fas fa-cog"></i></button>
+
                   <b-popover
                       target="id_settings_button"
                       triggers="click"
@@ -68,8 +68,8 @@
                       <b-form-group
                           v-bind:label="$t('Recently_Viewed')"
                           label-for="popover-input-1"
-                          label-cols="3"
-                          class="mb-1">
+                          label-cols="6"
+                          class="mb-3">
                         <b-form-input
                             type="number"
                             v-model="settings.recently_viewed"
@@ -77,11 +77,12 @@
                             size="sm"
                         ></b-form-input>
                       </b-form-group>
+
                       <b-form-group
                           v-bind:label="$t('Meal_Plan')"
                           label-for="popover-input-2"
-                          label-cols="3"
-                          class="mb-1">
+                          label-cols="6"
+                          class="mb-3">
                         <b-form-checkbox
                             switch
                             v-model="settings.show_meal_plan"
@@ -92,9 +93,7 @@
                     </div>
                     <div class="row" style="margin-top: 1vh">
                       <div class="col-12" style="text-align: right">
-                        <b-button size="sm" variant="secondary" style="margin-right:8px">Cancel
-                        </b-button>
-                        <b-button size="sm" variant="primary">Ok</b-button>
+                        <b-button size="sm" variant="secondary" style="margin-right:8px" @click="$root.$emit('bv::hide::popover')">{{$t('Close')}}</b-button>
                       </div>
                     </div>
                   </b-popover>
@@ -288,8 +287,6 @@ export default {
     })
 
     this.refreshData()
-
-    this.loadSpecialData()
   },
   watch: {
     settings: {

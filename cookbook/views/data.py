@@ -160,7 +160,7 @@ def import_url(request):
             ingredient = Ingredient()
 
             if ing['ingredient']['text'] != '':
-                ingredient.food, created = Food.objects.get_or_create(
+                ingredient.food, f_created = Food.objects.get_or_create(
                     name=ing['ingredient']['text'].strip(), space=request.space
                 )
 

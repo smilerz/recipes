@@ -15,13 +15,18 @@ def get_from_scraper(scrape, space):
     # converting the scrape_me object to the existing json format based on ld+json
     recipe_json = {}
     try:
-        recipe_json['name'] = parse_name(scrape.title() or scrape.schema.data.get('name') or '')
-    except (TypeError, AttributeError):
-        recipe_json['name'] = ''
+        recipe_json['name'] = parse_name(scrape.title() or None)
+    except Exception:
+        recipe_json['name'] = None
+    if not recipe_json['name']:
+        try:
+            recipe_json['name'] = scrape.schema.data.get('name') or ''
+        except Exception:
+            recipe_json['name'] = ''
 
     try:
         description = scrape.schema.data.get("description") or ''
-    except AttributeError:
+    except Exception:
         description = ''
 
     recipe_json['description'] = parse_description(description)
