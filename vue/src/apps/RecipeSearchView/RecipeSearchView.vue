@@ -301,8 +301,8 @@ export default {
     'settings.recently_viewed': function () {
       this.loadRecentlyViewed()
     },
-    'settings.search_input': _debounce(function () {
-      this.refreshData(false)
+    search_input: _debounce(function () {
+      this.refreshData()
     }, 300),
   },
   methods: {
@@ -353,7 +353,7 @@ export default {
     loadRecentlyViewed: function () {
       let apiClient = new ApiApiFactory()
       if (this.settings.recently_viewed > 0) {
-        apiClient.listRecipes({query: {last_viewed: this.settings.recently_viewed}}).then(result => {
+        apiClient.listRecipes({options: {query: {last_viewed: this.settings.recently_viewed}}}).then(result => {
           this.last_viewed_recipes = result.data.results
         })
       } else {
