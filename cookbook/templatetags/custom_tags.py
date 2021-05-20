@@ -136,10 +136,9 @@ def bookmarklet(request):
             localStorage.setItem('importURL', '" + server + reverse('api:bookmarkletimport-list') + "'); \
             localStorage.setItem('redirectURL', '" + server + reverse('data_import_url') + "'); \
             localStorage.setItem('token', '" + api_token.__str__() + "'); \
-            document.body.appendChild(document.createElement(\'script\')).src=\'"  \
+            document.body.appendChild(document.createElement(\'script\')).src=\'" \
             + server + prefix + static('js/bookmarklet.js') + "? \
             r=\'+Math.floor(Math.random()*999999999);}})();"
-
     return re.sub(r"[\n\t\s]*", "", bookmark)
 
 

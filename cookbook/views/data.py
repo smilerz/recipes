@@ -216,6 +216,7 @@ def import_url(request):
 
     return render(request, 'url_import.html', context)
 
+
 class Object(object):
     pass
 

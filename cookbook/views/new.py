@@ -68,10 +68,9 @@ class KeywordCreate(GroupRequiredMixin, CreateView):
     success_url = reverse_lazy('list_keyword')
 
     def form_valid(self, form):
-        obj = form.save(commit=False)
-        obj.space = self.request.space
-        obj.save()
-        return HttpResponseRedirect(reverse('edit_keyword', kwargs={'pk': obj.pk}))
+        form.cleaned_data['space'] = self.request.space
+        form.save()
+        return HttpResponseRedirect(reverse('list_keyword'))
 
     def get_context_data(self, **kwargs):
         context = super(KeywordCreate, self).get_context_data(**kwargs)

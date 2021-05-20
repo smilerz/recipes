@@ -7,7 +7,6 @@ from cookbook.helper.ingredient_parser import parse as parse_single_ingredient
 from cookbook.models import Keyword
 from django.utils.dateparse import parse_duration
 from html import unescape
-from recipe_scrapers._schemaorg import SchemaOrgException
 from recipe_scrapers._utils import get_minutes
 
 
