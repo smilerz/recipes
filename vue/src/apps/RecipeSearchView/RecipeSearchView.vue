@@ -13,7 +13,7 @@
 
 
             <b-input-group class="mt-3">
-              <b-input class="form-control" v-model="settings.search_input" v-bind:placeholder="$t('Search')"></b-input>
+              <b-input class="form-control" v-model="search_input" v-bind:placeholder="$t('Search')"></b-input>
               <b-input-group-append>
                 <b-button v-b-toggle.collapse_advanced_search variant="primary" class="shadow-none"><i
                     class="fas fa-caret-down" v-if="!settings.advanced_search_visible"></i><i class="fas fa-caret-up"
