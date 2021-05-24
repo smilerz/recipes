@@ -6,7 +6,6 @@ from django.contrib.postgres.search import (
     SearchQuery, SearchRank, SearchVector, TrigramSimilarity,
 )
 from django.db.models import Q, Case, When, Value
-from django.forms import IntegerField
 from django.utils import translation
 
 from cookbook.models import ViewLog
