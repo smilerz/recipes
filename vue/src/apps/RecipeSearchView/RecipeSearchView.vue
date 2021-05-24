@@ -319,15 +319,15 @@ export default {
           this.settings.search_books.map(function (A) {
             return A["id"];
           }),
+          this.settings.search_keywords_or,
+          this.settings.search_foods_or,
+          this.settings.search_books_or,
 
-          keywords_or: this.settings.search_keywords_or,
-          foods_or: this.settings.search_foods_or,
-          books_or: this.settings.search_books_or,
-
-          internal: this.search_internal,
-          page: this.pagination_page,
-        }
-      }).then(result => {
+          this.search_internal,
+          undefined,
+          this.pagination_page,
+      ).then(result => {
+        console.log(result.data.results)
         this.recipes = result.data.results
         this.pagination_count = result.data.count
       })
