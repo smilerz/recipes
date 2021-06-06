@@ -32,11 +32,16 @@
             <img src="{% static 'assets/favicon-16x16.png' %}">{% trans 'Bookmark Me!' %} </a>
         </div>
         <nav class="nav nav-pills flex-sm-row" style="margin-bottom:10px">
-            <a class="nav-link active" href="#nav-url" data-toggle="tab" role="tab" aria-controls="nav-url" aria-selected="true" @click="mode='url'">URL</a>
-            <a class="nav-link" href="#nav-app" data-toggle="tab" role="tab" aria-controls="nav-app" @click="mode='app'">App</a>
-            <a class="nav-link" href="#nav-source" data-toggle="tab" role="tab" aria-controls="nav-source" @click="mode='source'">Source</a>
-            <a class="nav-link disabled" href="#nav-text" data-toggle="tab" role="tab" aria-controls="nav-text" @click="mode='text'">Text</a>
-            <a class="nav-link disabled" href="#nav-file" data-toggle="tab" role="tab" aria-controls="nav-file" @click="mode='file'">File</a>
+            <a class="nav-link active" href="#nav-url" data-toggle="tab" role="tab" aria-controls="nav-url"
+               aria-selected="true" @click="mode='url'">URL</a>
+            <a class="nav-link" href="#nav-app" data-toggle="tab" role="tab" aria-controls="nav-app"
+               @click="mode='app'">App</a>
+            <a class="nav-link" href="#nav-source" data-toggle="tab" role="tab" aria-controls="nav-source"
+               @click="mode='source'">Source</a>
+            <a class="nav-link disabled" href="#nav-text" data-toggle="tab" role="tab" aria-controls="nav-text"
+               @click="mode='text'">Text</a>
+            <a class="nav-link disabled" href="#nav-file" data-toggle="tab" role="tab" aria-controls="nav-file"
+               @click="mode='file'">File</a>
         </nav>
 
 
@@ -112,12 +117,12 @@
                 </b-form-checkbox>
 
                 <b-form-file
-                    class="my-2"
-                    accept=".zip"
-                    multiple
-                    v-model="recipe_files"
-                    placeholder="{% trans 'Select recipe files to import or drop them here...' %}"
-                    drop-placeholder="Drop recipe files here...">
+                        class="my-2"
+                        accept=".zip"
+                        multiple
+                        v-model="recipe_files"
+                        placeholder="{% trans 'Select recipe files to import or drop them here...' %}"
+                        drop-placeholder="Drop recipe files here...">
                 </b-form-file>
                 <button @click="importAppRecipe()" class="btn btn-primary shadow-none" type="button"
                         id="id_btn_app"><i class="fas fa-file-archive"></i> {% trans 'Import' %}

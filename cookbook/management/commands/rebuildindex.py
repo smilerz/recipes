@@ -2,9 +2,11 @@ from django.conf import settings
 from django.contrib.postgres.search import SearchVector
 from django.core.management.base import BaseCommand
 from django_scopes import scopes_disabled
+from django.utils import translation
 from django.utils.translation import gettext_lazy as _
 
-from cookbook.models import Recipe
+from cookbook.managers import DICTIONARY
+from cookbook.models import Recipe, Step
 
 
 # can be executed at the command line with 'python manage.py rebuildindex'
@@ -16,11 +18,13 @@ class Command(BaseCommand):
             self.stdout.write(self.style.WARNING(_('Only Postgress databases use full text search, no index to rebuild')))
 
         try:
+            language = DICTIONARY.get(translation.get_language(), 'simple')
             with scopes_disabled():
-                search_vector = (
-                    SearchVector('name__unaccent', weight='A')
-                    + SearchVector('description__unaccent', weight='B'))
-                Recipe.objects.all().update(search_vector=search_vector)
+                Recipe.objects.all().update(
+                    name_search_vector=SearchVector('name__unaccent', weight='A', config=language),
+                    desc_search_vector=SearchVector('description__unaccent', weight='B', config=language)
+                )
+                Step.objects.all().update(search_vector=SearchVector('instruction__unaccent', weight='B', config=language))
 
                 self.stdout.write(self.style.SUCCESS(_('Recipe index rebuild complete.')))
         except:

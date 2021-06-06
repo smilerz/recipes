@@ -13,7 +13,7 @@
 
 
             <b-input-group class="mt-3">
-              <b-input class="form-control" v-model="search_input" v-bind:placeholder="$t('Search')"></b-input>
+              <b-input class="form-control" v-model="settings.search_input" v-bind:placeholder="$t('Search')"></b-input>
               <b-input-group-append>
                 <b-button v-b-toggle.collapse_advanced_search variant="primary" class="shadow-none"><i
                     class="fas fa-caret-down" v-if="!settings.advanced_search_visible"></i><i class="fas fa-caret-up"
@@ -92,8 +92,15 @@
                       </b-form-group>
                     </div>
                     <div class="row" style="margin-top: 1vh">
+                      <div class="col-12">
+                        <a :href="resolveDjangoUrl('view_settings') + '#search'">{{ $t('Advanced Search Settings') }}</a>
+                      </div>
+                    </div>
+                    <div class="row" style="margin-top: 1vh">
                       <div class="col-12" style="text-align: right">
-                        <b-button size="sm" variant="secondary" style="margin-right:8px" @click="$root.$emit('bv::hide::popover')">{{$t('Close')}}</b-button>
+                        <b-button size="sm" variant="secondary" style="margin-right:8px"
+                                  @click="$root.$emit('bv::hide::popover')">{{ $t('Close') }}
+                        </b-button>
                       </div>
                     </div>
                   </b-popover>
@@ -178,7 +185,7 @@
             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));grid-gap: 1rem;">
 
               <template
-                  v-if="search_input === '' && search_keywords.length === 0 &&  search_foods.length === 0  && search_books.length === 0">
+                  v-if="settings.search_input === '' && settings.search_keywords.length === 0 &&  settings.search_foods.length === 0  && settings.search_books.length === 0">
                 <recipe-card v-bind:key="`mp_${m.id}`" v-for="m in meal_plans" :recipe="m.recipe"
                              :meal_plan="m" :footer_text="m.meal_type_name"
                              footer_icon="far fa-calendar-alt"></recipe-card>
@@ -241,13 +248,13 @@ export default {
       meal_plans: [],
       last_viewed_recipes: [],
 
-      search_input: '',
-      search_internal: false,
-      search_keywords: [],
-      search_foods: [],
-      search_books: [],
-
       settings: {
+        search_input: '',
+        search_internal: false,
+        search_keywords: [],
+        search_foods: [],
+        search_books: [],
+
         search_keywords_or: true,
         search_foods_or: true,
         search_books_or: true,
@@ -286,7 +293,7 @@ export default {
       this.refreshData(false)
     })
 
-    this.refreshData()
+    this.$i18n.locale = window.CUSTOM_LOCALE
   },
   watch: {
     settings: {
@@ -301,7 +308,7 @@ export default {
     'settings.recently_viewed': function () {
       this.loadRecentlyViewed()
     },
-    search_input: _debounce(function () {
+    'settings.search_input': _debounce(function () {
       this.refreshData()
     }, 300),
   },
@@ -323,7 +330,7 @@ export default {
           this.settings.search_foods_or,
           this.settings.search_books_or,
 
-          this.search_internal,
+          this.settings.search_internal,
           undefined,
           this.pagination_page,
       ).then(result => {
@@ -353,7 +360,8 @@ export default {
     loadRecentlyViewed: function () {
       let apiClient = new ApiApiFactory()
       if (this.settings.recently_viewed > 0) {
-        apiClient.listRecipes({options: {query: {last_viewed: this.settings.recently_viewed}}}).then(result => {
+        apiClient.listRecipes(undefined, undefined, undefined, undefined, undefined, undefined,
+            undefined, undefined, undefined, undefined, undefined, {query: {last_viewed: this.settings.recently_viewed}}).then(result => {
           this.last_viewed_recipes = result.data.results
         })
       } else {

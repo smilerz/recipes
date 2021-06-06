@@ -12,6 +12,8 @@ from ._recipes import (
 
 IMPORT_SOURCE_URL = 'api_recipe_from_source'
 DATA_DIR = "cookbook/tests/other/test_data/"
+
+
 # These were chosen arbitrarily from:
 # Top 10 recipe websites listed here https://www.similarweb.com/top-websites/category/food-and-drink/cooking-and-recipes/
 # plus the test that previously existed
@@ -49,11 +51,15 @@ def test_import_permission(arg, request):
     TASTE_OF_HOME,
     # example of non-json recipes_scraper
     THE_SPRUCE_EATS,
-    TUDOGOSTOSO
+    TUDOGOSTOSO,
 ])
 def test_recipe_import(arg, u1_s1):
     for f in arg['file']:
-        with open(DATA_DIR + f, 'r', encoding='UTF-8') as d:
+        if 'cookbook' in os.getcwd():
+            test_file = os.path.join(os.getcwd(), 'other', 'test_data', f)
+        else:
+            test_file = os.path.join(os.getcwd(), 'cookbook', 'tests', 'other', 'test_data', f)
+        with open(test_file, 'r', encoding='UTF-8') as d:
             response = u1_s1.post(
                 reverse(IMPORT_SOURCE_URL),
                 {

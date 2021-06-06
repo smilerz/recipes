@@ -4,6 +4,7 @@ from django.contrib.postgres.search import SearchVector
 from django.contrib.auth.admin import UserAdmin
 from django.contrib.auth.models import User, Group
 from django_scopes import scopes_disabled
+from django.utils import translation
 
 from .models import (Comment, CookLog, Food, Ingredient, InviteLink, Keyword,
                      MealPlan, MealType, NutritionInformation, Recipe,
@@ -89,11 +90,13 @@ admin.site.register(Step, StepAdmin)
 
 @admin.action(description='Rebuild index for selected recipes')
 def rebuild_index(modeladmin, request, queryset):
+    language = DICTIONARY.get(translation.get_language(), 'simple')
     with scopes_disabled():
-        search_vector = (
-            SearchVector('name__unaccent', weight='A')
-            + SearchVector('description__unaccent', weight='B'))
-        queryset.update(search_vector=search_vector)
+        Recipe.objects.all().update(
+            name_search_vector=SearchVector('name__unaccent', weight='A', config=language),
+            desc_search_vector=SearchVector('description__unaccent', weight='B', config=language)
+        )
+        Step.objects.all().update(search_vector=SearchVector('instruction__unaccent', weight='B', config=language))
 
 
 class RecipeAdmin(admin.ModelAdmin):

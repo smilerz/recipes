@@ -424,7 +424,8 @@ class Recipe(ExportModelOperationsMixin('recipe'), models.Model, PermissionModel
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
-    search_vector = SearchVectorField(null=True)
+    name_search_vector = SearchVectorField(null=True)
+    desc_search_vector = SearchVectorField(null=True)
     space = models.ForeignKey(Space, on_delete=models.CASCADE)
 
     # load custom manager for full text search if postgress is available
@@ -437,7 +438,7 @@ class Recipe(ExportModelOperationsMixin('recipe'), models.Model, PermissionModel
         return self.name
 
     class Meta():
-        indexes = (GinIndex(fields=["search_vector"]),)
+        indexes = (GinIndex(fields=["name_search_vector", "desc_search_vector"]), Index(fields=['id', 'name', 'description']), )
 
 
 class Comment(ExportModelOperationsMixin('comment'), models.Model, PermissionModelMixin):
@@ -718,7 +719,7 @@ class ImportLog(models.Model, PermissionModelMixin):
         return f"{self.created_at}:{self.type}"
 
 
-class BookmarkletImport(models.Model, PermissionModelMixin):
+class BookmarkletImport(ExportModelOperationsMixin('bookmarklet_import'), models.Model, PermissionModelMixin):
     html = models.TextField()
     url = models.CharField(max_length=256, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -726,3 +727,50 @@ class BookmarkletImport(models.Model, PermissionModelMixin):
 
     objects = ScopedManager(space='space')
     space = models.ForeignKey(Space, on_delete=models.CASCADE)
+
+
+# field names used to configure search behavior - all data populated during data migration
+# other option is to use a MultiSelectField from https://github.com/goinnn/django-multiselectfield
+class SearchFields(models.Model, PermissionModelMixin):
+    name = models.CharField(max_length=32, unique=True)
+    field = models.CharField(max_length=64, unique=True)
+
+    def __str__(self):
+        return _(self.name)
+
+    @staticmethod
+    def get_name(self):
+        return _(self.name)
+
+
+def allSearchFields():
+    return SearchFields.objects.values_list('id')
+
+
+def nameSearchField():
+    return [SearchFields.objects.get(name='Name').id]
+
+
+class SearchPreference(models.Model, PermissionModelMixin):
+    # Search Style (validation parsleyjs.org)
+    # phrase or plain or raw (websearch and trigrams are mutually exclusive)
+    SIMPLE = 'plain'
+    PHRASE = 'phrase'
+    WEB = 'websearch'
+    RAW = 'raw'
+    SEARCH_STYLE = (
+        (SIMPLE, _('Simple')),
+        (PHRASE, _('Phrase')),
+        (WEB, _('Web')),
+        (RAW, _('Raw'))
+    )
+
+    user = AutoOneToOneField(User, on_delete=models.CASCADE, primary_key=True)
+    search = models.CharField(choices=SEARCH_STYLE, max_length=32, default=SIMPLE)
+
+    lookup = models.BooleanField(default=False)
+    unaccent = models.ManyToManyField(SearchFields, related_name="unaccent_fields", blank=True, default=allSearchFields)
+    icontains = models.ManyToManyField(SearchFields, related_name="icontains_fields", blank=True, default=nameSearchField)
+    istartswith = models.ManyToManyField(SearchFields, related_name="istartswith_fields", blank=True)
+    trigram = models.ManyToManyField(SearchFields, related_name="trigram_fields", blank=True)
+    fulltext = models.ManyToManyField(SearchFields, related_name="fulltext_fields", blank=True)

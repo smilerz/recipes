@@ -40,7 +40,7 @@ from cookbook.models import (CookLog, Food, Ingredient, Keyword, MealPlan,
                              MealType, Recipe, RecipeBook, ShoppingList,
                              ShoppingListEntry, ShoppingListRecipe, Step,
                              Storage, Sync, SyncLog, Unit, UserPreference,
-                             ViewLog, RecipeBookEntry, Supermarket, ImportLog, BookmarkletImport)
+                             ViewLog, RecipeBookEntry, Supermarket, ImportLog, BookmarkletImport, SupermarketCategory)
 from cookbook.provider.dropbox import Dropbox
 from cookbook.provider.local import Local
 from cookbook.provider.nextcloud import Nextcloud
@@ -57,8 +57,7 @@ from cookbook.serializer import (FoodSerializer, IngredientSerializer,
                                  UserNameSerializer, UserPreferenceSerializer,
                                  ViewLogSerializer, CookLogSerializer, RecipeBookEntrySerializer,
                                  RecipeOverviewSerializer, SupermarketSerializer, ImportLogSerializer,
-                                 BookmarkletImportSerializer)
-from recipes.settings import DEMO
+                                 BookmarkletImportSerializer, SupermarketCategorySerializer)
 
 
 class StandardFilterMixin(ViewSetMixin):
@@ -698,7 +697,9 @@ def recipe_from_source(request):
             return JsonResponse(
                 {
                     'error': True,
-                    'msg': _('The requested site does not provide any recognized data format to import the recipe from.')  # noqa: E501
+                    'msg': _(
+                        'The requested site does not provide any recognized data format to import the recipe from.')
+                    # noqa: E501
                 },
                 status=400)
         else:

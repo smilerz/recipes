@@ -1,32 +1,18 @@
 from datetime import datetime, timedelta
 
 from recipes import settings
-from django.contrib.postgres.aggregates import StringAgg
 from django.contrib.postgres.search import (
-    SearchQuery, SearchRank, SearchVector, TrigramSimilarity,
+    SearchQuery, SearchRank, TrigramSimilarity
 )
-from django.db.models import Q, Case, When, Value
+from django.db.models import Q, Subquery, Case, When, Value
 from django.utils import translation
 
-from cookbook.models import ViewLog
-
-
-DICTIONARY = {
-    # TODO find custom dictionaries - maybe from here https://www.postgresql.org/message-id/CAF4Au4x6X_wSXFwsQYE8q5o0aQZANrvYjZJ8uOnsiHDnOVPPEg%40mail.gmail.com
-    # 'hy': 'Armenian',
-    # 'ca': 'Catalan',
-    # 'cs': 'Czech',
-    'nl': 'dutch',
-    'en': 'english',
-    'fr': 'french',
-    'de': 'german',
-    'it': 'italian',
-    # 'lv': 'Latvian',
-    'es': 'spanish',
-}
+from cookbook.managers import DICTIONARY
+from cookbook.models import Food, Keyword, ViewLog
 
 
 def search_recipes(request, queryset, params):
+    search_prefs = request.user.searchpreference
     search_string = params.get('query', '')
     search_keywords = params.getlist('keywords', [])
     search_foods = params.getlist('foods', [])
@@ -43,57 +29,92 @@ def search_recipes(request, queryset, params):
     if search_last_viewed > 0:
         last_viewed_recipes = ViewLog.objects.filter(
             created_by=request.user, space=request.space,
-            created_at__gte=datetime.now() - timedelta(days=14)).values_list(
-            'recipe__pk', flat=True).distinct()
-        return queryset.filter(pk__in=list(set(last_viewed_recipes))[-search_last_viewed:])
+            created_at__gte=datetime.now() - timedelta(days=14)
+        ).order_by('pk').values_list('recipe__pk', flat=True).distinct()
+
+        return queryset.filter(pk__in=last_viewed_recipes[len(last_viewed_recipes) - min(len(last_viewed_recipes), search_last_viewed):])
 
     queryset = queryset.annotate(
         new_recipe=Case(When(
             created_at__gte=(datetime.now() - timedelta(days=7)), then=Value(100)),
             default=Value(0), )).order_by('-new_recipe', 'name')
 
-    if settings.DATABASES['default']['ENGINE'] in ['django.db.backends.postgresql_psycopg2', 'django.db.backends.postgresql'] and search_string != '':
-        # queryset = queryset.annotate(similarity=TrigramSimilarity('name', search_string), )
-        # .filter(Q(similarity__gt=0.1) | Q(name__unaccent__icontains=search_string)).order_by('-similarity')
-        language = DICTIONARY.get(translation.get_language(), 'simple')
-        search_query = SearchQuery(
-            search_string,
-            search_type="websearch",
-            config=language,
-        )
-        # TODO create user options to add/remove query elements from search so that they can fine tune their own experience
-        # trigrams, icontains, unaccent and startswith all impact results and performance significantly
-        search_vectors = (
-            SearchVector('search_vector')
-            # searching instruction is extremely slow
-            # TODO add search vector field, GIN index and save signal to update the vector on step save
-            # + SearchVector('steps__instruction', weight='D', config=language)
-            + SearchVector(StringAgg('steps__ingredients__food__name__unaccent', delimiter=' '), weight='B', config=language)
-            + SearchVector(StringAgg('keywords__name__unaccent', delimiter=' '), weight='B', config=language))
-        trigram = (
-            TrigramSimilarity('name__unaccent', search_string)
-            + TrigramSimilarity('description__unaccent', search_string)
-            # adding trigrams to ingredients and keywords causes duplicate results that can't be made unique
-            # + TrigramSimilarity('steps__ingredients__food__name__unaccent', search_string)
-            # + TrigramSimilarity('keywords__name__unaccent', search_string)
-        )
-        search_rank = SearchRank(search_vectors, search_query)
-        queryset = (
-            queryset.annotate(
-                vector=search_vectors,
-                rank=search_rank + trigram,
-                trigram=trigram
+    search_type = search_prefs.search or 'plain'
+    search_sort = None
+    if len(search_string) > 0:
+        unaccent_include = search_prefs.unaccent.values_list('field', flat=True)
+
+        icontains_include = [x + '__unaccent' if x in unaccent_include else x for x in search_prefs.icontains.values_list('field', flat=True)]
+        istartswith_include = [x + '__unaccent' if x in unaccent_include else x for x in search_prefs.istartswith.values_list('field', flat=True)]
+        trigram_include = [x + '__unaccent' if x in unaccent_include else x for x in search_prefs.trigram.values_list('field', flat=True)]
+        fulltext_include = search_prefs.fulltext.values_list('field', flat=True)  # fulltext doesn't use field name directly
+
+        # if no filters are configured use name__icontains as default
+        if len(icontains_include) + len(istartswith_include) + len(trigram_include) + len(fulltext_include) == 0:
+            filters = [Q(**{"name__icontains": search_string})]
+        else:
+            filters = []
+
+        # dynamically build array of filters that will be applied
+        for f in icontains_include:
+            filters += [Q(**{"%s__icontains" % f: search_string})]
+
+        for f in istartswith_include:
+            filters += [Q(**{"%s__istartswith" % f: search_string})]
+
+        if settings.DATABASES['default']['ENGINE'] in ['django.db.backends.postgresql_psycopg2', 'django.db.backends.postgresql']:
+            language = DICTIONARY.get(translation.get_language(), 'simple')
+            # django full text search https://docs.djangoproject.com/en/3.2/ref/contrib/postgres/search/#searchquery
+            # TODO can options install this extension to further enhance search query language https://github.com/caub/pg-tsquery
+            # trigram breaks full text search 'websearch' and 'raw' capabilities and will be ignored if those methods are chosen
+            if search_type in ['websearch', 'raw']:
+                search_trigram = False
+            else:
+                search_trigram = True
+            search_query = SearchQuery(
+                search_string,
+                search_type=search_type,
+                config=language,
             )
-            .filter(
-                # vector=search_query
-                Q(vector=search_query)
-                # adding trigrams to ingredients causes duplicate results that can't be made unique
-                # | Q(trigram__gt=0.2)
-                | Q(name__istartswith=search_string)
+
+            # iterate through fields to use in trigrams generating a single trigram
+            if search_trigram & len(trigram_include) > 1:
+                trigram = None
+                for f in trigram_include:
+                    if trigram:
+                        trigram += TrigramSimilarity(f, search_string)
+                    else:
+                        trigram = TrigramSimilarity(f, search_string)
+                queryset.annotate(simularity=trigram)
+                # TODO allow user to play with trigram scores
+                filters += [Q(simularity__gt=0.5)]
+
+            if 'name' in fulltext_include:
+                filters += [Q(name_search_vector=search_query)]
+            if 'description' in fulltext_include:
+                filters += [Q(desc_search_vector=search_query)]
+            if 'instructions' in fulltext_include:
+                filters += [Q(steps__search_vector=search_query)]
+            if 'keywords' in fulltext_include:
+                filters += [Q(keywords__in=Subquery(Keyword.objects.filter(name__search=search_query).values_list('id', flat=True)))]
+            if 'foods' in fulltext_include:
+                filters += [Q(steps__ingredients__food__in=Subquery(Food.objects.filter(name__search=search_query).values_list('id', flat=True)))]
+            query_filter = None
+            for f in filters:
+                if query_filter:
+                    query_filter |= f
+                else:
+                    query_filter = f
+
+            # TODO this is kind of a dumb method to sort.  create settings to choose rank vs most often made, date created or rating
+            search_rank = (
+                SearchRank('name_search_vector', search_query, cover_density=True)
+                + SearchRank('desc_search_vector', search_query, cover_density=True)
+                + SearchRank('steps__search_vector', search_query, cover_density=True)
             )
-            .order_by('-rank'))
-    else:
-        queryset = queryset.filter(name__icontains=search_string)
+            queryset = queryset.filter(query_filter).annotate(rank=search_rank)
+        else:
+            queryset = queryset.filter(query_filter)
 
     if len(search_keywords) > 0:
         if search_keywords_or == 'true':

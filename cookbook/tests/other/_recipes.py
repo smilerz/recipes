@@ -1104,19 +1104,6 @@ FOOD_NETWORK = {
     ],
     "recipeIngredient": [
         {
-            "amount": 0,
-            "unit": {
-                "text": "",
-                "id": 65816
-            },
-            "ingredient": {
-                "text": "Deselect All",
-                "id": 17169
-            },
-            "note": "",
-            "original": "Deselect All"
-        },
-        {
             "amount": 2,
             "unit": {
                 "text": "pounds",

@@ -11,12 +11,12 @@ module.exports = {
     // **optional** default: `[{ root: './' }]`
     // support monorepos
     projects: [
-      './packages/repo2', // shorthand for only root.
+      './vue', // shorthand for only root.
       {
         // **required**
         // Where is your project?
         // It is relative to `vetur.config.js`.
-        root: './packages/repo1',
+        root: './vue',
         // **optional** default: `'package.json'`
         // Where is `package.json` in the project?
         // We use it to determine the version of vue.
@@ -35,7 +35,7 @@ module.exports = {
         // It is relative to root property.
         // Notice: It won't actually do it. You need to use `require.context` or `Vue.component`
         globalComponents: [
-          './src/components/**/*.vue'
+          './vue/src/components/**/*.vue'
         ]
       }
     ]
