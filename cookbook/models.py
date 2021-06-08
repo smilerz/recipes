@@ -10,6 +10,7 @@ from django.contrib import auth
 from django.contrib.auth.models import Group, User
 from django.contrib.postgres.indexes import GinIndex
 from django.contrib.postgres.search import SearchVectorField
+from django.core.files.uploadedfile import UploadedFile, InMemoryUploadedFile
 from django.core.validators import MinLengthValidator
 from django.db import models
 from django.db.models import Index
@@ -774,3 +775,20 @@ class SearchPreference(models.Model, PermissionModelMixin):
     istartswith = models.ManyToManyField(SearchFields, related_name="istartswith_fields", blank=True)
     trigram = models.ManyToManyField(SearchFields, related_name="trigram_fields", blank=True)
     fulltext = models.ManyToManyField(SearchFields, related_name="fulltext_fields", blank=True)
+
+
+class UserFile(ExportModelOperationsMixin('user_files'), models.Model, PermissionModelMixin):
+    name = models.CharField(max_length=128)
+    file = models.FileField(upload_to='files/')
+    file_size_kb = models.IntegerField(default=0, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    created_by = models.ForeignKey(User, on_delete=models.CASCADE)
+
+    objects = ScopedManager(space='space')
+    space = models.ForeignKey(Space, on_delete=models.CASCADE)
+
+    def save(self, *args, **kwargs):
+        if hasattr(self.file, 'file') and isinstance(self.file.file, UploadedFile) or isinstance(self.file.file, InMemoryUploadedFile):
+            self.file.name = f'{uuid.uuid4()}' + pathlib.Path(self.file.name).suffix
+            self.file_size_kb = round(self.file.size / 1000)
+        super(UserFile, self).save(*args, **kwargs)

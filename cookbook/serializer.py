@@ -14,7 +14,7 @@ from cookbook.models import (Comment, CookLog, Food, Ingredient, Keyword,
                              ShareLink, ShoppingList, ShoppingListEntry,
                              ShoppingListRecipe, Step, Storage, Sync, SyncLog,
                              Unit, UserPreference, ViewLog, SupermarketCategory, Supermarket,
-                             SupermarketCategoryRelation, ImportLog, BookmarkletImport)
+                             SupermarketCategoryRelation, ImportLog, BookmarkletImport, UserFile)
 from cookbook.templatetags.custom_tags import markdown
 
 

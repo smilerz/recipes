@@ -40,7 +40,7 @@ from cookbook.models import (CookLog, Food, Ingredient, Keyword, MealPlan,
                              MealType, Recipe, RecipeBook, ShoppingList,
                              ShoppingListEntry, ShoppingListRecipe, Step,
                              Storage, Sync, SyncLog, Unit, UserPreference,
-                             ViewLog, RecipeBookEntry, Supermarket, ImportLog, BookmarkletImport, SupermarketCategory)
+                             ViewLog, RecipeBookEntry, Supermarket, ImportLog, BookmarkletImport, SupermarketCategory, UserFile)
 from cookbook.provider.dropbox import Dropbox
 from cookbook.provider.local import Local
 from cookbook.provider.nextcloud import Nextcloud
@@ -57,7 +57,7 @@ from cookbook.serializer import (FoodSerializer, IngredientSerializer,
                                  UserNameSerializer, UserPreferenceSerializer,
                                  ViewLogSerializer, CookLogSerializer, RecipeBookEntrySerializer,
                                  RecipeOverviewSerializer, SupermarketSerializer, ImportLogSerializer,
-                                 BookmarkletImportSerializer, SupermarketCategorySerializer)
+                                 BookmarkletImportSerializer, SupermarketCategorySerializer, UserFileSerializer)
 
 
 class StandardFilterMixin(ViewSetMixin):
@@ -526,6 +526,17 @@ class BookmarkletImportViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         return self.queryset.filter(space=self.request.space).all()
+
+
+class UserFileViewSet(viewsets.ModelViewSet, StandardFilterMixin):
+    queryset = UserFile.objects
+    serializer_class = UserFileSerializer
+    permission_classes = [CustomIsUser]
+    parser_classes = [MultiPartParser]
+
+    def get_queryset(self):
+        self.queryset = self.queryset.filter(space=self.request.space).all()
+        return super().get_queryset()
 
 
 # -------------- non django rest api views --------------------

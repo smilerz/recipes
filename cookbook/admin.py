@@ -12,7 +12,7 @@ from .models import (Comment, CookLog, Food, Ingredient, InviteLink, Keyword,
                      ShoppingList, ShoppingListEntry, ShoppingListRecipe,
                      Space, Step, Storage, Sync, SyncLog, Unit, UserPreference,
                      ViewLog, Supermarket, SupermarketCategory, SupermarketCategoryRelation,
-                     ImportLog, TelegramBot, BookmarkletImport)
+                     ImportLog, TelegramBot, BookmarkletImport, UserFile)
 
 from cookbook.managers import DICTIONARY
 
