@@ -12,7 +12,6 @@ from django.contrib.auth.forms import PasswordChangeForm
 from django.contrib.auth.models import Group
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
-from django.db import IntegrityError
 from django.db.models import Avg, Q, Sum
 from django.http import HttpResponseRedirect
 from django.shortcuts import get_object_or_404, render, redirect
@@ -64,12 +63,9 @@ def search(request):
     if has_group_permission(request.user, ('guest',)):
         if request.user.userpreference.search_style == UserPreference.NEW:
             return search_v2(request)
-        if settings.DATABASES['default']['ENGINE'] in ['django.db.backends.postgresql_psycopg2', 'django.db.backends.postgresql']:
-            qs = Recipe.objects.search(request.GET.get('name', ''), space=request.space)
-        else:
-            qs = Recipe.objects.filter(space=request.user.userpreference.space).all().order_by('name')
-        f = RecipeFilter(request.GET, queryset=qs, space=request.space)
-
+        f = RecipeFilter(request.GET,
+                         queryset=Recipe.objects.filter(space=request.user.userpreference.space).all().order_by('name'),
+                         space=request.space)
         if request.user.userpreference.search_style == UserPreference.LARGE:
             table = RecipeTable(f.qs)
         else:

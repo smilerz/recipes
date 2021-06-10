@@ -1,11 +1,9 @@
 import operator
-import pathlib
 import re
 import uuid
 from datetime import date, timedelta
 
 from annoying.fields import AutoOneToOneField
-from django.conf import settings
 from django.contrib import auth
 from django.contrib.auth.models import Group, User
 from django.contrib.postgres.indexes import GinIndex
@@ -16,12 +14,11 @@ from django.db import models
 from django.db.models import Index
 from django.utils import timezone
 from django.utils.translation import gettext as _
+from treebeard.mp_tree import MP_Node, MP_NodeManager
+from django_scopes import ScopedManager, scopes_disabled
 from django_prometheus.models import ExportModelOperationsMixin
-from django_scopes import ScopedManager
-
 from recipes.settings import (COMMENT_PREF_DEFAULT, FRACTION_PREF_DEFAULT,
                               STICKY_NAV_PREF_DEFAULT)
-from cookbook.managers import RecipeSearchManager
 
 
 def get_user_name(self):
@@ -215,6 +212,7 @@ class SupermarketCategory(models.Model, PermissionModelMixin):
         return self.name
 
     class Meta:
+        # TODO according to this https://docs.djangoproject.com/en/3.1/ref/models/options/#unique-together should not be used
         unique_together = (('space', 'name'),)
 
 
@@ -230,6 +228,7 @@ class Supermarket(models.Model, PermissionModelMixin):
         return self.name
 
     class Meta:
+        # TODO according to this https://docs.djangoproject.com/en/3.1/ref/models/options/#unique-together should not be used
         unique_together = (('space', 'name'),)
 
 
@@ -260,7 +259,9 @@ class SyncLog(models.Model, PermissionModelMixin):
         return f"{self.created_at}:{self.sync} - {self.status}"
 
 
-class Keyword(ExportModelOperationsMixin('keyword'), models.Model, PermissionModelMixin):
+class Keyword(ExportModelOperationsMixin('keyword'), MP_Node, PermissionModelMixin):
+    # TODO create get_or_create method
+    node_order_by = ['name']
     name = models.CharField(max_length=64)
     icon = models.CharField(max_length=16, blank=True, null=True)
     description = models.TextField(default="", blank=True)
@@ -268,7 +269,9 @@ class Keyword(ExportModelOperationsMixin('keyword'), models.Model, PermissionMod
     updated_at = models.DateTimeField(auto_now=True)
 
     space = models.ForeignKey(Space, on_delete=models.CASCADE)
-    objects = ScopedManager(space='space')
+    objects = ScopedManager(space='space', _manager_class=MP_NodeManager)
+
+    _full_name_separator = ' > '
 
     def __str__(self):
         if self.icon:
@@ -276,8 +279,67 @@ class Keyword(ExportModelOperationsMixin('keyword'), models.Model, PermissionMod
         else:
             return f"{self.name}"
 
+    @property
+    def parent(self):
+        parent = self.get_parent()
+        if parent:
+            return self.get_parent().id
+        return None
+
+    @classmethod
+    def get_or_create(self, **kwargs):
+        # an attempt to mimic get_or_create functionality with Keywords
+        # function attempts to get the keyword,
+        # if the length of the return is 0 will add a root node
+        kwargs['name'] = kwargs['name'].strip()
+        q = self.get_tree().filter(name=kwargs['name'], space=kwargs['space'])
+        if len(q) != 0:
+            return q[0]
+        else:
+            return Keyword.add_root(**kwargs)
+
+    @property
+    def full_name(self):
+        """
+        Returns a string representation of the keyword and it's ancestors,
+        e.g. 'Cuisine > Asian > Chinese > Catonese'.
+        """
+        names = [keyword.name for keyword in self.get_ancestors_and_self()]
+        return self._full_name_separator.join(names)
+
+    def get_ancestors_and_self(self):
+        """
+        Gets ancestors and includes itself. Use treebeard's get_ancestors
+        if you don't want to include the keyword itself. It's a separate
+        function as it's commonly used in templates.
+        """
+        if self.is_root():
+            return [self]
+        return list(self.get_ancestors()) + [self]
+
+    def get_descendants_and_self(self):
+        """
+        Gets descendants and includes itself. Use treebeard's get_descendants
+        if you don't want to include the keyword itself. It's a separate
+        function as it's commonly used in templates.
+        """
+        return self.get_tree(self)
+
+    def has_children(self):
+        return self.get_num_children() > 0
+
+    def get_num_children(self):
+        return self.get_children().count()
+
+    @classmethod
+    def add_root(self, **kwargs):
+        with scopes_disabled():
+            return super().add_root(**kwargs)
+
     class Meta:
-        unique_together = (('space', 'name'),)
+        constraints = [
+            models.UniqueConstraint(fields=['space', 'name'], name='unique_name_per_space')
+        ]
         indexes = (Index(fields=['id', 'name']), )
 
 
@@ -292,6 +354,7 @@ class Unit(ExportModelOperationsMixin('unit'), models.Model, PermissionModelMixi
         return self.name
 
     class Meta:
+        # TODO according to this https://docs.djangoproject.com/en/3.1/ref/models/options/#unique-together should not be used
         unique_together = (('space', 'name'),)
 
 
@@ -309,6 +372,7 @@ class Food(ExportModelOperationsMixin('food'), models.Model, PermissionModelMixi
         return self.name
 
     class Meta:
+        # TODO according to this https://docs.djangoproject.com/en/3.1/ref/models/options/#unique-together should not be used
         unique_together = (('space', 'name'),)
         indexes = (Index(fields=['id', 'name']), )
 
@@ -429,11 +493,7 @@ class Recipe(ExportModelOperationsMixin('recipe'), models.Model, PermissionModel
     desc_search_vector = SearchVectorField(null=True)
     space = models.ForeignKey(Space, on_delete=models.CASCADE)
 
-    # load custom manager for full text search if postgress is available
-    if settings.DATABASES['default']['ENGINE'] in ['django.db.backends.postgresql_psycopg2', 'django.db.backends.postgresql']:
-        objects = ScopedManager(_manager_class=RecipeSearchManager, space='space')
-    else:
-        objects = ScopedManager(space='space')
+    objects = ScopedManager(space='space')
 
     def __str__(self):
         return self.name
@@ -513,6 +573,7 @@ class RecipeBookEntry(ExportModelOperationsMixin('book_entry'), models.Model, Pe
             return None
 
     class Meta:
+        # TODO according to this https://docs.djangoproject.com/en/3.1/ref/models/options/#unique-together should not be used
         unique_together = (('recipe', 'book'),)
 
 
@@ -784,11 +845,9 @@ class UserFile(ExportModelOperationsMixin('user_files'), models.Model, Permissio
     created_at = models.DateTimeField(auto_now_add=True)
     created_by = models.ForeignKey(User, on_delete=models.CASCADE)
 
-    objects = ScopedManager(space='space')
-    space = models.ForeignKey(Space, on_delete=models.CASCADE)
+    def __str__(self):
+        return _(self.name)
 
-    def save(self, *args, **kwargs):
-        if hasattr(self.file, 'file') and isinstance(self.file.file, UploadedFile) or isinstance(self.file.file, InMemoryUploadedFile):
-            self.file.name = f'{uuid.uuid4()}' + pathlib.Path(self.file.name).suffix
-            self.file_size_kb = round(self.file.size / 1000)
-        super(UserFile, self).save(*args, **kwargs)
+    @staticmethod
+    def get_name(self):
+        return _(self.name)

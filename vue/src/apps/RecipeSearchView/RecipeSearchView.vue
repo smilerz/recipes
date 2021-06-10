@@ -111,12 +111,13 @@
                         <generic-multiselect @change="genericSelectChanged" parent_variable="search_keywords"
                                              :initial_selection="settings.search_keywords"
                                              search_function="listKeywords" label="label"
+                                             :tree_api="true"
                                              style="flex-grow: 1; flex-shrink: 1; flex-basis: 0"
                                              v-bind:placeholder="$t('Keywords')"></generic-multiselect>
                         <b-input-group-append>
                           <b-input-group-text>
                             <b-form-checkbox v-model="settings.search_keywords_or" name="check-button"
-                                             @change="refreshData"
+                                             @change="refreshData(false)"
                                              class="shadow-none" switch>
                               <span class="text-uppercase" v-if="settings.search_keywords_or">{{ $t('or') }}</span>
                               <span class="text-uppercase" v-else>{{ $t('and') }}</span>
@@ -138,7 +139,7 @@
                         <b-input-group-append>
                           <b-input-group-text>
                             <b-form-checkbox v-model="settings.search_foods_or" name="check-button"
-                                             @change="refreshData"
+                                             @change="refreshData(false)"
                                              class="shadow-none" switch>
                               <span class="text-uppercase" v-if="settings.search_foods_or">{{ $t('or') }}</span>
                               <span class="text-uppercase" v-else>{{ $t('and') }}</span>
@@ -160,7 +161,7 @@
                         <b-input-group-append>
                           <b-input-group-text>
                             <b-form-checkbox v-model="settings.search_books_or" name="check-button"
-                                             @change="refreshData"
+                                             @change="refreshData(false)"
                                              class="shadow-none" tyle="width: 100%" switch>
                               <span class="text-uppercase" v-if="settings.search_books_or">{{ $t('or') }}</span>
                               <span class="text-uppercase" v-else>{{ $t('and') }}</span>
@@ -309,7 +310,7 @@ export default {
       this.loadRecentlyViewed()
     },
     'settings.search_input': _debounce(function () {
-      this.refreshData()
+      this.refreshData(false)
     }, 300),
   },
   methods: {
@@ -334,9 +335,14 @@ export default {
           undefined,
           this.pagination_page,
       ).then(result => {
-        console.log(result.data.results)
-        this.recipes = result.data.results
-        this.pagination_count = result.data.count
+        this.pagination_more = (result.data.next !== null)
+        if (page_load) {
+          for (let x of result.data.results) {
+            this.recipes.push(x)
+          }
+        } else {
+          this.recipes = result.data.results
+        }
       })
     },
     loadMealPlan: function () {

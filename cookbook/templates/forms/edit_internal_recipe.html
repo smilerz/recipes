@@ -704,7 +704,8 @@
                 searchKeywords: function (query) {
                     this.keywords_loading = true
                     this.$http.get("{% url 'api:keyword-list' %}" + '?query=' + query + '&limit=10').then((response) => {
-                        this.keywords = response.data;
+                        console.log(response.data)
+                        this.keywords = response.data.results;
                         this.keywords_loading = false
                     }).catch((err) => {
                         console.log(err)
