@@ -11,8 +11,8 @@ It includes many of the new features I've developed and should be considered exp
 
 ## Experimental Features
 
-- Manual import recipes from URL & Source (HTML/JSON)
-- Bookmarklet to import recipes from any website
+- ~~Manual import recipes from URL & Source (HTML/JSON)~~ (merged)
+- ~~Bookmarklet to import recipes from any website~~ (merged)
 - Full Text Search
 - Hierarchical Keywords
 
