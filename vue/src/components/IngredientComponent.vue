@@ -37,6 +37,9 @@
 
                     <div class="ingredients__note ingredients__note_print d-none d-print-block"><i class="far fa-comment-alt d-print-none"></i> {{ ingredient.note }}</div>
                 </template>
+                <span class="justify-content-end py-0" v-if="!settings.ingredient_context">
+                    <ingredient-context-menu class="justify-content-end float-right align-items-end pr-0"></ingredient-context-menu>
+                </span>
             </td>
         </template>
     </tr>
@@ -47,6 +50,7 @@ import {calculateAmount, ResolveUrlMixin, EscapeCSSMixin} from "@/utils/utils"
 
 import Vue from "vue"
 import VueSanitize from "vue-sanitize"
+import IngredientContextMenu from "@/components/ContextMenu/IngredientContextMenu"
 
 Vue.use(VueSanitize)
 
@@ -54,10 +58,12 @@ export default {
     name: "IngredientComponent",
     props: {
         ingredient: Object,
-        ingredient_factor: {type: Number, default: 1},
-        detailed: {type: Boolean, default: true},
+        ingredient_factor: { type: Number, default: 1 },
+        detailed: { type: Boolean, default: true },
+        settings: Object,
     },
     mixins: [ResolveUrlMixin, EscapeCSSMixin],
+    components: { IngredientContextMenu },
     data() {
         return {
             checked: false,
