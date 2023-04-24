@@ -487,6 +487,7 @@ class UserPreference(models.Model, PermissionModelMixin):
     shopping_recent_days = models.PositiveIntegerField(default=7)
     csv_delim = models.CharField(max_length=2, default=",")
     csv_prefix = models.CharField(max_length=10, blank=True, )
+    ingredient_context = models.BooleanField(default=False)
 
     created_at = models.DateTimeField(auto_now_add=True)
     objects = ScopedManager(space='space')
