@@ -509,7 +509,6 @@
     "Combine_All_Steps": "Combine all steps into a single field.",
     "Plural": "Plural",
     "plural_short": "plural",
-
     "g": "gram [g] (metric, weight)",
     "kg": "kilogram [kg] (metric, weight)",
     "ounce": "ounce [oz] (weight)",
@@ -542,5 +541,7 @@
     "Name_Replace":"Name Replace",
     "Food_Replace":"Food Replace",
     "Unit_Replace":"Unit Replace",
-    "never_used_food": "Never Food"
+    "never_used_food": "Never Food",
+    "ingredient_context": "Ingredient Context Menu",
+    "ingredient_context_help": "Show an ingredient context menu when viewing a recipe."
 }
