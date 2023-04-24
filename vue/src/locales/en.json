@@ -532,5 +532,7 @@
     "Transpose_Words": "Transpose Words",
     "Name_Replace":"Name Replace",
     "Food_Replace":"Food Replace",
-    "Unit_Replace":"Unit Replace"
+    "Unit_Replace":"Unit Replace",
+    "ingredient_context": "Ingredient Context Menu",
+    "ingredient_context_help": "Show an ingredient context menu when viewing a recipe."
 }

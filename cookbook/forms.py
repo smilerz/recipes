@@ -45,7 +45,7 @@ class UserPreferenceForm(forms.ModelForm):
         model = UserPreference
         fields = (
             'default_unit', 'use_fractions', 'use_kj', 'theme', 'nav_color',
-            'sticky_navbar', 'default_page', 'plan_share', 'ingredient_decimals', 'comments', 'left_handed', 'show_step_ingredients',
+            'sticky_navbar', 'default_page', 'plan_share', 'ingredient_decimals', 'comments', 'left_handed', 'show_step_ingredients', 'ingredient_context',
         )
 
         labels = {
@@ -61,7 +61,8 @@ class UserPreferenceForm(forms.ModelForm):
             'shopping_auto_sync': _('Shopping list auto sync period'),
             'comments': _('Comments'),
             'left_handed': _('Left-handed mode'),
-            'show_step_ingredients': _('Show step ingredients table')
+            'show_step_ingredients': _('Show step ingredients table'),
+            'ingredient_context': _('Ingredient context menu')
         }
 
         help_texts = {
@@ -82,7 +83,8 @@ class UserPreferenceForm(forms.ModelForm):
             'mealplan_autoadd_shopping': _('Automatically add meal plan ingredients to shopping list.'),
             'mealplan_autoexclude_onhand': _('Exclude ingredients that are on hand.'),
             'left_handed': _('Will optimize the UI for use with your left hand.'),
-            'show_step_ingredients': _('Add ingredients table next to recipe steps. Applies at creation time for manually created and URL imported recipes. Individual steps can be overridden in the edit recipe view.')
+            'show_step_ingredients': _('Add ingredients table next to recipe steps. Applies at creation time for manually created and URL imported recipes. Individual steps can be overridden in the edit recipe view.'),
+            'ingredient_context': _("Show an ingredient context menu when viewing a recipe.")
         }
 
         widgets = {
