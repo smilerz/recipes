@@ -98,10 +98,14 @@ export default {
             recipe_servings: undefined,
             add_shopping: [],
             related_recipes: [],
+            settings: {
+                ingredient_context: false,
+            },
         }
     },
     mounted() {
         this.recipe_servings = this.servings
+        this.settings = getUserPreference()
     },
     computed: {
         ingredient_factor: function () {
