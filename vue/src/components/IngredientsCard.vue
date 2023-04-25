@@ -27,6 +27,7 @@
                                         :detailed="detailed"
                                         @checked-state-changed="$emit('checked-state-changed', $event)"
                                         :settings="settings"
+                                        :sub_badge="substitutes"
                                     />
                                 </template>
                             </template>
@@ -66,6 +67,7 @@ export default {
         detailed: {type: Boolean, default: true},
         header: {type: Boolean, default: false},
         recipe_list: {type: Number, default: undefined},
+        substitutes: { type: Boolean, default: false },
     },
     data() {
         return {
