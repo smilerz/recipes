@@ -26,7 +26,7 @@ from django.db.models import Case, Count, Exists, OuterRef, ProtectedError, Q, S
 from django.db.models.fields.related import ForeignObjectRel
 from django.db.models.functions import Coalesce, Lower
 from django.db.models.signals import post_save
-from django.http import FileResponse, HttpResponse, JsonResponse, HttpResponseRedirect
+from django.http import FileResponse, HttpResponse, HttpResponseRedirect, JsonResponse
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
 from django.utils import timezone
@@ -70,12 +70,13 @@ from cookbook.helper.recipe_url_import import (clean_dict, get_from_youtube_scra
 from cookbook.helper.scrapers.scrapers import text_scraper
 from cookbook.helper.shopping_helper import RecipeShoppingEditor, shopping_helper
 from cookbook.models import (Automation, BookmarkletImport, CookLog, CustomFilter, ExportLog, Food,
-                             FoodInheritField, ImportLog, Ingredient, InviteLink, Keyword, MealPlan,
-                             MealType, Property, PropertyType, Recipe, RecipeBook, RecipeBookEntry,
-                             ShareLink, ShoppingList, ShoppingListEntry, ShoppingListRecipe, Space,
-                             Step, Storage, Supermarket, SupermarketCategory,
-                             SupermarketCategoryRelation, Sync, SyncLog, Unit, UnitConversion,
-                             UserFile, UserPreference, UserSpace, ViewLog, FoodProperty)
+                             FoodInheritField, FoodProperty, ImportLog, Ingredient, InviteLink,
+                             Keyword, MealPlan, MealType, Property, PropertyType, Recipe,
+                             RecipeBook, RecipeBookEntry, ShareLink, ShoppingList,
+                             ShoppingListEntry, ShoppingListRecipe, Space, Step, Storage,
+                             Supermarket, SupermarketCategory, SupermarketCategoryRelation, Sync,
+                             SyncLog, Unit, UnitConversion, UserFile, UserPreference, UserSpace,
+                             ViewLog)
 from cookbook.provider.dropbox import Dropbox
 from cookbook.provider.local import Local
 from cookbook.provider.nextcloud import Nextcloud
@@ -104,7 +105,7 @@ from cookbook.serializer import (AccessTokenSerializer, AutomationSerializer,
                                  UserSerializer, UserSpaceSerializer, ViewLogSerializer)
 from cookbook.views.import_export import get_integration
 from recipes import settings
-from recipes.settings import FDC_API_KEY, DRF_THROTTLE_RECIPE_URL_IMPORT
+from recipes.settings import DRF_THROTTLE_RECIPE_URL_IMPORT, FDC_API_KEY
 
 
 class StandardFilterMixin(ViewSetMixin):
@@ -563,7 +564,7 @@ class FoodViewSet(viewsets.ModelViewSet, TreeMixin):
         self.queryset = super().get_queryset()
         shopping_status = ShoppingListEntry.objects.filter(space=self.request.space, food=OuterRef('id'),
                                                            checked=False).values('id')
-        # onhand_status = self.queryset.annotate(onhand_status=Exists(onhand_users_set__in=[shared_users]))
+
         return self.queryset \
             .annotate(shopping_status=Exists(shopping_status)) \
             .prefetch_related('onhand_users', 'inherit_fields', 'child_inherit_fields', 'substitute') \
@@ -643,6 +644,21 @@ class FoodViewSet(viewsets.ModelViewSet, TreeMixin):
         except Exception as e:
             traceback.print_exc()
             return JsonResponse({'msg': f'there was an error parsing the FDC data, please check the server logs'}, status=500, json_dumps_params={'indent': 4})
+
+    @decorators.action(detail=True, methods=['GET'], serializer_class=FoodSimpleSerializer, )
+    def substitutes(self, request, pk):
+        if self.request.space.demo:
+            raise PermissionDenied(detail='Not available in demo', code=None)
+        obj = self.get_object()
+        if obj.get_space() != request.space:
+            raise PermissionDenied(detail='You do not have the required permission to perform this action', code=403)
+
+        onhand = str2bool(request.query_params.get('onhand', False))
+        shopping_users = None
+        if onhand:
+            shopping_users = [*request.user.get_shopping_share(), request.user]
+        qs = obj.get_substitutes(onhand=onhand, shopping_users=shopping_users)
+        return Response(self.serializer_class(qs, many=True).data)
 
     def destroy(self, *args, **kwargs):
         try:
