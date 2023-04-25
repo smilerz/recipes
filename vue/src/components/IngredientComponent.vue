@@ -81,6 +81,7 @@ export default {
     },
     watch: {},
     mounted() {},
+    computed: {},
     methods: {
         calculateAmount: function (x) {
             return this.$sanitize(calculateAmount(x, this.ingredient_factor))
