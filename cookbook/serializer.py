@@ -606,7 +606,7 @@ class FoodSerializer(UniqueFieldsMixin, WritableNestedModelSerializer, ExtendedR
             filter |= Q(path__startswith=obj.path[:Food.steplen * (obj.depth - 1)], depth=obj.depth)
         if obj.substitute_children:
             filter |= Q(path__startswith=obj.path, depth__gt=obj.depth)
-        return Food.objects.filter(filter).filter(onhand_users__id__in=shared_users).exists()
+        return Food.objects.filter(filter).filter(onhand_users__id__in=shared_users).exclude(id=obj.id).exists()
 
     def create(self, validated_data):
         name = validated_data['name'].strip()
