@@ -113,13 +113,6 @@ class RecipeSearch():
 
             if self._search_type not in ['websearch', 'raw'] and self._trigram_include:
                 self._trigram = True
-        self._filters = None
-        self._fuzzy_match = None
-
-    def get_queryset(self, queryset):
-        self._queryset = queryset
-        self._queryset = self._queryset.prefetch_related("keywords")
-
         self._build_sort_order()
         self._recently_viewed(num_recent=self._num_recent)
         self._cooked_on_filter(cooked_date=self._cookedon)
@@ -408,7 +401,7 @@ class RecipeSearch():
             else:
                 default = 0
             # TODO make ratings a settings user-only vs all-users
-            self._queryset = self._queryset.annotate(rating=Round(Avg(Case(When(cooklog__created_by=self._request.user, then='cooklog__rating'), default=default))))
+            self._queryset = self._queryset.annotate(rating=Round(Avg(Case(When(cooklog__created_by=self._request.user, then="cooklog__rating"), default=default))))
         if rating is None:
             return
 
@@ -525,8 +518,6 @@ class RecipeSearch():
         if missing is None or (isinstance(missing, bool) and missing == False):
             return
         shopping_users = [*self._request.user.get_shopping_share(), self._request.user]
-
-        onhand_filter = Q(steps__ingredients__food__onhand_users__in=shopping_users)  # food onhand
 
         # ignore substitutions when also using the never_used_food filter
         if not self._never_used_food:
