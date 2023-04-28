@@ -118,7 +118,16 @@
                                                     <b-form-checkbox switch v-model="ui.show_makenow" id="popover-show_makenow" size="sm" class="mt-2"></b-form-checkbox>
                                                 </b-form-group>
                                                 <b-form-group v-bind:label="$t('never_used_food')" label-for="popover-show_never_used_food" label-cols="8" class="mb-1">
-                                                    <b-form-checkbox switch v-model="ui.show_never_used_food" id="popover-show_never_used_food" size="sm" class="mt-2"></b-form-checkbox>
+                                                    <b-form-checkbox
+                                                        switch
+                                                        v-model="ui.show_never_used_food"
+                                                        id="popover-show_never_used_food"
+                                                        size="sm"
+                                                        class="mt-2"
+                                                    ></b-form-checkbox>
+                                                </b-form-group>
+                                                <b-form-group v-bind:label="$t('last_cooked')" label-for="popover-show_cookedon" label-cols="8" class="mb-1">
+                                                    <b-form-checkbox switch v-model="ui.show_cookedon" id="popover-show_cookedon" size="sm" class="mt-2"></b-form-checkbox>
                                                 </b-form-group>
                                                 <b-form-group v-bind:label="$t('last_cooked')" label-for="popover-show_cookedon" label-cols="8" class="mb-1">
                                                     <b-form-checkbox switch v-model="ui.show_cookedon" id="popover-show_cookedon" size="sm" class="mt-2"></b-form-checkbox>
@@ -432,8 +441,7 @@
                                     </div>
 
                                     <!-- special switches -->
-                                    <div class="row g-0"
-                                         v-if="ui.show_timescooked || ui.show_makenow || ui.show_cookedon || ui.never_used_food">
+                                    <div class="row g-0" v-if="ui.show_timescooked || ui.show_makenow || ui.show_cookedon || ui.never_used_food">
                                         <div class="col-12">
                                             <b-input-group class="mt-2">
                                                 <!-- times cooked -->
@@ -575,13 +583,30 @@
                                                 <b-input-group-append v-if="ui.show_never_used_food">
                                                     <b-input-group-text>
                                                         {{ $t("never_used_food") }}
-                                                        <b-form-checkbox v-model="search.never_used_food" name="check-button"
-                                                                         @change="refreshData(false)"
-                                                                         class="shadow-none" switch style="width: 4em"/>
+                                                        <b-form-checkbox
+                                                            v-model="search.never_used_food"
+                                                            name="check-button"
+                                                            @change="refreshData(false)"
+                                                            class="shadow-none"
+                                                            switch
+                                                            style="width: 4em"
+                                                        />
+                                                    </b-input-group-text>
+                                                </b-input-group-append>
+                                                <b-input-group-append v-if="ui.show_never_used_food">
+                                                    <b-input-group-text>
+                                                        {{ $t("never_used_food") }}
+                                                        <b-form-checkbox
+                                                            v-model="search.never_used_food"
+                                                            name="check-button"
+                                                            @change="refreshData(false)"
+                                                            class="shadow-none"
+                                                            switch
+                                                            style="width: 4em"
+                                                        />
                                                     </b-input-group-text>
                                                 </b-input-group-append>
                                             </b-input-group>
-
                                         </div>
                                     </div>
 
