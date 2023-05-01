@@ -81,6 +81,7 @@ export default {
         this.onhand = this.ingredient.food.food_onhand
         this.sub_onhand = this.ingredient.food.substitute_onhand
         this.ignore_shopping = this.ingredient.food.ignore_shopping
+        this.shopping = this.ingredient.food.shopping
     },
     watch: {
         // only load shopping/substitute status if clicked
@@ -94,12 +95,6 @@ export default {
         },
     },
     methods: {
-        getShopping() {
-            let params = { id: this.ingredient.food.id }
-            this.genericAPI(this.Models.FOOD, this.Actions.FETCH, params).then((item) => {
-                this.shopping = item.shopping
-            })
-        },
         getSubstitutes() {
             let params = {
                 id: this.ingredient.food.id,
