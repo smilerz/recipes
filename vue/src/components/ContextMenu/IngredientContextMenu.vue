@@ -11,21 +11,24 @@
                 aria-expanded="false"
                 @click="clicked = true"
             >
-                <i v-if="onhand" class="fas fa-ellipsis-v fa-sm text-success"></i>
+                <i v-if="onhand || ignore_shoppping" class="fas fa-ellipsis-v fa-sm text-success"></i>
                 <i v-else-if="!onhand && sub_onhand" class="fas fa-ellipsis-v fa-sm text-warning"></i>
                 <i v-else class="fas fa-ellipsis-v fa-sm"></i>
             </a>
 
             <div class="dropdown-menu dropdown-menu-right" aria-labelledby="dropdownMenuLink">
                 <!-- is food onhand? -->
-                <a class="dropdown-item" v-if="onhand" href="#" @click="toggleOnHand()"><i class="fas fa-clipboard-check fa-fw text-success"></i> {{ $t("OnHand_Off") }}</a>
-                <a class="dropdown-item" v-else-if="!onhand && sub_onhand" href="#" @click="toggleOnHand()"
-                    ><i class="fas fa-clipboard-check fa-fw text-warning"></i> {{ $t("OnHand_On") }}</a
-                >
-                <a class="dropdown-item" v-else href="#" @click="toggleOnHand()"><i class="fas fa-clipboard fa-fw text-muted"></i> {{ $t("OnHand_On") }}</a>
+                <span v-if="!ignore_shopping">
+                    <a class="dropdown-item" v-if="onhand" href="#" @click="toggleOnHand()"><i class="fas fa-clipboard-check fa-fw text-success" /> {{ $t("OnHand_Off") }}</a>
+                    <a class="dropdown-item" v-else-if="!onhand && sub_onhand" href="#" @click="toggleOnHand()">
+                        <i class="fas fa-clipboard-check fa-fw text-warning" /> {{ $t("OnHand_On") }}
+                    </a>
+
+                    <a class="dropdown-item" v-else href="#" @click="toggleOnHand()"><i class="fas fa-clipboard fa-fw text-muted"></i> {{ $t("OnHand_On") }}</a>
+                </span>
 
                 <!-- is food in shopping list? -->
-                <span v-if="!ingredient.food.ignore_shoppping">
+                <span v-if="!ignore_shopping">
                     <a v-if="shopping" class="dropdown-item" href="#" @click="delShopping()">
                         <i class="fas fa-shopping-cart fa-fw text-success" /> {{ $t("RemoveFoodFromShopping", { food: ingredient.food.name }) }}
                     </a>
@@ -34,7 +37,13 @@
                     </a>
                 </span>
 
-                <!-- list of first 5 substitutes onhand -->
+                <!-- toggle ignore shopping? -->
+                <a v-if="!ignore_shopping" class="dropdown-item" href="#" @click="toggleIgnoreShopping()">
+                    <i class="fas fa-ban fa-fw text-muted" /> {{ $t("Ignore_Shopping") }}
+                </a>
+                <a v-else class="dropdown-item" href="#" @click="toggleIgnoreShopping()"> <i class="fas fa-ban fa-fw text-danger" /> {{ $t("No_Ignore_Shopping") }} </a>
+
+                <!-- list of substitutes onhand -->
                 <span v-if="ingredient.food.substitute_onhand && substitutes.length !== 0">
                     <div class="dropdown-divider"></div>
                     <h5 class="dropdown-header">{{ $t("SubstitutesList") }}</h5>
@@ -64,12 +73,14 @@ export default {
             substitutes: [],
             onhand: false,
             sub_onhand: false,
+            ignore_shopping: false,
             clicked: false,
         }
     },
     mounted() {
         this.onhand = this.ingredient.food.food_onhand
         this.sub_onhand = this.ingredient.food.substitute_onhand
+        this.ignore_shopping = this.ingredient.food.ignore_shopping
     },
     watch: {
         // only load shopping/substitute status if clicked
@@ -122,6 +133,13 @@ export default {
             let params = { id: this.ingredient.food.id, food_onhand: !this.onhand }
             this.genericAPI(this.Models.FOOD, this.Actions.UPDATE, params).then(() => {
                 this.onhand = !this.onhand
+                StandardToasts.makeStandardToast(this, StandardToasts.SUCCESS_UPDATE)
+            })
+        },
+        toggleIgnoreShopping() {
+            let params = { id: this.ingredient.food.id, ignore_shopping: !this.ignore_shopping }
+            this.genericAPI(this.Models.FOOD, this.Actions.UPDATE, params).then(() => {
+                this.ignore_shopping = !this.ignore_shopping
                 StandardToasts.makeStandardToast(this, StandardToasts.SUCCESS_UPDATE)
             })
         },
