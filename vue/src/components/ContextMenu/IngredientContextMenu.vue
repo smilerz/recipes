@@ -11,7 +11,7 @@
                 aria-expanded="false"
                 @click="clicked = true"
             >
-                <i v-if="onhand || ignore_shoppping" class="fas fa-ellipsis-v fa-sm text-success"></i>
+                <i v-if="onhand || ignore_shopping" class="fas fa-ellipsis-v fa-sm text-success"></i>
                 <i v-else-if="!onhand && sub_onhand" class="fas fa-ellipsis-v fa-sm text-warning"></i>
                 <i v-else class="fas fa-ellipsis-v fa-sm"></i>
             </a>
