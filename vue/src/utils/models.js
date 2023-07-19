@@ -1030,6 +1030,7 @@ export class Models {
                 "updatedon",
                 "viewedon",
                 "makenow",
+                "never_used_food",
                 "page",
                 "pageSize",
                 "options",
