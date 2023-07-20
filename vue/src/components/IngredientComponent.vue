@@ -47,8 +47,8 @@
 
                     <div class="d-none d-print-block"><i class="far fa-comment-alt d-print-none"></i> {{ ingredient.note }}</div>
                 </template>
-                <span class="justify-content-end py-0" v-if="!settings.ingredient_context">
-                    <ingredient-context-menu class="justify-content-end float-right align-items-end pr-0"></ingredient-context-menu>
+                <span class="justify-content-end py-0" v-if="settings.ingredient_context">
+                    <ingredient-context-menu :ingredient="ingredient" class="justify-content-end float-right align-items-end pr-0"></ingredient-context-menu>
                 </span>
             </td>
             <td v-if="!detailed && sub_badge && ingredient.food.substitute_onhand"><SubstituteBadge :item="ingredient.food" /></td>
