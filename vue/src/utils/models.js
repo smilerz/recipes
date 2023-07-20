@@ -225,6 +225,9 @@ export class Models {
         shopping: {
             params: ["id", ["id", "amount", "unit", "_delete"]],
         },
+        substitutes: {
+            params: ["id", "options"],
+        },
     }
     static FOOD_INHERIT_FIELDS = {
         name: "FoodInherit",
@@ -1435,5 +1438,8 @@ export class Actions {
     }
     static SHOPPING = {
         function: "shopping",
+    }
+    static SUBSTITUTES = {
+        function: "substitutes",
     }
 }
