@@ -51,7 +51,7 @@
                     <ingredient-context-menu :ingredient="ingredient" class="justify-content-end float-right align-items-end pr-0"></ingredient-context-menu>
                 </span>
             </td>
-            <td v-if="!detailed && sub_badge && ingredient.food.substitute_onhand"><SubstituteBadge :item="ingredient.food" /></td>
+            <td v-if="!detailed && ingredient.food.substitute_onhand"><SubstituteBadge :item="ingredient.food" /></td>
         </template>
     </tr>
 </template>
@@ -73,7 +73,6 @@ export default {
         ingredient_factor: { type: Number, default: 1 },
         detailed: { type: Boolean, default: true },
         settings: Object,
-        sub_badge: { type: Boolean, default: false },
     },
     mixins: [ResolveUrlMixin],
     components: { IngredientContextMenu, SubstituteBadge },
