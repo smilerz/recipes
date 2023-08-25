@@ -727,6 +727,12 @@ export interface FoodPropertyType {
     description?: string | null;
     /**
      *
+     * @type {string}
+     * @memberof FoodPropertyType
+     */
+    order?: number;
+    /**
+     *
      * @type {number}
      * @memberof FoodPropertyType
      */
@@ -1007,6 +1013,12 @@ export interface ImportLogKeyword {
      * @memberof ImportLogKeyword
      */
     name: string;
+    /**
+     *
+     * @type {string}
+     * @memberof ImportLogKeyword
+     */
+    icon?: string | null;
     /**
      *
      * @type {string}
@@ -1792,6 +1804,12 @@ export interface Keyword {
      * @type {string}
      * @memberof Keyword
      */
+    icon?: string | null;
+    /**
+     *
+     * @type {string}
+     * @memberof Keyword
+     */
     label?: string;
     /**
      *
@@ -1945,6 +1963,12 @@ export interface MealPlanMealType {
      * @memberof MealPlanMealType
      */
     order?: number;
+    /**
+     *
+     * @type {string}
+     * @memberof MealPlanMealType
+     */
+    icon?: string | null;
     /**
      *
      * @type {string}
@@ -2121,6 +2145,12 @@ export interface MealType {
      * @type {string}
      * @memberof MealType
      */
+    icon?: string | null;
+    /**
+     *
+     * @type {string}
+     * @memberof MealType
+     */
     color?: string | null;
     /**
      *
@@ -2190,6 +2220,12 @@ export interface PropertyType {
      * @memberof PropertyType
      */
     description?: string | null;
+    /**
+     *
+     * @type {string}
+     * @memberof PropertyType
+     */
+    order?: number;
     /**
      *
      * @type {number}
@@ -2403,6 +2439,12 @@ export interface OpenDataConversionFoodPreferredUnitMetric {
      * @memberof OpenDataConversionFoodPreferredUnitMetric
      */
     plural_name?: string;
+    /**
+     *
+     * @type {string}
+     * @memberof RecipeBook
+     */
+    icon?: string | null;
     /**
      *
      * @type {Array<CustomFilterShared>}
@@ -2747,6 +2789,12 @@ export interface RecipeKeywords {
      * @memberof RecipeKeywords
      */
     name: string;
+    /**
+     *
+     * @type {string}
+     * @memberof RecipeKeywords
+     */
+    icon?: string | null;
     /**
      *
      * @type {string}
@@ -3687,6 +3735,12 @@ export interface Space {
      * @memberof Space
      */
     food_inherit: Array<FoodInheritFields>;
+    /**
+     *
+     * @type {boolean}
+     * @memberof Space
+     */
+    show_facet_count?: boolean;
     /**
      *
      * @type {string}
@@ -4876,6 +4930,7 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
             const localVarQueryParameter = {} as any;
 
 
+
             localVarHeaderParameter['Content-Type'] = 'application/json';
 
             setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
@@ -4906,6 +4961,7 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
             const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
+
 
 
             localVarHeaderParameter['Content-Type'] = 'application/json';
@@ -5967,6 +6023,7 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
             const localVarQueryParameter = {} as any;
 
 
+
             setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
@@ -5997,6 +6054,7 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
             const localVarRequestOptions = { method: 'DELETE', ...baseOptions, ...options};
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
+
 
 
             setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
@@ -6031,6 +6089,7 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
             const localVarQueryParameter = {} as any;
 
 
+
             setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
@@ -6061,6 +6120,7 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
             const localVarRequestOptions = { method: 'DELETE', ...baseOptions, ...options};
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
+
 
 
             setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
@@ -7302,6 +7362,7 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
             }
 
 
+
             setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
@@ -7328,6 +7389,7 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
             const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
+
 
 
             setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
@@ -8913,6 +8975,7 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
             const localVarQueryParameter = {} as any;
 
 
+
             localVarHeaderParameter['Content-Type'] = 'application/json';
 
             setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
@@ -8947,6 +9010,7 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
             const localVarRequestOptions = { method: 'PATCH', ...baseOptions, ...options};
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
+
 
 
             localVarHeaderParameter['Content-Type'] = 'application/json';
@@ -10067,6 +10131,7 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
             const localVarQueryParameter = {} as any;
 
 
+
             setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
@@ -10328,6 +10393,7 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
             const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
+
 
 
             setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
@@ -12684,6 +12750,76 @@ export const ApiApiFp = function(configuration?: Configuration) {
          */
         async createExportLog(exportLog?: ExportLog, options?: any): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<ExportLog>> {
             const localVarAxiosArgs = await localVarAxiosParamCreator.createExportLog(exportLog, options);
+            return createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration);
+        },
+        /**
+         *
+         * @param {Food} [food]
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async createFood(food?: Food, options?: any): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<Food>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.createFood(food, options);
+            return createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration);
+        },
+        /**
+         *
+         * @param {ImportLog} [importLog]
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async createImportLog(importLog?: ImportLog, options?: any): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<ImportLog>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.createImportLog(importLog, options);
+            return createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration);
+        },
+        /**
+         *
+         * @param {Ingredient} [ingredient]
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async createIngredient(ingredient?: Ingredient, options?: any): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<Ingredient>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.createIngredient(ingredient, options);
+            return createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration);
+        },
+        /**
+         *
+         * @param {InviteLink} [inviteLink]
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async createInviteLink(inviteLink?: InviteLink, options?: any): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<InviteLink>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.createInviteLink(inviteLink, options);
+            return createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration);
+        },
+        /**
+         *
+         * @param {Keyword} [keyword]
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async createKeyword(keyword?: Keyword, options?: any): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<Keyword>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.createKeyword(keyword, options);
+            return createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration);
+        },
+        /**
+         *
+         * @param {MealPlan} [mealPlan]
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async createMealPlan(mealPlan?: MealPlan, options?: any): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<MealPlan>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.createMealPlan(mealPlan, options);
+            return createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration);
+        },
+        /**
+         * returns list of meal types created by the requesting user ordered by the order field.
+         * @param {MealType} [mealType]
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async createMealType(mealType?: MealType, options?: any): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<MealType>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.createMealType(mealType, options);
             return createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration);
         },
         /**
@@ -16072,8 +16208,8 @@ export const ApiApiFactory = function (configuration?: Configuration, basePath?:
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        partialUpdateExportLog(id: string, exportLog?: ExportLog, options?: any): AxiosPromise<ExportLog> {
-            return localVarFp.partialUpdateExportLog(id, exportLog, options).then((request) => request(axios, basePath));
+        partialUpdateMealType(id: string, mealType?: MealType, options?: any): AxiosPromise<MealType> {
+            return localVarFp.partialUpdateMealType(id, mealType, options).then((request) => request(axios, basePath));
         },
         /**
          *
