@@ -733,6 +733,12 @@ export interface FoodPropertyType {
     order?: number;
     /**
      *
+     * @type {number}
+     * @memberof FoodPropertyType
+     */
+    order?: number;
+    /**
+     *
      * @type {string}
      * @memberof FoodPropertyType
      */
@@ -3098,6 +3104,12 @@ export interface PropertyType {
      * @memberof PropertyType
      */
     description?: string | null;
+    /**
+     *
+     * @type {number}
+     * @memberof PropertyType
+     */
+    order?: number;
     /**
      *
      * @type {number}
@@ -14788,6 +14800,76 @@ export const ApiApiFp = function(configuration?: Configuration) {
          */
         async createExportLog(exportLog?: ExportLog, options?: any): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<ExportLog>> {
             const localVarAxiosArgs = await localVarAxiosParamCreator.createExportLog(exportLog, options);
+            return createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration);
+        },
+        /**
+         *
+         * @param {Food} [food]
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async createFood(food?: Food, options?: any): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<Food>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.createFood(food, options);
+            return createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration);
+        },
+        /**
+         *
+         * @param {ImportLog} [importLog]
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async createImportLog(importLog?: ImportLog, options?: any): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<ImportLog>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.createImportLog(importLog, options);
+            return createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration);
+        },
+        /**
+         *
+         * @param {Ingredient} [ingredient]
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async createIngredient(ingredient?: Ingredient, options?: any): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<Ingredient>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.createIngredient(ingredient, options);
+            return createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration);
+        },
+        /**
+         *
+         * @param {InviteLink} [inviteLink]
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async createInviteLink(inviteLink?: InviteLink, options?: any): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<InviteLink>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.createInviteLink(inviteLink, options);
+            return createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration);
+        },
+        /**
+         *
+         * @param {Keyword} [keyword]
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async createKeyword(keyword?: Keyword, options?: any): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<Keyword>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.createKeyword(keyword, options);
+            return createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration);
+        },
+        /**
+         *
+         * @param {MealPlan} [mealPlan]
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async createMealPlan(mealPlan?: MealPlan, options?: any): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<MealPlan>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.createMealPlan(mealPlan, options);
+            return createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration);
+        },
+        /**
+         * returns list of meal types created by the requesting user ordered by the order field.
+         * @param {MealType} [mealType]
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async createMealType(mealType?: MealType, options?: any): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<MealType>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.createMealType(mealType, options);
             return createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration);
         },
         /**
