@@ -733,6 +733,12 @@ export interface FoodPropertyType {
     description?: string | null;
     /**
      *
+     * @type {string}
+     * @memberof FoodPropertyType
+     */
+    order?: number;
+    /**
+     *
      * @type {number}
      * @memberof FoodPropertyType
      */
@@ -1013,6 +1019,12 @@ export interface ImportLogKeyword {
      * @memberof ImportLogKeyword
      */
     name: string;
+    /**
+     *
+     * @type {string}
+     * @memberof ImportLogKeyword
+     */
+    icon?: string | null;
     /**
      *
      * @type {string}
@@ -1804,6 +1816,12 @@ export interface Keyword {
      * @type {string}
      * @memberof Keyword
      */
+    icon?: string | null;
+    /**
+     *
+     * @type {string}
+     * @memberof Keyword
+     */
     label?: string;
     /**
      *
@@ -1957,6 +1975,12 @@ export interface MealPlanMealType {
      * @memberof MealPlanMealType
      */
     order?: number;
+    /**
+     *
+     * @type {string}
+     * @memberof MealPlanMealType
+     */
+    icon?: string | null;
     /**
      *
      * @type {string}
@@ -2128,6 +2152,12 @@ export interface MealType {
      * @memberof MealType
      */
     order?: number;
+    /**
+     *
+     * @type {string}
+     * @memberof MealType
+     */
+    icon?: string | null;
     /**
      *
      * @type {string}
@@ -3781,6 +3811,12 @@ export interface RecipeOverview {
      * @memberof RecipeOverview
      */
     _new?: string;
+    /**
+     *
+     * @type {boolean}
+     * @memberof Space
+     */
+    show_facet_count?: boolean;
     /**
      *
      * @type {string}
@@ -8426,6 +8462,7 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
             const localVarQueryParameter = {} as any;
 
 
+
             setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
@@ -8464,6 +8501,7 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
             }
 
 
+
             setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
@@ -8490,6 +8528,7 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
             const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
+
 
 
             setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
@@ -8528,6 +8567,7 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
             if (pageSize !== undefined) {
                 localVarQueryParameter['page_size'] = pageSize;
             }
+
 
 
 
@@ -9860,6 +9900,7 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
             }
 
 
+
             setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
@@ -9891,6 +9932,7 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
             if (query !== undefined) {
                 localVarQueryParameter['query'] = query;
             }
+
 
 
             setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
@@ -11521,6 +11563,7 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
             const localVarQueryParameter = {} as any;
 
 
+
             localVarHeaderParameter['Content-Type'] = 'application/json';
 
             setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
@@ -11555,6 +11598,7 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
             const localVarRequestOptions = { method: 'PATCH', ...baseOptions, ...options};
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
+
 
 
             localVarHeaderParameter['Content-Type'] = 'application/json';
