@@ -751,6 +751,12 @@ export interface FoodPropertyType {
     order?: number;
     /**
      *
+     * @type {number}
+     * @memberof FoodPropertyType
+     */
+    order?: number;
+    /**
+     *
      * @type {string}
      * @memberof FoodPropertyType
      */
@@ -2303,6 +2309,12 @@ export interface PropertyType {
     /**
      *
      * @type {string}
+     * @memberof PropertyType
+     */
+    order?: number;
+    /**
+     *
+     * @type {number}
      * @memberof PropertyType
      */
     order?: number;
