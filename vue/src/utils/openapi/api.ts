@@ -2221,8 +2221,14 @@ export interface RecipeSteps {
     order?: number;
     /**
      *
-     * @type {boolean}
-     * @memberof RecipeSteps
+     * @type {number}
+     * @memberof PropertyType
+     */
+    order?: number;
+    /**
+     *
+     * @type {string}
+     * @memberof PropertyType
      */
     show_as_header?: boolean;
     /**
