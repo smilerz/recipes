@@ -2170,764 +2170,6 @@ export interface MealType {
  * @export
  * @interface Property
  */
-export interface Property {
-    /**
-     *
-     * @type {number}
-     * @memberof Property
-     */
-    id?: number;
-    /**
-     *
-     * @type {string}
-     * @memberof Property
-     */
-    property_amount: string | null;
-    /**
-     *
-     * @type {FoodPropertyType}
-     * @memberof Property
-     */
-    property_type: FoodPropertyType;
-}
-/**
- *
- * @export
- * @interface PropertyType
- */
-export interface PropertyType {
-    /**
-     *
-     * @type {number}
-     * @memberof PropertyType
-     */
-    id?: number;
-    /**
-     *
-     * @type {string}
-     * @memberof PropertyType
-     */
-    name: string;
-    /**
-     *
-     * @type {string}
-     * @memberof PropertyType
-     */
-    unit?: string | null;
-    /**
-     *
-     * @type {string}
-     * @memberof PropertyType
-     */
-    description?: string | null;
-    /**
-     *
-     * @type {number}
-     * @memberof PropertyType
-     */
-    order?: number;
-    /**
-     *
-     * @type {number}
-     * @memberof PropertyType
-     */
-    order?: number;
-    /**
-     *
-     * @type {string}
-     * @memberof PropertyType
-     */
-    open_data_slug?: string | null;
-    /**
-     *
-     * @type {number}
-     * @memberof PropertyType
-     */
-    fdc_id?: number | null;
-}
-/**
- *
- * @export
- * @interface Recipe
- */
-export interface Recipe {
-    /**
-     *
-     * @type {number}
-     * @memberof Recipe
-     */
-    id?: number;
-    /**
-     *
-     * @type {string}
-     * @memberof Recipe
-     */
-    name: string;
-    /**
-     *
-     * @type {string}
-     * @memberof Recipe
-     */
-    description?: string | null;
-    /**
-     *
-     * @type {any}
-     * @memberof Recipe
-     */
-    image?: any | null;
-    /**
-     *
-     * @type {Array<RecipeKeywords>}
-     * @memberof Recipe
-     */
-    keywords?: Array<RecipeKeywords>;
-    /**
-     *
-     * @type {Array<RecipeSteps>}
-     * @memberof Recipe
-     */
-    steps: Array<RecipeSteps>;
-    /**
-     *
-     * @type {number}
-     * @memberof Recipe
-     */
-    working_time?: number;
-    /**
-     *
-     * @type {number}
-     * @memberof Recipe
-     */
-    waiting_time?: number;
-    /**
-     *
-     * @type {string}
-     * @memberof Recipe
-     */
-    created_by?: string;
-    /**
-     *
-     * @type {string}
-     * @memberof Recipe
-     */
-    created_at?: string;
-    /**
-     *
-     * @type {string}
-     * @memberof Recipe
-     */
-    updated_at?: string;
-    /**
-     *
-     * @type {string}
-     * @memberof Recipe
-     */
-    source_url?: string | null;
-    /**
-     *
-     * @type {boolean}
-     * @memberof Recipe
-     */
-    internal?: boolean;
-    /**
-     *
-     * @type {boolean}
-     * @memberof Recipe
-     */
-    show_ingredient_overview?: boolean;
-    /**
-     *
-     * @type {RecipeNutrition}
-     * @memberof Recipe
-     */
-    nutrition?: RecipeNutrition | null;
-    /**
-     *
-     * @type {Array<FoodProperties>}
-     * @memberof Recipe
-     */
-    properties?: Array<FoodProperties>;
-    /**
-     *
-     * @type {string}
-     * @memberof Recipe
-     */
-    food_properties?: string;
-    /**
-     *
-     * @type {number}
-     * @memberof Recipe
-     */
-    servings?: number;
-    /**
-     *
-     * @type {string}
-     * @memberof Recipe
-     */
-    file_path?: string;
-    /**
-     *
-     * @type {string}
-     * @memberof Recipe
-     */
-    servings_text?: string;
-    /**
-     *
-     * @type {string}
-     * @memberof Recipe
-     */
-    rating?: string | null;
-    /**
-     *
-     * @type {string}
-     * @memberof Recipe
-     */
-    last_cooked?: string | null;
-    /**
-     *
-     * @type {boolean}
-     * @memberof Recipe
-     */
-    _private?: boolean;
-    /**
-     *
-     * @type {Array<CustomFilterShared>}
-     * @memberof Recipe
-     */
-    shared?: Array<CustomFilterShared>;
-}
-/**
- *
- * @export
- * @interface RecipeBook
- */
-export interface RecipeBook {
-    /**
-     *
-     * @type {number}
-     * @memberof RecipeBook
-     */
-    id?: number;
-    /**
-     *
-     * @type {string}
-     * @memberof RecipeBook
-     */
-    name: string;
-    /**
-     *
-     * @type {string}
-     * @memberof RecipeBook
-     */
-    description?: string;
-    /**
-     *
-     * @type {Array<CustomFilterShared>}
-     * @memberof RecipeBook
-     */
-    shared: Array<CustomFilterShared>;
-    /**
-     *
-     * @type {string}
-     * @memberof RecipeBook
-     */
-    created_by?: string;
-    /**
-     *
-     * @type {RecipeBookFilter}
-     * @memberof RecipeBook
-     */
-    filter?: RecipeBookFilter | null;
-    /**
-     *
-     * @type {number}
-     * @memberof RecipeBook
-     */
-    order?: number;
-}
-/**
- *
- * @export
- * @interface RecipeBookEntry
- */
-export interface RecipeBookEntry {
-    /**
-     *
-     * @type {number}
-     * @memberof RecipeBookEntry
-     */
-    id?: number;
-    /**
-     *
-     * @type {number}
-     * @memberof RecipeBookEntry
-     */
-    book: number;
-    /**
-     *
-     * @type {string}
-     * @memberof RecipeBookEntry
-     */
-    book_content?: string;
-    /**
-     *
-     * @type {number}
-     * @memberof RecipeBookEntry
-     */
-    recipe: number;
-    /**
-     *
-     * @type {string}
-     * @memberof RecipeBookEntry
-     */
-    recipe_content?: string;
-}
-/**
- *
- * @export
- * @interface RecipeBookFilter
- */
-export interface RecipeBookFilter {
-    /**
-     *
-     * @type {number}
-     * @memberof RecipeBookFilter
-     */
-    id?: number;
-    /**
-     *
-     * @type {string}
-     * @memberof RecipeBookFilter
-     */
-    name: string;
-    /**
-     *
-     * @type {string}
-     * @memberof RecipeBookFilter
-     */
-    search: string;
-    /**
-     *
-     * @type {Array<CustomFilterShared>}
-     * @memberof RecipeBookFilter
-     */
-    shared?: Array<CustomFilterShared>;
-    /**
-     *
-     * @type {string}
-     * @memberof RecipeBookFilter
-     */
-    created_by?: string;
-}
-/**
- *
- * @export
- * @interface RecipeFile
- */
-export interface RecipeFile {
-    /**
-     *
-     * @type {number}
-     * @memberof RecipeFile
-     */
-    id?: number;
-    /**
-     *
-     * @type {string}
-     * @memberof RecipeFile
-     */
-    file_download?: string;
-    /**
-     *
-     * @type {string}
-     * @memberof RecipeFile
-     */
-    file_download?: string;
-    /**
-     *
-     * @type {string}
-     * @memberof RecipeFile
-     */
-    preview?: string;
-}
-/**
- *
- * @export
- * @interface RecipeImage
- */
-export interface RecipeImage {
-    /**
-     *
-     * @type {any}
-     * @memberof RecipeImage
-     */
-    image?: any | null;
-    /**
-     *
-     * @type {string}
-     * @memberof RecipeImage
-     */
-    image_url?: string | null;
-}
-/**
- *
- * @export
- * @interface RecipeIngredients
- */
-export interface RecipeIngredients {
-    /**
-     *
-     * @type {number}
-     * @memberof RecipeIngredients
-     */
-    id?: number;
-    /**
-     *
-     * @type {IngredientFood}
-     * @memberof RecipeIngredients
-     */
-    food: IngredientFood | null;
-    /**
-     *
-     * @type {FoodPropertiesFoodUnit}
-     * @memberof RecipeIngredients
-     */
-    unit: FoodPropertiesFoodUnit | null;
-    /**
-     *
-     * @type {string}
-     * @memberof RecipeIngredients
-     */
-    amount: string;
-    /**
-     *
-     * @type {string}
-     * @memberof RecipeIngredients
-     */
-    conversions?: string;
-    /**
-     *
-     * @type {string}
-     * @memberof RecipeIngredients
-     */
-    note?: string | null;
-    /**
-     *
-     * @type {number}
-     * @memberof RecipeIngredients
-     */
-    order?: number;
-    /**
-     *
-     * @type {boolean}
-     * @memberof RecipeIngredients
-     */
-    is_header?: boolean;
-    /**
-     *
-     * @type {boolean}
-     * @memberof RecipeIngredients
-     */
-    no_amount?: boolean;
-    /**
-     *
-     * @type {string}
-     * @memberof RecipeIngredients
-     */
-    original_text?: string | null;
-    /**
-     *
-     * @type {string}
-     * @memberof RecipeIngredients
-     */
-    used_in_recipes?: string;
-    /**
-     *
-     * @type {boolean}
-     * @memberof RecipeIngredients
-     */
-    always_use_plural_unit?: boolean;
-    /**
-     *
-     * @type {boolean}
-     * @memberof RecipeIngredients
-     */
-    always_use_plural_food?: boolean;
-}
-/**
- *
- * @export
- * @interface RecipeKeywords
- */
-export interface RecipeKeywords {
-    /**
-     *
-     * @type {number}
-     * @memberof RecipeKeywords
-     */
-    id?: number;
-    /**
-     *
-     * @type {string}
-     * @memberof RecipeKeywords
-     */
-    name: string;
-    /**
-     *
-     * @type {string}
-     * @memberof RecipeKeywords
-     */
-    label?: string;
-    /**
-     *
-     * @type {string}
-     * @memberof RecipeKeywords
-     */
-    description?: string;
-    /**
-     *
-     * @type {string}
-     * @memberof RecipeKeywords
-     */
-    parent?: string;
-    /**
-     *
-     * @type {number}
-     * @memberof RecipeKeywords
-     */
-    numchild?: number;
-    /**
-     *
-     * @type {string}
-     * @memberof RecipeKeywords
-     */
-    created_at?: string;
-    /**
-     *
-     * @type {string}
-     * @memberof RecipeKeywords
-     */
-    updated_at?: string;
-    /**
-     *
-     * @type {string}
-     * @memberof RecipeKeywords
-     */
-    full_name?: string;
-}
-/**
- *
- * @export
- * @interface RecipeNutrition
- */
-export interface RecipeNutrition {
-    /**
-     *
-     * @type {number}
-     * @memberof RecipeNutrition
-     */
-    id?: number;
-    /**
-     *
-     * @type {string}
-     * @memberof RecipeNutrition
-     */
-    carbohydrates: string;
-    /**
-     *
-     * @type {string}
-     * @memberof RecipeNutrition
-     */
-    fats: string;
-    /**
-     *
-     * @type {string}
-     * @memberof RecipeNutrition
-     */
-    proteins: string;
-    /**
-     *
-     * @type {string}
-     * @memberof RecipeNutrition
-     */
-    calories: string;
-    /**
-     *
-     * @type {string}
-     * @memberof RecipeNutrition
-     */
-    source?: string | null;
-}
-/**
- *
- * @export
- * @interface RecipeOverview
- */
-export interface RecipeOverview {
-    /**
-     *
-     * @type {number}
-     * @memberof RecipeOverview
-     */
-    id?: number;
-    /**
-     *
-     * @type {string}
-     * @memberof RecipeOverview
-     */
-    name: string;
-    /**
-     *
-     * @type {string}
-     * @memberof RecipeOverview
-     */
-    description?: string | null;
-    /**
-     *
-     * @type {any}
-     * @memberof RecipeOverview
-     */
-    image?: any | null;
-    /**
-     *
-     * @type {Array<MealPlanRecipeKeywords>}
-     * @memberof RecipeOverview
-     */
-    keywords: Array<MealPlanRecipeKeywords>;
-    /**
-     *
-     * @type {number}
-     * @memberof RecipeOverview
-     */
-    working_time?: number;
-    /**
-     *
-     * @type {number}
-     * @memberof RecipeOverview
-     */
-    waiting_time?: number;
-    /**
-     *
-     * @type {string}
-     * @memberof RecipeOverview
-     */
-    created_by?: string;
-    /**
-     *
-     * @type {string}
-     * @memberof RecipeOverview
-     */
-    created_at?: string;
-    /**
-     *
-     * @type {string}
-     * @memberof RecipeOverview
-     */
-    updated_at?: string;
-    /**
-     *
-     * @type {boolean}
-     * @memberof RecipeOverview
-     */
-    internal?: boolean;
-    /**
-     *
-     * @type {number}
-     * @memberof RecipeOverview
-     */
-    servings?: number;
-    /**
-     *
-     * @type {string}
-     * @memberof RecipeOverview
-     */
-    servings_text?: string;
-    /**
-     *
-     * @type {string}
-     * @memberof RecipeOverview
-     */
-    rating?: string | null;
-    /**
-     *
-     * @type {string}
-     * @memberof RecipeOverview
-     */
-    last_cooked?: string | null;
-    /**
-     *
-     * @type {string}
-     * @memberof RecipeOverview
-     */
-    _new?: string;
-    /**
-     *
-     * @type {string}
-     * @memberof RecipeOverview
-     */
-    recent?: string;
-}
-/**
- *
- * @export
- * @interface RecipeShoppingUpdate
- */
-export interface RecipeShoppingUpdate {
-    /**
-     *
-     * @type {number}
-     * @memberof RecipeShoppingUpdate
-     */
-    id?: number;
-    /**
-     * Existing shopping list to update
-     * @type {number}
-     * @memberof RecipeShoppingUpdate
-     */
-    list_recipe?: number | null;
-    /**
-     * List of ingredient IDs from the recipe to add, if not provided all ingredients will be added.
-     * @type {number}
-     * @memberof RecipeShoppingUpdate
-     */
-    ingredients?: number | null;
-    /**
-     * Providing a list_recipe ID and servings of 0 will delete that shopping list.
-     * @type {number}
-     * @memberof RecipeShoppingUpdate
-     */
-    servings?: number | null;
-}
-/**
- *
- * @export
- * @interface RecipeSimple
- */
-export interface RecipeSimple {
-    /**
-     *
-     * @type {number}
-     * @memberof RecipeSimple
-     */
-    id?: number;
-    /**
-     *
-     * @type {string}
-     * @memberof RecipeSimple
-     */
-    name: string;
-    /**
-     *
-     * @type {string}
-     * @memberof RecipeSimple
-     */
-    url?: string;
-}
-/**
- *
- * @export
- * @interface RecipeSteps
- */
 export interface RecipeSteps {
     /**
      *
@@ -4623,6 +3865,335 @@ export interface ViewLog {
      * @type {number}
      * @memberof ViewLog
      */
+    last_name?: string;
+    /**
+     *
+     * @type {string}
+     * @memberof User
+     */
+    display_name?: string;
+}
+/**
+ *
+ * @export
+ * @interface UserFile
+ */
+export interface UserFile {
+    /**
+     *
+     * @type {number}
+     * @memberof UserFile
+     */
+    id?: number;
+    /**
+     *
+     * @type {string}
+     * @memberof UserFile
+     */
+    name: string;
+    /**
+     *
+     * @type {any}
+     * @memberof UserFile
+     */
+    file: any;
+    /**
+     *
+     * @type {string}
+     * @memberof UserFile
+     */
+    file_download?: string;
+    /**
+     *
+     * @type {string}
+     * @memberof UserFile
+     */
+    preview?: string;
+    /**
+     *
+     * @type {number}
+     * @memberof UserFile
+     */
+    file_size_kb?: number;
+}
+/**
+ *
+ * @export
+ * @interface UserPreference
+ */
+export interface UserPreference {
+    /**
+     *
+     * @type {number}
+     * @memberof UserPreference
+     */
+    user: number;
+    /**
+     *
+     * @type {RecipeFile}
+     * @memberof UserPreference
+     */
+    image?: RecipeFile | null;
+    /**
+     *
+     * @type {string}
+     * @memberof UserPreference
+     */
+    theme?: UserPreferenceThemeEnum;
+    /**
+     *
+     * @type {string}
+     * @memberof UserPreference
+     */
+    nav_color?: UserPreferenceNavColorEnum;
+    /**
+     *
+     * @type {string}
+     * @memberof UserPreference
+     */
+    default_unit?: string;
+    /**
+     *
+     * @type {string}
+     * @memberof UserPreference
+     */
+    default_page?: UserPreferenceDefaultPageEnum;
+    /**
+     *
+     * @type {boolean}
+     * @memberof UserPreference
+     */
+    use_fractions?: boolean;
+    /**
+     *
+     * @type {boolean}
+     * @memberof UserPreference
+     */
+    use_kj?: boolean;
+    /**
+     *
+     * @type {Array<CustomFilterShared>}
+     * @memberof UserPreference
+     */
+    plan_share?: Array<CustomFilterShared> | null;
+    /**
+     *
+     * @type {boolean}
+     * @memberof UserPreference
+     */
+    sticky_navbar?: boolean;
+    /**
+     *
+     * @type {number}
+     * @memberof UserPreference
+     */
+    ingredient_decimals?: number;
+    /**
+     *
+     * @type {boolean}
+     * @memberof UserPreference
+     */
+    comments?: boolean;
+    /**
+     *
+     * @type {number}
+     * @memberof UserPreference
+     */
+    shopping_auto_sync?: number;
+    /**
+     *
+     * @type {boolean}
+     * @memberof UserPreference
+     */
+    mealplan_autoadd_shopping?: boolean;
+    /**
+     *
+     * @type {string}
+     * @memberof UserPreference
+     */
+    food_inherit_default?: string;
+    /**
+     *
+     * @type {string}
+     * @memberof UserPreference
+     */
+    default_delay?: string;
+    /**
+     *
+     * @type {boolean}
+     * @memberof UserPreference
+     */
+    mealplan_autoinclude_related?: boolean;
+    /**
+     *
+     * @type {boolean}
+     * @memberof UserPreference
+     */
+    mealplan_autoexclude_onhand?: boolean;
+    /**
+     *
+     * @type {Array<CustomFilterShared>}
+     * @memberof UserPreference
+     */
+    shopping_share?: Array<CustomFilterShared> | null;
+    /**
+     *
+     * @type {number}
+     * @memberof UserPreference
+     */
+    shopping_recent_days?: number;
+    /**
+     *
+     * @type {string}
+     * @memberof UserPreference
+     */
+    csv_delim?: string;
+    /**
+     *
+     * @type {string}
+     * @memberof UserPreference
+     */
+    csv_prefix?: string;
+    /**
+     *
+     * @type {boolean}
+     * @memberof UserPreference
+     */
+    filter_to_supermarket?: boolean;
+    /**
+     *
+     * @type {boolean}
+     * @memberof UserPreference
+     */
+    shopping_add_onhand?: boolean;
+    /**
+     *
+     * @type {boolean}
+     * @memberof UserPreference
+     */
+    left_handed?: boolean;
+    /**
+     *
+     * @type {boolean}
+     * @memberof UserPreference
+     */
+    show_step_ingredients?: boolean;
+    /**
+     *
+     * @type {string}
+     * @memberof UserPreference
+     */
+    food_children_exist?: string;
+}
+
+/**
+    * @export
+    * @enum {string}
+    */
+export enum UserPreferenceThemeEnum {
+    Tandoor = 'TANDOOR',
+    Bootstrap = 'BOOTSTRAP',
+    Darkly = 'DARKLY',
+    Flatly = 'FLATLY',
+    Superhero = 'SUPERHERO',
+    TandoorDark = 'TANDOOR_DARK'
+}
+/**
+    * @export
+    * @enum {string}
+    */
+export enum UserPreferenceNavColorEnum {
+    Primary = 'PRIMARY',
+    Secondary = 'SECONDARY',
+    Success = 'SUCCESS',
+    Info = 'INFO',
+    Warning = 'WARNING',
+    Danger = 'DANGER',
+    Light = 'LIGHT',
+    Dark = 'DARK'
+}
+/**
+    * @export
+    * @enum {string}
+    */
+export enum UserPreferenceDefaultPageEnum {
+    Search = 'SEARCH',
+    Plan = 'PLAN',
+    Books = 'BOOKS'
+}
+
+/**
+ *
+ * @export
+ * @interface UserSpace
+ */
+export interface UserSpace {
+    /**
+     *
+     * @type {number}
+     * @memberof UserSpace
+     */
+    id?: number;
+    /**
+     *
+     * @type {ShoppingListCreatedBy}
+     * @memberof UserSpace
+     */
+    user?: ShoppingListCreatedBy;
+    /**
+     *
+     * @type {string}
+     * @memberof UserSpace
+     */
+    space?: string;
+    /**
+     *
+     * @type {Array<InviteLinkGroup>}
+     * @memberof UserSpace
+     */
+    groups: Array<InviteLinkGroup>;
+    /**
+     *
+     * @type {boolean}
+     * @memberof UserSpace
+     */
+    active?: boolean;
+    /**
+     *
+     * @type {string}
+     * @memberof UserSpace
+     */
+    internal_note?: string | null;
+    /**
+     *
+     * @type {string}
+     * @memberof UserSpace
+     */
+    invite_link?: string | null;
+    /**
+     *
+     * @type {string}
+     * @memberof UserSpace
+     */
+    created_at?: string;
+    /**
+     *
+     * @type {string}
+     * @memberof UserSpace
+     */
+    updated_at?: string;
+}
+/**
+ *
+ * @export
+ * @interface ViewLog
+ */
+export interface ViewLog {
+    /**
+     *
+     * @type {number}
+     * @memberof ViewLog
+     */
     id?: number;
     /**
      *
@@ -4652,39 +4223,6 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
     return {
         /**
          *
-         * @param {ShoppingListEntryBulk} [shoppingListEntryBulk]
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        bulkShoppingListEntry: async (shoppingListEntryBulk?: ShoppingListEntryBulk, options: any = {}): Promise<RequestArgs> => {
-            const localVarPath = `/api/shopping-list-entry/bulk/`;
-            // use dummy base URL string because the URL constructor only accepts absolute URLs.
-            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
-            let baseOptions;
-            if (configuration) {
-                baseOptions = configuration.baseOptions;
-            }
-
-            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
-            const localVarHeaderParameter = {} as any;
-            const localVarQueryParameter = {} as any;
-
-
-
-            localVarHeaderParameter['Content-Type'] = 'application/json';
-
-            setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
-            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
-            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
-            localVarRequestOptions.data = serializeDataIfNeeded(shoppingListEntryBulk, localVarRequestOptions, configuration)
-
-            return {
-                url: toPathString(localVarUrlObj),
-                options: localVarRequestOptions,
-            };
-        },
-        /**
-         *
          * @param {AccessToken} [accessToken]
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -4701,6 +4239,7 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
             const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
+
 
 
             localVarHeaderParameter['Content-Type'] = 'application/json';
@@ -4733,6 +4272,7 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
             const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
+
 
 
             localVarHeaderParameter['Content-Type'] = 'application/json';
@@ -5309,39 +4849,6 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
             };
         },
         /**
-         * function to retrieve a recipe from a given url or source string :param request: standard request with additional post parameters         - url: url to use for importing recipe         - data: if no url is given recipe is imported from provided source data         - (optional) bookmarklet: id of bookmarklet import to use, overrides URL and data attributes :return: JsonResponse containing the parsed json and images
-         * @param {any} [body]
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        createRecipeUrlImport: async (body?: any, options: any = {}): Promise<RequestArgs> => {
-            const localVarPath = `/api/recipe-from-source/`;
-            // use dummy base URL string because the URL constructor only accepts absolute URLs.
-            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
-            let baseOptions;
-            if (configuration) {
-                baseOptions = configuration.baseOptions;
-            }
-
-            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
-            const localVarHeaderParameter = {} as any;
-            const localVarQueryParameter = {} as any;
-
-
-
-            localVarHeaderParameter['Content-Type'] = 'application/json';
-
-            setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
-            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
-            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
-            localVarRequestOptions.data = serializeDataIfNeeded(body, localVarRequestOptions, configuration)
-
-            return {
-                url: toPathString(localVarUrlObj),
-                options: localVarRequestOptions,
-            };
-        },
-        /**
          *
          * @param {ShoppingList} [shoppingList]
          * @param {*} [options] Override http request option.
@@ -5415,6 +4922,686 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
          */
         createShoppingListRecipe: async (shoppingListRecipe?: ShoppingListRecipe, options: any = {}): Promise<RequestArgs> => {
             const localVarPath = `/api/shopping-list-recipe/`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(shoppingListRecipe, localVarRequestOptions, configuration)
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         *
+         * @param {Step} [step]
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        createStep: async (step?: Step, options: any = {}): Promise<RequestArgs> => {
+            const localVarPath = `/api/step/`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(step, localVarRequestOptions, configuration)
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         *
+         * @param {Storage} [storage]
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        createStorage: async (storage?: Storage, options: any = {}): Promise<RequestArgs> => {
+            const localVarPath = `/api/storage/`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(storage, localVarRequestOptions, configuration)
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         *
+         * @param {Supermarket} [supermarket]
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        createSupermarket: async (supermarket?: Supermarket, options: any = {}): Promise<RequestArgs> => {
+            const localVarPath = `/api/supermarket/`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(supermarket, localVarRequestOptions, configuration)
+
+/**
+ * ApiApi - axios parameter creator
+ * @export
+ */
+export const ApiApiAxiosParamCreator = function (configuration?: Configuration) {
+    return {
+        /**
+         *
+         * @param {ShoppingListEntryBulk} [shoppingListEntryBulk]
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        bulkShoppingListEntry: async (shoppingListEntryBulk?: ShoppingListEntryBulk, options: any = {}): Promise<RequestArgs> => {
+            const localVarPath = `/api/shopping-list-entry/bulk/`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(shoppingListEntryBulk, localVarRequestOptions, configuration)
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         *
+         * @param {AccessToken} [accessToken]
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        createAccessToken: async (accessToken?: AccessToken, options: any = {}): Promise<RequestArgs> => {
+            const localVarPath = `/api/access-token/`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(accessToken, localVarRequestOptions, configuration)
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         *
+         * @param {any} [body]
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        createAutoPlanViewSet: async (body?: any, options: any = {}): Promise<RequestArgs> => {
+            const localVarPath = `/api/auto-plan/`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(body, localVarRequestOptions, configuration)
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         *
+         * @param {Automation} [automation]
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        createAutomation: async (automation?: Automation, options: any = {}): Promise<RequestArgs> => {
+            const localVarPath = `/api/automation/`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(automation, localVarRequestOptions, configuration)
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         *
+         * @param {BookmarkletImport} [bookmarkletImport]
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        createBookmarkletImport: async (bookmarkletImport?: BookmarkletImport, options: any = {}): Promise<RequestArgs> => {
+            const localVarPath = `/api/bookmarklet-import/`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(bookmarkletImport, localVarRequestOptions, configuration)
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         *
+         * @param {CookLog} [cookLog]
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        createCookLog: async (cookLog?: CookLog, options: any = {}): Promise<RequestArgs> => {
+            const localVarPath = `/api/cook-log/`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(cookLog, localVarRequestOptions, configuration)
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         *
+         * @param {CustomFilter} [customFilter]
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        createCustomFilter: async (customFilter?: CustomFilter, options: any = {}): Promise<RequestArgs> => {
+            const localVarPath = `/api/custom-filter/`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(customFilter, localVarRequestOptions, configuration)
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         *
+         * @param {ExportLog} [exportLog]
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        createExportLog: async (exportLog?: ExportLog, options: any = {}): Promise<RequestArgs> => {
+            const localVarPath = `/api/export-log/`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(exportLog, localVarRequestOptions, configuration)
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         *
+         * @param {Food} [food]
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        createFood: async (food?: Food, options: any = {}): Promise<RequestArgs> => {
+            const localVarPath = `/api/food/`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(food, localVarRequestOptions, configuration)
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         *
+         * @param {ImportLog} [importLog]
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        createImportLog: async (importLog?: ImportLog, options: any = {}): Promise<RequestArgs> => {
+            const localVarPath = `/api/import-log/`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(importLog, localVarRequestOptions, configuration)
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         *
+         * @param {string} id A unique integer value identifying this food.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        destroyFood: async (id: string, options: any = {}): Promise<RequestArgs> => {
+            // verify required parameter 'id' is not null or undefined
+            assertParamExists('destroyFood', 'id', id)
+            const localVarPath = `/api/food/{id}/`
+                .replace(`{${"id"}}`, encodeURIComponent(String(id)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(recipe, localVarRequestOptions, configuration)
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         *
+         * @param {string} id A unique integer value identifying this import log.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        destroyImportLog: async (id: string, options: any = {}): Promise<RequestArgs> => {
+            // verify required parameter 'id' is not null or undefined
+            assertParamExists('destroyImportLog', 'id', id)
+            const localVarPath = `/api/import-log/{id}/`
+                .replace(`{${"id"}}`, encodeURIComponent(String(id)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(recipeBook, localVarRequestOptions, configuration)
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         *
+         * @param {string} id A unique integer value identifying this ingredient.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        destroyIngredient: async (id: string, options: any = {}): Promise<RequestArgs> => {
+            // verify required parameter 'id' is not null or undefined
+            assertParamExists('destroyIngredient', 'id', id)
+            const localVarPath = `/api/ingredient/{id}/`
+                .replace(`{${"id"}}`, encodeURIComponent(String(id)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(recipeBookEntry, localVarRequestOptions, configuration)
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         *
+         * @param {string} id A unique integer value identifying this invite link.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        destroyInviteLink: async (id: string, options: any = {}): Promise<RequestArgs> => {
+            // verify required parameter 'id' is not null or undefined
+            assertParamExists('destroyInviteLink', 'id', id)
+            const localVarPath = `/api/invite-link/{id}/`
+                .replace(`{${"id"}}`, encodeURIComponent(String(id)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(body, localVarRequestOptions, configuration)
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         *
+         * @param {string} id A unique integer value identifying this keyword.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        destroyKeyword: async (id: string, options: any = {}): Promise<RequestArgs> => {
+            // verify required parameter 'id' is not null or undefined
+            assertParamExists('destroyKeyword', 'id', id)
+            const localVarPath = `/api/keyword/{id}/`
+                .replace(`{${"id"}}`, encodeURIComponent(String(id)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(shoppingList, localVarRequestOptions, configuration)
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         *
+         * @param {string} id A unique integer value identifying this meal plan.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        destroyMealPlan: async (id: string, options: any = {}): Promise<RequestArgs> => {
+            // verify required parameter 'id' is not null or undefined
+            assertParamExists('destroyMealPlan', 'id', id)
+            const localVarPath = `/api/meal-plan/{id}/`
+                .replace(`{${"id"}}`, encodeURIComponent(String(id)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(shoppingListEntry, localVarRequestOptions, configuration)
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * returns list of meal types created by the requesting user ordered by the order field.
+         * @param {string} id A unique integer value identifying this meal type.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        destroyMealType: async (id: string, options: any = {}): Promise<RequestArgs> => {
+            // verify required parameter 'id' is not null or undefined
+            assertParamExists('destroyMealType', 'id', id)
+            const localVarPath = `/api/meal-type/{id}/`
+                .replace(`{${"id"}}`, encodeURIComponent(String(id)));
             // use dummy base URL string because the URL constructor only accepts absolute URLs.
             const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
             let baseOptions;
@@ -6098,8 +6285,9 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
             };
         },
         /**
-         *
-         * @param {string} id A unique integer value identifying this ingredient.
+         * updates the food with all possible data from the FDC Api if properties with a fdc_id already exist they will be overridden, if existing properties don\'t have a fdc_id they won\'t be changed
+         * @param {string} id A unique integer value identifying this food.
+         * @param {Food} [food]
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -6581,6 +6769,26 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
 
+            if (query !== undefined) {
+                localVarQueryParameter['query'] = query;
+            }
+
+            if (root !== undefined) {
+                localVarQueryParameter['root'] = root;
+            }
+
+            if (tree !== undefined) {
+                localVarQueryParameter['tree'] = tree;
+            }
+
+            if (page !== undefined) {
+                localVarQueryParameter['page'] = page;
+            }
+
+            if (pageSize !== undefined) {
+                localVarQueryParameter['page_size'] = pageSize;
+            }
+
 
 
             setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
@@ -6593,16 +6801,12 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
             };
         },
         /**
-         *
-         * @param {string} id A unique integer value identifying this supermarket.
+         * optional parameters  - **from_date**: filter from (inclusive) a certain date onward - **to_date**: filter upward to (inclusive) certain date
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        destroySupermarket: async (id: string, options: any = {}): Promise<RequestArgs> => {
-            // verify required parameter 'id' is not null or undefined
-            assertParamExists('destroySupermarket', 'id', id)
-            const localVarPath = `/api/supermarket/{id}/`
-                .replace(`{${"id"}}`, encodeURIComponent(String(id)));
+        listMealPlans: async (options: any = {}): Promise<RequestArgs> => {
+            const localVarPath = `/api/meal-plan/`;
             // use dummy base URL string because the URL constructor only accepts absolute URLs.
             const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
             let baseOptions;
@@ -6626,281 +6830,12 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
             };
         },
         /**
-         *
-         * @param {string} id A unique integer value identifying this supermarket category.
+         * returns list of meal types created by the requesting user ordered by the order field.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        destroySupermarketCategory: async (id: string, options: any = {}): Promise<RequestArgs> => {
-            // verify required parameter 'id' is not null or undefined
-            assertParamExists('destroySupermarketCategory', 'id', id)
-            const localVarPath = `/api/supermarket-category/{id}/`
-                .replace(`{${"id"}}`, encodeURIComponent(String(id)));
-            // use dummy base URL string because the URL constructor only accepts absolute URLs.
-            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
-            let baseOptions;
-            if (configuration) {
-                baseOptions = configuration.baseOptions;
-            }
-
-            const localVarRequestOptions = { method: 'DELETE', ...baseOptions, ...options};
-            const localVarHeaderParameter = {} as any;
-            const localVarQueryParameter = {} as any;
-
-
-
-            setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
-            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
-            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
-
-            return {
-                url: toPathString(localVarUrlObj),
-                options: localVarRequestOptions,
-            };
-        },
-        /**
-         *
-         * @param {string} id A unique integer value identifying this supermarket category relation.
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        destroySupermarketCategoryRelation: async (id: string, options: any = {}): Promise<RequestArgs> => {
-            // verify required parameter 'id' is not null or undefined
-            assertParamExists('destroySupermarketCategoryRelation', 'id', id)
-            const localVarPath = `/api/supermarket-category-relation/{id}/`
-                .replace(`{${"id"}}`, encodeURIComponent(String(id)));
-            // use dummy base URL string because the URL constructor only accepts absolute URLs.
-            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
-            let baseOptions;
-            if (configuration) {
-                baseOptions = configuration.baseOptions;
-            }
-
-            const localVarRequestOptions = { method: 'DELETE', ...baseOptions, ...options};
-            const localVarHeaderParameter = {} as any;
-            const localVarQueryParameter = {} as any;
-
-
-
-            setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
-            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
-            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
-
-            return {
-                url: toPathString(localVarUrlObj),
-                options: localVarRequestOptions,
-            };
-        },
-        /**
-         *
-         * @param {string} id A unique integer value identifying this sync.
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        destroySync: async (id: string, options: any = {}): Promise<RequestArgs> => {
-            // verify required parameter 'id' is not null or undefined
-            assertParamExists('destroySync', 'id', id)
-            const localVarPath = `/api/sync/{id}/`
-                .replace(`{${"id"}}`, encodeURIComponent(String(id)));
-            // use dummy base URL string because the URL constructor only accepts absolute URLs.
-            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
-            let baseOptions;
-            if (configuration) {
-                baseOptions = configuration.baseOptions;
-            }
-
-            const localVarRequestOptions = { method: 'DELETE', ...baseOptions, ...options};
-            const localVarHeaderParameter = {} as any;
-            const localVarQueryParameter = {} as any;
-
-
-
-            setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
-            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
-            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
-
-            return {
-                url: toPathString(localVarUrlObj),
-                options: localVarRequestOptions,
-            };
-        },
-        /**
-         *
-         * @param {string} id A unique integer value identifying this unit.
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        destroyUnit: async (id: string, options: any = {}): Promise<RequestArgs> => {
-            // verify required parameter 'id' is not null or undefined
-            assertParamExists('destroyUnit', 'id', id)
-            const localVarPath = `/api/unit/{id}/`
-                .replace(`{${"id"}}`, encodeURIComponent(String(id)));
-            // use dummy base URL string because the URL constructor only accepts absolute URLs.
-            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
-            let baseOptions;
-            if (configuration) {
-                baseOptions = configuration.baseOptions;
-            }
-
-            const localVarRequestOptions = { method: 'DELETE', ...baseOptions, ...options};
-            const localVarHeaderParameter = {} as any;
-            const localVarQueryParameter = {} as any;
-
-
-
-            setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
-            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
-            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
-
-            return {
-                url: toPathString(localVarUrlObj),
-                options: localVarRequestOptions,
-            };
-        },
-        /**
-         *
-         * @param {string} id A unique integer value identifying this unit conversion.
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        destroyUnitConversion: async (id: string, options: any = {}): Promise<RequestArgs> => {
-            // verify required parameter 'id' is not null or undefined
-            assertParamExists('destroyUnitConversion', 'id', id)
-            const localVarPath = `/api/unit-conversion/{id}/`
-                .replace(`{${"id"}}`, encodeURIComponent(String(id)));
-            // use dummy base URL string because the URL constructor only accepts absolute URLs.
-            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
-            let baseOptions;
-            if (configuration) {
-                baseOptions = configuration.baseOptions;
-            }
-
-            const localVarRequestOptions = { method: 'DELETE', ...baseOptions, ...options};
-            const localVarHeaderParameter = {} as any;
-            const localVarQueryParameter = {} as any;
-
-
-
-            setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
-            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
-            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
-
-            return {
-                url: toPathString(localVarUrlObj),
-                options: localVarRequestOptions,
-            };
-        },
-        /**
-         *
-         * @param {string} id A unique integer value identifying this user file.
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        destroyUserFile: async (id: string, options: any = {}): Promise<RequestArgs> => {
-            // verify required parameter 'id' is not null or undefined
-            assertParamExists('destroyUserFile', 'id', id)
-            const localVarPath = `/api/user-file/{id}/`
-                .replace(`{${"id"}}`, encodeURIComponent(String(id)));
-            // use dummy base URL string because the URL constructor only accepts absolute URLs.
-            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
-            let baseOptions;
-            if (configuration) {
-                baseOptions = configuration.baseOptions;
-            }
-
-            const localVarRequestOptions = { method: 'DELETE', ...baseOptions, ...options};
-            const localVarHeaderParameter = {} as any;
-            const localVarQueryParameter = {} as any;
-
-
-
-            setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
-            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
-            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
-
-            return {
-                url: toPathString(localVarUrlObj),
-                options: localVarRequestOptions,
-            };
-        },
-        /**
-         *
-         * @param {string} id A unique integer value identifying this user space.
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        destroyUserSpace: async (id: string, options: any = {}): Promise<RequestArgs> => {
-            // verify required parameter 'id' is not null or undefined
-            assertParamExists('destroyUserSpace', 'id', id)
-            const localVarPath = `/api/user-space/{id}/`
-                .replace(`{${"id"}}`, encodeURIComponent(String(id)));
-            // use dummy base URL string because the URL constructor only accepts absolute URLs.
-            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
-            let baseOptions;
-            if (configuration) {
-                baseOptions = configuration.baseOptions;
-            }
-
-            const localVarRequestOptions = { method: 'DELETE', ...baseOptions, ...options};
-            const localVarHeaderParameter = {} as any;
-            const localVarQueryParameter = {} as any;
-
-
-
-            setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
-            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
-            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
-
-            return {
-                url: toPathString(localVarUrlObj),
-                options: localVarRequestOptions,
-            };
-        },
-        /**
-         *
-         * @param {string} id A unique integer value identifying this view log.
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        destroyViewLog: async (id: string, options: any = {}): Promise<RequestArgs> => {
-            // verify required parameter 'id' is not null or undefined
-            assertParamExists('destroyViewLog', 'id', id)
-            const localVarPath = `/api/view-log/{id}/`
-                .replace(`{${"id"}}`, encodeURIComponent(String(id)));
-            // use dummy base URL string because the URL constructor only accepts absolute URLs.
-            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
-            let baseOptions;
-            if (configuration) {
-                baseOptions = configuration.baseOptions;
-            }
-
-            const localVarRequestOptions = { method: 'DELETE', ...baseOptions, ...options};
-            const localVarHeaderParameter = {} as any;
-            const localVarQueryParameter = {} as any;
-
-
-
-            setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
-            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
-            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
-
-            return {
-                url: toPathString(localVarUrlObj),
-                options: localVarRequestOptions,
-            };
-        },
-        /**
-         * updates the food with all possible data from the FDC Api if properties with a fdc_id already exist they will be overridden, if existing properties don\'t have a fdc_id they won\'t be changed
-         * @param {string} id A unique integer value identifying this food.
-         * @param {Food} [food]
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        fdcFood: async (id: string, food?: Food, options: any = {}): Promise<RequestArgs> => {
-            // verify required parameter 'id' is not null or undefined
-            assertParamExists('fdcFood', 'id', id)
-            const localVarPath = `/api/food/{id}/fdc/`
-                .replace(`{${"id"}}`, encodeURIComponent(String(id)));
+        listMealTypes: async (options: any = {}): Promise<RequestArgs> => {
+            const localVarPath = `/api/meal-type/`;
             // use dummy base URL string because the URL constructor only accepts absolute URLs.
             const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
             let baseOptions;
@@ -7077,13 +7012,41 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
         },
         /**
          *
+         * @param {string} [query] Query string matched (fuzzy) against recipe name. In the future also fulltext search.
+         * @param {number} [keywords] ID of keyword a recipe should have. For multiple repeat parameter. Equivalent to keywords_or
+         * @param {number} [keywordsOr] Keyword IDs, repeat for multiple. Return recipes with any of the keywords
+         * @param {number} [keywordsAnd] Keyword IDs, repeat for multiple. Return recipes with all of the keywords.
+         * @param {number} [keywordsOrNot] Keyword IDs, repeat for multiple. Exclude recipes with any of the keywords.
+         * @param {number} [keywordsAndNot] Keyword IDs, repeat for multiple. Exclude recipes with all of the keywords.
+         * @param {number} [foods] ID of food a recipe should have. For multiple repeat parameter.
+         * @param {number} [foodsOr] Food IDs, repeat for multiple. Return recipes with any of the foods
+         * @param {number} [foodsAnd] Food IDs, repeat for multiple. Return recipes with all of the foods.
+         * @param {number} [foodsOrNot] Food IDs, repeat for multiple. Exclude recipes with any of the foods.
+         * @param {number} [foodsAndNot] Food IDs, repeat for multiple. Exclude recipes with all of the foods.
+         * @param {number} [units] ID of unit a recipe should have.
+         * @param {number} [rating] Rating a recipe should have or greater. [0 - 5] Negative value filters rating less than.
+         * @param {string} [books] ID of book a recipe should be in. For multiple repeat parameter.
+         * @param {number} [booksOr] Book IDs, repeat for multiple. Return recipes with any of the books
+         * @param {number} [booksAnd] Book IDs, repeat for multiple. Return recipes with all of the books.
+         * @param {number} [booksOrNot] Book IDs, repeat for multiple. Exclude recipes with any of the books.
+         * @param {number} [booksAndNot] Book IDs, repeat for multiple. Exclude recipes with all of the books.
+         * @param {string} [internal] If only internal recipes should be returned. [true/&lt;b&gt;false&lt;/b&gt;]
+         * @param {string} [random] Returns the results in randomized order. [true/&lt;b&gt;false&lt;/b&gt;]
+         * @param {string} [_new] Returns new results first in search results. [true/&lt;b&gt;false&lt;/b&gt;]
+         * @param {number} [timescooked] Filter recipes cooked X times or more.  Negative values returns cooked less than X times
+         * @param {string} [cookedon] Filter recipes last cooked on or after YYYY-MM-DD. Prepending - filters on or before date.
+         * @param {string} [createdon] Filter recipes created on or after YYYY-MM-DD. Prepending - filters on or before date.
+         * @param {string} [updatedon] Filter recipes updated on or after YYYY-MM-DD. Prepending - filters on or before date.
+         * @param {string} [viewedon] Filter recipes lasts viewed on or after YYYY-MM-DD. Prepending - filters on or before date.
+         * @param {string} [makenow] Filter recipes that can be made with OnHand food. [true/&lt;b&gt;false&lt;/b&gt;]
+         * @param {string} [neverUsedFood] Filter recipes that contain food that have never been used. [true/&lt;b&gt;false&lt;/b&gt;]
          * @param {number} [page] A page number within the paginated result set.
          * @param {number} [pageSize] Number of results to return per page.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        listCookLogs: async (page?: number, pageSize?: number, options: any = {}): Promise<RequestArgs> => {
-            const localVarPath = `/api/cook-log/`;
+        listRecipes: async (query?: string, keywords?: number, keywordsOr?: number, keywordsAnd?: number, keywordsOrNot?: number, keywordsAndNot?: number, foods?: number, foodsOr?: number, foodsAnd?: number, foodsOrNot?: number, foodsAndNot?: number, units?: number, rating?: number, books?: string, booksOr?: number, booksAnd?: number, booksOrNot?: number, booksAndNot?: number, internal?: string, random?: string, _new?: string, timescooked?: number, cookedon?: string, createdon?: string, updatedon?: string, viewedon?: string, makenow?: string, neverUsedFood?: string, page?: number, pageSize?: number, options: any = {}): Promise<RequestArgs> => {
+            const localVarPath = `/api/recipe/`;
             // use dummy base URL string because the URL constructor only accepts absolute URLs.
             const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
             let baseOptions;
@@ -7094,6 +7057,118 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
             const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
+
+            if (query !== undefined) {
+                localVarQueryParameter['query'] = query;
+            }
+
+            if (keywords !== undefined) {
+                localVarQueryParameter['keywords'] = keywords;
+            }
+
+            if (keywordsOr !== undefined) {
+                localVarQueryParameter['keywords_or'] = keywordsOr;
+            }
+
+            if (keywordsAnd !== undefined) {
+                localVarQueryParameter['keywords_and'] = keywordsAnd;
+            }
+
+            if (keywordsOrNot !== undefined) {
+                localVarQueryParameter['keywords_or_not'] = keywordsOrNot;
+            }
+
+            if (keywordsAndNot !== undefined) {
+                localVarQueryParameter['keywords_and_not'] = keywordsAndNot;
+            }
+
+            if (foods !== undefined) {
+                localVarQueryParameter['foods'] = foods;
+            }
+
+            if (foodsOr !== undefined) {
+                localVarQueryParameter['foods_or'] = foodsOr;
+            }
+
+            if (foodsAnd !== undefined) {
+                localVarQueryParameter['foods_and'] = foodsAnd;
+            }
+
+            if (foodsOrNot !== undefined) {
+                localVarQueryParameter['foods_or_not'] = foodsOrNot;
+            }
+
+            if (foodsAndNot !== undefined) {
+                localVarQueryParameter['foods_and_not'] = foodsAndNot;
+            }
+
+            if (units !== undefined) {
+                localVarQueryParameter['units'] = units;
+            }
+
+            if (rating !== undefined) {
+                localVarQueryParameter['rating'] = rating;
+            }
+
+            if (books !== undefined) {
+                localVarQueryParameter['books'] = books;
+            }
+
+            if (booksOr !== undefined) {
+                localVarQueryParameter['books_or'] = booksOr;
+            }
+
+            if (booksAnd !== undefined) {
+                localVarQueryParameter['books_and'] = booksAnd;
+            }
+
+            if (booksOrNot !== undefined) {
+                localVarQueryParameter['books_or_not'] = booksOrNot;
+            }
+
+            if (booksAndNot !== undefined) {
+                localVarQueryParameter['books_and_not'] = booksAndNot;
+            }
+
+            if (internal !== undefined) {
+                localVarQueryParameter['internal'] = internal;
+            }
+
+            if (random !== undefined) {
+                localVarQueryParameter['random'] = random;
+            }
+
+            if (_new !== undefined) {
+                localVarQueryParameter['new'] = _new;
+            }
+
+            if (timescooked !== undefined) {
+                localVarQueryParameter['timescooked'] = timescooked;
+            }
+
+            if (cookedon !== undefined) {
+                localVarQueryParameter['cookedon'] = cookedon;
+            }
+
+            if (createdon !== undefined) {
+                localVarQueryParameter['createdon'] = createdon;
+            }
+
+            if (updatedon !== undefined) {
+                localVarQueryParameter['updatedon'] = updatedon;
+            }
+
+            if (viewedon !== undefined) {
+                localVarQueryParameter['viewedon'] = viewedon;
+            }
+
+            if (makenow !== undefined) {
+                localVarQueryParameter['makenow'] = makenow;
+            }
+
+            if (neverUsedFood !== undefined) {
+                localVarQueryParameter['never_used_food'] = neverUsedFood;
+            }
 
             if (page !== undefined) {
                 localVarQueryParameter['page'] = page;
@@ -8295,260 +8370,16 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
         },
         /**
          *
-         * @param {string} [query] Query string matched against user-file name.
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        listUserFiles: async (query?: string, options: any = {}): Promise<RequestArgs> => {
-            const localVarPath = `/api/user-file/`;
-            // use dummy base URL string because the URL constructor only accepts absolute URLs.
-            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
-            let baseOptions;
-            if (configuration) {
-                baseOptions = configuration.baseOptions;
-            }
-
-            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
-            const localVarHeaderParameter = {} as any;
-            const localVarQueryParameter = {} as any;
-
-            if (query !== undefined) {
-                localVarQueryParameter['query'] = query;
-            }
-
-
-
-            setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
-            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
-            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
-
-            return {
-                url: toPathString(localVarUrlObj),
-                options: localVarRequestOptions,
-            };
-        },
-        /**
-         *
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        listUserPreferences: async (options: any = {}): Promise<RequestArgs> => {
-            const localVarPath = `/api/user-preference/`;
-            // use dummy base URL string because the URL constructor only accepts absolute URLs.
-            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
-            let baseOptions;
-            if (configuration) {
-                baseOptions = configuration.baseOptions;
-            }
-
-            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
-            const localVarHeaderParameter = {} as any;
-            const localVarQueryParameter = {} as any;
-
-
-
-            setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
-            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
-            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
-
-            return {
-                url: toPathString(localVarUrlObj),
-                options: localVarRequestOptions,
-            };
-        },
-        /**
-         *
-         * @param {number} [page] A page number within the paginated result set.
-         * @param {number} [pageSize] Number of results to return per page.
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        listUserSpaces: async (page?: number, pageSize?: number, options: any = {}): Promise<RequestArgs> => {
-            const localVarPath = `/api/user-space/`;
-            // use dummy base URL string because the URL constructor only accepts absolute URLs.
-            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
-            let baseOptions;
-            if (configuration) {
-                baseOptions = configuration.baseOptions;
-            }
-
-            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
-            const localVarHeaderParameter = {} as any;
-            const localVarQueryParameter = {} as any;
-
-            if (page !== undefined) {
-                localVarQueryParameter['page'] = page;
-            }
-
-            if (pageSize !== undefined) {
-                localVarQueryParameter['page_size'] = pageSize;
-            }
-
-
-
-            setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
-            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
-            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
-
-            return {
-                url: toPathString(localVarUrlObj),
-                options: localVarRequestOptions,
-            };
-        },
-        /**
-         * optional parameters  - **filter_list**: array of user id\'s to get names for
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        listUsers: async (options: any = {}): Promise<RequestArgs> => {
-            const localVarPath = `/api/user/`;
-            // use dummy base URL string because the URL constructor only accepts absolute URLs.
-            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
-            let baseOptions;
-            if (configuration) {
-                baseOptions = configuration.baseOptions;
-            }
-
-            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
-            const localVarHeaderParameter = {} as any;
-            const localVarQueryParameter = {} as any;
-
-
-
-            setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
-            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
-            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
-
-            return {
-                url: toPathString(localVarUrlObj),
-                options: localVarRequestOptions,
-            };
-        },
-        /**
-         *
-         * @param {number} [page] A page number within the paginated result set.
-         * @param {number} [pageSize] Number of results to return per page.
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        listViewLogs: async (page?: number, pageSize?: number, options: any = {}): Promise<RequestArgs> => {
-            const localVarPath = `/api/view-log/`;
-            // use dummy base URL string because the URL constructor only accepts absolute URLs.
-            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
-            let baseOptions;
-            if (configuration) {
-                baseOptions = configuration.baseOptions;
-            }
-
-            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
-            const localVarHeaderParameter = {} as any;
-            const localVarQueryParameter = {} as any;
-
-            if (page !== undefined) {
-                localVarQueryParameter['page'] = page;
-            }
-
-            if (pageSize !== undefined) {
-                localVarQueryParameter['page_size'] = pageSize;
-            }
-
-
-
-            setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
-            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
-            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
-
-            return {
-                url: toPathString(localVarUrlObj),
-                options: localVarRequestOptions,
-            };
-        },
-        /**
-         * function to reset inheritance from api, see food method for docs
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        listresetFoodInheritances: async (options: any = {}): Promise<RequestArgs> => {
-            const localVarPath = `/api/reset-food-inheritance/`;
-            // use dummy base URL string because the URL constructor only accepts absolute URLs.
-            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
-            let baseOptions;
-            if (configuration) {
-                baseOptions = configuration.baseOptions;
-            }
-
-            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
-            const localVarHeaderParameter = {} as any;
-            const localVarQueryParameter = {} as any;
-
-
-
-            setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
-            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
-            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
-
-            return {
-                url: toPathString(localVarUrlObj),
-                options: localVarRequestOptions,
-            };
-        },
-        /**
-         *
-         * @param {string} id A unique integer value identifying this food.
-         * @param {string} target
-         * @param {Food} [food]
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        mergeFood: async (id: string, target: string, food?: Food, options: any = {}): Promise<RequestArgs> => {
-            // verify required parameter 'id' is not null or undefined
-            assertParamExists('mergeFood', 'id', id)
-            // verify required parameter 'target' is not null or undefined
-            assertParamExists('mergeFood', 'target', target)
-            const localVarPath = `/api/food/{id}/merge/{target}/`
-                .replace(`{${"id"}}`, encodeURIComponent(String(id)))
-                .replace(`{${"target"}}`, encodeURIComponent(String(target)));
-            // use dummy base URL string because the URL constructor only accepts absolute URLs.
-            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
-            let baseOptions;
-            if (configuration) {
-                baseOptions = configuration.baseOptions;
-            }
-
-            const localVarRequestOptions = { method: 'PUT', ...baseOptions, ...options};
-            const localVarHeaderParameter = {} as any;
-            const localVarQueryParameter = {} as any;
-
-
-
-            localVarHeaderParameter['Content-Type'] = 'application/json';
-
-            setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
-            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
-            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
-            localVarRequestOptions.data = serializeDataIfNeeded(food, localVarRequestOptions, configuration)
-
-            return {
-                url: toPathString(localVarUrlObj),
-                options: localVarRequestOptions,
-            };
-        },
-        /**
-         *
          * @param {string} id A unique integer value identifying this keyword.
-         * @param {string} target
          * @param {Keyword} [keyword]
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        mergeKeyword: async (id: string, target: string, keyword?: Keyword, options: any = {}): Promise<RequestArgs> => {
+        partialUpdateKeyword: async (id: string, keyword?: Keyword, options: any = {}): Promise<RequestArgs> => {
             // verify required parameter 'id' is not null or undefined
-            assertParamExists('mergeKeyword', 'id', id)
-            // verify required parameter 'target' is not null or undefined
-            assertParamExists('mergeKeyword', 'target', target)
-            const localVarPath = `/api/keyword/{id}/merge/{target}/`
-                .replace(`{${"id"}}`, encodeURIComponent(String(id)))
-                .replace(`{${"target"}}`, encodeURIComponent(String(target)));
+            assertParamExists('partialUpdateKeyword', 'id', id)
+            const localVarPath = `/api/keyword/{id}/`
+                .replace(`{${"id"}}`, encodeURIComponent(String(id)));
             // use dummy base URL string because the URL constructor only accepts absolute URLs.
             const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
             let baseOptions;
@@ -8576,20 +8407,16 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
         },
         /**
          *
-         * @param {string} id A unique integer value identifying this supermarket category.
-         * @param {string} target
-         * @param {SupermarketCategory} [supermarketCategory]
+         * @param {string} id A unique integer value identifying this meal plan.
+         * @param {MealPlan} [mealPlan]
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        mergeSupermarketCategory: async (id: string, target: string, supermarketCategory?: SupermarketCategory, options: any = {}): Promise<RequestArgs> => {
+        partialUpdateMealPlan: async (id: string, mealPlan?: MealPlan, options: any = {}): Promise<RequestArgs> => {
             // verify required parameter 'id' is not null or undefined
-            assertParamExists('mergeSupermarketCategory', 'id', id)
-            // verify required parameter 'target' is not null or undefined
-            assertParamExists('mergeSupermarketCategory', 'target', target)
-            const localVarPath = `/api/supermarket-category/{id}/merge/{target}/`
-                .replace(`{${"id"}}`, encodeURIComponent(String(id)))
-                .replace(`{${"target"}}`, encodeURIComponent(String(target)));
+            assertParamExists('partialUpdateMealPlan', 'id', id)
+            const localVarPath = `/api/meal-plan/{id}/`
+                .replace(`{${"id"}}`, encodeURIComponent(String(id)));
             // use dummy base URL string because the URL constructor only accepts absolute URLs.
             const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
             let baseOptions;
@@ -8608,7 +8435,7 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
             setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
-            localVarRequestOptions.data = serializeDataIfNeeded(supermarketCategory, localVarRequestOptions, configuration)
+            localVarRequestOptions.data = serializeDataIfNeeded(mealPlan, localVarRequestOptions, configuration)
 
             return {
                 url: toPathString(localVarUrlObj),
@@ -8616,21 +8443,17 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
             };
         },
         /**
-         *
-         * @param {string} id A unique integer value identifying this unit.
-         * @param {string} target
-         * @param {Unit} [unit]
+         * returns list of meal types created by the requesting user ordered by the order field.
+         * @param {string} id A unique integer value identifying this meal type.
+         * @param {MealType} [mealType]
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        mergeUnit: async (id: string, target: string, unit?: Unit, options: any = {}): Promise<RequestArgs> => {
+        partialUpdateMealType: async (id: string, mealType?: MealType, options: any = {}): Promise<RequestArgs> => {
             // verify required parameter 'id' is not null or undefined
-            assertParamExists('mergeUnit', 'id', id)
-            // verify required parameter 'target' is not null or undefined
-            assertParamExists('mergeUnit', 'target', target)
-            const localVarPath = `/api/unit/{id}/merge/{target}/`
-                .replace(`{${"id"}}`, encodeURIComponent(String(id)))
-                .replace(`{${"target"}}`, encodeURIComponent(String(target)));
+            assertParamExists('partialUpdateMealType', 'id', id)
+            const localVarPath = `/api/meal-type/{id}/`
+                .replace(`{${"id"}}`, encodeURIComponent(String(id)));
             // use dummy base URL string because the URL constructor only accepts absolute URLs.
             const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
             let baseOptions;
@@ -8649,7 +8472,7 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
             setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
-            localVarRequestOptions.data = serializeDataIfNeeded(unit, localVarRequestOptions, configuration)
+            localVarRequestOptions.data = serializeDataIfNeeded(mealType, localVarRequestOptions, configuration)
 
             return {
                 url: toPathString(localVarUrlObj),
@@ -9737,45 +9560,7 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
         },
         /**
          *
-         * @param {string} id A unique integer value identifying this sync.
-         * @param {Sync} [sync]
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        partialUpdateSync: async (id: string, sync?: Sync, options: any = {}): Promise<RequestArgs> => {
-            // verify required parameter 'id' is not null or undefined
-            assertParamExists('partialUpdateSync', 'id', id)
-            const localVarPath = `/api/sync/{id}/`
-                .replace(`{${"id"}}`, encodeURIComponent(String(id)));
-            // use dummy base URL string because the URL constructor only accepts absolute URLs.
-            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
-            let baseOptions;
-            if (configuration) {
-                baseOptions = configuration.baseOptions;
-            }
-
-            const localVarRequestOptions = { method: 'PATCH', ...baseOptions, ...options};
-            const localVarHeaderParameter = {} as any;
-            const localVarQueryParameter = {} as any;
-
-
-
-            localVarHeaderParameter['Content-Type'] = 'application/json';
-
-            setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
-            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
-            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
-            localVarRequestOptions.data = serializeDataIfNeeded(sync, localVarRequestOptions, configuration)
-
-            return {
-                url: toPathString(localVarUrlObj),
-                options: localVarRequestOptions,
-            };
-        },
-        /**
-         *
-         * @param {string} id A unique integer value identifying this unit.
-         * @param {Unit} [unit]
+         * @param {string} id A unique integer value identifying this food.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -10098,245 +9883,15 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
             };
         },
         /**
-         *
-         * @param {string} id A unique integer value identifying this access token.
+         * returns list of meal types created by the requesting user ordered by the order field.
+         * @param {string} id A unique integer value identifying this meal type.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        retrieveAccessToken: async (id: string, options: any = {}): Promise<RequestArgs> => {
+        retrieveMealType: async (id: string, options: any = {}): Promise<RequestArgs> => {
             // verify required parameter 'id' is not null or undefined
-            assertParamExists('retrieveAccessToken', 'id', id)
-            const localVarPath = `/api/access-token/{id}/`
-                .replace(`{${"id"}}`, encodeURIComponent(String(id)));
-            // use dummy base URL string because the URL constructor only accepts absolute URLs.
-            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
-            let baseOptions;
-            if (configuration) {
-                baseOptions = configuration.baseOptions;
-            }
-
-            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
-            const localVarHeaderParameter = {} as any;
-            const localVarQueryParameter = {} as any;
-
-
-
-            setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
-            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
-            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
-
-            return {
-                url: toPathString(localVarUrlObj),
-                options: localVarRequestOptions,
-            };
-        },
-        /**
-         *
-         * @param {string} id A unique integer value identifying this automation.
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        retrieveAutomation: async (id: string, options: any = {}): Promise<RequestArgs> => {
-            // verify required parameter 'id' is not null or undefined
-            assertParamExists('retrieveAutomation', 'id', id)
-            const localVarPath = `/api/automation/{id}/`
-                .replace(`{${"id"}}`, encodeURIComponent(String(id)));
-            // use dummy base URL string because the URL constructor only accepts absolute URLs.
-            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
-            let baseOptions;
-            if (configuration) {
-                baseOptions = configuration.baseOptions;
-            }
-
-            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
-            const localVarHeaderParameter = {} as any;
-            const localVarQueryParameter = {} as any;
-
-
-            setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
-            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
-            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
-
-            return {
-                url: toPathString(localVarUrlObj),
-                options: localVarRequestOptions,
-            };
-        },
-        /**
-         *
-         * @param {string} id A unique integer value identifying this bookmarklet import.
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        retrieveBookmarkletImport: async (id: string, options: any = {}): Promise<RequestArgs> => {
-            // verify required parameter 'id' is not null or undefined
-            assertParamExists('retrieveBookmarkletImport', 'id', id)
-            const localVarPath = `/api/bookmarklet-import/{id}/`
-                .replace(`{${"id"}}`, encodeURIComponent(String(id)));
-            // use dummy base URL string because the URL constructor only accepts absolute URLs.
-            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
-            let baseOptions;
-            if (configuration) {
-                baseOptions = configuration.baseOptions;
-            }
-
-            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
-            const localVarHeaderParameter = {} as any;
-            const localVarQueryParameter = {} as any;
-
-
-
-            setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
-            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
-            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
-
-            return {
-                url: toPathString(localVarUrlObj),
-                options: localVarRequestOptions,
-            };
-        },
-        /**
-         *
-         * @param {string} id A unique integer value identifying this cook log.
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        retrieveCookLog: async (id: string, options: any = {}): Promise<RequestArgs> => {
-            // verify required parameter 'id' is not null or undefined
-            assertParamExists('retrieveCookLog', 'id', id)
-            const localVarPath = `/api/cook-log/{id}/`
-                .replace(`{${"id"}}`, encodeURIComponent(String(id)));
-            // use dummy base URL string because the URL constructor only accepts absolute URLs.
-            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
-            let baseOptions;
-            if (configuration) {
-                baseOptions = configuration.baseOptions;
-            }
-
-            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
-            const localVarHeaderParameter = {} as any;
-            const localVarQueryParameter = {} as any;
-
-
-
-            setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
-            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
-            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
-
-            return {
-                url: toPathString(localVarUrlObj),
-                options: localVarRequestOptions,
-            };
-        },
-        /**
-         *
-         * @param {string} id A unique integer value identifying this custom filter.
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        retrieveCustomFilter: async (id: string, options: any = {}): Promise<RequestArgs> => {
-            // verify required parameter 'id' is not null or undefined
-            assertParamExists('retrieveCustomFilter', 'id', id)
-            const localVarPath = `/api/custom-filter/{id}/`
-                .replace(`{${"id"}}`, encodeURIComponent(String(id)));
-            // use dummy base URL string because the URL constructor only accepts absolute URLs.
-            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
-            let baseOptions;
-            if (configuration) {
-                baseOptions = configuration.baseOptions;
-            }
-
-            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
-            const localVarHeaderParameter = {} as any;
-            const localVarQueryParameter = {} as any;
-
-
-
-            setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
-            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
-            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
-
-            return {
-                url: toPathString(localVarUrlObj),
-                options: localVarRequestOptions,
-            };
-        },
-        /**
-         *
-         * @param {string} id A unique integer value identifying this export log.
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        retrieveExportLog: async (id: string, options: any = {}): Promise<RequestArgs> => {
-            // verify required parameter 'id' is not null or undefined
-            assertParamExists('retrieveExportLog', 'id', id)
-            const localVarPath = `/api/export-log/{id}/`
-                .replace(`{${"id"}}`, encodeURIComponent(String(id)));
-            // use dummy base URL string because the URL constructor only accepts absolute URLs.
-            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
-            let baseOptions;
-            if (configuration) {
-                baseOptions = configuration.baseOptions;
-            }
-
-            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
-            const localVarHeaderParameter = {} as any;
-            const localVarQueryParameter = {} as any;
-
-
-
-            setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
-            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
-            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
-
-            return {
-                url: toPathString(localVarUrlObj),
-                options: localVarRequestOptions,
-            };
-        },
-        /**
-         *
-         * @param {string} id A unique integer value identifying this food.
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        retrieveFood: async (id: string, options: any = {}): Promise<RequestArgs> => {
-            // verify required parameter 'id' is not null or undefined
-            assertParamExists('retrieveFood', 'id', id)
-            const localVarPath = `/api/food/{id}/`
-                .replace(`{${"id"}}`, encodeURIComponent(String(id)));
-            // use dummy base URL string because the URL constructor only accepts absolute URLs.
-            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
-            let baseOptions;
-            if (configuration) {
-                baseOptions = configuration.baseOptions;
-            }
-
-            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
-            const localVarHeaderParameter = {} as any;
-            const localVarQueryParameter = {} as any;
-
-
-
-            setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
-            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
-            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
-
-            return {
-                url: toPathString(localVarUrlObj),
-                options: localVarRequestOptions,
-            };
-        },
-        /**
-         *
-         * @param {string} id A unique integer value identifying this food inherit field.
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        retrieveFoodInheritField: async (id: string, options: any = {}): Promise<RequestArgs> => {
-            // verify required parameter 'id' is not null or undefined
-            assertParamExists('retrieveFoodInheritField', 'id', id)
-            const localVarPath = `/api/food-inherit-field/{id}/`
+            assertParamExists('retrieveMealType', 'id', id)
+            const localVarPath = `/api/meal-type/{id}/`
                 .replace(`{${"id"}}`, encodeURIComponent(String(id)));
             // use dummy base URL string because the URL constructor only accepts absolute URLs.
             const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
@@ -11125,237 +10680,6 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        retrieveUnit: async (id: string, options: any = {}): Promise<RequestArgs> => {
-            // verify required parameter 'id' is not null or undefined
-            assertParamExists('retrieveUnit', 'id', id)
-            const localVarPath = `/api/unit/{id}/`
-                .replace(`{${"id"}}`, encodeURIComponent(String(id)));
-            // use dummy base URL string because the URL constructor only accepts absolute URLs.
-            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
-            let baseOptions;
-            if (configuration) {
-                baseOptions = configuration.baseOptions;
-            }
-
-            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
-            const localVarHeaderParameter = {} as any;
-            const localVarQueryParameter = {} as any;
-
-
-
-            setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
-            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
-            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
-
-            return {
-                url: toPathString(localVarUrlObj),
-                options: localVarRequestOptions,
-            };
-        },
-        /**
-         *
-         * @param {string} id A unique integer value identifying this unit conversion.
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        retrieveUnitConversion: async (id: string, options: any = {}): Promise<RequestArgs> => {
-            // verify required parameter 'id' is not null or undefined
-            assertParamExists('retrieveUnitConversion', 'id', id)
-            const localVarPath = `/api/unit-conversion/{id}/`
-                .replace(`{${"id"}}`, encodeURIComponent(String(id)));
-            // use dummy base URL string because the URL constructor only accepts absolute URLs.
-            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
-            let baseOptions;
-            if (configuration) {
-                baseOptions = configuration.baseOptions;
-            }
-
-            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
-            const localVarHeaderParameter = {} as any;
-            const localVarQueryParameter = {} as any;
-
-
-
-            setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
-            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
-            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
-
-            return {
-                url: toPathString(localVarUrlObj),
-                options: localVarRequestOptions,
-            };
-        },
-        /**
-         *
-         * @param {string} id A unique integer value identifying this user.
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        retrieveUser: async (id: string, options: any = {}): Promise<RequestArgs> => {
-            // verify required parameter 'id' is not null or undefined
-            assertParamExists('retrieveUser', 'id', id)
-            const localVarPath = `/api/user/{id}/`
-                .replace(`{${"id"}}`, encodeURIComponent(String(id)));
-            // use dummy base URL string because the URL constructor only accepts absolute URLs.
-            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
-            let baseOptions;
-            if (configuration) {
-                baseOptions = configuration.baseOptions;
-            }
-
-            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
-            const localVarHeaderParameter = {} as any;
-            const localVarQueryParameter = {} as any;
-
-
-
-            setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
-            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
-            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
-
-            return {
-                url: toPathString(localVarUrlObj),
-                options: localVarRequestOptions,
-            };
-        },
-        /**
-         *
-         * @param {string} id A unique integer value identifying this user file.
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        retrieveUserFile: async (id: string, options: any = {}): Promise<RequestArgs> => {
-            // verify required parameter 'id' is not null or undefined
-            assertParamExists('retrieveUserFile', 'id', id)
-            const localVarPath = `/api/user-file/{id}/`
-                .replace(`{${"id"}}`, encodeURIComponent(String(id)));
-            // use dummy base URL string because the URL constructor only accepts absolute URLs.
-            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
-            let baseOptions;
-            if (configuration) {
-                baseOptions = configuration.baseOptions;
-            }
-
-            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
-            const localVarHeaderParameter = {} as any;
-            const localVarQueryParameter = {} as any;
-
-
-
-            setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
-            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
-            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
-
-            return {
-                url: toPathString(localVarUrlObj),
-                options: localVarRequestOptions,
-            };
-        },
-        /**
-         *
-         * @param {string} user A unique value identifying this user preference.
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        retrieveUserPreference: async (user: string, options: any = {}): Promise<RequestArgs> => {
-            // verify required parameter 'user' is not null or undefined
-            assertParamExists('retrieveUserPreference', 'user', user)
-            const localVarPath = `/api/user-preference/{user}/`
-                .replace(`{${"user"}}`, encodeURIComponent(String(user)));
-            // use dummy base URL string because the URL constructor only accepts absolute URLs.
-            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
-            let baseOptions;
-            if (configuration) {
-                baseOptions = configuration.baseOptions;
-            }
-
-            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
-            const localVarHeaderParameter = {} as any;
-            const localVarQueryParameter = {} as any;
-
-
-
-            setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
-            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
-            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
-
-            return {
-                url: toPathString(localVarUrlObj),
-                options: localVarRequestOptions,
-            };
-        },
-        /**
-         *
-         * @param {string} id A unique integer value identifying this user space.
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        retrieveUserSpace: async (id: string, options: any = {}): Promise<RequestArgs> => {
-            // verify required parameter 'id' is not null or undefined
-            assertParamExists('retrieveUserSpace', 'id', id)
-            const localVarPath = `/api/user-space/{id}/`
-                .replace(`{${"id"}}`, encodeURIComponent(String(id)));
-            // use dummy base URL string because the URL constructor only accepts absolute URLs.
-            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
-            let baseOptions;
-            if (configuration) {
-                baseOptions = configuration.baseOptions;
-            }
-
-            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
-            const localVarHeaderParameter = {} as any;
-            const localVarQueryParameter = {} as any;
-
-
-
-            setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
-            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
-            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
-
-            return {
-                url: toPathString(localVarUrlObj),
-                options: localVarRequestOptions,
-            };
-        },
-        /**
-         *
-         * @param {string} id A unique integer value identifying this view log.
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        retrieveViewLog: async (id: string, options: any = {}): Promise<RequestArgs> => {
-            // verify required parameter 'id' is not null or undefined
-            assertParamExists('retrieveViewLog', 'id', id)
-            const localVarPath = `/api/view-log/{id}/`
-                .replace(`{${"id"}}`, encodeURIComponent(String(id)));
-            // use dummy base URL string because the URL constructor only accepts absolute URLs.
-            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
-            let baseOptions;
-            if (configuration) {
-                baseOptions = configuration.baseOptions;
-            }
-
-            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
-            const localVarHeaderParameter = {} as any;
-            const localVarQueryParameter = {} as any;
-
-
-
-            setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
-            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
-            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
-
-            return {
-                url: toPathString(localVarUrlObj),
-                options: localVarRequestOptions,
-            };
-        },
-        /**
-         * function to download a user file securely (wrapping as zip to prevent any context based XSS problems) temporary solution until a real file manager is implemented
-         * @param {string} fileId
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
         retrievedownloadFile: async (fileId: string, options: any = {}): Promise<RequestArgs> => {
             // verify required parameter 'fileId' is not null or undefined
             assertParamExists('retrievedownloadFile', 'fileId', fileId)
@@ -11627,6 +10951,7 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
             setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(bookmarkletImport, localVarRequestOptions, configuration)
 
             return {
                 url: toPathString(localVarUrlObj),
@@ -11637,263 +10962,6 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
          *
          * @param {string} id A unique integer value identifying this cook log.
          * @param {CookLog} [cookLog]
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        retrieveshareLink: async (id: string, options: any = {}): Promise<RequestArgs> => {
-            // verify required parameter 'id' is not null or undefined
-            assertParamExists('retrieveshareLink', 'id', id)
-            const localVarPath = `/api/share-link/{id}`
-                .replace(`{${"id"}}`, encodeURIComponent(String(id)));
-            // use dummy base URL string because the URL constructor only accepts absolute URLs.
-            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
-            let baseOptions;
-            if (configuration) {
-                baseOptions = configuration.baseOptions;
-            }
-
-            const localVarRequestOptions = { method: 'PUT', ...baseOptions, ...options};
-            const localVarHeaderParameter = {} as any;
-            const localVarQueryParameter = {} as any;
-
-
-
-            localVarHeaderParameter['Content-Type'] = 'application/json';
-
-            setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
-            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
-            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
-
-            return {
-                url: toPathString(localVarUrlObj),
-                options: localVarRequestOptions,
-            };
-        },
-        /**
-         *
-         * @param {string} id A unique integer value identifying this custom filter.
-         * @param {CustomFilter} [customFilter]
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        retrieveswitchActiveSpace: async (spaceId: string, options: any = {}): Promise<RequestArgs> => {
-            // verify required parameter 'spaceId' is not null or undefined
-            assertParamExists('retrieveswitchActiveSpace', 'spaceId', spaceId)
-            const localVarPath = `/api/switch-active-space/{space_id}/`
-                .replace(`{${"space_id"}}`, encodeURIComponent(String(spaceId)));
-            // use dummy base URL string because the URL constructor only accepts absolute URLs.
-            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
-            let baseOptions;
-            if (configuration) {
-                baseOptions = configuration.baseOptions;
-            }
-
-            const localVarRequestOptions = { method: 'PUT', ...baseOptions, ...options};
-            const localVarHeaderParameter = {} as any;
-            const localVarQueryParameter = {} as any;
-
-
-
-            localVarHeaderParameter['Content-Type'] = 'application/json';
-
-            setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
-            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
-            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
-
-            return {
-                url: toPathString(localVarUrlObj),
-                options: localVarRequestOptions,
-            };
-        },
-        /**
-         *
-         * @param {string} id A unique integer value identifying this export log.
-         * @param {ExportLog} [exportLog]
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        shoppingFood: async (id: string, foodShoppingUpdate?: FoodShoppingUpdate, options: any = {}): Promise<RequestArgs> => {
-            // verify required parameter 'id' is not null or undefined
-            assertParamExists('shoppingFood', 'id', id)
-            const localVarPath = `/api/food/{id}/shopping/`
-                .replace(`{${"id"}}`, encodeURIComponent(String(id)));
-            // use dummy base URL string because the URL constructor only accepts absolute URLs.
-            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
-            let baseOptions;
-            if (configuration) {
-                baseOptions = configuration.baseOptions;
-            }
-
-            const localVarRequestOptions = { method: 'PUT', ...baseOptions, ...options};
-            const localVarHeaderParameter = {} as any;
-            const localVarQueryParameter = {} as any;
-
-
-
-            localVarHeaderParameter['Content-Type'] = 'application/json';
-
-            setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
-            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
-            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
-            localVarRequestOptions.data = serializeDataIfNeeded(foodShoppingUpdate, localVarRequestOptions, configuration)
-
-            return {
-                url: toPathString(localVarUrlObj),
-                options: localVarRequestOptions,
-            };
-        },
-        /**
-         *
-         * @param {string} id A unique integer value identifying this food.
-         * @param {Food} [food]
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        shoppingRecipe: async (id: string, recipeShoppingUpdate?: RecipeShoppingUpdate, options: any = {}): Promise<RequestArgs> => {
-            // verify required parameter 'id' is not null or undefined
-            assertParamExists('shoppingRecipe', 'id', id)
-            const localVarPath = `/api/recipe/{id}/shopping/`
-                .replace(`{${"id"}}`, encodeURIComponent(String(id)));
-            // use dummy base URL string because the URL constructor only accepts absolute URLs.
-            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
-            let baseOptions;
-            if (configuration) {
-                baseOptions = configuration.baseOptions;
-            }
-
-            const localVarRequestOptions = { method: 'PUT', ...baseOptions, ...options};
-            const localVarHeaderParameter = {} as any;
-            const localVarQueryParameter = {} as any;
-
-
-
-            localVarHeaderParameter['Content-Type'] = 'application/json';
-
-            setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
-            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
-            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
-            localVarRequestOptions.data = serializeDataIfNeeded(recipeShoppingUpdate, localVarRequestOptions, configuration)
-
-            return {
-                url: toPathString(localVarUrlObj),
-                options: localVarRequestOptions,
-            };
-        },
-        /**
-         *
-         * @param {string} id A unique integer value identifying this import log.
-         * @param {ImportLog} [importLog]
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        updateAccessToken: async (id: string, accessToken?: AccessToken, options: any = {}): Promise<RequestArgs> => {
-            // verify required parameter 'id' is not null or undefined
-            assertParamExists('updateAccessToken', 'id', id)
-            const localVarPath = `/api/access-token/{id}/`
-                .replace(`{${"id"}}`, encodeURIComponent(String(id)));
-            // use dummy base URL string because the URL constructor only accepts absolute URLs.
-            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
-            let baseOptions;
-            if (configuration) {
-                baseOptions = configuration.baseOptions;
-            }
-
-            const localVarRequestOptions = { method: 'PUT', ...baseOptions, ...options};
-            const localVarHeaderParameter = {} as any;
-            const localVarQueryParameter = {} as any;
-
-
-
-            localVarHeaderParameter['Content-Type'] = 'application/json';
-
-            setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
-            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
-            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
-            localVarRequestOptions.data = serializeDataIfNeeded(accessToken, localVarRequestOptions, configuration)
-
-            return {
-                url: toPathString(localVarUrlObj),
-                options: localVarRequestOptions,
-            };
-        },
-        /**
-         *
-         * @param {string} id A unique integer value identifying this ingredient.
-         * @param {Ingredient} [ingredient]
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        updateAutomation: async (id: string, automation?: Automation, options: any = {}): Promise<RequestArgs> => {
-            // verify required parameter 'id' is not null or undefined
-            assertParamExists('updateAutomation', 'id', id)
-            const localVarPath = `/api/automation/{id}/`
-                .replace(`{${"id"}}`, encodeURIComponent(String(id)));
-            // use dummy base URL string because the URL constructor only accepts absolute URLs.
-            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
-            let baseOptions;
-            if (configuration) {
-                baseOptions = configuration.baseOptions;
-            }
-
-            const localVarRequestOptions = { method: 'PUT', ...baseOptions, ...options};
-            const localVarHeaderParameter = {} as any;
-            const localVarQueryParameter = {} as any;
-
-
-
-            localVarHeaderParameter['Content-Type'] = 'application/json';
-
-            setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
-            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
-            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
-            localVarRequestOptions.data = serializeDataIfNeeded(automation, localVarRequestOptions, configuration)
-
-            return {
-                url: toPathString(localVarUrlObj),
-                options: localVarRequestOptions,
-            };
-        },
-        /**
-         *
-         * @param {string} id A unique integer value identifying this invite link.
-         * @param {InviteLink} [inviteLink]
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        updateBookmarkletImport: async (id: string, bookmarkletImport?: BookmarkletImport, options: any = {}): Promise<RequestArgs> => {
-            // verify required parameter 'id' is not null or undefined
-            assertParamExists('updateBookmarkletImport', 'id', id)
-            const localVarPath = `/api/bookmarklet-import/{id}/`
-                .replace(`{${"id"}}`, encodeURIComponent(String(id)));
-            // use dummy base URL string because the URL constructor only accepts absolute URLs.
-            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
-            let baseOptions;
-            if (configuration) {
-                baseOptions = configuration.baseOptions;
-            }
-
-            const localVarRequestOptions = { method: 'PUT', ...baseOptions, ...options};
-            const localVarHeaderParameter = {} as any;
-            const localVarQueryParameter = {} as any;
-
-
-
-            localVarHeaderParameter['Content-Type'] = 'application/json';
-
-            setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
-            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
-            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
-            localVarRequestOptions.data = serializeDataIfNeeded(bookmarkletImport, localVarRequestOptions, configuration)
-
-            return {
-                url: toPathString(localVarUrlObj),
-                options: localVarRequestOptions,
-            };
-        },
-        /**
-         *
-         * @param {string} id A unique integer value identifying this keyword.
-         * @param {Keyword} [keyword]
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -11929,8 +10997,8 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
         },
         /**
          *
-         * @param {string} id A unique integer value identifying this meal plan.
-         * @param {MealPlan} [mealPlan]
+         * @param {string} id A unique integer value identifying this custom filter.
+         * @param {CustomFilter} [customFilter]
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -11965,9 +11033,9 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
             };
         },
         /**
-         * returns list of meal types created by the requesting user ordered by the order field.
-         * @param {string} id A unique integer value identifying this meal type.
-         * @param {MealType} [mealType]
+         *
+         * @param {string} id A unique integer value identifying this export log.
+         * @param {ExportLog} [exportLog]
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -11975,6 +11043,265 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
             // verify required parameter 'id' is not null or undefined
             assertParamExists('updateExportLog', 'id', id)
             const localVarPath = `/api/export-log/{id}/`
+                .replace(`{${"id"}}`, encodeURIComponent(String(id)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'PUT', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(exportLog, localVarRequestOptions, configuration)
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         *
+         * @param {string} id A unique integer value identifying this food.
+         * @param {Food} [food]
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        updateFood: async (id: string, food?: Food, options: any = {}): Promise<RequestArgs> => {
+            // verify required parameter 'id' is not null or undefined
+            assertParamExists('updateFood', 'id', id)
+            const localVarPath = `/api/food/{id}/`
+                .replace(`{${"id"}}`, encodeURIComponent(String(id)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'PUT', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(food, localVarRequestOptions, configuration)
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         *
+         * @param {string} id A unique integer value identifying this import log.
+         * @param {ImportLog} [importLog]
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        updateImportLog: async (id: string, importLog?: ImportLog, options: any = {}): Promise<RequestArgs> => {
+            // verify required parameter 'id' is not null or undefined
+            assertParamExists('updateImportLog', 'id', id)
+            const localVarPath = `/api/import-log/{id}/`
+                .replace(`{${"id"}}`, encodeURIComponent(String(id)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'PUT', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(importLog, localVarRequestOptions, configuration)
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         *
+         * @param {string} id A unique integer value identifying this ingredient.
+         * @param {Ingredient} [ingredient]
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        updateIngredient: async (id: string, ingredient?: Ingredient, options: any = {}): Promise<RequestArgs> => {
+            // verify required parameter 'id' is not null or undefined
+            assertParamExists('updateIngredient', 'id', id)
+            const localVarPath = `/api/ingredient/{id}/`
+                .replace(`{${"id"}}`, encodeURIComponent(String(id)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'PUT', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(ingredient, localVarRequestOptions, configuration)
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         *
+         * @param {string} id A unique integer value identifying this invite link.
+         * @param {InviteLink} [inviteLink]
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        updateInviteLink: async (id: string, inviteLink?: InviteLink, options: any = {}): Promise<RequestArgs> => {
+            // verify required parameter 'id' is not null or undefined
+            assertParamExists('updateInviteLink', 'id', id)
+            const localVarPath = `/api/invite-link/{id}/`
+                .replace(`{${"id"}}`, encodeURIComponent(String(id)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'PUT', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(inviteLink, localVarRequestOptions, configuration)
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         *
+         * @param {string} id A unique integer value identifying this keyword.
+         * @param {Keyword} [keyword]
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        updateKeyword: async (id: string, keyword?: Keyword, options: any = {}): Promise<RequestArgs> => {
+            // verify required parameter 'id' is not null or undefined
+            assertParamExists('updateKeyword', 'id', id)
+            const localVarPath = `/api/keyword/{id}/`
+                .replace(`{${"id"}}`, encodeURIComponent(String(id)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'PUT', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(keyword, localVarRequestOptions, configuration)
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         *
+         * @param {string} id A unique integer value identifying this meal plan.
+         * @param {MealPlan} [mealPlan]
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        updateMealPlan: async (id: string, mealPlan?: MealPlan, options: any = {}): Promise<RequestArgs> => {
+            // verify required parameter 'id' is not null or undefined
+            assertParamExists('updateMealPlan', 'id', id)
+            const localVarPath = `/api/meal-plan/{id}/`
+                .replace(`{${"id"}}`, encodeURIComponent(String(id)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'PUT', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(mealPlan, localVarRequestOptions, configuration)
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * returns list of meal types created by the requesting user ordered by the order field.
+         * @param {string} id A unique integer value identifying this meal type.
+         * @param {MealType} [mealType]
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        updateMealType: async (id: string, mealType?: MealType, options: any = {}): Promise<RequestArgs> => {
+            // verify required parameter 'id' is not null or undefined
+            assertParamExists('updateMealType', 'id', id)
+            const localVarPath = `/api/meal-type/{id}/`
                 .replace(`{${"id"}}`, encodeURIComponent(String(id)));
             // use dummy base URL string because the URL constructor only accepts absolute URLs.
             const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
@@ -13641,8 +12968,8 @@ export const ApiApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async listRecipes(query?: string, keywords?: number, keywordsOr?: number, keywordsAnd?: number, keywordsOrNot?: number, keywordsAndNot?: number, foods?: number, foodsOr?: number, foodsAnd?: number, foodsOrNot?: number, foodsAndNot?: number, units?: number, rating?: number, books?: string, booksOr?: number, booksAnd?: number, booksOrNot?: number, booksAndNot?: number, internal?: string, random?: string, _new?: string, timescooked?: number, cookedon?: string, createdon?: string, updatedon?: string, viewedon?: string, makenow?: string, page?: number, pageSize?: number, options?: any): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<InlineResponse2008>> {
-            const localVarAxiosArgs = await localVarAxiosParamCreator.listRecipes(query, keywords, keywordsOr, keywordsAnd, keywordsOrNot, keywordsAndNot, foods, foodsOr, foodsAnd, foodsOrNot, foodsAndNot, units, rating, books, booksOr, booksAnd, booksOrNot, booksAndNot, internal, random, _new, timescooked, cookedon, createdon, updatedon, viewedon, makenow, page, pageSize, options);
+        async listRecipes(query?: string, keywords?: number, keywordsOr?: number, keywordsAnd?: number, keywordsOrNot?: number, keywordsAndNot?: number, foods?: number, foodsOr?: number, foodsAnd?: number, foodsOrNot?: number, foodsAndNot?: number, units?: number, rating?: number, books?: string, booksOr?: number, booksAnd?: number, booksOrNot?: number, booksAndNot?: number, internal?: string, random?: string, _new?: string, timescooked?: number, cookedon?: string, createdon?: string, updatedon?: string, viewedon?: string, makenow?: string, neverUsedFood?: string, page?: number, pageSize?: number, options?: any): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<InlineResponse2006>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.listRecipes(query, keywords, keywordsOr, keywordsAnd, keywordsOrNot, keywordsAndNot, foods, foodsOr, foodsAnd, foodsOrNot, foodsAndNot, units, rating, books, booksOr, booksAnd, booksOrNot, booksAndNot, internal, random, _new, timescooked, cookedon, createdon, updatedon, viewedon, makenow, neverUsedFood, page, pageSize, options);
             return createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration);
         },
         /**
@@ -13974,83 +13301,6 @@ export const ApiApiFp = function(configuration?: Configuration) {
          */
         async partialUpdateExportLog(id: string, exportLog?: ExportLog, options?: any): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<ExportLog>> {
             const localVarAxiosArgs = await localVarAxiosParamCreator.partialUpdateExportLog(id, exportLog, options);
-            return createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration);
-        },
-        /**
-         *
-         * @param {string} id A unique integer value identifying this food.
-         * @param {Food} [food]
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        async partialUpdateFood(id: string, food?: Food, options?: any): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<Food>> {
-            const localVarAxiosArgs = await localVarAxiosParamCreator.partialUpdateFood(id, food, options);
-            return createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration);
-        },
-        /**
-         *
-         * @param {string} id A unique integer value identifying this import log.
-         * @param {ImportLog} [importLog]
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        async partialUpdateImportLog(id: string, importLog?: ImportLog, options?: any): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<ImportLog>> {
-            const localVarAxiosArgs = await localVarAxiosParamCreator.partialUpdateImportLog(id, importLog, options);
-            return createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration);
-        },
-        /**
-         *
-         * @param {string} id A unique integer value identifying this ingredient.
-         * @param {Ingredient} [ingredient]
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        async partialUpdateIngredient(id: string, ingredient?: Ingredient, options?: any): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<Ingredient>> {
-            const localVarAxiosArgs = await localVarAxiosParamCreator.partialUpdateIngredient(id, ingredient, options);
-            return createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration);
-        },
-        /**
-         *
-         * @param {string} id A unique integer value identifying this invite link.
-         * @param {InviteLink} [inviteLink]
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        async partialUpdateInviteLink(id: string, inviteLink?: InviteLink, options?: any): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<InviteLink>> {
-            const localVarAxiosArgs = await localVarAxiosParamCreator.partialUpdateInviteLink(id, inviteLink, options);
-            return createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration);
-        },
-        /**
-         *
-         * @param {string} id A unique integer value identifying this keyword.
-         * @param {Keyword} [keyword]
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        async partialUpdateKeyword(id: string, keyword?: Keyword, options?: any): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<Keyword>> {
-            const localVarAxiosArgs = await localVarAxiosParamCreator.partialUpdateKeyword(id, keyword, options);
-            return createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration);
-        },
-        /**
-         *
-         * @param {string} id A unique integer value identifying this meal plan.
-         * @param {MealPlan} [mealPlan]
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        async partialUpdateMealPlan(id: string, mealPlan?: MealPlan, options?: any): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<MealPlan>> {
-            const localVarAxiosArgs = await localVarAxiosParamCreator.partialUpdateMealPlan(id, mealPlan, options);
-            return createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration);
-        },
-        /**
-         * returns list of meal types created by the requesting user ordered by the order field.
-         * @param {string} id A unique integer value identifying this meal type.
-         * @param {MealType} [mealType]
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        async partialUpdateMealType(id: string, mealType?: MealType, options?: any): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<MealType>> {
-            const localVarAxiosArgs = await localVarAxiosParamCreator.partialUpdateMealType(id, mealType, options);
             return createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration);
         },
         /**
@@ -15940,8 +15190,8 @@ export const ApiApiFactory = function (configuration?: Configuration, basePath?:
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        listRecipes(query?: string, keywords?: number, keywordsOr?: number, keywordsAnd?: number, keywordsOrNot?: number, keywordsAndNot?: number, foods?: number, foodsOr?: number, foodsAnd?: number, foodsOrNot?: number, foodsAndNot?: number, units?: number, rating?: number, books?: string, booksOr?: number, booksAnd?: number, booksOrNot?: number, booksAndNot?: number, internal?: string, random?: string, _new?: string, timescooked?: number, cookedon?: string, createdon?: string, updatedon?: string, viewedon?: string, makenow?: string, page?: number, pageSize?: number, options?: any): AxiosPromise<InlineResponse2008> {
-            return localVarFp.listRecipes(query, keywords, keywordsOr, keywordsAnd, keywordsOrNot, keywordsAndNot, foods, foodsOr, foodsAnd, foodsOrNot, foodsAndNot, units, rating, books, booksOr, booksAnd, booksOrNot, booksAndNot, internal, random, _new, timescooked, cookedon, createdon, updatedon, viewedon, makenow, page, pageSize, options).then((request) => request(axios, basePath));
+        listRecipes(query?: string, keywords?: number, keywordsOr?: number, keywordsAnd?: number, keywordsOrNot?: number, keywordsAndNot?: number, foods?: number, foodsOr?: number, foodsAnd?: number, foodsOrNot?: number, foodsAndNot?: number, units?: number, rating?: number, books?: string, booksOr?: number, booksAnd?: number, booksOrNot?: number, booksAndNot?: number, internal?: string, random?: string, _new?: string, timescooked?: number, cookedon?: string, createdon?: string, updatedon?: string, viewedon?: string, makenow?: string, neverUsedFood?: string, page?: number, pageSize?: number, options?: any): AxiosPromise<InlineResponse2006> {
+            return localVarFp.listRecipes(query, keywords, keywordsOr, keywordsAnd, keywordsOrNot, keywordsAndNot, foods, foodsOr, foodsAnd, foodsOrNot, foodsAndNot, units, rating, books, booksOr, booksAnd, booksOrNot, booksAndNot, internal, random, _new, timescooked, cookedon, createdon, updatedon, viewedon, makenow, neverUsedFood, page, pageSize, options).then((request) => request(axios, basePath));
         },
         /**
          *
@@ -16310,8 +15560,8 @@ export const ApiApiFactory = function (configuration?: Configuration, basePath?:
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        partialUpdateExportLog(id: string, exportLog?: ExportLog, options?: any): AxiosPromise<ExportLog> {
-            return localVarFp.partialUpdateExportLog(id, exportLog, options).then((request) => request(axios, basePath));
+        partialUpdateMealType(id: string, mealType?: MealType, options?: any): AxiosPromise<MealType> {
+            return localVarFp.partialUpdateMealType(id, mealType, options).then((request) => request(axios, basePath));
         },
         /**
          *
