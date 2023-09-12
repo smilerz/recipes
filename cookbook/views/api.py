@@ -932,6 +932,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
         QueryParam(name='updatedon', description=_('Filter recipes updated on or after YYYY-MM-DD. Prepending ''-'' filters on or before date.')),
         QueryParam(name='viewedon', description=_('Filter recipes lasts viewed on or after YYYY-MM-DD. Prepending ''-'' filters on or before date.')),
         QueryParam(name='makenow', description=_('Filter recipes that can be made with OnHand food. [''true''/''<b>false</b>'']')),
+        QueryParam(name='never_used_food', description=_('Filter recipes that contain food that have never been used. [''true''/''<b>false</b>'']')),
     ]
     schema = QueryParamAutoSchema()
 
