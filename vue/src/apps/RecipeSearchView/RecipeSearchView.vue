@@ -117,6 +117,9 @@
                                                 <b-form-group v-bind:label="$t('make_now')" label-for="popover-show_makenow" label-cols="8" class="mb-1">
                                                     <b-form-checkbox switch v-model="ui.show_makenow" id="popover-show_makenow" size="sm" class="mt-2"></b-form-checkbox>
                                                 </b-form-group>
+                                                <b-form-group v-bind:label="$t('never_used_food')" label-for="popover-show_never_used_food" label-cols="8" class="mb-1">
+                                                    <b-form-checkbox switch v-model="ui.show_never_used_food" id="popover-show_never_used_food" size="sm" class="mt-2"></b-form-checkbox>
+                                                </b-form-group>
                                                 <b-form-group v-bind:label="$t('last_cooked')" label-for="popover-show_cookedon" label-cols="8" class="mb-1">
                                                     <b-form-checkbox switch v-model="ui.show_cookedon" id="popover-show_cookedon" size="sm" class="mt-2"></b-form-checkbox>
                                                 </b-form-group>
@@ -429,7 +432,8 @@
                                     </div>
 
                                     <!-- special switches -->
-                                    <div class="row g-0" v-if="ui.show_timescooked || ui.show_makenow || ui.show_cookedon">
+                                    <div class="row g-0"
+                                         v-if="ui.show_timescooked || ui.show_makenow || ui.show_cookedon || ui.never_used_food">
                                         <div class="col-12">
                                             <b-input-group class="mt-2">
                                                 <!-- times cooked -->
@@ -568,7 +572,16 @@
                                                         />
                                                     </b-input-group-text>
                                                 </b-input-group-append>
+                                                <b-input-group-append v-if="ui.show_never_used_food">
+                                                    <b-input-group-text>
+                                                        {{ $t("never_used_food") }}
+                                                        <b-form-checkbox v-model="search.never_used_food" name="check-button"
+                                                                         @change="refreshData(false)"
+                                                                         class="shadow-none" switch style="width: 4em"/>
+                                                    </b-input-group-text>
+                                                </b-input-group-append>
                                             </b-input-group>
+
                                         </div>
                                     </div>
 
@@ -921,6 +934,7 @@ export default {
                 timescooked: undefined,
                 timescooked_gte: true,
                 makenow: false,
+                never_used_food: false,
                 cookedon: undefined,
                 cookedon_gte: true,
                 createdon: undefined,
@@ -958,6 +972,7 @@ export default {
                 show_sortby: false,
                 show_timescooked: false,
                 show_makenow: false,
+                show_never_used_food: false,
                 show_cookedon: false,
                 show_viewedon: false,
                 show_createdon: false,
@@ -1234,6 +1249,7 @@ export default {
             this.search.pagination_page = 1
             this.search.timescooked = undefined
             this.search.makenow = false
+            this.search.never_used_food = false
             this.search.cookedon = undefined
             this.search.viewedon = undefined
             this.search.createdon = undefined
@@ -1331,6 +1347,7 @@ export default {
                 random: this.random_search,
                 timescooked: timescooked,
                 makenow: this.search.makenow || undefined,
+                never_used_food: this.search.never_used_food || undefined,
                 cookedon: cookedon,
                 createdon: createdon,
                 updatedon: updatedon,
@@ -1359,6 +1376,7 @@ export default {
                 this.search?.search_rating !== undefined ||
                 (this.search.timescooked !== undefined && this.search.timescooked !== "") ||
                 this.search.makenow !== false ||
+                this.search.never_used_food !== false ||
                 (this.search.cookedon !== undefined && this.search.cookedon !== "") ||
                 (this.search.viewedon !== undefined && this.search.viewedon !== "") ||
                 (this.search.createdon !== undefined && this.search.createdon !== "") ||
