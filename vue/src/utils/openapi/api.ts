@@ -2598,7 +2598,7 @@ export interface RecipeFile {
      * @type {string}
      * @memberof RecipeFile
      */
-    name: string;
+    file_download?: string;
     /**
      *
      * @type {string}
@@ -7293,7 +7293,6 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
 
 
 
-
             setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
@@ -7458,7 +7457,6 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
             if (pageSize !== undefined) {
                 localVarQueryParameter['page_size'] = pageSize;
             }
-
 
 
 
@@ -7840,7 +7838,6 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
 
 
 
-
             setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
@@ -8045,7 +8042,6 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
             if (pageSize !== undefined) {
                 localVarQueryParameter['page_size'] = pageSize;
             }
-
 
 
 
