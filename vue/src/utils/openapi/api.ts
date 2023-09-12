@@ -11516,7 +11516,6 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
             const localVarQueryParameter = {} as any;
 
 
-
             setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
@@ -11547,7 +11546,6 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
             const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
-
 
 
             setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
@@ -12980,8 +12978,8 @@ export const ApiApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async createKeyword(keyword?: Keyword, options?: any): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<Keyword>> {
-            const localVarAxiosArgs = await localVarAxiosParamCreator.createKeyword(keyword, options);
+        async createCookLog(cookLog?: CookLog, options?: any): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<CookLog>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.createCookLog(cookLog, options);
             return createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration);
         },
         /**
@@ -12990,8 +12988,8 @@ export const ApiApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async createMealPlan(mealPlan?: MealPlan, options?: any): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<MealPlan>> {
-            const localVarAxiosArgs = await localVarAxiosParamCreator.createMealPlan(mealPlan, options);
+        async createCustomFilter(customFilter?: CustomFilter, options?: any): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<CustomFilter>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.createCustomFilter(customFilter, options);
             return createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration);
         },
         /**
@@ -13000,8 +12998,8 @@ export const ApiApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async createMealType(mealType?: MealType, options?: any): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<MealType>> {
-            const localVarAxiosArgs = await localVarAxiosParamCreator.createMealType(mealType, options);
+        async createExportLog(exportLog?: ExportLog, options?: any): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<ExportLog>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.createExportLog(exportLog, options);
             return createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration);
         },
         /**
@@ -16463,8 +16461,8 @@ export const ApiApiFactory = function (configuration?: Configuration, basePath?:
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        partialUpdateMealType(id: string, mealType?: MealType, options?: any): AxiosPromise<MealType> {
-            return localVarFp.partialUpdateMealType(id, mealType, options).then((request) => request(axios, basePath));
+        partialUpdateExportLog(id: string, exportLog?: ExportLog, options?: any): AxiosPromise<ExportLog> {
+            return localVarFp.partialUpdateExportLog(id, exportLog, options).then((request) => request(axios, basePath));
         },
         /**
          *
