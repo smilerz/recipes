@@ -113,6 +113,13 @@ class RecipeSearch():
 
             if self._search_type not in ['websearch', 'raw'] and self._trigram_include:
                 self._trigram = True
+            self.search_query = SearchQuery(
+                self._string,
+                search_type=self._search_type,
+                config=self._language,
+            )
+            self.search_rank = None
+        self.orderby = []
         self._filters = None
         self._fuzzy_match = None
 
