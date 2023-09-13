@@ -114,6 +114,19 @@ class RecipeSearch():
 
             if self._search_type not in ['websearch', 'raw'] and self._trigram_include:
                 self._trigram = True
+            self.search_query = SearchQuery(
+                self._string,
+                search_type=self._search_type,
+                config=self._language,
+            )
+            self.search_rank = None
+        self.orderby = []
+        self._filters = None
+        self._fuzzy_match = None
+
+    def get_queryset(self, queryset):
+        self._queryset = queryset
+        self._queryset = self._queryset.prefetch_related('keywords')
         self._build_sort_order()
         self._recently_viewed(num_recent=self._num_recent)
         self._cooked_on_filter(cooked_date=self._cookedon)
