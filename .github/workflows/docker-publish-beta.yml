@@ -31,10 +31,8 @@ jobs:
         run: |
           if [[ "$GITHUB_REF" = refs/tags/* ]]; then
             echo "VERSION=${GITHUB_REF/refs\/tags\//}" >> $GITHUB_OUTPUT
-          elif [[ "$GITHUB_REF" = refs/heads/beta ]]; then
-            echo VERSION=beta >> $GITHUB_OUTPUT
           else
-            echo VERSION=develop >> $GITHUB_OUTPUT
+            echo VERSION=working >> $GITHUB_OUTPUT
           fi
 
       # Build Vue frontend
