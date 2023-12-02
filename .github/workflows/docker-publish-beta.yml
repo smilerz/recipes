@@ -67,7 +67,7 @@ jobs:
           context: .
           file: ${{ matrix.dockerfile }}
           pull: true
-          push: ${{ github.secret_source == 'Repository' }}
+          push: true
           platforms: ${{ matrix.platforms }}
           tags: '${{ steps.meta.outputs.tags }}'
           cache-from: type=gha
