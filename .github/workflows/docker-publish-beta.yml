@@ -32,7 +32,7 @@ jobs:
           if [[ "$GITHUB_REF" = refs/tags/* ]]; then
             echo "VERSION=${GITHUB_REF/refs\/tags\//}" >> $GITHUB_OUTPUT
           else
-            echo VERSION=latest >> $GITHUB_OUTPUT
+            echo VERSION=working >> $GITHUB_OUTPUT
           fi
 
       # Build Vue frontend
@@ -62,7 +62,7 @@ jobs:
         uses: docker/metadata-action@v5
         with:
           images: |
-            smilerz/recipes
+            smilerz/recipes:latest
       - name: Build and Push
         uses: docker/build-push-action@v5
         with:
@@ -71,6 +71,5 @@ jobs:
           pull: true
           push: ${{ github.secret_source == 'Repository' }}
           platforms: ${{ matrix.platforms }}
-          tags: ${{ steps.meta.outputs.tags }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
