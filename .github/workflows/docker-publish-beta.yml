@@ -21,7 +21,7 @@ jobs:
           - name: Standard
             dockerfile: Dockerfile
             platforms: linux/amd64
-            suffix: "latest"
+            suffix: ""
             continue-on-error: false
     steps:
       - uses: actions/checkout@v3
@@ -31,8 +31,10 @@ jobs:
         run: |
           if [[ "$GITHUB_REF" = refs/tags/* ]]; then
             echo "VERSION=${GITHUB_REF/refs\/tags\//}" >> $GITHUB_OUTPUT
+          elif [[ "$GITHUB_REF" = refs/heads/beta ]]; then
+            echo VERSION=beta >> $GITHUB_OUTPUT
           else
-            echo VERSION=working >> $GITHUB_OUTPUT
+            echo VERSION=latest >> $GITHUB_OUTPUT
           fi
 
       # Build Vue frontend
@@ -62,7 +64,7 @@ jobs:
         uses: docker/metadata-action@v5
         with:
           images: |
-            smilerz/recipes:latest
+            smilerz/recipes
       - name: Build and Push
         uses: docker/build-push-action@v5
         with:
@@ -71,5 +73,6 @@ jobs:
           pull: true
           push: ${{ github.secret_source == 'Repository' }}
           platforms: ${{ matrix.platforms }}
+          tags: ${{ steps.meta.outputs.tags }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
