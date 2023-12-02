@@ -24,17 +24,6 @@ jobs:
             suffix: "latest"
             continue-on-error: false
     steps:
-      - uses: actions/checkout@v3
-
-      - name: Get version number
-        id: get_version
-        run: |
-          if [[ "$GITHUB_REF" = refs/tags/* ]]; then
-            echo "VERSION=${GITHUB_REF/refs\/tags\//}" >> $GITHUB_OUTPUT
-          else
-            echo VERSION=working >> $GITHUB_OUTPUT
-          fi
-
       # Build Vue frontend
       - uses: actions/setup-node@v3
         with:
@@ -63,6 +52,8 @@ jobs:
         with:
           images: |
             smilerz/recipes
+          tags: |
+            type=raw,value=latest,enable={{is_default_branch}}
       - name: Build and Push
         uses: docker/build-push-action@v5
         with:
