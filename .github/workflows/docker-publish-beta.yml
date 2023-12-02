@@ -53,12 +53,14 @@ jobs:
         with:
           username: ${{ secrets.USERNAME }}
           password: ${{ secrets.PASSWORD }}
-      - name: Docker meta
+      - name: Docker Metadata
         id: meta
         uses: docker/metadata-action@v5
         with:
           images: |
             smilerz/recipes
+          tags: |
+            type=raw,value=latest,enable={{is_default_branch}}
       - name: Build and Push
         uses: docker/build-push-action@v5
         with:
@@ -67,6 +69,6 @@ jobs:
           pull: true
           push: ${{ github.secret_source == 'Repository' }}
           platforms: ${{ matrix.platforms }}
-          tags: 'latest'
+          tags: '${{ steps.meta.outputs.tags }}'
           cache-from: type=gha
           cache-to: type=gha,mode=max
