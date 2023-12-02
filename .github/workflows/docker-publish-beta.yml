@@ -24,19 +24,6 @@ jobs:
             suffix: ""
             continue-on-error: false
     steps:
-      - uses: actions/checkout@v3
-
-      - name: Get version number
-        id: get_version
-        run: |
-          if [[ "$GITHUB_REF" = refs/tags/* ]]; then
-            echo "VERSION=${GITHUB_REF/refs\/tags\//}" >> $GITHUB_OUTPUT
-          elif [[ "$GITHUB_REF" = refs/heads/beta ]]; then
-            echo VERSION=beta >> $GITHUB_OUTPUT
-          else
-            echo VERSION=latest >> $GITHUB_OUTPUT
-          fi
-
       # Build Vue frontend
       - uses: actions/setup-node@v3
         with:
@@ -73,6 +60,5 @@ jobs:
           pull: true
           push: ${{ github.secret_source == 'Repository' }}
           platforms: ${{ matrix.platforms }}
-          tags: ${{ steps.meta.outputs.tags }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
