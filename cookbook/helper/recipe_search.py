@@ -531,7 +531,7 @@ class RecipeSearch():
         if missing is None or (isinstance(missing, bool) and missing == False):
             return
         shopping_users = [*self._request.user.get_shopping_share(), self._request.user]
-
+        onhand_filter = Q(steps__ingredients__food__onhand_users__in=shopping_users)  # food onhand
         # ignore substitutions when also using the never_used_food filter
         if not self._never_used_food:
             # or substitute food onhand
