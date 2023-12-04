@@ -531,6 +531,7 @@ class RecipeSearch():
         if missing is None or (isinstance(missing, bool) and missing == False):
             return
         shopping_users = [*self._request.user.get_shopping_share(), self._request.user]
+        onhand_filter = Q(steps__ingredients__food__onhand_users__in=shopping_users)  # food onhand
 
         # ignore substitutions when also using the never_used_food filter
         if not self._never_used_food:
@@ -562,6 +563,12 @@ class RecipeSearch():
             has_sibling_sub=Case(When(steps__ingredients__food__in=self.__sibling_substitute_filter(shopping_users), then=Value(1)), default=Value(0))
         ).annotate(missingfood=F('count_food') - F('count_onhand') - F('count_ignore_shopping')).filter(missingfood__lte=missing)
         self._queryset = self._queryset.distinct().filter(id__in=makenow_recipes.values('id'))
+
+    def _never_used_food_filter(self):
+        # filters recipes to include foods that have never been used
+        if not self._never_used_food:
+            return
+        self._queryset = self._queryset.filter(steps__ingredients__food__in=Food.objects.filter(~Q(ingredient__step__recipe__cooklog__isnull=False)).distinct())
 
     def _never_used_food_filter(self):
         # filters recipes to include foods that have never been used

@@ -608,6 +608,32 @@
                                                         />
                                                     </b-input-group-text>
                                                 </b-input-group-append>
+                                                <b-input-group-append v-if="ui.show_never_used_food">
+                                                    <b-input-group-text>
+                                                        {{ $t("never_used_food") }}
+                                                        <b-form-checkbox
+                                                            v-model="search.never_used_food"
+                                                            name="check-button"
+                                                            @change="refreshData(false)"
+                                                            class="shadow-none"
+                                                            switch
+                                                            style="width: 4em"
+                                                        />
+                                                    </b-input-group-text>
+                                                </b-input-group-append>
+                                                <b-input-group-append v-if="ui.show_never_used_food">
+                                                    <b-input-group-text>
+                                                        {{ $t("never_used_food") }}
+                                                        <b-form-checkbox
+                                                            v-model="search.never_used_food"
+                                                            name="check-button"
+                                                            @change="refreshData(false)"
+                                                            class="shadow-none"
+                                                            switch
+                                                            style="width: 4em"
+                                                        />
+                                                    </b-input-group-text>
+                                                </b-input-group-append>
                                             </b-input-group>
                                         </div>
                                     </div>
