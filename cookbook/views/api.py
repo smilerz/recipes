@@ -638,9 +638,9 @@ class FoodViewSet(viewsets.ModelViewSet, TreeMixin):
             Property.objects.filter(space=self.request.space, import_food_id=food.id).update(import_food_id=None)
 
             return self.retrieve(request, pk)
-        except Exception as e:
+        except Exception:
             traceback.print_exc()
-            return JsonResponse({'msg': f'there was an error parsing the FDC data, please check the server logs'}, status=500, json_dumps_params={'indent': 4})
+            return JsonResponse({'msg': 'there was an error parsing the FDC data, please check the server logs'}, status=500, json_dumps_params={'indent': 4})
 
     @decorators.action(detail=True, methods=['GET'], serializer_class=FoodSimpleSerializer, )
     def substitutes(self, request, pk):
@@ -711,11 +711,18 @@ class MealPlanViewSet(viewsets.ModelViewSet):
 
     - **from_date**: filter from (inclusive) a certain date onward
     - **to_date**: filter upward to (inclusive) certain date
+    - **meal_type**: filter meal plans based on meal_type ID
 
     """
     queryset = MealPlan.objects
     serializer_class = MealPlanSerializer
     permission_classes = [(CustomIsOwner | CustomIsShared) & CustomTokenHasReadWriteScope]
+    query_params = [
+        QueryParam(name='from_date', description=_('Filter meal plans from date (inclusive) in the format of YYYY-MM-DD.'), qtype='string'),
+        QueryParam(name='to_date', description=_('Filter meal plans to date (inclusive) in the format of YYYY-MM-DD.'), qtype='string'),
+        QueryParam(name='meal_type', description=_('Filter meal plans with MealType ID.'), qtype='int'),
+    ]
+    schema = QueryParamAutoSchema()
 
     def get_queryset(self):
         queryset = self.queryset.filter(
@@ -730,6 +737,11 @@ class MealPlanViewSet(viewsets.ModelViewSet):
         to_date = self.request.query_params.get('to_date', None)
         if to_date is not None:
             queryset = queryset.filter(to_date__lte=to_date)
+
+        meal_type = self.request.query_params.get('meal_type', None)
+        if meal_type is not None:
+            queryset = queryset.filter(meal_type__id=meal_type)
+
         return queryset
 
 
