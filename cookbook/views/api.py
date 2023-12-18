@@ -46,6 +46,7 @@ from rest_framework.pagination import PageNumberPagination
 from rest_framework.parsers import MultiPartParser
 from rest_framework.renderers import JSONRenderer, TemplateHTMLRenderer
 from rest_framework.response import Response
+from rest_framework.schemas import DefaultSchema
 from rest_framework.throttling import AnonRateThrottle, UserRateThrottle
 from rest_framework.views import APIView
 from rest_framework.viewsets import ViewSetMixin
@@ -1332,12 +1333,10 @@ class CustomAuthToken(ObtainAuthToken):
     throttle_classes = [AuthTokenThrottle]
 
     def post(self, request, *args, **kwargs):
-        serializer = self.serializer_class(data=request.data,
-                                           context={'request': request})
+        serializer = self.serializer_class(data=request.data, context={'request': request})
         serializer.is_valid(raise_exception=True)
         user = serializer.validated_data['user']
-        if token := AccessToken.objects.filter(user=user, expires__gt=timezone.now(), scope__contains='read').filter(
-                scope__contains='write').first():
+        if token := AccessToken.objects.filter(user=user, expires__gt=timezone.now(), scope__contains='read').filter(scope__contains='write').first():
             access_token = token
         else:
             access_token = AccessToken.objects.create(user=user, token=f'tda_{str(uuid.uuid4()).replace("-", "_")}',
@@ -1353,7 +1352,7 @@ class CustomAuthToken(ObtainAuthToken):
         })
 
 
-class RecipeUrlImportView(ObtainAuthToken):
+class RecipeUrlImportView(ObtainAuthToken, viewsets.ModelViewSet):
     throttle_classes = [RecipeImportThrottle]
     permission_classes = [CustomIsUser & CustomTokenHasReadWriteScope]
 
