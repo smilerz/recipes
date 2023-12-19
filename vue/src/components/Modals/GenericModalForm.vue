@@ -7,20 +7,80 @@
             <b-modal :id="'modal_' + id" @hidden="cancelAction" size="lg">
                 <template v-slot:modal-title>
                     <h4 class="d-inline">{{ form.title }}</h4>
-                    <help-badge v-if="form.show_help" @show="show_help = true" @hide="show_help = false" :component="`GenericModal${form.title}`"/>
+                    <help-badge v-if="form.show_help" @show="show_help = true" @hide="show_help = false" :component="`GenericModal${form.title}`" />
                 </template>
                 <div v-for="(f, i) in form.fields" v-bind:key="i">
                     <p v-if="visibleCondition(f, 'instruction')">{{ f.label }}</p>
-                    <lookup-input v-if="visibleCondition(f, 'lookup')" :form="f" :model="listModel(f.list)" @change="storeValue" :help="showHelp && f.help" :optional="f.optional"/>
-                    <checkbox-input class="mb-3" v-if="visibleCondition(f, 'checkbox')" :label="f.label" :value="f.value" :field="f.field" :help="showHelp && f.help"/>
-                    <text-input v-if="visibleCondition(f, 'text')" :label="f.label" :value="f.value" :field="f.field" :placeholder="f.placeholder" :help="showHelp && f.help" :subtitle="f.subtitle" :disabled="f.disabled" :optional="f.optional"/>
-                    <text-area-input v-if="visibleCondition(f, 'textarea')" :label="f.label" :value="f.value" :field="f.field" :placeholder="f.placeholder" :help="showHelp && f.help" :subtitle="f.subtitle" :disabled="f.disabled" :optional="f.optional"/>
-                    <choice-input v-if="visibleCondition(f, 'choice')" :label="f.label" :value="f.value" :field="f.field" :options="f.options" :placeholder="f.placeholder" :optional="f.optional"/>
-                    <file-input v-if="visibleCondition(f, 'file')" :label="f.label" :value="f.value" :field="f.field" @change="storeValue" :optional="f.optional"/>
+                    <lookup-input
+                        v-if="visibleCondition(f, 'lookup')"
+                        :form="f"
+                        :model="listModel(f.list)"
+                        @change="storeValue"
+                        :help="showHelp && f.help"
+                        :optional="f.optional"
+                    />
+                    <checkbox-input class="mb-3" v-if="visibleCondition(f, 'checkbox')" :label="f.label" :value="f.value" :field="f.field" :help="showHelp && f.help" />
+                    <text-input
+                        v-if="visibleCondition(f, 'text')"
+                        :label="f.label"
+                        :value="f.value"
+                        :field="f.field"
+                        :placeholder="f.placeholder"
+                        :help="showHelp && f.help"
+                        :subtitle="f.subtitle"
+                        :disabled="f.disabled"
+                        :optional="f.optional"
+                    />
+                    <text-area-input
+                        v-if="visibleCondition(f, 'textarea')"
+                        :label="f.label"
+                        :value="f.value"
+                        :field="f.field"
+                        :placeholder="f.placeholder"
+                        :help="showHelp && f.help"
+                        :subtitle="f.subtitle"
+                        :disabled="f.disabled"
+                        :optional="f.optional"
+                    />
+                    <choice-input
+                        v-if="visibleCondition(f, 'choice')"
+                        :label="f.label"
+                        :value="f.value"
+                        :field="f.field"
+                        :options="f.options"
+                        :placeholder="f.placeholder"
+                        :optional="f.optional"
+                    />
+                    <file-input v-if="visibleCondition(f, 'file')" :label="f.label" :value="f.value" :field="f.field" @change="storeValue" :optional="f.optional" />
                     <small-text v-if="visibleCondition(f, 'smalltext')" :value="f.value" />
-                    <date-input v-if="visibleCondition(f, 'date')" :label="f.label" :value="f.value" :field="f.field" :help="showHelp && f.help" :subtitle="f.subtitle" :optional="f.optional"/>
-                    <color-input v-if="visibleCondition(f, 'color')" :label="f.label" :value="f.value" :field="f.field" :help="showHelp && f.help" :subtitle="f.subtitle" :optional="f.optional"/>
-                    <number-input v-if="visibleCondition(f, 'number')" :label="f.label" :value="f.value" :field="f.field" :placeholder="f.placeholder" :help="showHelp && f.help" :subtitle="f.subtitle" :optional="f.optional"/>
+                    <date-input
+                        v-if="visibleCondition(f, 'date')"
+                        :label="f.label"
+                        :value="f.value"
+                        :field="f.field"
+                        :help="showHelp && f.help"
+                        :subtitle="f.subtitle"
+                        :optional="f.optional"
+                    />
+                    <color-input
+                        v-if="visibleCondition(f, 'color')"
+                        :label="f.label"
+                        :value="f.value"
+                        :field="f.field"
+                        :help="showHelp && f.help"
+                        :subtitle="f.subtitle"
+                        :optional="f.optional"
+                    />
+                    <number-input
+                        v-if="visibleCondition(f, 'number')"
+                        :label="f.label"
+                        :value="f.value"
+                        :field="f.field"
+                        :placeholder="f.placeholder"
+                        :help="showHelp && f.help"
+                        :subtitle="f.subtitle"
+                        :optional="f.optional"
+                    />
                 </div>
                 <template v-slot:modal-footer>
                     <div class="row w-100">
@@ -35,30 +95,29 @@
                 </template>
             </b-modal>
         </template>
-
     </div>
 </template>
 
 <script>
+import { formFunctions, getForm } from "@/utils/utils"
+import { BootstrapVue } from "bootstrap-vue"
 import Vue from "vue"
-import {BootstrapVue} from "bootstrap-vue"
-import {getForm, formFunctions} from "@/utils/utils"
 
 Vue.use(BootstrapVue)
 
-import {ApiApiFactory} from "@/utils/openapi/api"
-import {ApiMixin, StandardToasts, ToastMixin, getUserPreference} from "@/utils/utils"
-import CheckboxInput from "@/components/Modals/CheckboxInput"
-import LookupInput from "@/components/Modals/LookupInput"
-import TextInput from "@/components/Modals/TextInput"
-import DateInput from "@/components/Modals/DateInput"
-import ChoiceInput from "@/components/Modals/ChoiceInput"
-import FileInput from "@/components/Modals/FileInput"
-import SmallText from "@/components/Modals/SmallText"
 import HelpBadge from "@/components/Badges/Help"
-import NumberInput from "@/components/Modals/NumberInput.vue";
-import TextAreaInput from "@/components/Modals/TextAreaInput.vue";
-import ColorInput from "@/components/Modals/ColorInput.vue";
+import CheckboxInput from "@/components/Modals/CheckboxInput"
+import ChoiceInput from "@/components/Modals/ChoiceInput"
+import ColorInput from "@/components/Modals/ColorInput.vue"
+import DateInput from "@/components/Modals/DateInput"
+import FileInput from "@/components/Modals/FileInput"
+import LookupInput from "@/components/Modals/LookupInput"
+import NumberInput from "@/components/Modals/NumberInput.vue"
+import SmallText from "@/components/Modals/SmallText"
+import TextAreaInput from "@/components/Modals/TextAreaInput.vue"
+import TextInput from "@/components/Modals/TextInput"
+import { ApiApiFactory } from "@/utils/openapi/api"
+import { ApiMixin, StandardToasts, ToastMixin, getUserPreference } from "@/utils/utils"
 
 export default {
     name: "GenericModalForm",
@@ -73,11 +132,11 @@ export default {
         DateInput,
         NumberInput,
         TextAreaInput,
-        ColorInput
+        ColorInput,
     },
     mixins: [ApiMixin, ToastMixin],
     props: {
-        model: {required: true, type: Object},
+        model: { required: true, type: Object },
         action: {
             type: Object,
             default() {
@@ -96,8 +155,8 @@ export default {
                 return {}
             },
         },
-        show: {required: true, type: Boolean, default: false},
-        models: {required: false, type: Function, default: null}
+        show: { required: true, type: Boolean, default: false },
+        models: { required: false, type: Function, default: null },
     },
     data() {
         return {
@@ -159,6 +218,7 @@ export default {
                 this.$bvModal.hide("modal_" + this.id)
                 this.form_data = {}
             }
+            console.log(this.form)
         },
     },
     methods: {
@@ -209,7 +269,7 @@ export default {
             return form
         },
         delete: function () {
-            this.genericAPI(this.model, this.Actions.DELETE, {id: this.item1.id})
+            this.genericAPI(this.model, this.Actions.DELETE, { id: this.item1.id })
                 .then((result) => {
                     this.$emit("finish-action")
                     StandardToasts.makeStandardToast(this, StandardToasts.SUCCESS_DELETE)
@@ -228,7 +288,7 @@ export default {
                 // if there is no item id assume it's a new item
                 this.genericAPI(this.model, this.Actions.CREATE, this.form_data)
                     .then((result) => {
-                        this.$emit("finish-action", {item: result.data})
+                        this.$emit("finish-action", { item: result.data })
                         StandardToasts.makeStandardToast(this, StandardToasts.SUCCESS_CREATE)
                     })
                     .catch((err) => {
@@ -239,7 +299,7 @@ export default {
             } else {
                 this.genericAPI(this.model, this.Actions.UPDATE, this.form_data)
                     .then((result) => {
-                        this.$emit("finish-action", {item: result.data})
+                        this.$emit("finish-action", { item: result.data })
                         StandardToasts.makeStandardToast(this, StandardToasts.SUCCESS_UPDATE)
                     })
                     .catch((err) => {
@@ -259,9 +319,9 @@ export default {
                 this.$emit("finish-action", "cancel")
                 return
             }
-            this.genericAPI(this.model, this.Actions.MOVE, {source: this.item1.id, target: this.form_data.target.id})
+            this.genericAPI(this.model, this.Actions.MOVE, { source: this.item1.id, target: this.form_data.target.id })
                 .then((result) => {
-                    this.$emit("finish-action", {target: this.form_data.target.id})
+                    this.$emit("finish-action", { target: this.form_data.target.id })
                     StandardToasts.makeStandardToast(this, StandardToasts.SUCCESS_MOVE)
                 })
                 .catch((err) => {
@@ -287,7 +347,7 @@ export default {
                 .then((result) => {
                     this.$emit("finish-action", {
                         target: this.form_data.target.id,
-                        target_object: this.form_data.target
+                        target_object: this.form_data.target,
                     }) //TODO temporary workaround to not change other apis
                     StandardToasts.makeStandardToast(this, StandardToasts.SUCCESS_MERGE)
                 })

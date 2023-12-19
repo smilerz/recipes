@@ -50,6 +50,7 @@ export const useMealPlanStore = defineStore(_STORE_ID, {
             if (this.currently_updating !== [from_date, to_date]) {
                 this.currently_updating = [from_date, to_date] // certainly no perfect check but better than nothing
 
+                console.log(from_date, to_date)
                 let apiClient = new ApiApiFactory()
                 apiClient.listMealPlans(from_date, to_date).then((r) => {
                     r.data.forEach((p) => {
