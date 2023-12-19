@@ -538,6 +538,7 @@ export function getForm(model, action, item1, item2) {
     }
     let form = { fields: [] }
     let value = ""
+    console.log("config:", config)
     for (const [k, v] of Object.entries(config)) {
         if (v?.function) {
             switch (v.function) {

@@ -509,6 +509,7 @@
     "Combine_All_Steps": "Combine all steps into a single field.",
     "Plural": "Plural",
     "plural_short": "plural",
+    "plural_name": "Plural name",
     "g": "gram [g] (metric, weight)",
     "kg": "kilogram [kg] (metric, weight)",
     "ounce": "ounce [oz] (weight)",
@@ -547,9 +548,5 @@
     "SubstitutesList": "Substitutes On Hand",
     "No_Ignore_Shopping": "Don't Ignore Shopping",
     "ingredient_context": "Ingredient Context Menu",
-    "ingredient_context_help": "Show an ingredient context menu when viewing a recipe.",
-    "OnHand_On": "Set this food on hand.",
-    "OnHand_Off": "Set this food not on hand.",
-    "SubstitutesList": "Substitutes On Hand",
-    "No_Ignore_Shopping": "Don't Ignore Shopping"
+    "ingredient_context_help": "Show an ingredient context menu when viewing a recipe."
 }
