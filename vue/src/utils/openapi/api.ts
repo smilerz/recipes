@@ -7178,7 +7178,7 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
          * optional parameters  - **from_date**: filter from (inclusive) a certain date onward - **to_date**: filter upward to (inclusive) certain date - **meal_type**: filter meal plans based on meal_type ID
          * @param {string} [fromDate] Filter meal plans from date (inclusive) in the format of YYYY-MM-DD.
          * @param {string} [toDate] Filter meal plans to date (inclusive) in the format of YYYY-MM-DD.
-         * @param {number} [mealType] Filter meal plans with MealType ID.
+         * @param {number} [mealType] Filter meal plans with MealType ID. For multiple repeat parameter.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -13228,7 +13228,7 @@ export const ApiApiFp = function(configuration?: Configuration) {
          * optional parameters  - **from_date**: filter from (inclusive) a certain date onward - **to_date**: filter upward to (inclusive) certain date - **meal_type**: filter meal plans based on meal_type ID
          * @param {string} [fromDate] Filter meal plans from date (inclusive) in the format of YYYY-MM-DD.
          * @param {string} [toDate] Filter meal plans to date (inclusive) in the format of YYYY-MM-DD.
-         * @param {number} [mealType] Filter meal plans with MealType ID.
+         * @param {number} [mealType] Filter meal plans with MealType ID. For multiple repeat parameter.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -15506,7 +15506,7 @@ export const ApiApiFactory = function (configuration?: Configuration, basePath?:
          * optional parameters  - **from_date**: filter from (inclusive) a certain date onward - **to_date**: filter upward to (inclusive) certain date - **meal_type**: filter meal plans based on meal_type ID
          * @param {string} [fromDate] Filter meal plans from date (inclusive) in the format of YYYY-MM-DD.
          * @param {string} [toDate] Filter meal plans to date (inclusive) in the format of YYYY-MM-DD.
-         * @param {number} [mealType] Filter meal plans with MealType ID.
+         * @param {number} [mealType] Filter meal plans with MealType ID. For multiple repeat parameter.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -17802,7 +17802,7 @@ export class ApiApi extends BaseAPI {
      * optional parameters  - **from_date**: filter from (inclusive) a certain date onward - **to_date**: filter upward to (inclusive) certain date - **meal_type**: filter meal plans based on meal_type ID
      * @param {string} [fromDate] Filter meal plans from date (inclusive) in the format of YYYY-MM-DD.
      * @param {string} [toDate] Filter meal plans to date (inclusive) in the format of YYYY-MM-DD.
-     * @param {number} [mealType] Filter meal plans with MealType ID.
+     * @param {number} [mealType] Filter meal plans with MealType ID. For multiple repeat parameter.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof ApiApi
