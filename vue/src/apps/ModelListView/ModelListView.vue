@@ -1,7 +1,6 @@
 <template>
     <div id="app" style="margin-bottom: 4vh" v-if="this_model">
-        <generic-modal-form v-if="this_model" :model="this_model" :action="this_action" :item1="this_item"
-                            :item2="this_target" :show="show_modal" @finish-action="finishAction"/>
+        <generic-modal-form v-if="this_model" :model="this_model" :action="this_action" :item1="this_item" :item2="this_target" :show="show_modal" @finish-action="finishAction" />
 
         <div class="row">
             <div class="col-md-2 d-none d-md-block"></div>
@@ -18,19 +17,25 @@
                         <div class="col-md-9" style="margin-top: 1vh">
                             <h3>
                                 <!-- <span><b-button variant="link" size="sm" class="text-dark shadow-none"><i class="fas fa-chevron-down"></i></b-button></span> -->
-                                <model-menu/>
+                                <model-menu />
                                 <span>{{ $t(this.this_model.name) }}</span>
                                 <span v-if="apiName !== 'Step' && apiName !== 'CustomFilter'">
                                     <b-button variant="link" @click="startAction({ action: 'new' })">
                                         <i class="fas fa-plus-circle fa-2x"></i>
-                                    </b-button> </span >
+                                    </b-button>
+                                </span>
                                 <!-- TODO add proper field to model config to determine if create should be available or not -->
                             </h3>
                         </div>
                         <div class="col-md-3" style="position: relative; margin-top: 1vh">
-                            <b-form-checkbox v-model="show_split" name="check-button" v-if="paginated"
-                                             class="shadow-none"
-                                             style="position: relative; top: 50%; transform: translateY(-50%)" switch>
+                            <b-form-checkbox
+                                v-model="show_split"
+                                name="check-button"
+                                v-if="paginated"
+                                class="shadow-none"
+                                style="position: relative; top: 50%; transform: translateY(-50%)"
+                                switch
+                            >
                                 {{ $t("show_split_screen") }}
                             </b-form-checkbox>
                         </div>
@@ -40,29 +45,46 @@
                         <div class="col" :class="{ 'col-md-6': show_split }">
                             <!-- model isn't paginated and loads in one API call -->
                             <div v-if="!paginated">
-                                <generic-horizontal-card v-for="i in items_left" v-bind:key="i.id" :item="i"
-                                                         :model="this_model" @item-action="startAction($event, 'left')"
-                                                         @finish-action="finishAction"/>
+                                <generic-horizontal-card
+                                    v-for="i in items_left"
+                                    v-bind:key="i.id"
+                                    :item="i"
+                                    :model="this_model"
+                                    @item-action="startAction($event, 'left')"
+                                    @finish-action="finishAction"
+                                />
                             </div>
                             <!-- model is paginated and needs managed -->
-                            <generic-infinite-cards v-if="paginated" :card_counts="left_counts" :scroll="show_split"
-                                                    @search="getItems($event, 'left')" @reset="resetList('left')">
+                            <generic-infinite-cards v-if="paginated" :card_counts="left_counts" :scroll="show_split" @search="getItems($event, 'left')" @reset="resetList('left')">
                                 <template v-slot:cards>
-                                    <generic-horizontal-card v-for="i in items_left" v-bind:key="i.id" :item="i"
-                                                             :model="this_model"
-                                                             @item-action="startAction($event, 'left')"
-                                                             @finish-action="finishAction"/>
+                                    <generic-horizontal-card
+                                        v-for="i in items_left"
+                                        v-bind:key="i.id"
+                                        :item="i"
+                                        :model="this_model"
+                                        @item-action="startAction($event, 'left')"
+                                        @finish-action="finishAction"
+                                    />
                                 </template>
                             </generic-infinite-cards>
                         </div>
                         <div class="col col-md-6" v-if="show_split">
-                            <generic-infinite-cards v-if="this_model" :card_counts="right_counts" :scroll="show_split"
-                                                    @search="getItems($event, 'right')" @reset="resetList('right')">
+                            <generic-infinite-cards
+                                v-if="this_model"
+                                :card_counts="right_counts"
+                                :scroll="show_split"
+                                @search="getItems($event, 'right')"
+                                @reset="resetList('right')"
+                            >
                                 <template v-slot:cards>
-                                    <generic-horizontal-card v-for="i in items_right" v-bind:key="i.id" :item="i"
-                                                             :model="this_model"
-                                                             @item-action="startAction($event, 'right')"
-                                                             @finish-action="finishAction"/>
+                                    <generic-horizontal-card
+                                        v-for="i in items_right"
+                                        v-bind:key="i.id"
+                                        :item="i"
+                                        :model="this_model"
+                                        @item-action="startAction($event, 'right')"
+                                        @finish-action="finishAction"
+                                    />
                                 </template>
                             </generic-infinite-cards>
                         </div>
@@ -74,19 +96,18 @@
 </template>
 
 <script>
+import { BootstrapVue } from "bootstrap-vue"
 import Vue from "vue"
-import {BootstrapVue} from "bootstrap-vue"
 
 import "bootstrap-vue/dist/bootstrap-vue.css"
 
-import {CardMixin, ApiMixin, getConfig, resolveDjangoUrl} from "@/utils/utils"
-import {StandardToasts, ToastMixin} from "@/utils/utils"
+import { ApiMixin, CardMixin, StandardToasts, ToastMixin, getConfig, resolveDjangoUrl } from "@/utils/utils"
 
-import GenericInfiniteCards from "@/components/GenericInfiniteCards"
-import GenericHorizontalCard from "@/components/GenericHorizontalCard"
-import GenericModalForm from "@/components/Modals/GenericModalForm"
 import ModelMenu from "@/components/ContextMenu/ModelMenu"
-import {ApiApiFactory} from "@/utils/openapi/api"
+import GenericHorizontalCard from "@/components/GenericHorizontalCard"
+import GenericInfiniteCards from "@/components/GenericInfiniteCards"
+import GenericModalForm from "@/components/Modals/GenericModalForm"
+import { ApiApiFactory } from "@/utils/openapi/api"
 //import StorageQuota from "@/components/StorageQuota";
 
 Vue.use(BootstrapVue)
@@ -107,8 +128,8 @@ export default {
             // this.Models and this.Actions inherited from ApiMixin
             items_left: [],
             items_right: [],
-            right_counts: {max: 9999, current: 0},
-            left_counts: {max: 9999, current: 0},
+            right_counts: { max: 9999, current: 0 },
+            left_counts: { max: 9999, current: 0 },
             this_model: undefined,
             model_menu: undefined,
             this_action: undefined,
@@ -141,16 +162,16 @@ export default {
         this.header_component_name = this.this_model?.list?.header_component?.name ?? undefined
         this.$nextTick(() => {
             if (!this.paginated) {
-                this.getItems({page: 1}, "left")
+                this.getItems({ page: 1 }, "left")
             }
         })
         this.$i18n.locale = window.CUSTOM_LOCALE
         let apiClient = new ApiApiFactory()
-        apiClient.retrieveSpace(window.ACTIVE_SPACE_ID).then(r => {
+        apiClient.retrieveSpace(window.ACTIVE_SPACE_ID).then((r) => {
             this.use_plural = r.data.use_plural
-            if (!this.use_plural && this.this_model !== null && this.this_model.create.params[0] !== null && this.this_model.create.params[0].includes('plural_name')) {
-                let index = this.this_model.create.params[0].indexOf('plural_name')
-                if (index > -1){
+            if (!this.use_plural && this.this_model !== null && this.this_model.create.params[0] !== null && this.this_model.create.params[0].includes("plural_name")) {
+                let index = this.this_model.create.params[0].indexOf("plural_name")
+                if (index > -1) {
                     this.this_model.create.params[0].splice(index, 1)
                 }
                 delete this.this_model.create.form.plural_name
@@ -186,10 +207,10 @@ export default {
                 case "ingredient-editor": {
                     let url = resolveDjangoUrl("view_ingredient_editor")
                     if (this.this_model === this.Models.FOOD) {
-                        window.open(url + '?food_id=' + e.source.id, "_blank");
+                        window.open(url + "?food_id=" + e.source.id, "_blank")
                     }
                     if (this.this_model === this.Models.UNIT) {
-                        window.open(url + '?unit_id=' + e.source.id, "_blank");
+                        window.open(url + "?unit_id=" + e.source.id, "_blank")
                     }
                     break
                 }
@@ -270,7 +291,7 @@ export default {
         },
         getItems: function (params = {}, col) {
             let column = col || "left"
-            params.options = {query: {extended: 1}} // returns extended values in API response
+            params.options = { query: { extended: 1 } } // returns extended values in API response
             this.genericAPI(this.this_model, this.Actions.LIST, params)
                 .then((result) => {
                     let results = result.data?.results ?? result.data
@@ -286,11 +307,11 @@ export default {
                     }
                 })
                 .catch((err) => {
-                    StandardToasts.makeStandardToast(this,StandardToasts.FAIL_FETCH, err)
+                    StandardToasts.makeStandardToast(this, StandardToasts.FAIL_FETCH, err)
                 })
         },
         getThis: function (id, callback) {
-            return this.genericAPI(this.this_model, this.Actions.FETCH, {id: id})
+            return this.genericAPI(this.this_model, this.Actions.FETCH, { id: id })
         },
         saveThis: function (item) {
             if (!item?.id) {
@@ -301,20 +322,20 @@ export default {
                         // then place all new items at the top of the list - could sort instead
                         this.items_left = [result.data].concat(this.destroyCard(result?.data?.id, this.items_left))
                         // this creates a deep copy to make sure that columns stay independent
-                        this.items_right = [{...result.data}].concat(this.destroyCard(result?.data?.id, this.items_right))
-                        StandardToasts.makeStandardToast(this,StandardToasts.SUCCESS_CREATE)
+                        this.items_right = [{ ...result.data }].concat(this.destroyCard(result?.data?.id, this.items_right))
+                        StandardToasts.makeStandardToast(this, StandardToasts.SUCCESS_CREATE)
                     })
                     .catch((err) => {
-                        StandardToasts.makeStandardToast(this,StandardToasts.FAIL_CREATE, err)
+                        StandardToasts.makeStandardToast(this, StandardToasts.FAIL_CREATE, err)
                     })
             } else {
                 this.genericAPI(this.this_model, this.Actions.UPDATE, item)
                     .then((result) => {
                         this.refreshThis(item.id)
-                        StandardToasts.makeStandardToast(this,StandardToasts.SUCCESS_UPDATE)
+                        StandardToasts.makeStandardToast(this, StandardToasts.SUCCESS_UPDATE)
                     })
                     .catch((err) => {
-                        StandardToasts.makeStandardToast(this,StandardToasts.FAIL_UPDATE, err)
+                        StandardToasts.makeStandardToast(this, StandardToasts.FAIL_UPDATE, err)
                     })
             }
         },
@@ -322,10 +343,10 @@ export default {
         addShopping: function (food) {
             let api = new ApiApiFactory()
             food.shopping = true
-            api.createShoppingListEntry({food: food, amount: 1}).then(() => {
-                StandardToasts.makeStandardToast(this,StandardToasts.SUCCESS_CREATE)
+            api.createShoppingListEntry({ food: food, amount: 1 }).then(() => {
+                StandardToasts.makeStandardToast(this, StandardToasts.SUCCESS_CREATE)
                 this.refreshCard(food, this.items_left)
-                this.refreshCard({...food}, this.items_right)
+                this.refreshCard({ ...food }, this.items_right)
             })
         },
         updateThis: function (item) {
@@ -344,10 +365,10 @@ export default {
                 this.clearState()
                 return
             }
-            this.genericAPI(this.this_model, this.Actions.MOVE, {source: source_id, target: target_id})
+            this.genericAPI(this.this_model, this.Actions.MOVE, { source: source_id, target: target_id })
                 .then((result) => {
                     this.moveUpdateItem(source_id, target_id)
-                    StandardToasts.makeStandardToast(this,StandardToasts.SUCCESS_MOVE)
+                    StandardToasts.makeStandardToast(this, StandardToasts.SUCCESS_MOVE)
                 })
                 .catch((err) => {
                     console.log(err)
@@ -386,7 +407,7 @@ export default {
             })
                 .then((result) => {
                     this.mergeUpdateItem(source_id, target_id)
-                    StandardToasts.makeStandardToast(this,StandardToasts.SUCCESS_MERGE)
+                    StandardToasts.makeStandardToast(this, StandardToasts.SUCCESS_MERGE)
                 })
                 .catch((err) => {
                     //TODO error checking not working with OpenAPI methods
@@ -426,8 +447,8 @@ export default {
             let params = {
                 root: item.id,
                 pageSize: 200,
-                query: {extended: 1},
-                options: {query: {extended: 1}},
+                query: { extended: 1 },
+                options: { query: { extended: 1 } },
             }
             this.genericAPI(this.this_model, this.Actions.LIST, params)
                 .then((result) => {
@@ -440,13 +461,13 @@ export default {
                 })
                 .catch((err) => {
                     console.log(err)
-                    StandardToasts.makeStandardToast(this,StandardToasts.FAIL_FETCH, err)
+                    StandardToasts.makeStandardToast(this, StandardToasts.FAIL_FETCH, err)
                 })
         },
         getRecipes: function (col, item) {
             let parent = {}
             // TODO: make this generic
-            let params = {pageSize: 50, random: true}
+            let params = { pageSize: 50, random: true }
             params[this.this_recipe_param] = item.id
             this.genericAPI(this.Models.RECIPE, this.Actions.LIST, params)
                 .then((result) => {
@@ -465,7 +486,7 @@ export default {
         refreshThis: function (id) {
             this.getThis(id).then((result) => {
                 this.refreshCard(result.data, this.items_left)
-                this.refreshCard({...result.data}, this.items_right)
+                this.refreshCard({ ...result.data }, this.items_right)
             })
         },
         deleteThis: function (id) {
