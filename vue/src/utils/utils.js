@@ -527,7 +527,7 @@ export function getConfig(model, action) {
 export function getForm(model, action, item1, item2) {
     let f = action.function
     let config = { ...action?.form, ...model.model_type?.[f]?.form, ...model?.[f]?.form }
-    console.log(action?.form, model.model_type?.[f]?.form, model?.[f]?.form)
+    console.log(model, action)
     // if not defined partialUpdate will use form from create
     if (f === "partialUpdate" && Object.keys(config).length == 0) {
         config = { ...Actions.CREATE?.form, ...model.model_type?.["create"]?.form, ...model?.["create"]?.form }
