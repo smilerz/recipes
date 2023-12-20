@@ -30,19 +30,21 @@
                             </p>
                         </div>
 
-                        <div
-                            class="card-img-overlay d-flex flex-column justify-content-left float-left text-left pt-2"
-                            style="width: 40%"
-                            v-if="recipe.working_time !== 0 || recipe.waiting_time !== 0"
-                        >
-                            <b-badge pill variant="light" class="mt-1 font-weight-normal" v-if="recipe.working_time !== 0 && recipe.working_time !== undefined">
-                                <i class="fa fa-clock"></i> {{ working_time }}
-                            </b-badge>
-                            <b-badge pill variant="secondary" class="mt-1 font-weight-normal" v-if="recipe.waiting_time !== 0 && recipe.waiting_time !== undefined">
-                                <i class="fa fa-pause"></i> {{ waiting_time }}
-                            </b-badge>
-                            <recipe-rating :recipe="recipe"></recipe-rating>
-                        </div>
+                        <b-row class="card-img-overlay pt-1">
+                            <b-col cols="6">
+                                <div v-if="recipe.working_time !== 0 || recipe.waiting_time !== 0">
+                                    <b-badge pill variant="light" class="mt-1 font-weight-normal" v-if="recipe.working_time !== 0 && recipe.working_time !== undefined">
+                                        <i class="fa fa-clock"></i> {{ working_time }}
+                                    </b-badge>
+                                    <b-badge pill variant="secondary" class="mt-1 font-weight-normal" v-if="recipe.waiting_time !== 0 && recipe.waiting_time !== undefined">
+                                        <i class="fa fa-pause"></i> {{ waiting_time }}
+                                    </b-badge>
+                                </div>
+                            </b-col>
+                            <b-col cols="6" class="text-right">
+                                <recipe-rating :recipe="recipe" :pill="true"></recipe-rating>
+                            </b-col>
+                        </b-row>
                     </div>
                 </a>
 
@@ -158,9 +160,7 @@ export default {
         }
     },
 
-    mounted() {
-        console.log(this.recipe)
-    },
+    mounted() {},
     computed: {
         show_detail: function () {
             return this.recipe?.steps !== undefined && this.detailed
