@@ -8,26 +8,29 @@
                             <div class="row">
                                 <div class="col-12">
                                     <b-input-group>
-                                        <b-form-input id="TitleInput" v-model="entryEditing.title"
-                                                      :placeholder="entryEditing.title_placeholder"
-                                                      @change="missing_recipe = false"></b-form-input>
+                                        <b-form-input
+                                            id="TitleInput"
+                                            v-model="entryEditing.title"
+                                            :placeholder="entryEditing.title_placeholder"
+                                            @change="missing_recipe = false"
+                                        ></b-form-input>
                                         <b-input-group-append class="d-none d-lg-block">
                                             <b-button variant="primary" @click="entryEditing.title = ''"><i class="fa fa-eraser"></i></b-button>
                                         </b-input-group-append>
                                     </b-input-group>
-                                    <span class="text-danger" v-if="missing_recipe">{{
-                                            $t("Title_or_Recipe_Required")
-                                        }}</span>
-                                    <small tabindex="-1" class="form-text text-muted" v-if="!missing_recipe">{{
-                                            $t("Title")
-                                        }}</small>
+                                    <span class="text-danger" v-if="missing_recipe">{{ $t("Title_or_Recipe_Required") }}</span>
+                                    <small tabindex="-1" class="form-text text-muted" v-if="!missing_recipe">{{ $t("Title") }}</small>
                                 </div>
                                 <div class="col-12 col-lg-6">
                                     <b-input-group>
                                         <b-form-input type="date" v-model="entryEditing.from_date"></b-form-input>
                                         <b-input-group-append>
-                                            <b-button variant="secondary" @click="entryEditing.from_date = changeDate(entryEditing.from_date, -1)"><i class="fas fa-minus"></i></b-button>
-                                            <b-button variant="primary" @click="entryEditing.from_date = changeDate(entryEditing.from_date, 1)"><i class="fas fa-plus"></i></b-button>
+                                            <b-button variant="secondary" @click="entryEditing.from_date = changeDate(entryEditing.from_date, -1)"
+                                                ><i class="fas fa-minus"></i
+                                            ></b-button>
+                                            <b-button variant="primary" @click="entryEditing.from_date = changeDate(entryEditing.from_date, 1)"
+                                                ><i class="fas fa-plus"></i
+                                            ></b-button>
                                         </b-input-group-append>
                                     </b-input-group>
 
@@ -37,7 +40,9 @@
                                     <b-input-group>
                                         <b-form-input type="date" v-model="entryEditing.to_date"></b-form-input>
                                         <b-input-group-append>
-                                            <b-button variant="secondary" @click="entryEditing.to_date = changeDate(entryEditing.to_date, -1)"><i class="fas fa-minus"></i></b-button>
+                                            <b-button variant="secondary" @click="entryEditing.to_date = changeDate(entryEditing.to_date, -1)"
+                                                ><i class="fas fa-minus"></i
+                                            ></b-button>
                                             <b-button variant="primary" @click="entryEditing.to_date = changeDate(entryEditing.to_date, 1)"><i class="fas fa-plus"></i></b-button>
                                         </b-input-group-append>
                                     </b-input-group>
@@ -77,19 +82,14 @@
                                             :allow_create="true"
                                             :create_placeholder="$t('Create_New_Meal_Type')"
                                         ></generic-multiselect>
-                                        <span class="text-danger" v-if="missing_meal_type">{{
-                                                $t("Meal_Type_Required")
-                                            }}</span>
-                                        <small tabindex="-1" class="form-text text-muted"
-                                               v-if="!missing_meal_type">{{ $t("Meal_Type") }}</small>
+                                        <span class="text-danger" v-if="missing_meal_type">{{ $t("Meal_Type_Required") }}</span>
+                                        <small tabindex="-1" class="form-text text-muted" v-if="!missing_meal_type">{{ $t("Meal_Type") }}</small>
                                     </b-form-group>
                                     <b-form-group label-for="NoteInput" :description="$t('Note')" class="mt-3">
-                                    <textarea class="form-control" id="NoteInput" v-model="entryEditing.note"
-                                              :placeholder="$t('Note')"></textarea>
+                                        <textarea class="form-control" id="NoteInput" v-model="entryEditing.note" :placeholder="$t('Note')"></textarea>
                                     </b-form-group>
                                     <b-input-group>
-                                        <b-form-input id="ServingsInput" v-model="entryEditing.servings"
-                                                      :placeholder="$t('Servings')"></b-form-input>
+                                        <b-form-input id="ServingsInput" v-model="entryEditing.servings" :placeholder="$t('Servings')"></b-form-input>
                                     </b-input-group>
                                     <small tabindex="-1" class="form-text text-muted">{{ $t("Servings") }}</small>
                                     <b-form-group class="mt-3">
@@ -108,34 +108,22 @@
                                         <small tabindex="-1" class="form-text text-muted">{{ $t("Share") }}</small>
                                     </b-form-group>
                                     <b-input-group v-if="!autoMealPlan">
-                                        <b-form-checkbox id="AddToShopping" v-model="mealplan_settings.addshopping"/>
-                                        <small tabindex="-1" class="form-text text-muted">{{
-                                                $t("AddToShopping")
-                                            }}</small>
+                                        <b-form-checkbox id="AddToShopping" v-model="mealplan_settings.addshopping" />
+                                        <small tabindex="-1" class="form-text text-muted">{{ $t("AddToShopping") }}</small>
                                     </b-input-group>
                                     <b-input-group v-if="mealplan_settings.addshopping && !autoMealPlan">
-                                        <b-form-checkbox id="reviewShopping"
-                                                         v-model="mealplan_settings.reviewshopping"/>
-                                        <small tabindex="-1" class="form-text text-muted">{{
-                                                $t("review_shopping")
-                                            }}</small>
+                                        <b-form-checkbox id="reviewShopping" v-model="mealplan_settings.reviewshopping" />
+                                        <small tabindex="-1" class="form-text text-muted">{{ $t("review_shopping") }}</small>
                                     </b-input-group>
                                 </div>
                                 <div class="col-lg-6 d-none d-lg-block d-xl-block">
-                                    <recipe-card v-if="entryEditing.recipe" :recipe="entryEditing.recipe"
-                                                 :detailed="false"></recipe-card>
+                                    <recipe-card v-if="entryEditing.recipe" :recipe="entryEditing.recipe" :detailed="false"></recipe-card>
                                 </div>
                             </div>
                             <div class="row mt-3 mb-3">
                                 <div class="col-12">
-                                    <b-button variant="danger" @click="deleteEntry" v-if="allow_delete">{{
-                                            $t("Delete")
-                                        }}
-                                    </b-button>
-                                    <b-button class="float-right" variant="primary" @click="editEntry">{{
-                                            $t("Save")
-                                        }}
-                                    </b-button>
+                                    <b-button variant="danger" @click="deleteEntry" v-if="allow_delete">{{ $t("Delete") }} </b-button>
+                                    <b-button class="float-right" variant="primary" @click="editEntry">{{ $t("Save") }} </b-button>
                                 </div>
                             </div>
                         </div>
@@ -144,25 +132,29 @@
             </div>
         </b-modal>
 
-        <shopping-modal :recipe="last_created_plan.recipe" :servings="last_created_plan.servings" :modal_id="999999"
-                        :mealplan="last_created_plan" v-if="last_created_plan !== null && last_created_plan.recipe !== null"/>
+        <shopping-modal
+            :recipe="last_created_plan.recipe"
+            :servings="last_created_plan.servings"
+            :modal_id="999999"
+            :mealplan="last_created_plan"
+            v-if="last_created_plan !== null && last_created_plan.recipe !== null"
+        />
     </div>
-
 </template>
 
 <script>
+import GenericMultiselect from "@/components/GenericMultiselect"
+import {ApiMixin, ToastMixin} from "@/utils/utils"
+import {BootstrapVue} from "bootstrap-vue"
 import Vue from "vue"
 import VueCookies from "vue-cookies"
-import {BootstrapVue} from "bootstrap-vue"
-import GenericMultiselect from "@/components/GenericMultiselect"
-import {ApiMixin, getUserPreference, ToastMixin} from "@/utils/utils"
 
-const {ApiApiFactory} = require("@/utils/openapi/api")
+const { ApiApiFactory } = require("@/utils/openapi/api")
 
-import {useUserPreferenceStore} from "@/stores/UserPreferenceStore";
-import {useMealPlanStore} from "@/stores/MealPlanStore";
-import ShoppingModal from "@/components/Modals/ShoppingModal.vue";
-import moment from "moment";
+import ShoppingModal from "@/components/Modals/ShoppingModal.vue"
+import {useMealPlanStore} from "@/stores/MealPlanStore"
+import {useUserPreferenceStore} from "@/stores/UserPreferenceStore"
+import moment from "moment"
 
 Vue.use(BootstrapVue)
 Vue.use(VueCookies)
@@ -182,6 +174,7 @@ export default {
             type: Boolean,
             default: true,
         },
+        entryEditing_inital_servings: Number,
     },
     mixins: [ApiMixin, ToastMixin],
     components: {
@@ -209,12 +202,12 @@ export default {
             },
             deep: true,
         },
-        'entryEditing.from_date': {
+        "entryEditing.from_date": {
             handler(newVal, oldVal) {
                 if (newVal !== undefined && oldVal !== undefined) {
                     if (newVal !== oldVal) {
-                        let change = Math.abs(moment(oldVal).diff(moment(this.entryEditing.to_date), 'days')) // even though negative numbers might be correct, they would be illogical as to needs to always be larger than from
-                        this.entryEditing.to_date = moment(newVal).add(change, 'd').format("YYYY-MM-DD")
+                        let change = Math.abs(moment(oldVal).diff(moment(this.entryEditing.to_date), "days")) // even though negative numbers might be correct, they would be illogical as to needs to always be larger than from
+                        this.entryEditing.to_date = moment(newVal).add(change, "d").format("YYYY-MM-DD")
                     }
                 }
             },
@@ -252,37 +245,41 @@ export default {
                 this.entryEditing.to_date = this.create_date
             }
 
-            useUserPreferenceStore().getData().then(userPreference => {
-                if (this.entryEditing.id === -1) {
-                    this.entryEditing.shared = userPreference.plan_share
-                }
-            })
+            useUserPreferenceStore()
+                .getData()
+                .then((userPreference) => {
+                    if (this.entryEditing.id === -1) {
+                        this.entryEditing.shared = userPreference.plan_share
+                    }
+                })
         },
         editEntry() {
-
             if (this.entryEditing.meal_type == null) {
-                this.makeToast('Warning', this.$t('Meal_Type_Required'), 'warning')
-                return;
+                this.makeToast("Warning", this.$t("Meal_Type_Required"), "warning")
+                return
             }
             if (this.entryEditing.recipe == null && this.entryEditing.title === "") {
-                this.makeToast('Warning', this.$t('Title_or_Recipe_Required'), 'warning')
+                this.makeToast("Warning", this.$t("Title_or_Recipe_Required"), "warning")
                 return
             }
             //TODO properly validate
             this.$bvModal.hide(this.modal_id)
 
             // only set addshopping if review is not enabled
-            this.$set(this.entryEditing, 'addshopping', (this.mealplan_settings.addshopping && !this.mealplan_settings.reviewshopping))
+            this.$set(this.entryEditing, "addshopping", this.mealplan_settings.addshopping && !this.mealplan_settings.reviewshopping)
 
-            if (!('id' in this.entryEditing) || this.entryEditing.id === -1) {
-                useMealPlanStore().createObject(this.entryEditing).then((r) => {
-                    this.last_created_plan = r.data
-                    if (r.data.recipe && this.mealplan_settings.addshopping && !this.autoMealPlan && this.mealplan_settings.reviewshopping) {
-                        this.$nextTick(function () {
-                            this.$bvModal.show(`shopping_999999`)
-                        })
-                    }
-                })
+            if (!("id" in this.entryEditing) || this.entryEditing.id === -1) {
+                useMealPlanStore()
+                    .createObject(this.entryEditing)
+                    .then((r) => {
+                        this.last_created_plan = r.data
+                        console.log(r.data)
+                        if (r.data.recipe && this.mealplan_settings.addshopping && !this.autoMealPlan && this.mealplan_settings.reviewshopping) {
+                            this.$nextTick(function () {
+                                this.$bvModal.show(`shopping_999999`)
+                            })
+                        }
+                    })
             } else {
                 useMealPlanStore().updateObject(this.entryEditing)
             }
@@ -319,8 +316,8 @@ export default {
             }
         },
         changeDate(date, change) {
-            return moment(date).add(change, 'd').format("YYYY-MM-DD")
-        }
+            return moment(date).add(change, "d").format("YYYY-MM-DD")
+        },
     },
 }
 </script>
