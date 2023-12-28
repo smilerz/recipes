@@ -49,6 +49,7 @@ jobs:
       if: github.ref == 'refs/heads/coverage'
       uses: stefanzweifel/git-auto-commit-action@v5
       with:
+        branch: gh-pages
         commit_message: Pytest and Coverage Reports
         add_options: '--force'
         file_pattern: 'docs/coverage/ docs/tests/'
