@@ -20,4 +20,9 @@ class Migration(migrations.Migration):
             name='fdc_id',
             field=models.IntegerField(blank=True, default=None, null=True),
         ),
+        migrations.AddField(
+            model_name='userpreference',
+            name='ingredient_context',
+            field=models.BooleanField(default=False),
+        ),
     ]
