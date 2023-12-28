@@ -751,8 +751,6 @@ class Ingredient(ExportModelOperationsMixin('ingredient'), models.Model, Permiss
     objects = ScopedManager(space='space')
 
     def __str__(self):
-        if not self.step_set.exists():
-            return f"{self.pk}: {_('Orphaned Ingredient')}"
         return f'{self.pk}: {self.amount} {self.food.name} {self.unit.name}'
 
     class Meta:
