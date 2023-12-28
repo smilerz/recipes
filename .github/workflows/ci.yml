@@ -43,13 +43,12 @@ jobs:
       run : |
         genbadge coverage -i coverage/coverage.xml -o coverage/coverage-badge.svg
         genbadge tests -i  tests/pytest.xml -o tests/pytest-badge.svg
-        git checkout gh-pages
-        git add -f coverage tests
+        git add -f coverage/ tests/
     - name: Commit reports and badge
       if: github.ref == 'refs/heads/working'
       uses: stefanzweifel/git-auto-commit-action@v5
       with:
-        branch: gh-pages
+        branch: origin/gh-pages
         commit_message: Pytest and Coverage Reports
         skip_dirty_check: true
         skip_fetch: true
