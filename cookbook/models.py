@@ -781,10 +781,7 @@ class Step(ExportModelOperationsMixin('step'), models.Model, PermissionModelMixi
         return render_instructions(self)
 
     def __str__(self):
-        r = self.recipe_set.select_related('name').first()
-        if not self.recipe_set.exists():
-            return f"Orphaned Step{'':s if not obj.name else f': {self.pk} {self.name}'}"
-        return f"{r.name}: {self.name}" if self.name else r.name
+        return f"{self.pk}: {self.name}" if self.name else f"Step: {self.pk}"
 
     class Meta:
         ordering = ['order', 'pk']
