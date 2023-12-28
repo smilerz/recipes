@@ -39,7 +39,7 @@ jobs:
       run: |
         pytest --cov=. --cov-report=html:docs/coverage --cov-report=xml:docs/coverage/coverage.xml --junitxml=docs/tests/pytest.xml --html=docs/tests/tests.html
     - name: Generate badges
-      if: github.ref == 'refs/heads/coverage'
+      if: github.ref == 'refs/heads/working'
       run : |
         genbadge coverage -i docs/coverage/coverage.xml -o docs/coverage/coverage-badge.svg
         genbadge coverage -i docs/coverage/coverage.xml -o docs/coverage-badge.svg
