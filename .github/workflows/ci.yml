@@ -1,0 +1,54 @@
+name: Continuous Integration
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    if: github.repository_owner == 'smilerz'
+    runs-on: ubuntu-latest
+    strategy:
+      max-parallel: 4
+      matrix:
+        python-version: ['3.10']
+
+    steps:
+    - uses: actions/checkout@v3
+    - name: Set up Python 3.10
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
+    # Build Vue frontend
+    - uses: actions/setup-node@v3
+      with:
+        node-version: '18'
+    - name: Install Vue dependencies
+      working-directory: ./vue
+      run: yarn install
+    - name: Build Vue dependencies
+      working-directory: ./vue
+      run: yarn build
+    - name: Install Django dependencies
+      run: |
+        sudo apt-get -y update
+        sudo apt-get install -y libsasl2-dev python3-dev libldap2-dev libssl-dev
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        python3 manage.py collectstatic --noinput
+        python3 manage.py collectstatic_js_reverse
+    - name: Django Testing project
+      run: |
+        pytest --cov=. --cov-report=html:docs/coverage --cov-report=xml:docs/coverage/coverage.xml --junitxml=docs/tests/pytest.xml --html=docs/tests/tests.html
+    - name: Generate badges
+      if: github.ref == 'refs/heads/coverage'
+      run : |
+        genbadge coverage -i docs/coverage/coverage.xml -o docs/coverage/coverage-badge.svg
+        genbadge coverage -i docs/coverage/coverage.xml -o docs/coverage-badge.svg
+        genbadge tests -i  docs/tests/pytest.xml -o docs/tests/pytest-badge.svg
+        git add -f docs/coverage docs/tests
+    - name: Commit reports and badge
+      if: github.ref == 'refs/heads/coverage'
+      uses: stefanzweifel/git-auto-commit-action@v5
+      with:
+        commit_message: Pytest and Coverage Reports
+        add_options: '--force'
+        file_pattern: 'docs/coverage/ docs/tests/'

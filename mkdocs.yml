@@ -1,8 +1,8 @@
 site_name: Tandoor Recipes
 site_description: Tandoor Recipe Documentation
-site_author: vabene1111
-repo_url: https://github.com/vabene1111/recipes
-edit_uri: https://github.com/vabene1111/recipes/tree/develop/docs
+site_author: smilerz
+repo_url: https://github.com/smilerz/recipes
+edit_uri: https://github.com/smilerz/recipes/tree/develop/docs
 extra_css:
   - stylesheets/extra.css
 
