@@ -46,7 +46,7 @@ jobs:
         genbadge tests -i  docs/tests/pytest.xml -o docs/tests/pytest-badge.svg
         git add -f docs/coverage docs/tests
     - name: Commit reports and badge
-      if: github.ref == 'refs/heads/coverage'
+      if: github.ref == 'refs/heads/working'
       uses: stefanzweifel/git-auto-commit-action@v5
       with:
         branch: gh-pages
