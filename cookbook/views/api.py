@@ -105,7 +105,7 @@ from cookbook.serializer import (AccessTokenSerializer, AutomationSerializer,
                                  UserSerializer, UserSpaceSerializer, ViewLogSerializer)
 from cookbook.views.import_export import get_integration
 from recipes import settings
-from recipes.settings import FDC_API_KEY, DRF_THROTTLE_RECIPE_URL_IMPORT
+from recipes.settings import DRF_THROTTLE_RECIPE_URL_IMPORT, FDC_API_KEY
 
 
 class StandardFilterMixin(ViewSetMixin):
@@ -1681,9 +1681,8 @@ def log_cooking(request, recipe_id):
 
 @group_required('user')
 def get_plan_ical(request, from_date, to_date):
-    queryset = MealPlan.objects.filter(
-        Q(created_by=request.user) | Q(shared=request.user)
-    ).filter(space=request.user.userspace_set.filter(active=1).first().space).distinct().all()
+    queryset = MealPlan.objects.filter(Q(created_by=request.user) | Q(shared=request.user)).filter(
+        space=request.user.userspace_set.filter(active=1).first().space).distinct().all()
 
     if from_date is not None:
         queryset = queryset.filter(date__gte=from_date)

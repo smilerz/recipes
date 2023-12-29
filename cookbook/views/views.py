@@ -1,9 +1,9 @@
 import os
 import re
+import subprocess
 from datetime import datetime
 from io import StringIO
 from uuid import UUID
-import subprocess
 
 from django.apps import apps
 from django.conf import settings
@@ -30,7 +30,7 @@ from cookbook.models import (Comment, CookLog, InviteLink, SearchFields, SearchP
                              ShareLink, Space, UserSpace, ViewLog)
 from cookbook.tables import CookLogTable, ViewLogTable
 from cookbook.version_info import VERSION_INFO
-from recipes.settings import PLUGINS, BASE_DIR
+from recipes.settings import BASE_DIR, PLUGINS
 
 
 def index(request):
@@ -41,11 +41,8 @@ def index(request):
             return HttpResponseRedirect(reverse_lazy('view_search'))
 
     try:
-        page_map = {
-            UserPreference.SEARCH: reverse_lazy('view_search'),
-            UserPreference.PLAN: reverse_lazy('view_plan'),
-            UserPreference.BOOKS: reverse_lazy('view_books'),
-        }
+        page_map = {UserPreference.SEARCH: reverse_lazy('view_search'),            UserPreference.PLAN: reverse_lazy('view_plan'),            UserPreference.BOOKS: reverse_lazy('view_books'),
+                    }
 
         return HttpResponseRedirect(page_map.get(request.user.userpreference.default_page))
     except UserPreference.DoesNotExist:
@@ -73,7 +70,8 @@ def space_overview(request):
         create_form = SpaceCreateForm(request.POST, prefix='create')
         join_form = SpaceJoinForm(request.POST, prefix='join')
         if settings.HOSTED and request.user.username == 'demo':
-            messages.add_message(request, messages.WARNING, _('This feature is not available in the demo version!'))
+            messages.add_message(request, messages.WARNING, _(
+                'This feature is not available in the demo version!'))
         else:
             if create_form.is_valid():
                 created_space = Space.objects.create(
@@ -85,7 +83,8 @@ def space_overview(request):
                     allow_sharing=settings.SPACE_DEFAULT_ALLOW_SHARING,
                 )
 
-                user_space = UserSpace.objects.create(space=created_space, user=request.user, active=False)
+                user_space = UserSpace.objects.create(
+                    space=created_space, user=request.user, active=False)
                 user_space.groups.add(Group.objects.filter(name='admin').get())
 
                 messages.add_message(request, messages.SUCCESS,
@@ -96,13 +95,16 @@ def space_overview(request):
                 return HttpResponseRedirect(reverse('view_invite', args=[join_form.cleaned_data['token']]))
     else:
         if settings.SOCIAL_DEFAULT_ACCESS and len(request.user.userspace_set.all()) == 0:
-            user_space = UserSpace.objects.create(space=Space.objects.first(), user=request.user, active=False)
-            user_space.groups.add(Group.objects.filter(name=settings.SOCIAL_DEFAULT_GROUP).get())
+            user_space = UserSpace.objects.create(
+                space=Space.objects.first(), user=request.user, active=False)
+            user_space.groups.add(Group.objects.filter(
+                name=settings.SOCIAL_DEFAULT_GROUP).get())
             return HttpResponseRedirect(reverse('index'))
         if 'signup_token' in request.session:
             return HttpResponseRedirect(reverse('view_invite', args=[request.session.pop('signup_token', '')]))
 
-        create_form = SpaceCreateForm(initial={'name': f'{request.user.get_user_display_name()}\'s Space'})
+        create_form = SpaceCreateForm(
+            initial={'name': f'{request.user.get_user_display_name()}\'s Space'})
         join_form = SpaceJoinForm()
 
     return render(request, 'space_overview.html', {'create_form': create_form, 'join_form': join_form})
@@ -117,7 +119,8 @@ def switch_space(request, space_id):
 
 def no_perm(request):
     if not request.user.is_authenticated:
-        messages.add_message(request, messages.ERROR, _('You are not logged in and therefore cannot view this page!'))
+        messages.add_message(request, messages.ERROR, _(
+            'You are not logged in and therefore cannot view this page!'))
         return HttpResponseRedirect(reverse('account_login') + '?next=' + request.GET.get('next', '/search/'))
     return render(request, 'no_perm_info.html')
 
@@ -138,7 +141,8 @@ def recipe_view(request, pk, share=None):
                                  _('You do not have the required permissions to view this page!'))
             return HttpResponseRedirect(reverse('index'))
 
-        comments = Comment.objects.filter(recipe__space=request.space, recipe=recipe)
+        comments = Comment.objects.filter(
+            recipe__space=request.space, recipe=recipe)
 
         if request.method == "POST":
             if not request.user.is_authenticated:
@@ -154,15 +158,18 @@ def recipe_view(request, pk, share=None):
                 comment.created_by = request.user
                 comment.save()
 
-                messages.add_message(request, messages.SUCCESS, _('Comment saved!'))
+                messages.add_message(
+                    request, messages.SUCCESS, _('Comment saved!'))
 
         comment_form = CommentForm()
 
         if request.user.is_authenticated:
             if not ViewLog.objects.filter(recipe=recipe, created_by=request.user,
-                                          created_at__gt=(timezone.now() - timezone.timedelta(minutes=5)),
+                                          created_at__gt=(
+                                              timezone.now() - timezone.timedelta(minutes=5)),
                                           space=request.space).exists():
-                ViewLog.objects.create(recipe=recipe, created_by=request.user, space=request.space)
+                ViewLog.objects.create(
+                    recipe=recipe, created_by=request.user, space=request.space)
 
         return render(request, 'recipe_view.html',
                       {'recipe': recipe, 'comments': comments, 'comment_form': comment_form, 'share': share, })
@@ -191,7 +198,8 @@ def view_profile(request, user_id):
 @group_required('guest')
 def user_settings(request):
     if request.space.demo:
-        messages.add_message(request, messages.ERROR, _('This feature is not available in the demo version!'))
+        messages.add_message(request, messages.ERROR, _(
+            'This feature is not available in the demo version!'))
         return redirect('index')
 
     return render(request, 'user_settings.html', {})
@@ -218,7 +226,8 @@ def property_editor(request, pk):
 @group_required('guest')
 def shopping_settings(request):
     if request.space.demo:
-        messages.add_message(request, messages.ERROR, _('This feature is not available in the demo version!'))
+        messages.add_message(request, messages.ERROR, _(
+            'This feature is not available in the demo version!'))
         return redirect('index')
 
     sp = request.user.searchpreference
@@ -231,10 +240,10 @@ def shopping_settings(request):
                 if not sp:
                     sp = SearchPreferenceForm(user=request.user)
                 fields_searched = (
-                        len(search_form.cleaned_data['icontains'])
-                        + len(search_form.cleaned_data['istartswith'])
-                        + len(search_form.cleaned_data['trigram'])
-                        + len(search_form.cleaned_data['fulltext'])
+                    len(search_form.cleaned_data['icontains'])
+                    + len(search_form.cleaned_data['istartswith'])
+                    + len(search_form.cleaned_data['trigram'])
+                    + len(search_form.cleaned_data['fulltext'])
                 )
                 if search_form.cleaned_data['preset'] == 'fuzzy':
                     sp.search = SearchPreference.SIMPLE
@@ -254,11 +263,13 @@ def shopping_settings(request):
                     sp.icontains.set([SearchFields.objects.get(name='Name')])
                     sp.istartswith.set([SearchFields.objects.get(name='Name')])
                     sp.trigram.clear()
-                    sp.fulltext.set(SearchFields.objects.filter(name__in=['Ingredients']))
+                    sp.fulltext.set(SearchFields.objects.filter(
+                        name__in=['Ingredients']))
                     sp.trigram_threshold = 0.2
                     sp.save()
                 elif fields_searched == 0:
-                    search_form.add_error(None, _('You must select at least one field to search!'))
+                    search_form.add_error(
+                        None, _('You must select at least one field to search!'))
                     search_error = True
                 elif search_form.cleaned_data['search'] in ['websearch', 'raw'] and len(
                         search_form.cleaned_data['fulltext']) == 0:
@@ -267,7 +278,8 @@ def shopping_settings(request):
                     search_error = True
                 elif search_form.cleaned_data['search'] in ['websearch', 'raw'] and len(
                         search_form.cleaned_data['trigram']) > 0:
-                    search_form.add_error(None, _('Fuzzy search is not compatible with this search method!'))
+                    search_form.add_error(
+                        None, _('Fuzzy search is not compatible with this search method!'))
                     search_error = True
                 else:
                     sp.search = search_form.cleaned_data['search']
@@ -335,13 +347,16 @@ def system(request):
             database_message = _('Everything is fine!')
         elif postgres_ver < postgres_current - 2:
             database_status = 'danger'
-            database_message = _('PostgreSQL %(v)s is deprecated.  Upgrade to a fully supported version!') % {'v': postgres_ver}
+            database_message = _('PostgreSQL %(v)s is deprecated.  Upgrade to a fully supported version!') % {
+                'v': postgres_ver}
         else:
             database_status = 'info'
-            database_message = _('You are running PostgreSQL %(v1)s.  PostgreSQL %(v2)s is recommended') % {'v1': postgres_ver, 'v2': postgres_current}
+            database_message = _('You are running PostgreSQL %(v1)s.  PostgreSQL %(v2)s is recommended') % {
+                'v1': postgres_ver, 'v2': postgres_current}
     else:
         database_status = 'info'
-        database_message = _('This application is not running with a Postgres database backend. This is ok but not recommended as some features only work with postgres databases.')
+        database_message = _(
+            'This application is not running with a Postgres database backend. This is ok but not recommended as some features only work with postgres databases.')
 
     secret_key = False if os.getenv('SECRET_KEY') else True
 
@@ -358,18 +373,22 @@ def system(request):
     current_app = None
     for row in out.getvalue().splitlines():
         if '[ ]' in row and current_app:
-            migration_info[current_app]['unapplied_migrations'].append(row.replace('[ ]', ''))
+            migration_info[current_app]['unapplied_migrations'].append(
+                row.replace('[ ]', ''))
             missing_migration = True
         elif '[X]' in row and current_app:
-            migration_info[current_app]['applied_migrations'].append(row.replace('[x]', ''))
+            migration_info[current_app]['applied_migrations'].append(
+                row.replace('[x]', ''))
         elif '(no migrations)' in row and current_app:
             pass
         else:
             current_app = row
-            migration_info[current_app] = {'app': current_app, 'unapplied_migrations': [], 'applied_migrations': [], 'total': 0}
+            migration_info[current_app] = {'app': current_app, 'unapplied_migrations': [
+            ], 'applied_migrations': [], 'total': 0}
 
     for key in migration_info.keys():
-        migration_info[key]['total'] = len(migration_info[key]['unapplied_migrations']) + len(migration_info[key]['applied_migrations'])
+        migration_info[key]['total'] = len(
+            migration_info[key]['unapplied_migrations']) + len(migration_info[key]['applied_migrations'])
 
     return render(request, 'system.html', {
         'gunicorn_media': settings.GUNICORN_MEDIA,
@@ -400,13 +419,16 @@ def setup(request):
                 if form.cleaned_data['password'] != form.cleaned_data['password_confirm']:
                     form.add_error('password', _('Passwords dont match!'))
                 else:
-                    user = User(username=form.cleaned_data['name'], is_superuser=True, is_staff=True)
+                    user = User(
+                        username=form.cleaned_data['name'], is_superuser=True, is_staff=True)
                     try:
-                        validate_password(form.cleaned_data['password'], user=user)
+                        validate_password(
+                            form.cleaned_data['password'], user=user)
                         user.set_password(form.cleaned_data['password'])
                         user.save()
 
-                        messages.add_message(request, messages.SUCCESS, _('User has been created, please login!'))
+                        messages.add_message(request, messages.SUCCESS, _(
+                            'User has been created, please login!'))
                         return HttpResponseRedirect(reverse('account_login'))
                     except ValidationError as e:
                         for m in e:
@@ -422,7 +444,8 @@ def invite_link(request, token):
         try:
             token = UUID(token, version=4)
         except ValueError:
-            messages.add_message(request, messages.ERROR, _('Malformed Invite Link supplied!'))
+            messages.add_message(request, messages.ERROR, _(
+                'Malformed Invite Link supplied!'))
             return HttpResponseRedirect(reverse('index'))
 
         if link := InviteLink.objects.filter(valid_until__gte=datetime.today(), used_by=None, uuid=token).first():
@@ -431,7 +454,8 @@ def invite_link(request, token):
                     link.used_by = request.user
                     link.save()
 
-                user_space = UserSpace.objects.create(user=request.user, space=link.space, internal_note=link.internal_note, invite_link=link, active=False)
+                user_space = UserSpace.objects.create(
+                    user=request.user, space=link.space, internal_note=link.internal_note, invite_link=link, active=False)
 
                 if request.user.userspace_set.count() == 1:
                     user_space.active = True
@@ -439,20 +463,23 @@ def invite_link(request, token):
 
                 user_space.groups.add(link.group)
 
-                messages.add_message(request, messages.SUCCESS, _('Successfully joined space.'))
+                messages.add_message(request, messages.SUCCESS, _(
+                    'Successfully joined space.'))
                 return HttpResponseRedirect(reverse('view_space_overview'))
             else:
                 request.session['signup_token'] = str(token)
                 return HttpResponseRedirect(reverse('account_signup'))
 
-    messages.add_message(request, messages.ERROR, _('Invite Link not valid or already used!'))
+    messages.add_message(request, messages.ERROR, _(
+        'Invite Link not valid or already used!'))
     return HttpResponseRedirect(reverse('view_space_overview'))
 
 
 @group_required('admin')
 def space_manage(request, space_id):
     if request.space.demo:
-        messages.add_message(request, messages.ERROR, _('This feature is not available in the demo version!'))
+        messages.add_message(request, messages.ERROR, _(
+            'This feature is not available in the demo version!'))
         return redirect('index')
     space = get_object_or_404(Space, id=space_id)
     switch_user_active_space(request.user, space)

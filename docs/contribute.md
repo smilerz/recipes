@@ -15,15 +15,38 @@ If you want to contribute bug fixes or small tweaks then your pull requests are 
 
 !!! danger "Discuss First!"
     If you want to contribute larger features that introduce more complexity to the project please
-    make sure to **first submit a technical description** outlining what and how you want to do it. 
-    This allows me and the community to give feedback and manage the complexity of the overall 
+    make sure to **first submit a technical description** outlining what and how you want to do it.
+    This allows me and the community to give feedback and manage the complexity of the overall
     application. If you don't do this please don't be mad if I reject your PR
 
 !!! info
     The dev setup is a little messy as this application combines the best (at least in my opinion) of both Django and Vue.js.
 
+!!! info linting and formating
+    This project uses autopep8, flake8, prettier, and ESLint to lint and format the code.  In order to submit a PR you must use the
+    project standard configurations.
+
+    ##### VSCode:
+    Install the official plugins: autopep8, flake8, isort
+    Add the following line to your settings.json:
+    ``` json
+    "[python]": {
+        "editor.defaultFormatter": "ms-python.autopep8",
+        "editor.formatOnSave": true
+    },
+    ```
+
+    ##### PyCharm
+    Add the following line to your settings.json:
+    ``` json
+    "[python]": {
+        "editor.defaultFormatter": "ms-python.flake8",
+        "editor.formatOnSave": true
+    },
+    ```
+
 ### Django
-This application is developed using the Django framework for Python. They have excellent 
+This application is developed using the Django framework for Python. They have excellent
 [documentation](https://www.djangoproject.com/start/) on how to get started, so I will only give you the basics here.
 
 1. Clone this repository wherever you like and install the Python language for your OS (I recommend using version 3.10 or above).
@@ -37,13 +60,13 @@ There is **no** need to set any environment variables. By default, a simple SQLi
 populated from default values.
 
 ### Vue.js
-Most new frontend pages are build using [Vue.js](https://vuejs.org/). 
+Most new frontend pages are build using [Vue.js](https://vuejs.org/).
 
 In order to work on these pages, you will have to install a Javascript package manager of your choice. The following examples use yarn.
 
 In the `vue` folder run `yarn install` to install the dependencies. After that you can use `yarn serve` to start the development server,
-and proceed to test your changes. If you do not wish to work on those pages, but instead want the application to work properly during 
-development, run `yarn build` to build the frontend pages once. 
+and proceed to test your changes. If you do not wish to work on those pages, but instead want the application to work properly during
+development, run `yarn build` to build the frontend pages once.
 
 #### API Client
 The API Client is generated automatically from the OpenAPI interface provided by the Django REST framework.
@@ -81,12 +104,12 @@ You can simply register an account and then follow these steps to add translatio
 !!! info "Creating a new language"
     To create a new language you must first select Tandoor (the project) and then a component.
     Here you will have the option to add the language. Afterwards you can also simply add it to the other components as well.
-    Once a new language is (partially) finished let me know on GitHub so I can add it to the language-switcher in Tandoor itself. 
+    Once a new language is (partially) finished let me know on GitHub so I can add it to the language-switcher in Tandoor itself.
 
 There is also [a lot of documentation](https://docs.weblate.org/en/latest/user/translating.html) available from Weblate directly.
 
 ![2021-04-11_16-03](https://user-images.githubusercontent.com/6819595/114307359-926e0380-9adf-11eb-9a2b-febba56e4d8c.gif)
 
-It is also possible to provide the translations directly by creating a new language 
-using `manage.py makemessages -l <language_code> -i venv`. Once finished, simply open a PR with the changed files. This sometimes causes issues merging 
+It is also possible to provide the translations directly by creating a new language
+using `manage.py makemessages -l <language_code> -i venv`. Once finished, simply open a PR with the changed files. This sometimes causes issues merging
 with weblate, so I would prefer the use of weblate.

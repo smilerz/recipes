@@ -1,0 +1,23 @@
+[flake8]
+extend-ignore =
+    # Line too long
+    E501,
+    # Line break occurred before a binary operator
+    W503,
+    # Line break occurred after a binary operator
+    W504,
+    # Comparison to False should be 'if cond is False:' or 'if not cond:'
+    E712
+exclude =
+    .git,
+    **/__pycache__,
+        **/.git,
+        **/.svn,
+        **/.hg,
+        **/CVS,
+        **/.DS_Store,
+        .vscode,
+        **/*.pyc
+per-file-ignores=
+    cookbook/apps.py:F401
+max-line-length = 179
