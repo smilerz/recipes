@@ -1,11 +1,9 @@
 [flake8]
 extend-ignore =
-    # Line too long
-    E501,
-    # Line break occurred before a binary operator
+    # Whitespace before ':' - Required for black compatibility
+    E203,
+    # Line break occurred before a binary operator - Required for black compatibility
     W503,
-    # Line break occurred after a binary operator
-    W504,
     # Comparison to False should be 'if cond is False:' or 'if not cond:'
     E712
 exclude =
@@ -21,3 +19,4 @@ exclude =
 per-file-ignores=
     cookbook/apps.py:F401
 max-line-length = 179
+
