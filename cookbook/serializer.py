@@ -394,8 +394,7 @@ class UserPreferenceSerializer(WritableNestedModelSerializer):
             'food_inherit_default', 'default_delay',
             'mealplan_autoinclude_related', 'mealplan_autoexclude_onhand', 'shopping_share', 'shopping_recent_days',
             'csv_delim', 'csv_prefix',
-            'filter_to_supermarket', 'shopping_add_onhand', 'left_handed', 'show_step_ingredients',
-            'food_children_exist'
+            'filter_to_supermarket', 'shopping_add_onhand', 'left_handed', 'show_step_ingredients', 'food_children_exist', 'ingredient_context'
         )
 
 
@@ -602,7 +601,8 @@ class FoodSimpleSerializer(serializers.ModelSerializer):
 class FoodSerializer(UniqueFieldsMixin, WritableNestedModelSerializer, ExtendedRecipeMixin, OpenDataModelMixin):
     supermarket_category = SupermarketCategorySerializer(allow_null=True, required=False)
     recipe = RecipeSimpleSerializer(allow_null=True, required=False)
-    shopping = serializers.ReadOnlyField(source='shopping_status')
+    shopping = serializers.SerializerMethodField('get_shopping_status')
+    # shopping = serializers.ReadOnlyField(source='shopping_status')  # reverting to serializer method as annotations on get_queryset don't execute when on nested serializers
     inherit_fields = FoodInheritFieldSerializer(many=True, allow_null=True, required=False)
     child_inherit_fields = FoodInheritFieldSerializer(many=True, allow_null=True, required=False)
     food_onhand = CustomOnHandField(required=False, allow_null=True)
@@ -638,7 +638,10 @@ class FoodSerializer(UniqueFieldsMixin, WritableNestedModelSerializer, ExtendedR
             filter |= Q(path__startswith=obj.path[:Food.steplen * (obj.depth - 1)], depth=obj.depth)
         if obj.substitute_children:
             filter |= Q(path__startswith=obj.path, depth__gt=obj.depth)
-        return Food.objects.filter(filter).filter(onhand_users__id__in=shared_users).exists()
+        return Food.objects.filter(filter).filter(onhand_users__id__in=shared_users).exclude(id=obj.id).exists()
+
+    def get_shopping_status(self, obj):
+        return ShoppingListEntry.objects.filter(space=obj.space, food=obj, checked=False).exists()
 
     def create(self, validated_data):
         name = validated_data['name'].strip()

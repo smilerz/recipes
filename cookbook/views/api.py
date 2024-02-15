@@ -22,7 +22,7 @@ from django.contrib.postgres.search import TrigramSimilarity
 from django.core.cache import caches
 from django.core.exceptions import FieldError, ValidationError
 from django.core.files import File
-from django.db.models import Case, Count, Exists, OuterRef, ProtectedError, Q, Subquery, Value, When
+from django.db.models import Case, Count, OuterRef, ProtectedError, Q, Subquery, Value, When
 from django.db.models.fields.related import ForeignObjectRel
 from django.db.models.functions import Coalesce, Lower
 from django.db.models.signals import post_save
@@ -96,18 +96,17 @@ from cookbook.serializer import (AccessTokenSerializer, AutomationSerializer,
                                  RecipeExportSerializer, RecipeFromSourceSerializer,
                                  RecipeImageSerializer, RecipeOverviewSerializer, RecipeSerializer,
                                  RecipeShoppingUpdateSerializer, RecipeSimpleSerializer,
-                                 ShoppingListAutoSyncSerializer, ShoppingListEntrySerializer,
-                                 ShoppingListRecipeSerializer, ShoppingListSerializer,
-                                 SpaceSerializer, StepSerializer, StorageSerializer,
-                                 SupermarketCategoryRelationSerializer,
+                                 ShoppingListAutoSyncSerializer, ShoppingListEntryBulkSerializer,
+                                 ShoppingListEntrySerializer, ShoppingListRecipeSerializer,
+                                 ShoppingListSerializer, SpaceSerializer, StepSerializer,
+                                 StorageSerializer, SupermarketCategoryRelationSerializer,
                                  SupermarketCategorySerializer, SupermarketSerializer,
                                  SyncLogSerializer, SyncSerializer, UnitConversionSerializer,
                                  UnitSerializer, UserFileSerializer, UserPreferenceSerializer,
-                                 UserSerializer, UserSpaceSerializer, ViewLogSerializer,
-                                 ShoppingListEntryBulkSerializer)
+                                 UserSerializer, UserSpaceSerializer, ViewLogSerializer)
 from cookbook.views.import_export import get_integration
 from recipes import settings
-from recipes.settings import FDC_API_KEY, DRF_THROTTLE_RECIPE_URL_IMPORT
+from recipes.settings import DRF_THROTTLE_RECIPE_URL_IMPORT, FDC_API_KEY
 
 
 class StandardFilterMixin(ViewSetMixin):
@@ -565,11 +564,8 @@ class FoodViewSet(viewsets.ModelViewSet, TreeMixin):
                 pass
 
         self.queryset = super().get_queryset()
-        shopping_status = ShoppingListEntry.objects.filter(space=self.request.space, food=OuterRef('id'),
-                                                           checked=False).values('id')
-        # onhand_status = self.queryset.annotate(onhand_status=Exists(onhand_users_set__in=[shared_users]))
+
         return self.queryset \
-            .annotate(shopping_status=Exists(shopping_status)) \
             .prefetch_related('onhand_users', 'inherit_fields', 'child_inherit_fields', 'substitute') \
             .select_related('recipe', 'supermarket_category')
 
@@ -832,7 +828,7 @@ class IngredientViewSet(viewsets.ModelViewSet):
         if unit and re.match(r'^(\d)+$', unit):
             queryset = queryset.filter(unit_id=unit)
 
-        return queryset
+        return queryset.select_related('food')
 
 
 class StepViewSet(viewsets.ModelViewSet):

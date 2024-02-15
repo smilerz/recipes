@@ -33,8 +33,7 @@
                     <a :href="resolveDjangoUrl('view_recipe', ingredient.food.recipe.id)" v-if="ingredient.food.recipe !== null" target="_blank" rel="noopener noreferrer">
                         {{ ingredientName(ingredient) }}
                     </a>
-                    <a :href="ingredient.food.url" v-else-if="ingredient.food.url !== ''" target="_blank" rel="noopener noreferrer">
-                        {{ ingredientName(ingredient) }}</a>
+                    <a :href="ingredient.food.url" v-else-if="ingredient.food.url !== ''" target="_blank" rel="noopener noreferrer"> {{ ingredientName(ingredient) }}</a>
                     <template v-else>
                         <span>{{ ingredientName(ingredient) }}</span>
                     </template>
@@ -48,16 +47,22 @@
 
                     <div class="d-none d-print-block"><i class="far fa-comment-alt d-print-none"></i> {{ ingredient.note }}</div>
                 </template>
+                <span class="justify-content-end py-0" v-if="settings.ingredient_context">
+                    <ingredient-context-menu :ingredient="ingredient" class="justify-content-end float-right align-items-end pr-0"></ingredient-context-menu>
+                </span>
             </td>
+            <td v-if="!detailed && ingredient.food.substitute_onhand"><SubstituteBadge :item="ingredient.food" /></td>
         </template>
     </tr>
 </template>
 
 <script>
-import {calculateAmount, ResolveUrlMixin} from "@/utils/utils"
+import { calculateAmount, ResolveUrlMixin } from "@/utils/utils"
 
 import Vue from "vue"
 import VueSanitize from "vue-sanitize"
+import IngredientContextMenu from "@/components/ContextMenu/IngredientContextMenu"
+import SubstituteBadge from "@/components/Badges/Substitute"
 
 Vue.use(VueSanitize)
 
@@ -65,18 +70,20 @@ export default {
     name: "IngredientComponent",
     props: {
         ingredient: Object,
-        ingredient_factor: {type: Number, default: 1},
-        detailed: {type: Boolean, default: true},
+        ingredient_factor: { type: Number, default: 1 },
+        detailed: { type: Boolean, default: true },
+        settings: Object,
     },
     mixins: [ResolveUrlMixin],
+    components: { IngredientContextMenu, SubstituteBadge },
     data() {
         return {
             checked: false,
         }
     },
     watch: {},
-    mounted() {
-    },
+    mounted() {},
+    computed: {},
     methods: {
         calculateAmount: function (x) {
             return this.$sanitize(calculateAmount(x, this.ingredient_factor))
@@ -86,7 +93,7 @@ export default {
             this.$emit("checked-state-changed", this.ingredient)
         },
         ingredientName: function (ingredient) {
-            if (ingredient.food.plural_name == null || ingredient.food.plural_name === '') {
+            if (ingredient.food.plural_name == null || ingredient.food.plural_name === "") {
                 return ingredient.food.name
             }
             if (ingredient.always_use_plural_food) {
@@ -98,7 +105,7 @@ export default {
             } else {
                 return ingredient.food.name
             }
-        }
+        },
     },
 }
 </script>
