@@ -594,6 +594,21 @@ class FoodViewSet(viewsets.ModelViewSet, TreeMixin):
         ShoppingListEntry.objects.create(food=obj, amount=amount, unit=unit, space=request.space, created_by=request.user)
         return Response(content, status=status.HTTP_204_NO_CONTENT)
 
+    @decorators.action(detail=True, methods=['GET'], serializer_class=FoodSimpleSerializer, )
+    def substitutes(self, request, pk):
+        if self.request.space.demo:
+            raise PermissionDenied(detail='Not available in demo', code=None)
+        obj = self.get_object()
+        if obj.get_space() != request.space:
+            raise PermissionDenied(detail='You do not have the required permission to perform this action', code=403)
+
+        onhand = str2bool(request.query_params.get('onhand', False))
+        shopping_users = None
+        if onhand:
+            shopping_users = [*request.user.get_shopping_share(), request.user]
+        qs = obj.get_substitutes(onhand=onhand, shopping_users=shopping_users)
+        return Response(self.serializer_class(qs, many=True).data)
+
     @decorators.action(detail=True, methods=['POST'], )
     def fdc(self, request, pk):
         """

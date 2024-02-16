@@ -874,6 +874,31 @@ export interface FoodSimple {
 /**
  *
  * @export
+ * @interface FoodSimple
+ */
+export interface FoodSimple {
+    /**
+     *
+     * @type {number}
+     * @memberof FoodSimple
+     */
+    id?: number;
+    /**
+     *
+     * @type {string}
+     * @memberof FoodSimple
+     */
+    name: string;
+    /**
+     *
+     * @type {string}
+     * @memberof FoodSimple
+     */
+    plural_name?: string | null;
+}
+/**
+ *
+ * @export
  * @interface FoodSubstitute
  */
 export interface FoodSubstitute {
@@ -11625,7 +11650,6 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
             const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
-
 
 
             setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
