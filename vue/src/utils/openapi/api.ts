@@ -812,6 +812,31 @@ export enum FoodShoppingUpdateDeleteEnum {
 /**
  * 
  * @export
+ * @interface FoodSimple
+ */
+export interface FoodSimple {
+    /**
+     * 
+     * @type {number}
+     * @memberof FoodSimple
+     */
+    id?: number;
+    /**
+     * 
+     * @type {string}
+     * @memberof FoodSimple
+     */
+    name: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof FoodSimple
+     */
+    plural_name?: string | null;
+}
+/**
+ * 
+ * @export
  * @interface FoodSubstitute
  */
 export interface FoodSubstitute {
@@ -11420,6 +11445,39 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
         },
         /**
          * 
+         * @param {string} id A unique integer value identifying this food.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        substitutesFood: async (id: string, options: any = {}): Promise<RequestArgs> => {
+            // verify required parameter 'id' is not null or undefined
+            assertParamExists('substitutesFood', 'id', id)
+            const localVarPath = `/api/food/{id}/substitutes/`
+                .replace(`{${"id"}}`, encodeURIComponent(String(id)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
          * @param {string} id A unique integer value identifying this access token.
          * @param {AccessToken} [accessToken] 
          * @param {*} [options] Override http request option.
@@ -14637,6 +14695,16 @@ export const ApiApiFp = function(configuration?: Configuration) {
         },
         /**
          * 
+         * @param {string} id A unique integer value identifying this food.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async substitutesFood(id: string, options?: any): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<FoodSimple>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.substitutesFood(id, options);
+            return createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration);
+        },
+        /**
+         * 
          * @param {string} id A unique integer value identifying this access token.
          * @param {AccessToken} [accessToken] 
          * @param {*} [options] Override http request option.
@@ -16823,6 +16891,15 @@ export const ApiApiFactory = function (configuration?: Configuration, basePath?:
          */
         shoppingRecipe(id: string, recipeShoppingUpdate?: RecipeShoppingUpdate, options?: any): AxiosPromise<RecipeShoppingUpdate> {
             return localVarFp.shoppingRecipe(id, recipeShoppingUpdate, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * 
+         * @param {string} id A unique integer value identifying this food.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        substitutesFood(id: string, options?: any): AxiosPromise<FoodSimple> {
+            return localVarFp.substitutesFood(id, options).then((request) => request(axios, basePath));
         },
         /**
          * 
@@ -19366,6 +19443,17 @@ export class ApiApi extends BaseAPI {
      */
     public shoppingRecipe(id: string, recipeShoppingUpdate?: RecipeShoppingUpdate, options?: any) {
         return ApiApiFp(this.configuration).shoppingRecipe(id, recipeShoppingUpdate, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * 
+     * @param {string} id A unique integer value identifying this food.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof ApiApi
+     */
+    public substitutesFood(id: string, options?: any) {
+        return ApiApiFp(this.configuration).substitutesFood(id, options).then((request) => request(this.axios, this.basePath));
     }
 
     /**
