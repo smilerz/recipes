@@ -15,4 +15,9 @@ class Migration(migrations.Migration):
             name='updated_at',
             field=models.DateTimeField(auto_now=True),
         ),
+        migrations.AddField(
+            model_name='userpreference',
+            name='ingredient_context',
+            field=models.BooleanField(default=False),
+        ),
     ]
