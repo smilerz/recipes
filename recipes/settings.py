@@ -308,27 +308,17 @@ if os.getenv('DATABASE_URL'):
 
     DATABASES = {
         'default': {
-            'ENGINE': engine,
-            'OPTIONS': ast.literal_eval(os.getenv('DB_OPTIONS')) if os.getenv('DB_OPTIONS') else {},
-            'HOST': settings['host'],
-            'PORT': settings['port'],
-            'USER': settings['user'],
-            'PASSWORD': settings['password'],
-            'NAME': settings['database'],
-            'CONN_MAX_AGE': 600,
+            'ENGINE': engine, 'OPTIONS': ast.literal_eval(os.getenv('DB_OPTIONS')) if os.getenv('DB_OPTIONS') else {}, 'HOST': settings['host'], 'PORT': settings['port'], 'USER':
+            settings['user'], 'PASSWORD': settings['password'], 'NAME': settings['database'], 'CONN_MAX_AGE': 600,
         }
     }
 else:
     DATABASES = {
         'default': {
-            'ENGINE': os.getenv('DB_ENGINE') if os.getenv('DB_ENGINE') else 'django.db.backends.sqlite3',
-            'OPTIONS': ast.literal_eval(os.getenv('DB_OPTIONS')) if os.getenv('DB_OPTIONS') else {},
-            'HOST': os.getenv('POSTGRES_HOST'),
-            'PORT': os.getenv('POSTGRES_PORT'),
-            'USER': os.getenv('POSTGRES_USER'),
-            'PASSWORD': os.getenv('POSTGRES_PASSWORD'),
-            'NAME': os.getenv('POSTGRES_DB') if os.getenv('POSTGRES_DB') else 'db.sqlite3',
-            'CONN_MAX_AGE': 60,
+            'ENGINE': os.getenv('DB_ENGINE') if os.getenv('DB_ENGINE') else 'django.db.backends.sqlite3', 'OPTIONS':
+            ast.literal_eval(os.getenv('DB_OPTIONS')) if os.getenv('DB_OPTIONS') else {}, 'HOST': os.getenv('POSTGRES_HOST'), 'PORT': os.getenv('POSTGRES_PORT'), 'USER':
+            os.getenv('POSTGRES_USER'), 'PASSWORD': os.getenv('POSTGRES_PASSWORD'), 'NAME': os.getenv('POSTGRES_DB') if os.getenv('POSTGRES_DB') else 'db.sqlite3', 'CONN_MAX_AGE':
+            60,
         }
     }
 
@@ -357,29 +347,23 @@ else:
 
 CACHES = {'default': {'BACKEND': 'django.core.cache.backends.locmem.LocMemCache', 'LOCATION': 'default', }}
 
+CACHES = {'default': {'BACKEND': 'django.core.cache.backends.locmem.LocMemCache', 'LOCATION': 'default', }}
+
 # Vue webpack settings
 VUE_DIR = os.path.join(BASE_DIR, 'vue')
 
 WEBPACK_LOADER = {
     'DEFAULT': {
-        'CACHE': not DEBUG,
-        'BUNDLE_DIR_NAME': 'vue/',  # must end with slash
-        'STATS_FILE': os.path.join(VUE_DIR, 'webpack-stats.json'),
-        'POLL_INTERVAL': 0.1,
-        'TIMEOUT': None,
-        'IGNORE': [r'.+\.hot-update.js', r'.+\.map'],
+        'CACHE': not DEBUG, 'BUNDLE_DIR_NAME': 'vue/',  # must end with slash
+        'STATS_FILE': os.path.join(VUE_DIR, 'webpack-stats.json'), 'POLL_INTERVAL': 0.1, 'TIMEOUT': None, 'IGNORE': [r'.+\.hot-update.js', r'.+\.map'],
     },
 }
 
 for p in PLUGINS:
     if p['bundle_name'] != '':
         WEBPACK_LOADER[p['bundle_name']] = {
-            'CACHE': not DEBUG,
-            'BUNDLE_DIR_NAME': 'vue/',  # must end with slash
-            'STATS_FILE': os.path.join(p["base_path"], 'vue', 'webpack-stats.json'),
-            'POLL_INTERVAL': 0.1,
-            'TIMEOUT': None,
-            'IGNORE': [r'.+\.hot-update.js', r'.+\.map'],
+            'CACHE': not DEBUG, 'BUNDLE_DIR_NAME': 'vue/',  # must end with slash
+            'STATS_FILE': os.path.join(p["base_path"], 'vue', 'webpack-stats.json'), 'POLL_INTERVAL': 0.1, 'TIMEOUT': None, 'IGNORE': [r'.+\.hot-update.js', r'.+\.map'],
         }
 
 # Internationalization
