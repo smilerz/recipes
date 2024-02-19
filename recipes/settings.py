@@ -357,8 +357,6 @@ else:
 
 CACHES = {'default': {'BACKEND': 'django.core.cache.backends.locmem.LocMemCache', 'LOCATION': 'default', }}
 
-CACHES = {'default': {'BACKEND': 'django.core.cache.backends.locmem.LocMemCache', 'LOCATION': 'default', }}
-
 # Vue webpack settings
 VUE_DIR = os.path.join(BASE_DIR, 'vue')
 
