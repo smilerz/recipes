@@ -242,7 +242,9 @@ class MergeMixin(ViewSetMixin):
 
             try:
                 if isinstance(source, Food):
-                    source.properties.remove()
+                    source.properties.all().delete()
+                    source.properties.clear()
+                    UnitConversion.objects.filter(food=source).delete()
 
                 for link in [field for field in source._meta.get_fields() if issubclass(type(field), ForeignObjectRel)]:
                     linkManager = getattr(source, link.get_accessor_name())
@@ -599,11 +601,21 @@ class FoodViewSet(viewsets.ModelViewSet, TreeMixin):
         if properties with a fdc_id already exist they will be overridden, if existing properties don't have a fdc_id they won't be changed
         """
         food = self.get_object()
+        if not food.fdc_id:
+            return JsonResponse({'msg': 'Food has no FDC ID associated.'}, status=400,
+                                json_dumps_params={'indent': 4})
 
         response = requests.get(f'https://api.nal.usda.gov/fdc/v1/food/{food.fdc_id}?api_key={FDC_API_KEY}')
         if response.status_code == 429:
-            return JsonResponse({'msg', 'API Key Rate Limit reached/exceeded, see https://api.data.gov/docs/rate-limits/ for more information. Configure your key in Tandoor using environment FDC_API_KEY variable.'}, status=429,
+            return JsonResponse({'msg': 'API Key Rate Limit reached/exceeded, see https://api.data.gov/docs/rate-limits/ for more information. Configure your key in Tandoor using environment FDC_API_KEY variable.'}, status=429,
                                 json_dumps_params={'indent': 4})
+        if response.status_code != 200:
+            return JsonResponse({'msg': f'Error while requesting FDC data using url https://api.nal.usda.gov/fdc/v1/food/{food.fdc_id}?api_key=****'}, status=response.status_code,
+                                json_dumps_params={'indent': 4})
+
+        food.properties_food_amount = 100
+        food.properties_food_unit = Unit.objects.get_or_create(base_unit__iexact='g', space=self.request.space, defaults={'name': 'g', 'base_unit': 'g', 'space': self.request.space})[0]
+        food.save()
 
         try:
             data = json.loads(response.content)
@@ -617,14 +629,23 @@ class FoodViewSet(viewsets.ModelViewSet, TreeMixin):
 
             for pt in PropertyType.objects.filter(space=request.space, fdc_id__gte=0).all():
                 if pt.fdc_id:
+                    property_found = False
                     for fn in data['foodNutrients']:
                         if fn['nutrient']['id'] == pt.fdc_id:
+                            property_found = True
                             food_property_list.append(Property(
                                 property_type_id=pt.id,
-                                property_amount=round(fn['amount'], 2),
+                                property_amount=max(0, round(fn['amount'], 2)),  # sometimes FDC might return negative values which make no sense, set to 0
                                 import_food_id=food.id,
                                 space=self.request.space,
                             ))
+                    if not property_found:
+                        food_property_list.append(Property(
+                            property_type_id=pt.id,
+                            property_amount=0,  # if field not in FDC data the food does not have that property
+                            import_food_id=food.id,
+                            space=self.request.space,
+                        ))
 
             Property.objects.bulk_create(food_property_list, ignore_conflicts=True, unique_fields=('space', 'import_food_id', 'property_type',))
 
@@ -669,8 +690,16 @@ class RecipeBookViewSet(viewsets.ModelViewSet, StandardFilterMixin):
     permission_classes = [(CustomIsOwner | CustomIsShared) & CustomTokenHasReadWriteScope]
 
     def get_queryset(self):
+        order_field = self.request.GET.get('order_field')
+        order_direction = self.request.GET.get('order_direction')
+
+        if not order_field:
+            order_field = 'id'
+
+        ordering = f"{'' if order_direction == 'asc' else '-'}{order_field}"
+
         self.queryset = self.queryset.filter(Q(created_by=self.request.user) | Q(shared=self.request.user)).filter(
-            space=self.request.space).distinct()
+            space=self.request.space).distinct().order_by(ordering)
         return super().get_queryset()
 
 
@@ -1605,6 +1634,7 @@ class ImportOpenData(APIView):
         # TODO validate data
         print(request.data)
         selected_version = request.data['selected_version']
+        selected_datatypes = request.data['selected_datatypes']
         update_existing = str2bool(request.data['update_existing'])
         use_metric = str2bool(request.data['use_metric'])
 
@@ -1614,12 +1644,19 @@ class ImportOpenData(APIView):
         response_obj = {}
 
         data_importer = OpenDataImporter(request, data, update_existing=update_existing, use_metric=use_metric)
-        response_obj['unit'] = len(data_importer.import_units())
-        response_obj['category'] = len(data_importer.import_category())
-        response_obj['property'] = len(data_importer.import_property())
-        response_obj['store'] = len(data_importer.import_supermarket())
-        response_obj['food'] = len(data_importer.import_food())
-        response_obj['conversion'] = len(data_importer.import_conversion())
+
+        if selected_datatypes['unit']['selected']:
+            response_obj['unit'] = data_importer.import_units()
+        if selected_datatypes['category']['selected']:
+            response_obj['category'] = data_importer.import_category()
+        if selected_datatypes['property']['selected']:
+            response_obj['property'] = data_importer.import_property()
+        if selected_datatypes['store']['selected']:
+            response_obj['store'] = data_importer.import_supermarket()
+        if selected_datatypes['food']['selected']:
+            response_obj['food'] = data_importer.import_food()
+        if selected_datatypes['conversion']['selected']:
+            response_obj['conversion'] = data_importer.import_conversion()
 
         return Response(response_obj)
 

@@ -10,7 +10,7 @@ from django_scopes import scopes_disabled
 from django_scopes.forms import SafeModelChoiceField, SafeModelMultipleChoiceField
 from hcaptcha.fields import hCaptchaField
 
-from .models import Comment, Food, InviteLink, Keyword, Recipe, RecipeBook, RecipeBookEntry, SearchPreference, Space, Storage, Sync, User, UserPreference
+from .models import Comment, InviteLink, Keyword, Recipe, SearchPreference, Space, Storage, Sync, User, UserPreference
 
 
 class SelectWidget(widgets.Select):
@@ -161,19 +161,21 @@ class StorageForm(forms.ModelForm):
 
 
 # TODO: Deprecate
-class RecipeBookEntryForm(forms.ModelForm):
-    prefix = 'bookmark'
+# class RecipeBookEntryForm(forms.ModelForm):
+#     prefix = 'bookmark'
 
-    def __init__(self, *args, **kwargs):
-        space = kwargs.pop('space')
-        super().__init__(*args, **kwargs)
-        self.fields['book'].queryset = RecipeBook.objects.filter(space=space).all()
+#     def __init__(self, *args, **kwargs):
+#         space = kwargs.pop('space')
+#         super().__init__(*args, **kwargs)
+#         self.fields['book'].queryset = RecipeBook.objects.filter(space=space).all()
 
-    class Meta:
-        model = RecipeBookEntry
-        fields = ('book', )
+#     class Meta:
+#         model = RecipeBookEntry
+#         fields = ('book',)
 
-        field_classes = {'book': SafeModelChoiceField, }
+#         field_classes = {
+#             'book': SafeModelChoiceField,
+#         }
 
 
 class SyncForm(forms.ModelForm):
@@ -328,53 +330,71 @@ class SearchPreferenceForm(forms.ModelForm):
         }
 
 
-class ShoppingPreferenceForm(forms.ModelForm):
-    prefix = 'shopping'
+# class ShoppingPreferenceForm(forms.ModelForm):
+#     prefix = 'shopping'
 
-    class Meta:
-        model = UserPreference
+#     class Meta:
+#         model = UserPreference
 
-        fields = ('shopping_share', 'shopping_auto_sync', 'mealplan_autoadd_shopping', 'mealplan_autoexclude_onhand', 'mealplan_autoinclude_related', 'shopping_add_onhand',
-                  'default_delay', 'filter_to_supermarket', 'shopping_recent_days', 'csv_delim', 'csv_prefix')
+#         fields = (
+#             'shopping_share', 'shopping_auto_sync', 'mealplan_autoadd_shopping', 'mealplan_autoexclude_onhand',
+#             'mealplan_autoinclude_related', 'shopping_add_onhand', 'default_delay', 'filter_to_supermarket', 'shopping_recent_days', 'csv_delim', 'csv_prefix'
+#         )
 
-        help_texts = {
-            'shopping_share':
-            _('Users will see all items you add to your shopping list.  They must add you to see items on their list.'), 'shopping_auto_sync':
-            _('Setting to 0 will disable auto sync. When viewing a shopping list the list is updated every set seconds to sync changes someone else might have made. Useful when shopping with multiple people but might use a little bit '
-              'of mobile data. If lower than instance limit it is reset when saving.'), 'mealplan_autoadd_shopping':
-            _('Automatically add meal plan ingredients to shopping list.'), 'mealplan_autoinclude_related':
-            _('When adding a meal plan to the shopping list (manually or automatically), include all related recipes.'), 'mealplan_autoexclude_onhand':
-            _('When adding a meal plan to the shopping list (manually or automatically), exclude ingredients that are on hand.'), 'default_delay':
-            _('Default number of hours to delay a shopping list entry.'), 'filter_to_supermarket':
-            _('Filter shopping list to only include supermarket categories.'), 'shopping_recent_days':
-            _('Days of recent shopping list entries to display.'), 'shopping_add_onhand':
-            _("Mark food 'On Hand' when checked off shopping list."), 'csv_delim':
-            _('Delimiter to use for CSV exports.'), 'csv_prefix':
-            _('Prefix to add when copying list to the clipboard.'),
-        }
-        labels = {
-            'shopping_share': _('Share Shopping List'), 'shopping_auto_sync': _('Autosync'), 'mealplan_autoadd_shopping': _('Auto Add Meal Plan'), 'mealplan_autoexclude_onhand':
-            _('Exclude On Hand'), 'mealplan_autoinclude_related': _('Include Related'), 'default_delay': _('Default Delay Hours'), 'filter_to_supermarket':
-            _('Filter to Supermarket'), 'shopping_recent_days': _('Recent Days'), 'csv_delim': _('CSV Delimiter'), "csv_prefix_label": _("List Prefix"), 'shopping_add_onhand':
-            _("Auto On Hand"),
-        }
+#         help_texts = {
+#             'shopping_share': _('Users will see all items you add to your shopping list.  They must add you to see items on their list.'),
+#             'shopping_auto_sync': _(
+#                 'Setting to 0 will disable auto sync. When viewing a shopping list the list is updated every set seconds to sync changes someone else might have made. Useful when shopping with multiple people but might use a little bit '
+#                 'of mobile data. If lower than instance limit it is reset when saving.'
+#             ),
+#             'mealplan_autoadd_shopping': _('Automatically add meal plan ingredients to shopping list.'),
+#             'mealplan_autoinclude_related': _('When adding a meal plan to the shopping list (manually or automatically), include all related recipes.'),
+#             'mealplan_autoexclude_onhand': _('When adding a meal plan to the shopping list (manually or automatically), exclude ingredients that are on hand.'),
+#             'default_delay': _('Default number of hours to delay a shopping list entry.'),
+#             'filter_to_supermarket': _('Filter shopping list to only include supermarket categories.'),
+#             'shopping_recent_days': _('Days of recent shopping list entries to display.'),
+#             'shopping_add_onhand': _("Mark food 'On Hand' when checked off shopping list."),
+#             'csv_delim': _('Delimiter to use for CSV exports.'),
+#             'csv_prefix': _('Prefix to add when copying list to the clipboard.'),
 
-        widgets = {'shopping_share': MultiSelectWidget}
+#         }
+#         labels = {
+#             'shopping_share': _('Share Shopping List'),
+#             'shopping_auto_sync': _('Autosync'),
+#             'mealplan_autoadd_shopping': _('Auto Add Meal Plan'),
+#             'mealplan_autoexclude_onhand': _('Exclude On Hand'),
+#             'mealplan_autoinclude_related': _('Include Related'),
+#             'default_delay': _('Default Delay Hours'),
+#             'filter_to_supermarket': _('Filter to Supermarket'),
+#             'shopping_recent_days': _('Recent Days'),
+#             'csv_delim': _('CSV Delimiter'),
+#             "csv_prefix_label": _("List Prefix"),
+#             'shopping_add_onhand': _("Auto On Hand"),
+#         }
 
+#         widgets = {
+#             'shopping_share': MultiSelectWidget
+#         }
 
-class SpacePreferenceForm(forms.ModelForm):
-    prefix = 'space'
-    reset_food_inherit = forms.BooleanField(label=_("Reset Food Inheritance"), initial=False, required=False, help_text=_("Reset all food to inherit the fields configured."))
+# class SpacePreferenceForm(forms.ModelForm):
+#     prefix = 'space'
+#     reset_food_inherit = forms.BooleanField(label=_("Reset Food Inheritance"), initial=False, required=False,
+#                                             help_text=_("Reset all food to inherit the fields configured."))
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)  # populates the post
-        self.fields['food_inherit'].queryset = Food.inheritable_fields
+#     def __init__(self, *args, **kwargs):
+#         super().__init__(*args, **kwargs)  # populates the post
+#         self.fields['food_inherit'].queryset = Food.inheritable_fields
 
-    class Meta:
-        model = Space
+#     class Meta:
+#         model = Space
 
-        fields = ('food_inherit', 'reset_food_inherit', )
+#         fields = ('food_inherit', 'reset_food_inherit',)
 
-        help_texts = {'food_inherit': _('Fields on food that should be inherited by default.'), 'use_plural': _('Use the plural form for units and food inside this space.'), }
+#         help_texts = {
+#             'food_inherit': _('Fields on food that should be inherited by default.'),
+#             'use_plural': _('Use the plural form for units and food inside this space.'),
+#         }
 
-        widgets = {'food_inherit': MultiSelectWidget}
+#         widgets = {
+#             'food_inherit': MultiSelectWidget
+#         }

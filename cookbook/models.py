@@ -224,6 +224,27 @@ class TreeModel(MP_Node):
         abstract = True
 
 
+class MergeModelMixin:
+
+    def merge_into(self, target):
+        """
+        very simple merge function that replaces the current instance with the target instance
+        :param target: target object
+        :return: target with data merged
+        """
+
+        if self == target:
+            raise ValueError('Cannot merge an object with itself')
+
+        if getattr(self, 'space', 0) != getattr(target, 'space', 0):
+            raise RuntimeError('Cannot merge objects from different spaces')
+
+        if hasattr(self, 'get_descendants_and_self') and target in callable(getattr(self, 'get_descendants_and_self')):
+            raise RuntimeError('Cannot merge parent (source) with child (target) object')
+
+        # TODO copy field values
+
+
 class PermissionModelMixin:
     @staticmethod
     def get_space_key():
@@ -335,10 +356,18 @@ class Space(ExportModelOperationsMixin('space'), models.Model):
         BookmarkletImport.objects.filter(space=self).delete()
         CustomFilter.objects.filter(space=self).delete()
 
+        Property.objects.filter(space=self).delete()
+        PropertyType.objects.filter(space=self).delete()
+
         Comment.objects.filter(recipe__space=self).delete()
-        Keyword.objects.filter(space=self).delete()
         Ingredient.objects.filter(space=self).delete()
-        Food.objects.filter(space=self).delete()
+        Keyword.objects.filter(space=self).delete()
+
+        # delete food in batches because treabeard might fail to delete otherwise
+        while Food.objects.filter(space=self).count() > 0:
+            pks = Food.objects.filter(space=self).values_list('pk')[:200]
+            Food.objects.filter(pk__in=pks).delete()
+
         Unit.objects.filter(space=self).delete()
         Step.objects.filter(space=self).delete()
         NutritionInformation.objects.filter(space=self).delete()
@@ -362,9 +391,11 @@ class Space(ExportModelOperationsMixin('space'), models.Model):
         SupermarketCategory.objects.filter(space=self).delete()
         Supermarket.objects.filter(space=self).delete()
 
-        InviteLink.objects.filter(space=self).delete()
         UserFile.objects.filter(space=self).delete()
+        UserSpace.objects.filter(space=self).delete()
         Automation.objects.filter(space=self).delete()
+        InviteLink.objects.filter(space=self).delete()
+        TelegramBot.objects.filter(space=self).delete()
         self.delete()
 
     def get_owner(self):
@@ -458,6 +489,7 @@ class UserPreference(models.Model, PermissionModelMixin):
             self.use_fractions = FRACTION_PREF_DEFAULT
 
         return super().save(*args, **kwargs)
+
     def __str__(self):
         return str(self.user)
 
@@ -517,7 +549,7 @@ class Sync(models.Model, PermissionModelMixin):
         return self.path
 
 
-class SupermarketCategory(models.Model, PermissionModelMixin):
+class SupermarketCategory(models.Model, PermissionModelMixin, MergeModelMixin):
     name = models.CharField(max_length=128, validators=[MinLengthValidator(1)])
     description = models.TextField(blank=True, null=True)
     open_data_slug = models.CharField(max_length=128, null=True, blank=True, default=None)
@@ -527,6 +559,14 @@ class SupermarketCategory(models.Model, PermissionModelMixin):
 
     def __str__(self):
         return self.name
+
+    def merge_into(self, target):
+        super().merge_into(target)
+
+        Food.objects.filter(supermarket_category=self).update(supermarket_category=target)
+        SupermarketCategoryRelation.objects.filter(category=self).update(category=target)
+        self.delete()
+        return target
 
     class Meta:
         constraints = [
@@ -602,7 +642,7 @@ class Keyword(ExportModelOperationsMixin('keyword'), TreeModel, PermissionModelM
         indexes = (Index(fields=['id', 'name']),)
 
 
-class Unit(ExportModelOperationsMixin('unit'), models.Model, PermissionModelMixin):
+class Unit(ExportModelOperationsMixin('unit'), models.Model, PermissionModelMixin, MergeModelMixin):
     name = models.CharField(max_length=128, validators=[MinLengthValidator(1)])
     plural_name = models.CharField(max_length=128, null=True, blank=True, default=None)
     description = models.TextField(blank=True, null=True)
@@ -611,6 +651,17 @@ class Unit(ExportModelOperationsMixin('unit'), models.Model, PermissionModelMixi
 
     space = models.ForeignKey(Space, on_delete=models.CASCADE)
     objects = ScopedManager(space='space')
+
+    def merge_into(self, target):
+        super().merge_into(target)
+
+        Ingredient.objects.filter(unit=self).update(unit=target)
+        ShoppingListEntry.objects.filter(unit=self).update(unit=target)
+        Food.objects.filter(properties_food_unit=self).update(properties_food_unit=target)
+        Food.objects.filter(preferred_unit=self).update(preferred_unit=target)
+        Food.objects.filter(preferred_shopping_unit=self).update(preferred_shopping_unit=target)
+        self.delete()
+        return target
 
     def __str__(self):
         return self.name
@@ -659,6 +710,32 @@ class Food(ExportModelOperationsMixin('food'), TreeModel, PermissionModelMixin):
 
     def __str__(self):
         return self.name
+
+    def merge_into(self, target):
+        """
+        very simple merge function that replaces the current food with the target food
+        also replaces a few attributes on the target field if they were empty before
+        :param target: target food object
+        :return: target with data merged
+        """
+        if self == target:
+            raise ValueError('Cannot merge an object with itself')
+
+        if self.space != target.space:
+            raise RuntimeError('Cannot merge objects from different spaces')
+
+        try:
+            if target in self.get_descendants_and_self():
+                raise RuntimeError('Cannot merge parent (source) with child (target) object')
+        except AttributeError:
+            pass  # AttributeError is raised when the object is not a tree and thus does not have the get_descendants_and_self() function
+
+        self.properties.all().delete()
+        self.properties.clear()
+        Ingredient.objects.filter(food=self).update(food=target)
+        ShoppingListEntry.objects.filter(food=self).update(food=target)
+        self.delete()
+        return target
 
     def delete(self):
         if self.ingredient_set.all().exclude(step=None).count() > 0:
@@ -867,7 +944,7 @@ class PropertyType(models.Model, PermissionModelMixin):
 
 
 class Property(models.Model, PermissionModelMixin):
-    property_amount = models.DecimalField(default=0, decimal_places=4, max_digits=32)
+    property_amount = models.DecimalField(default=None, null=True, decimal_places=4, max_digits=32)
     property_type = models.ForeignKey(PropertyType, on_delete=models.PROTECT)
 
     import_food_id = models.IntegerField(null=True, blank=True)  # field to hold food id when importing properties from the open data project
@@ -1015,6 +1092,7 @@ class RecipeBook(ExportModelOperationsMixin('book'), models.Model, PermissionMod
     shared = models.ManyToManyField(User, blank=True, related_name='shared_with')
     created_by = models.ForeignKey(User, on_delete=models.CASCADE)
     filter = models.ForeignKey('cookbook.CustomFilter', null=True, blank=True, on_delete=models.SET_NULL)
+    order = models.IntegerField(default=0)
 
     space = models.ForeignKey(Space, on_delete=models.CASCADE)
     objects = ScopedManager(space='space')

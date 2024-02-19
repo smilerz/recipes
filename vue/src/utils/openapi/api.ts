@@ -644,7 +644,7 @@ export interface FoodProperties {
      * @type {string}
      * @memberof FoodProperties
      */
-    property_amount: string;
+    property_amount: string | null;
     /**
      * 
      * @type {FoodPropertyType}
@@ -2133,7 +2133,7 @@ export interface Property {
      * @type {string}
      * @memberof Property
      */
-    property_amount: string;
+    property_amount: string | null;
     /**
      * 
      * @type {FoodPropertyType}
@@ -2383,6 +2383,12 @@ export interface RecipeBook {
      * @memberof RecipeBook
      */
     filter?: RecipeBookFilter | null;
+    /**
+     * 
+     * @type {number}
+     * @memberof RecipeBook
+     */
+    order?: number;
 }
 /**
  * 
