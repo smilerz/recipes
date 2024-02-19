@@ -65,6 +65,7 @@ export default {
         settings: Object,
     },
     mixins: [ResolveUrlMixin, EscapeCSSMixin],
+    components: { IngredientContextMenu, SubstituteBadge },
     data() {
         return {
             checked: false,
