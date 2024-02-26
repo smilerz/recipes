@@ -40,7 +40,6 @@ from recipes.settings import AWS_ENABLED, MEDIA_URL
 
 
 class WritableNestedModelSerializer(WNMS):
-
     # overload to_internal_value to allow using PK only on nested object
     def to_internal_value(self, data):
         # iterate through every field on the posted object
