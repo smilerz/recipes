@@ -104,10 +104,10 @@ MESSAGE_TAGS = {messages.ERROR: 'danger'}
 # Application definition
 
 INSTALLED_APPS = [
-    'dal', 'dal_select2', 'django.contrib.admin', 'django.contrib.auth', 'django.contrib.contenttypes', 'django.contrib.sessions', 'django.contrib.messages',
-    'django.contrib.sites', 'django.contrib.staticfiles', 'django.contrib.postgres', 'oauth2_provider', 'django_prometheus', 'django_tables2', 'corsheaders', 'crispy_forms',
-    'crispy_bootstrap4', 'rest_framework', 'rest_framework.authtoken', 'django_cleanup.apps.CleanupConfig', 'webpack_loader', 'django_js_reverse', 'hcaptcha', 'allauth',
-    'allauth.account', 'allauth.socialaccount', 'cookbook.apps.CookbookConfig', 'treebeard',
+    'django.contrib.admin', 'django.contrib.auth', 'django.contrib.contenttypes', 'django.contrib.sessions', 'django.contrib.messages', 'django.contrib.sites',
+    'django.contrib.staticfiles', 'django.contrib.postgres', 'oauth2_provider', 'django_prometheus', 'django_tables2', 'corsheaders', 'crispy_forms', 'crispy_bootstrap4',
+    'rest_framework', 'rest_framework.authtoken', 'django_cleanup.apps.CleanupConfig', 'webpack_loader', 'django_js_reverse', 'hcaptcha', 'allauth', 'allauth.account',
+    'allauth.socialaccount', 'cookbook.apps.CookbookConfig', 'treebeard',
 ]
 
 PLUGINS_DIRECTORY = os.path.join(BASE_DIR, 'recipes', 'plugins')
@@ -129,14 +129,17 @@ try:
                         INSTALLED_APPS.append(plugin_module)
 
                         plugin_config = {
-                            'name': plugin_class.verbose_name if hasattr(plugin_class, 'verbose_name') else plugin_class.name, 'version':
-                            plugin_class.VERSION if hasattr(plugin_class, 'VERSION') else 'unknown', 'website': plugin_class.website if hasattr(plugin_class, 'website') else '',
-                            'github': plugin_class.github if hasattr(plugin_class, 'github') else '', 'module': f'recipes.plugins.{d}', 'base_path':
-                            os.path.join(BASE_DIR, 'recipes', 'plugins',
-                                         d), 'base_url': plugin_class.base_url, 'bundle_name': plugin_class.bundle_name if hasattr(plugin_class, 'bundle_name') else '',
-                            'api_router_name': plugin_class.api_router_name if hasattr(plugin_class, 'api_router_name') else '', 'nav_main':
-                            plugin_class.nav_main if hasattr(plugin_class, 'nav_main') else '', 'nav_dropdown':
-                            plugin_class.nav_dropdown if hasattr(plugin_class, 'nav_dropdown') else '',
+                            'name': plugin_class.verbose_name if hasattr(plugin_class, 'verbose_name') else plugin_class.name,
+                            'version': plugin_class.VERSION if hasattr(plugin_class, 'VERSION') else 'unknown',
+                            'website': plugin_class.website if hasattr(plugin_class, 'website') else '',
+                            'github': plugin_class.github if hasattr(plugin_class, 'github') else '',
+                            'module': f'recipes.plugins.{d}',
+                            'base_path': os.path.join(BASE_DIR, 'recipes', 'plugins', d),
+                            'base_url': plugin_class.base_url,
+                            'bundle_name': plugin_class.bundle_name if hasattr(plugin_class, 'bundle_name') else '',
+                            'api_router_name': plugin_class.api_router_name if hasattr(plugin_class, 'api_router_name') else '',
+                            'nav_main': plugin_class.nav_main if hasattr(plugin_class, 'nav_main') else '',
+                            'nav_dropdown': plugin_class.nav_dropdown if hasattr(plugin_class, 'nav_dropdown') else '',
                         }
                         PLUGINS.append(plugin_config)
                         print(f'PLUGIN {d} loaded')
@@ -208,16 +211,30 @@ if LDAP_AUTH:
     AUTH_LDAP_BIND_DN = os.getenv('AUTH_LDAP_BIND_DN')
     AUTH_LDAP_BIND_PASSWORD = os.getenv('AUTH_LDAP_BIND_PASSWORD')
     AUTH_LDAP_USER_SEARCH = LDAPSearch(os.getenv('AUTH_LDAP_USER_SEARCH_BASE_DN'), ldap.SCOPE_SUBTREE, os.getenv('AUTH_LDAP_USER_SEARCH_FILTER_STR', '(uid=%(user)s)'), )
-    AUTH_LDAP_USER_ATTR_MAP = ast.literal_eval(
-        os.getenv('AUTH_LDAP_USER_ATTR_MAP')) if os.getenv('AUTH_LDAP_USER_ATTR_MAP') else {'first_name': 'givenName', 'last_name': 'sn', 'email': 'mail', }
+    AUTH_LDAP_USER_ATTR_MAP = ast.literal_eval(os.getenv('AUTH_LDAP_USER_ATTR_MAP')) if os.getenv('AUTH_LDAP_USER_ATTR_MAP') else {
+        'first_name': 'givenName',
+        'last_name': 'sn',
+        'email': 'mail',
+    }
     AUTH_LDAP_ALWAYS_UPDATE_USER = bool(int(os.getenv('AUTH_LDAP_ALWAYS_UPDATE_USER', True)))
     AUTH_LDAP_CACHE_TIMEOUT = int(os.getenv('AUTH_LDAP_CACHE_TIMEOUT', 3600))
     if 'AUTH_LDAP_TLS_CACERTFILE' in os.environ:
         AUTH_LDAP_GLOBAL_OPTIONS = {ldap.OPT_X_TLS_CACERTFILE: os.getenv('AUTH_LDAP_TLS_CACERTFILE')}
     if DEBUG:
         LOGGING = {
-            "version": 1, "disable_existing_loggers": False, "handlers": {"console": {"class": "logging.StreamHandler"}}, "loggers":
-            {"django_auth_ldap": {"level": "DEBUG", "handlers": ["console"]}},
+            "version": 1,
+            "disable_existing_loggers": False,
+            "handlers": {
+                "console": {
+                    "class": "logging.StreamHandler"
+                }
+            },
+            "loggers": {
+                "django_auth_ldap": {
+                    "level": "DEBUG",
+                    "handlers": ["console"]
+                }
+            },
         }
 
 AUTHENTICATION_BACKENDS += ['django.contrib.auth.backends.ModelBackend', 'allauth.account.auth_backends.AuthenticationBackend', ]
@@ -234,10 +251,15 @@ if REMOTE_USER_AUTH:
 # Password validation
 # https://docs.djangoproject.com/en/2.0/ref/settings/#auth-password-validators
 
-AUTH_PASSWORD_VALIDATORS = [{'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
-                             }, {'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
-                                 }, {'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator', },
-                            {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator', }, ]
+AUTH_PASSWORD_VALIDATORS = [{
+    'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
+}, {
+    'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
+}, {
+    'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
+}, {
+    'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
+}, ]
 
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
@@ -248,15 +270,17 @@ WRITE_SCOPE = 'write'
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES':
     ('rest_framework.authentication.SessionAuthentication', 'oauth2_provider.contrib.rest_framework.OAuth2Authentication', 'rest_framework.authentication.BasicAuthentication',
-     ), 'DEFAULT_PERMISSION_CLASSES': ['rest_framework.permissions.IsAuthenticated', ],
+     ),
+    'DEFAULT_PERMISSION_CLASSES': ['rest_framework.permissions.IsAuthenticated', ],
 }
 
 ROOT_URLCONF = 'recipes.urls'
 
 TEMPLATES = [{
-    'BACKEND': 'django.template.backends.django.DjangoTemplates', 'DIRS': [os.path.join(BASE_DIR, 'templates'),
-                                                                           os.path.join(BASE_DIR, 'cookbook', 'templates')], 'APP_DIRS': True, 'OPTIONS':
-    {
+    'BACKEND': 'django.template.backends.django.DjangoTemplates',
+    'DIRS': [os.path.join(BASE_DIR, 'templates'), os.path.join(BASE_DIR, 'cookbook', 'templates')],
+    'APP_DIRS': True,
+    'OPTIONS': {
         'context_processors': [
             'django.template.context_processors.debug', 'django.template.context_processors.request', 'django.contrib.auth.context_processors.auth',
             'django.contrib.messages.context_processors.messages', 'django.template.context_processors.media', 'cookbook.helper.context_processors.context_settings',
@@ -284,17 +308,27 @@ if os.getenv('DATABASE_URL'):
 
     DATABASES = {
         'default': {
-            'ENGINE': engine, 'OPTIONS': ast.literal_eval(os.getenv('DB_OPTIONS')) if os.getenv('DB_OPTIONS') else {}, 'HOST': settings['host'], 'PORT': settings['port'], 'USER':
-            settings['user'], 'PASSWORD': settings['password'], 'NAME': settings['database'], 'CONN_MAX_AGE': 600,
+            'ENGINE': engine,
+            'OPTIONS': ast.literal_eval(os.getenv('DB_OPTIONS')) if os.getenv('DB_OPTIONS') else {},
+            'HOST': settings['host'],
+            'PORT': settings['port'],
+            'USER': settings['user'],
+            'PASSWORD': settings['password'],
+            'NAME': settings['database'],
+            'CONN_MAX_AGE': 600,
         }
     }
 else:
     DATABASES = {
         'default': {
-            'ENGINE': os.getenv('DB_ENGINE') if os.getenv('DB_ENGINE') else 'django.db.backends.sqlite3', 'OPTIONS':
-            ast.literal_eval(os.getenv('DB_OPTIONS')) if os.getenv('DB_OPTIONS') else {}, 'HOST': os.getenv('POSTGRES_HOST'), 'PORT': os.getenv('POSTGRES_PORT'), 'USER':
-            os.getenv('POSTGRES_USER'), 'PASSWORD': os.getenv('POSTGRES_PASSWORD'), 'NAME': os.getenv('POSTGRES_DB') if os.getenv('POSTGRES_DB') else 'db.sqlite3', 'CONN_MAX_AGE':
-            60,
+            'ENGINE': os.getenv('DB_ENGINE') if os.getenv('DB_ENGINE') else 'django.db.backends.sqlite3',
+            'OPTIONS': ast.literal_eval(os.getenv('DB_OPTIONS')) if os.getenv('DB_OPTIONS') else {},
+            'HOST': os.getenv('POSTGRES_HOST'),
+            'PORT': os.getenv('POSTGRES_PORT'),
+            'USER': os.getenv('POSTGRES_USER'),
+            'PASSWORD': os.getenv('POSTGRES_PASSWORD'),
+            'NAME': os.getenv('POSTGRES_DB') if os.getenv('POSTGRES_DB') else 'db.sqlite3',
+            'CONN_MAX_AGE': 60,
         }
     }
 
@@ -313,8 +347,12 @@ else:
 
 # SQLite testing DB
 # DATABASES = {
-#     'default':
-#     {'ENGINE': 'django.db.backends.sqlite3', 'OPTIONS': ast.literal_eval(os.getenv('DB_OPTIONS')) if os.getenv('DB_OPTIONS') else {}, 'NAME': 'db.sqlite3', 'CONN_MAX_AGE': 600, }
+#     'default': {
+#         'ENGINE': 'django.db.backends.sqlite3',
+#         'OPTIONS': ast.literal_eval(os.getenv('DB_OPTIONS')) if os.getenv('DB_OPTIONS') else {},
+#         'NAME': 'db.sqlite3',
+#         'CONN_MAX_AGE': 600,
+#     }
 # }
 
 CACHES = {'default': {'BACKEND': 'django.core.cache.backends.locmem.LocMemCache', 'LOCATION': 'default', }}
@@ -324,16 +362,24 @@ VUE_DIR = os.path.join(BASE_DIR, 'vue')
 
 WEBPACK_LOADER = {
     'DEFAULT': {
-        'CACHE': not DEBUG, 'BUNDLE_DIR_NAME': 'vue/',  # must end with slash
-        'STATS_FILE': os.path.join(VUE_DIR, 'webpack-stats.json'), 'POLL_INTERVAL': 0.1, 'TIMEOUT': None, 'IGNORE': [r'.+\.hot-update.js', r'.+\.map'],
+        'CACHE': not DEBUG,
+        'BUNDLE_DIR_NAME': 'vue/',  # must end with slash
+        'STATS_FILE': os.path.join(VUE_DIR, 'webpack-stats.json'),
+        'POLL_INTERVAL': 0.1,
+        'TIMEOUT': None,
+        'IGNORE': [r'.+\.hot-update.js', r'.+\.map'],
     },
 }
 
 for p in PLUGINS:
     if p['bundle_name'] != '':
         WEBPACK_LOADER[p['bundle_name']] = {
-            'CACHE': not DEBUG, 'BUNDLE_DIR_NAME': 'vue/',  # must end with slash
-            'STATS_FILE': os.path.join(p["base_path"], 'vue', 'webpack-stats.json'), 'POLL_INTERVAL': 0.1, 'TIMEOUT': None, 'IGNORE': [r'.+\.hot-update.js', r'.+\.map'],
+            'CACHE': not DEBUG,
+            'BUNDLE_DIR_NAME': 'vue/',  # must end with slash
+            'STATS_FILE': os.path.join(p["base_path"], 'vue', 'webpack-stats.json'),
+            'POLL_INTERVAL': 0.1,
+            'TIMEOUT': None,
+            'IGNORE': [r'.+\.hot-update.js', r'.+\.map'],
         }
 
 # Internationalization
@@ -424,5 +470,8 @@ ACCOUNT_FORMS = {'signup': 'cookbook.forms.AllAuthSignupForm', 'reset_password':
 
 ACCOUNT_EMAIL_UNKNOWN_ACCOUNTS = False
 ACCOUNT_RATE_LIMITS = {"change_password": "1/m/user", "reset_password": "1/m/ip,1/m/key", "reset_password_from_key": "1/m/ip", "signup": "5/m/ip", "login": "5/m/ip", }
+
+DISABLE_EXTERNAL_CONNECTORS = bool(int(os.getenv('DISABLE_EXTERNAL_CONNECTORS', False)))
+EXTERNAL_CONNECTORS_QUEUE_SIZE = int(os.getenv('EXTERNAL_CONNECTORS_QUEUE_SIZE', 100))
 
 mimetypes.add_type("text/javascript", ".js", True)
