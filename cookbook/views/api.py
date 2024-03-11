@@ -14,7 +14,6 @@ from zipfile import ZipFile
 
 import requests
 import validators
-from PIL import UnidentifiedImageError
 from annoying.decorators import ajax_request
 from annoying.functions import get_object_or_None
 from django.contrib import messages
@@ -35,6 +34,7 @@ from django.utils.translation import gettext as _
 from django_scopes import scopes_disabled
 from icalendar import Calendar, Event
 from oauth2_provider.models import AccessToken
+from PIL import UnidentifiedImageError
 from recipe_scrapers import scrape_me
 from recipe_scrapers._exceptions import NoSchemaFoundInWildMode
 from requests.exceptions import MissingSchema
@@ -57,47 +57,33 @@ from cookbook.helper.HelperFunctions import str2bool
 from cookbook.helper.image_processing import handle_image
 from cookbook.helper.ingredient_parser import IngredientParser
 from cookbook.helper.open_data_importer import OpenDataImporter
-from cookbook.helper.permission_helper import (
-    CustomIsAdmin, CustomIsOwner, CustomIsOwnerReadOnly, CustomIsShared, CustomIsSpaceOwner, CustomIsUser, CustomRecipePermission, CustomTokenHasReadWriteScope,
-    CustomTokenHasScope, CustomUserPermission, IsReadOnlyDRF, above_space_limit, group_required, has_group_permission, is_space_owner, switch_user_active_space,
-)
+from cookbook.helper.permission_helper import (CustomIsAdmin, CustomIsOwner, CustomIsOwnerReadOnly, CustomIsShared, CustomIsSpaceOwner, CustomIsUser, CustomRecipePermission,
+                                               CustomTokenHasReadWriteScope, CustomTokenHasScope, CustomUserPermission, IsReadOnlyDRF, above_space_limit, group_required,
+                                               has_group_permission, is_space_owner, switch_user_active_space,
+                                               )
 from cookbook.helper.recipe_search import RecipeSearch
 from cookbook.helper.recipe_url_import import clean_dict, get_from_youtube_scraper, get_images_from_soup
 from cookbook.helper.scrapers.scrapers import text_scraper
 from cookbook.helper.shopping_helper import RecipeShoppingEditor, shopping_helper
-from cookbook.models import (Automation, BookmarkletImport, CookLog, CustomFilter, ExportLog, Food,
-                             FoodInheritField, FoodProperty, ImportLog, Ingredient, InviteLink,
-                             Keyword, MealPlan, MealType, Property, PropertyType, Recipe,
-                             RecipeBook, RecipeBookEntry, ShareLink, ShoppingListEntry, ShoppingListRecipe, Space, Step, Storage,
-                             Supermarket, SupermarketCategory, SupermarketCategoryRelation, Sync,
-                             SyncLog, Unit, UnitConversion, UserFile, UserPreference, UserSpace,
-                             ViewLog, ConnectorConfig)
+from cookbook.models import (Automation, BookmarkletImport, ConnectorConfig, CookLog, CustomFilter, ExportLog, Food, FoodInheritField, FoodProperty, ImportLog, Ingredient,
+                             InviteLink, Keyword, MealPlan, MealType, Property, PropertyType, Recipe, RecipeBook, RecipeBookEntry, ShareLink, ShoppingListEntry,
+                             ShoppingListRecipe, Space, Step, Storage, Supermarket, SupermarketCategory, SupermarketCategoryRelation, Sync, SyncLog, Unit, UnitConversion,
+                             UserFile, UserPreference, UserSpace, ViewLog,
+                             )
 from cookbook.provider.dropbox import Dropbox
 from cookbook.provider.local import Local
 from cookbook.provider.nextcloud import Nextcloud
 from cookbook.schemas import FilterSchema, QueryParam, QueryParamAutoSchema, TreeSchema
-from cookbook.serializer import (AccessTokenSerializer, AutomationSerializer,
-                                 AutoMealPlanSerializer, BookmarkletImportListSerializer,
-                                 BookmarkletImportSerializer, CookLogSerializer,
-                                 CustomFilterSerializer, ExportLogSerializer,
-                                 FoodInheritFieldSerializer, FoodSerializer,
-                                 FoodShoppingUpdateSerializer, FoodSimpleSerializer,
-                                 GroupSerializer, ImportLogSerializer, IngredientSerializer,
-                                 IngredientSimpleSerializer, InviteLinkSerializer,
-                                 KeywordSerializer, MealPlanSerializer, MealTypeSerializer,
-                                 PropertySerializer, PropertyTypeSerializer,
-                                 RecipeBookEntrySerializer, RecipeBookSerializer,
-                                 RecipeExportSerializer, RecipeFromSourceSerializer,
-                                 RecipeImageSerializer, RecipeOverviewSerializer, RecipeSerializer,
-                                 RecipeShoppingUpdateSerializer, RecipeSimpleSerializer,
-                                 ShoppingListEntrySerializer,
-                                 ShoppingListRecipeSerializer, SpaceSerializer, StepSerializer, StorageSerializer,
-                                 SupermarketCategoryRelationSerializer,
-                                 SupermarketCategorySerializer, SupermarketSerializer,
-                                 SyncLogSerializer, SyncSerializer, UnitConversionSerializer,
-                                 UnitSerializer, UserFileSerializer, UserPreferenceSerializer,
-                                 UserSerializer, UserSpaceSerializer, ViewLogSerializer,
-                                 ShoppingListEntryBulkSerializer, ConnectorConfigConfigSerializer)
+from cookbook.serializer import (AccessTokenSerializer, AutomationSerializer, AutoMealPlanSerializer, BookmarkletImportListSerializer, BookmarkletImportSerializer,
+                                 ConnectorConfigConfigSerializer, CookLogSerializer, CustomFilterSerializer, ExportLogSerializer, FoodInheritFieldSerializer, FoodSerializer,
+                                 FoodShoppingUpdateSerializer, FoodSimpleSerializer, GroupSerializer, ImportLogSerializer, IngredientSerializer, IngredientSimpleSerializer,
+                                 InviteLinkSerializer, KeywordSerializer, MealPlanSerializer, MealTypeSerializer, PropertySerializer, PropertyTypeSerializer,
+                                 RecipeBookEntrySerializer, RecipeBookSerializer, RecipeExportSerializer, RecipeFromSourceSerializer, RecipeImageSerializer,
+                                 RecipeOverviewSerializer, RecipeSerializer, RecipeShoppingUpdateSerializer, RecipeSimpleSerializer, ShoppingListEntryBulkSerializer,
+                                 ShoppingListEntrySerializer, ShoppingListRecipeSerializer, SpaceSerializer, StepSerializer, StorageSerializer,
+                                 SupermarketCategoryRelationSerializer, SupermarketCategorySerializer, SupermarketSerializer, SyncLogSerializer, SyncSerializer,
+                                 UnitConversionSerializer, UnitSerializer, UserFileSerializer, UserPreferenceSerializer, UserSerializer, UserSpaceSerializer, ViewLogSerializer,
+                                 )
 from cookbook.views.import_export import get_integration
 from recipes import settings
 from recipes.settings import DRF_THROTTLE_RECIPE_URL_IMPORT, FDC_API_KEY
@@ -186,9 +172,8 @@ class FuzzyFilterMixin(ViewSetMixin, ExtendedRecipeMixin):
         if query is not None and query not in ["''", '']:
             if fuzzy and (settings.DATABASES['default']['ENGINE'] == 'django.db.backends.postgresql'):
                 if self.request.user.is_authenticated and any(
-                    [self.model.__name__.lower() in x for x in self.request.user.searchpreference.unaccent.values_list('field', flat=True)]
-                    ):
-                        self.queryset = self.queryset.annotate(trigram=TrigramSimilarity('name__unaccent', query))
+                    [self.model.__name__.lower() in x for x in self.request.user.searchpreference.unaccent.values_list('field', flat=True)]):
+                    self.queryset = self.queryset.annotate(trigram=TrigramSimilarity('name__unaccent', query))
                 else:
                     self.queryset = self.queryset.annotate(trigram=TrigramSimilarity('name', query))
                 self.queryset = self.queryset.order_by('-trigram')
@@ -648,31 +633,45 @@ class FoodViewSet(viewsets.ModelViewSet, TreeMixin):
                     for fn in data['foodNutrients']:
                         if fn['nutrient']['id'] == pt.fdc_id:
                             property_found = True
-                            food_property_list.append(Property(
-                                property_type_id=pt.id,
-                                property_amount=max(0, round(fn['amount'], 2)),  # sometimes FDC might return negative values which make no sense, set to 0
-                                space=self.request.space,
-                            ))
+                            food_property_list.append(
+                                Property(property_type_id=pt.id,
+                                         property_amount=max(0, round(fn['amount'], 2)),  # sometimes FDC might return negative values which make no sense, set to 0
+                                         space=self.request.space,
+                                         ))
                     if not property_found:
-                        food_property_list.append(Property(
-                            property_type_id=pt.id,
-                            property_amount=0,  # if field not in FDC data the food does not have that property
-                            space=self.request.space,
-                        ))
+                        food_property_list.append(
+                            Property(property_type_id=pt.id, property_amount=0,  # if field not in FDC data the food does not have that property
+                                     space=self.request.space,
+                                     ))
 
-            properties = Property.objects.bulk_create(food_property_list, unique_fields=('space', 'property_type',))
+            properties = Property.objects.bulk_create(food_property_list, unique_fields=('space', 'property_type', ))
 
             property_food_relation_list = []
             for p in properties:
                 property_food_relation_list.append(Food.properties.through(food_id=food.id, property_id=p.pk))
 
-            FoodProperty.objects.bulk_create(property_food_relation_list, ignore_conflicts=True, unique_fields=('food_id', 'property_id',))
+            FoodProperty.objects.bulk_create(property_food_relation_list, ignore_conflicts=True, unique_fields=('food_id', 'property_id', ))
 
             return self.retrieve(request, pk)
         except Exception:
             traceback.print_exc()
             return JsonResponse({'msg': 'there was an error parsing the FDC data, please check the server logs'}, status=500, json_dumps_params={'indent': 4})
     
+    @decorators.action(detail=True, methods=['GET'], serializer_class=FoodSimpleSerializer, )
+    def substitutes(self, request, pk):
+        if self.request.space.demo:
+            raise PermissionDenied(detail='Not available in demo', code=None)
+        obj = self.get_object()
+        if obj.get_space() != request.space:
+            raise PermissionDenied(detail='You do not have the required permission to perform this action', code=403)
+
+        onhand = str2bool(request.query_params.get('onhand', False))
+        shopping_users = None
+        if onhand:
+            shopping_users = [*request.user.get_shopping_share(), request.user]
+        qs = obj.get_substitutes(onhand=onhand, shopping_users=shopping_users)
+        return Response(self.serializer_class(qs, many=True).data)
+
     @decorators.action(detail=True, methods=['GET'], serializer_class=FoodSimpleSerializer, )
     def substitutes(self, request, pk):
         if self.request.space.demo:
@@ -939,9 +938,21 @@ class RecipeViewSet(viewsets.ModelViewSet):
         QueryParam(name='books_and', description=_('Book IDs, repeat for multiple. Return recipes with all of the books.'), qtype='integer'),
         QueryParam(name='books_or_not', description=_('Book IDs, repeat for multiple. Exclude recipes with any of the books.'), qtype='integer'),
         QueryParam(name='books_and_not', description=_('Book IDs, repeat for multiple. Exclude recipes with all of the books.'), qtype='integer'),
-        QueryParam(name='internal', description=_('If only internal recipes should be returned. [''true''/''<b>false</b>'']')),
-        QueryParam(name='random', description=_('Returns the results in randomized order. [''true''/''<b>false</b>'']')),
-        QueryParam(name='new', description=_('Returns new results first in search results. [''true''/''<b>false</b>'']')),
+        QueryParam(name='internal', description=_('If only internal recipes should be returned. ['
+                                                  'true'
+                                                  '/'
+                                                  '<b>false</b>'
+                                                  ']')),
+        QueryParam(name='random', description=_('Returns the results in randomized order. ['
+                                                'true'
+                                                '/'
+                                                '<b>false</b>'
+                                                ']')),
+        QueryParam(name='new', description=_('Returns new results first in search results. ['
+                                             'true'
+                                             '/'
+                                             '<b>false</b>'
+                                             ']')),
         QueryParam(name='timescooked', description=_('Filter recipes cooked X times or more.  Negative values returns cooked less than X times'), qtype='integer'),
         QueryParam(name='cookedon', description=_('Filter recipes last cooked on or after YYYY-MM-DD. Prepending ''-'' filters on or before date.')),
         QueryParam(name='createdon', description=_('Filter recipes created on or after YYYY-MM-DD. Prepending ''-'' filters on or before date.')),
@@ -1085,9 +1096,7 @@ class UnitConversionViewSet(viewsets.ModelViewSet):
     queryset = UnitConversion.objects
     serializer_class = UnitConversionSerializer
     permission_classes = [CustomIsUser & CustomTokenHasReadWriteScope]
-    query_params = [
-        QueryParam(name='food_id', description='ID of food to filter for', qtype='integer'),
-    ]
+    query_params = [QueryParam(name='food_id', description='ID of food to filter for', qtype='integer'), ]
     schema = QueryParamAutoSchema()
 
     def get_queryset(self):
@@ -1123,11 +1132,9 @@ class ShoppingListRecipeViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         self.queryset = self.queryset.filter(Q(entries__space=self.request.space) | Q(recipe__space=self.request.space))
-        return self.queryset.filter(
-            Q(entries__isnull=True)
-            | Q(entries__created_by=self.request.user)
-            | Q(entries__created_by__in=list(self.request.user.get_shopping_share()))
-            ).distinct().all()
+        return self.queryset.filter(Q(entries__isnull=True)
+                                    | Q(entries__created_by=self.request.user)
+                                    | Q(entries__created_by__in=list(self.request.user.get_shopping_share()))).distinct().all()
 
 
 class ShoppingListEntryViewSet(viewsets.ModelViewSet):
@@ -1136,11 +1143,19 @@ class ShoppingListEntryViewSet(viewsets.ModelViewSet):
     permission_classes = [(CustomIsOwner | CustomIsShared) & CustomTokenHasReadWriteScope]
     query_params = [
         QueryParam(name='id', description=_('Returns the shopping list entry with a primary key of id.  Multiple values allowed.'), qtype='integer'),
-        QueryParam(
-            name='checked',
-            description=_('Filter shopping list entries on checked.  [''true'', ''false'', ''both'', ''<b>recent</b>'']<br>  \
-                - ''recent'' includes unchecked items and recently completed items.')
-                   ),
+        QueryParam(name='checked',
+                   description=_('Filter shopping list entries on checked.  ['
+                                 'true'
+                                 ', '
+                                 'false'
+                                 ', '
+                                 'both'
+                                 ', '
+                                 '<b>recent</b>'
+                                 ']<br>  \
+                - '
+                                 'recent'
+                                 ' includes unchecked items and recently completed items.')),
         QueryParam(name='supermarket', description=_('Returns the shopping list entries sorted by supermarket category order.'), qtype='integer'),
     ]
     schema = QueryParamAutoSchema()
@@ -1210,9 +1225,7 @@ class CookLogViewSet(viewsets.ModelViewSet):
     serializer_class = CookLogSerializer
     permission_classes = [CustomIsOwner & CustomTokenHasReadWriteScope]
     pagination_class = DefaultPagination
-    query_params = [
-        QueryParam(name='recipe', description=_('Filter for entries with the given recipe'), qtype='integer'),
-    ]
+    query_params = [QueryParam(name='recipe', description=_('Filter for entries with the given recipe'), qtype='integer'), ]
 
     def get_queryset(self):
         if self.request.query_params.get('recipe', None):
@@ -1292,9 +1305,7 @@ class AutomationViewSet(viewsets.ModelViewSet, StandardFilterMixin):
     permission_classes = [CustomIsUser & CustomTokenHasReadWriteScope]
     pagination_class = DefaultPagination
 
-    query_params = [
-        QueryParam(name='automation_type', description=_('Return the Automations matching the automation type.  Multiple values allowed.'), qtype='string'),
-    ]
+    query_params = [QueryParam(name='automation_type', description=_('Return the Automations matching the automation type.  Multiple values allowed.'), qtype='string'), ]
     schema = QueryParamAutoSchema()
 
     auto_type = {

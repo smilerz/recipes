@@ -244,6 +244,7 @@ export interface BookmarkletImportList {
 }
 /**
  *
+<<<<<<< HEAD
  * @export
  * @interface ConnectorConfigConfig
  */
@@ -311,6 +312,8 @@ export interface ConnectorConfigConfig {
 }
 /**
  * 
+=======
+>>>>>>> ingredient_context_menu
  * @export
  * @interface CookLog
  */
@@ -346,12 +349,15 @@ export interface CookLog {
      */
     comment?: string | null;
     /**
+<<<<<<< HEAD
      * 
      * @type {CookLogCreatedBy}
      * @memberof CookLog
      */
     created_by?: CookLogCreatedBy;
     /**
+=======
+>>>>>>> ingredient_context_menu
      *
      * @type {string}
      * @memberof CookLog
@@ -365,7 +371,7 @@ export interface CookLog {
     updated_at?: string;
 }
 /**
- * 
+ *
  * @export
  * @interface CookLogCreatedBy
  */
@@ -932,26 +938,42 @@ export enum FoodShoppingUpdateDeleteEnum {
  */
 export interface FoodSimple {
     /**
+<<<<<<< HEAD
      * 
+=======
+     *
+>>>>>>> ingredient_context_menu
      * @type {number}
      * @memberof FoodSimple
      */
     id?: number;
     /**
+<<<<<<< HEAD
      * 
+=======
+     *
+>>>>>>> ingredient_context_menu
      * @type {string}
      * @memberof FoodSimple
      */
     name: string;
     /**
+<<<<<<< HEAD
      * 
+=======
+     *
+>>>>>>> ingredient_context_menu
      * @type {string}
      * @memberof FoodSimple
      */
     plural_name?: string | null;
 }
 /**
+<<<<<<< HEAD
  * 
+=======
+ *
+>>>>>>> ingredient_context_menu
  * @export
  * @interface FoodSubstitute
  */
@@ -2314,6 +2336,7 @@ export interface RecipeSteps {
     name?: string;
     /**
      *
+<<<<<<< HEAD
      * @type {string}
      * @memberof RecipeSteps
      */
@@ -2322,6 +2345,23 @@ export interface RecipeSteps {
      *
      * @type {Array<RecipeIngredients>}
      * @memberof RecipeSteps
+=======
+     * @type {FoodPropertyType}
+     * @memberof Property
+     */
+    property_type: FoodPropertyType;
+}
+/**
+ *
+ * @export
+ * @interface PropertyType
+ */
+export interface PropertyType {
+    /**
+     *
+     * @type {number}
+     * @memberof PropertyType
+>>>>>>> ingredient_context_menu
      */
     ingredients: Array<RecipeIngredients>;
     /**
@@ -2338,18 +2378,26 @@ export interface RecipeSteps {
     ingredients_vue?: string;
     /**
      *
+<<<<<<< HEAD
      * @type {number}
      * @memberof RecipeSteps
+=======
+     * @type {string}
+     * @memberof PropertyType
+>>>>>>> ingredient_context_menu
      */
     time?: number;
     /**
      *
+<<<<<<< HEAD
      * @type {number}
      * @memberof RecipeSteps
      */
     order?: number;
     /**
      *
+=======
+>>>>>>> ingredient_context_menu
      * @type {number}
      * @memberof PropertyType
      */
@@ -2362,10 +2410,24 @@ export interface RecipeSteps {
     show_as_header?: boolean;
     /**
      *
+<<<<<<< HEAD
      * @type {RecipeFile}
      * @memberof RecipeSteps
      */
     file?: RecipeFile | null;
+=======
+     * @type {number}
+     * @memberof PropertyType
+     */
+    fdc_id?: number | null;
+}
+/**
+ *
+ * @export
+ * @interface Recipe
+ */
+export interface Recipe {
+>>>>>>> ingredient_context_menu
     /**
      *
      * @type {number}
@@ -2381,13 +2443,40 @@ export interface RecipeSteps {
     /**
      *
      * @type {string}
+<<<<<<< HEAD
      * @memberof RecipeSteps
+=======
+     * @memberof Recipe
+     */
+    description?: string | null;
+    /**
+     *
+     * @type {any}
+     * @memberof Recipe
+     */
+    image?: any | null;
+    /**
+     *
+     * @type {Array<RecipeKeywords>}
+     * @memberof Recipe
+     */
+    keywords?: Array<RecipeKeywords>;
+    /**
+     *
+     * @type {Array<RecipeSteps>}
+     * @memberof Recipe
+>>>>>>> ingredient_context_menu
      */
     numrecipe?: string;
     /**
      *
+<<<<<<< HEAD
      * @type {boolean}
      * @memberof RecipeSteps
+=======
+     * @type {number}
+     * @memberof Recipe
+>>>>>>> ingredient_context_menu
      */
     show_ingredients_table?: boolean;
 }
@@ -2417,20 +2506,35 @@ export interface ShoppingList {
     note?: string | null;
     /**
      *
+<<<<<<< HEAD
      * @type {Array<ShoppingListRecipes>}
      * @memberof ShoppingList
+=======
+     * @type {string}
+     * @memberof Recipe
+>>>>>>> ingredient_context_menu
      */
     recipes: Array<ShoppingListRecipes> | null;
     /**
      *
+<<<<<<< HEAD
      * @type {Array<ShoppingListEntries>}
      * @memberof ShoppingList
+=======
+     * @type {string}
+     * @memberof Recipe
+>>>>>>> ingredient_context_menu
      */
     entries: Array<ShoppingListEntries> | null;
     /**
      *
+<<<<<<< HEAD
      * @type {Array<CustomFilterShared>}
      * @memberof ShoppingList
+=======
+     * @type {boolean}
+     * @memberof Recipe
+>>>>>>> ingredient_context_menu
      */
     shared: Array<CustomFilterShared>;
     /**
@@ -2441,14 +2545,24 @@ export interface ShoppingList {
     finished?: boolean;
     /**
      *
+<<<<<<< HEAD
      * @type {ShoppingListSupermarket}
      * @memberof ShoppingList
+=======
+     * @type {RecipeNutrition}
+     * @memberof Recipe
+>>>>>>> ingredient_context_menu
      */
     supermarket: ShoppingListSupermarket | null;
     /**
      *
+<<<<<<< HEAD
      * @type {string}
      * @memberof ShoppingList
+=======
+     * @type {Array<FoodProperties>}
+     * @memberof Recipe
+>>>>>>> ingredient_context_menu
      */
     created_by?: string;
     /**
@@ -2471,7 +2585,11 @@ export interface ShoppingListCreatedBy {
      */
     id?: number;
     /**
+<<<<<<< HEAD
      * Required. 150 characters or fewer. Letters, digits and @/./+/-/_ only.
+=======
+     *
+>>>>>>> ingredient_context_menu
      * @type {string}
      * @memberof ShoppingListCreatedBy
      */
@@ -2491,7 +2609,23 @@ export interface ShoppingListCreatedBy {
     /**
      *
      * @type {string}
+<<<<<<< HEAD
      * @memberof ShoppingListCreatedBy
+=======
+     * @memberof Recipe
+     */
+    last_cooked?: string | null;
+    /**
+     *
+     * @type {boolean}
+     * @memberof Recipe
+     */
+    _private?: boolean;
+    /**
+     *
+     * @type {Array<CustomFilterShared>}
+     * @memberof Recipe
+>>>>>>> ingredient_context_menu
      */
     display_name?: string;
 }
@@ -2509,26 +2643,51 @@ export interface ShoppingListEntries {
     id?: number;
     /**
      *
+<<<<<<< HEAD
      * @type {number}
      * @memberof ShoppingListEntries
+=======
+     * @type {string}
+     * @memberof RecipeBook
+>>>>>>> ingredient_context_menu
      */
     list_recipe?: number | null;
     /**
      *
+<<<<<<< HEAD
      * @type {IngredientFood}
      * @memberof ShoppingListEntries
+=======
+     * @type {string}
+     * @memberof RecipeBook
+>>>>>>> ingredient_context_menu
      */
     food: IngredientFood | null;
     /**
      *
+<<<<<<< HEAD
      * @type {FoodPropertiesFoodUnit}
      * @memberof ShoppingListEntries
+=======
+     * @type {Array<CustomFilterShared>}
+     * @memberof RecipeBook
+>>>>>>> ingredient_context_menu
      */
     unit?: FoodPropertiesFoodUnit | null;
     /**
      *
      * @type {string}
+<<<<<<< HEAD
      * @memberof ShoppingListEntries
+=======
+     * @memberof RecipeBook
+     */
+    created_by?: string;
+    /**
+     *
+     * @type {RecipeBookFilter}
+     * @memberof RecipeBook
+>>>>>>> ingredient_context_menu
      */
     amount: string;
     /**
@@ -2537,28 +2696,75 @@ export interface ShoppingListEntries {
      * @memberof ShoppingListEntries
      */
     order?: number;
+<<<<<<< HEAD
     /**
      *
      * @type {boolean}
      * @memberof ShoppingListEntries
+=======
+}
+/**
+ *
+ * @export
+ * @interface RecipeBookEntry
+ */
+export interface RecipeBookEntry {
+    /**
+     *
+     * @type {number}
+     * @memberof RecipeBookEntry
+     */
+    id?: number;
+    /**
+     *
+     * @type {number}
+     * @memberof RecipeBookEntry
+>>>>>>> ingredient_context_menu
      */
     checked?: boolean;
     /**
      *
+<<<<<<< HEAD
      * @type {ShoppingListRecipeMealplan}
      * @memberof ShoppingListEntries
+=======
+     * @type {string}
+     * @memberof RecipeBookEntry
+>>>>>>> ingredient_context_menu
      */
     recipe_mealplan?: ShoppingListRecipeMealplan;
     /**
      *
+<<<<<<< HEAD
      * @type {ShoppingListCreatedBy}
      * @memberof ShoppingListEntries
+=======
+     * @type {number}
+     * @memberof RecipeBookEntry
+>>>>>>> ingredient_context_menu
      */
     created_by?: ShoppingListCreatedBy;
     /**
      *
      * @type {string}
+<<<<<<< HEAD
      * @memberof ShoppingListEntries
+=======
+     * @memberof RecipeBookEntry
+     */
+    recipe_content?: string;
+}
+/**
+ *
+ * @export
+ * @interface RecipeBookFilter
+ */
+export interface RecipeBookFilter {
+    /**
+     *
+     * @type {number}
+     * @memberof RecipeBookFilter
+>>>>>>> ingredient_context_menu
      */
     created_at?: string;
     /**
@@ -2570,7 +2776,17 @@ export interface ShoppingListEntries {
     /**
      *
      * @type {string}
+<<<<<<< HEAD
      * @memberof ShoppingListEntries
+=======
+     * @memberof RecipeBookFilter
+     */
+    search: string;
+    /**
+     *
+     * @type {Array<CustomFilterShared>}
+     * @memberof RecipeBookFilter
+>>>>>>> ingredient_context_menu
      */
     completed_at?: string | null;
     /**
@@ -2594,6 +2810,53 @@ export interface ShoppingListEntry {
     id?: number;
     /**
      *
+<<<<<<< HEAD
+=======
+     * @type {string}
+     * @memberof RecipeFile
+     */
+    name: string;
+    /**
+     *
+     * @type {string}
+     * @memberof RecipeFile
+     */
+    file_download?: string;
+    /**
+     *
+     * @type {string}
+     * @memberof RecipeFile
+     */
+    preview?: string;
+}
+/**
+ *
+ * @export
+ * @interface RecipeImage
+ */
+export interface RecipeImage {
+    /**
+     *
+     * @type {any}
+     * @memberof RecipeImage
+     */
+    image?: any | null;
+    /**
+     *
+     * @type {string}
+     * @memberof RecipeImage
+     */
+    image_url?: string | null;
+}
+/**
+ *
+ * @export
+ * @interface RecipeIngredients
+ */
+export interface RecipeIngredients {
+    /**
+     *
+>>>>>>> ingredient_context_menu
      * @type {number}
      * @memberof ShoppingListEntry
      */
@@ -2618,32 +2881,57 @@ export interface ShoppingListEntry {
     amount: string;
     /**
      *
+<<<<<<< HEAD
      * @type {number}
      * @memberof ShoppingListEntry
+=======
+     * @type {string}
+     * @memberof RecipeIngredients
+>>>>>>> ingredient_context_menu
      */
     order?: number;
     /**
      *
+<<<<<<< HEAD
      * @type {boolean}
      * @memberof ShoppingListEntry
+=======
+     * @type {string}
+     * @memberof RecipeIngredients
+>>>>>>> ingredient_context_menu
      */
     checked?: boolean;
     /**
      *
+<<<<<<< HEAD
      * @type {ShoppingListRecipeMealplan}
      * @memberof ShoppingListEntry
+=======
+     * @type {number}
+     * @memberof RecipeIngredients
+>>>>>>> ingredient_context_menu
      */
     recipe_mealplan?: ShoppingListRecipeMealplan;
     /**
      *
+<<<<<<< HEAD
      * @type {ShoppingListCreatedBy}
      * @memberof ShoppingListEntry
+=======
+     * @type {boolean}
+     * @memberof RecipeIngredients
+>>>>>>> ingredient_context_menu
      */
     created_by?: ShoppingListCreatedBy;
     /**
      *
+<<<<<<< HEAD
      * @type {string}
      * @memberof ShoppingListEntry
+=======
+     * @type {boolean}
+     * @memberof RecipeIngredients
+>>>>>>> ingredient_context_menu
      */
     created_at?: string;
     /**
@@ -2660,8 +2948,13 @@ export interface ShoppingListEntry {
     completed_at?: string | null;
     /**
      *
+<<<<<<< HEAD
      * @type {string}
      * @memberof ShoppingListEntry
+=======
+     * @type {boolean}
+     * @memberof RecipeIngredients
+>>>>>>> ingredient_context_menu
      */
     delay_until?: string | null;
 }
@@ -2673,12 +2966,15 @@ export interface ShoppingListEntry {
 export interface ShoppingListEntryBulk {
     /**
      *
+<<<<<<< HEAD
      * @type {Array<any>}
      * @memberof ShoppingListEntryBulk
      */
     ids: Array<any>;
     /**
      *
+=======
+>>>>>>> ingredient_context_menu
      * @type {boolean}
      * @memberof ShoppingListEntryBulk
      */
@@ -2710,20 +3006,35 @@ export interface ShoppingListRecipe {
     name?: string;
     /**
      *
+<<<<<<< HEAD
      * @type {number}
      * @memberof ShoppingListRecipe
+=======
+     * @type {string}
+     * @memberof RecipeKeywords
+>>>>>>> ingredient_context_menu
      */
     recipe?: number | null;
     /**
      *
+<<<<<<< HEAD
      * @type {number}
      * @memberof ShoppingListRecipe
+=======
+     * @type {string}
+     * @memberof RecipeKeywords
+>>>>>>> ingredient_context_menu
      */
     mealplan?: number | null;
     /**
      *
+<<<<<<< HEAD
      * @type {string}
      * @memberof ShoppingListRecipe
+=======
+     * @type {number}
+     * @memberof RecipeKeywords
+>>>>>>> ingredient_context_menu
      */
     servings: string;
     /**
@@ -2771,6 +3082,7 @@ export interface ShoppingListRecipeMealplan {
     name?: string;
     /**
      *
+<<<<<<< HEAD
      * @type {number}
      * @memberof ShoppingListRecipeMealplan
      */
@@ -2783,6 +3095,8 @@ export interface ShoppingListRecipeMealplan {
     mealplan?: number | null;
     /**
      *
+=======
+>>>>>>> ingredient_context_menu
      * @type {string}
      * @memberof ShoppingListRecipeMealplan
      */
@@ -2795,12 +3109,15 @@ export interface ShoppingListRecipeMealplan {
     mealplan_note?: string;
     /**
      *
+<<<<<<< HEAD
      * @type {string}
      * @memberof ShoppingListRecipeMealplan
      */
     mealplan_from_date?: string;
     /**
      *
+=======
+>>>>>>> ingredient_context_menu
      * @type {string}
      * @memberof ShoppingListRecipeMealplan
      */
@@ -2827,7 +3144,23 @@ export interface ShoppingListRecipes {
     /**
      *
      * @type {string}
+<<<<<<< HEAD
      * @memberof ShoppingListRecipes
+=======
+     * @memberof RecipeOverview
+     */
+    description?: string | null;
+    /**
+     *
+     * @type {any}
+     * @memberof RecipeOverview
+     */
+    image?: any | null;
+    /**
+     *
+     * @type {Array<MealPlanRecipeKeywords>}
+     * @memberof RecipeOverview
+>>>>>>> ingredient_context_menu
      */
     name?: string;
     /**
@@ -2862,8 +3195,13 @@ export interface ShoppingListRecipes {
     mealplan_from_date?: string;
     /**
      *
+<<<<<<< HEAD
      * @type {string}
      * @memberof ShoppingListRecipes
+=======
+     * @type {boolean}
+     * @memberof RecipeOverview
+>>>>>>> ingredient_context_menu
      */
     mealplan_type?: string;
 }
@@ -2893,12 +3231,15 @@ export interface ShoppingListSupermarket {
     description?: string | null;
     /**
      *
+<<<<<<< HEAD
      * @type {Array<ShoppingListSupermarketCategoryToSupermarket>}
      * @memberof ShoppingListSupermarket
      */
     category_to_supermarket?: Array<ShoppingListSupermarketCategoryToSupermarket>;
     /**
      *
+=======
+>>>>>>> ingredient_context_menu
      * @type {string}
      * @memberof ShoppingListSupermarket
      */
@@ -2912,18 +3253,30 @@ export interface ShoppingListSupermarket {
 export interface ShoppingListSupermarketCategory {
     /**
      *
+<<<<<<< HEAD
      * @type {number}
      * @memberof ShoppingListSupermarketCategory
      */
     id?: number;
     /**
      *
+=======
+>>>>>>> ingredient_context_menu
      * @type {string}
      * @memberof ShoppingListSupermarketCategory
      */
     name: string;
     /**
      *
+<<<<<<< HEAD
+=======
+     * @type {boolean}
+     * @memberof Space
+     */
+    show_facet_count?: boolean;
+    /**
+     *
+>>>>>>> ingredient_context_menu
      * @type {string}
      * @memberof ShoppingListSupermarketCategory
      */
@@ -2980,12 +3333,15 @@ export interface Space {
     name?: string;
     /**
      *
+<<<<<<< HEAD
      * @type {string}
      * @memberof Space
      */
     created_by?: string | null;
     /**
      *
+=======
+>>>>>>> ingredient_context_menu
      * @type {string}
      * @memberof Space
      */
@@ -3131,6 +3487,7 @@ export interface Space {
 }
 
 /**
+<<<<<<< HEAD
     * @export
     * @enum {string}
     */
@@ -3154,6 +3511,8 @@ export enum SpaceNavTextColorEnum {
 }
 
 /**
+=======
+>>>>>>> ingredient_context_menu
  *
  * @export
  * @interface Step
@@ -3191,8 +3550,11 @@ export interface Step {
     instructions_markdown?: string;
     /**
 <<<<<<< HEAD
+<<<<<<< HEAD
      * 
 =======
+=======
+>>>>>>> ingredient_context_menu
      *
      * @type {string}
      * @memberof Step
@@ -3200,7 +3562,10 @@ export interface Step {
     ingredients_vue?: string;
     /**
      *
+<<<<<<< HEAD
 >>>>>>> fresh_filter
+=======
+>>>>>>> ingredient_context_menu
      * @type {number}
      * @memberof Step
      */
@@ -3272,19 +3637,51 @@ export interface Storage {
     /**
      *
      * @type {string}
+<<<<<<< HEAD
      * @memberof Storage
+=======
+     * @memberof ShoppingList
+     */
+    note?: string | null;
+    /**
+     *
+     * @type {Array<ShoppingListRecipes>}
+     * @memberof ShoppingList
+     */
+    recipes: Array<ShoppingListRecipes> | null;
+    /**
+     *
+     * @type {Array<ShoppingListEntries>}
+     * @memberof ShoppingList
+     */
+    entries: Array<ShoppingListEntries> | null;
+    /**
+     *
+     * @type {Array<CustomFilterShared>}
+     * @memberof ShoppingList
+>>>>>>> ingredient_context_menu
      */
     method?: StorageMethodEnum;
     /**
      *
+<<<<<<< HEAD
      * @type {string}
      * @memberof Storage
+=======
+     * @type {boolean}
+     * @memberof ShoppingList
+>>>>>>> ingredient_context_menu
      */
     username?: string | null;
     /**
      *
+<<<<<<< HEAD
      * @type {string}
      * @memberof Storage
+=======
+     * @type {ShoppingListSupermarket}
+     * @memberof ShoppingList
+>>>>>>> ingredient_context_menu
      */
     password?: string | null;
     /**
@@ -3302,6 +3699,7 @@ export interface Storage {
 }
 
 /**
+<<<<<<< HEAD
     * @export
     * @enum {string}
     */
@@ -3312,6 +3710,8 @@ export enum StorageMethodEnum {
 }
 
 /**
+=======
+>>>>>>> ingredient_context_menu
  *
  * @export
  * @interface Supermarket
@@ -3337,8 +3737,13 @@ export interface Supermarket {
     description?: string | null;
     /**
      *
+<<<<<<< HEAD
      * @type {Array<ShoppingListSupermarketCategoryToSupermarket>}
      * @memberof Supermarket
+=======
+     * @type {string}
+     * @memberof ShoppingListCreatedBy
+>>>>>>> ingredient_context_menu
      */
     category_to_supermarket?: Array<ShoppingListSupermarketCategoryToSupermarket>;
     /**
@@ -3362,14 +3767,24 @@ export interface SupermarketCategory {
     id?: number;
     /**
      *
+<<<<<<< HEAD
      * @type {string}
      * @memberof SupermarketCategory
+=======
+     * @type {number}
+     * @memberof ShoppingListEntries
+>>>>>>> ingredient_context_menu
      */
     name: string;
     /**
      *
+<<<<<<< HEAD
      * @type {string}
      * @memberof SupermarketCategory
+=======
+     * @type {IngredientFood}
+     * @memberof ShoppingListEntries
+>>>>>>> ingredient_context_menu
      */
     description?: string | null;
 }
@@ -3381,14 +3796,24 @@ export interface SupermarketCategory {
 export interface SupermarketCategoryRelation {
     /**
      *
+<<<<<<< HEAD
      * @type {number}
      * @memberof SupermarketCategoryRelation
+=======
+     * @type {FoodPropertiesFoodUnit}
+     * @memberof ShoppingListEntries
+>>>>>>> ingredient_context_menu
      */
     id?: number;
     /**
      *
+<<<<<<< HEAD
      * @type {ShoppingListSupermarketCategory}
      * @memberof SupermarketCategoryRelation
+=======
+     * @type {string}
+     * @memberof ShoppingListEntries
+>>>>>>> ingredient_context_menu
      */
     category: ShoppingListSupermarketCategory;
     /**
@@ -3399,8 +3824,13 @@ export interface SupermarketCategoryRelation {
     supermarket: number;
     /**
      *
+<<<<<<< HEAD
      * @type {number}
      * @memberof SupermarketCategoryRelation
+=======
+     * @type {boolean}
+     * @memberof ShoppingListEntries
+>>>>>>> ingredient_context_menu
      */
     order?: number;
 }
@@ -3412,14 +3842,24 @@ export interface SupermarketCategoryRelation {
 export interface Sync {
     /**
      *
+<<<<<<< HEAD
      * @type {number}
      * @memberof Sync
+=======
+     * @type {ShoppingListRecipeMealplan}
+     * @memberof ShoppingListEntries
+>>>>>>> ingredient_context_menu
      */
     id?: number;
     /**
      *
+<<<<<<< HEAD
      * @type {number}
      * @memberof Sync
+=======
+     * @type {ShoppingListCreatedBy}
+     * @memberof ShoppingListEntries
+>>>>>>> ingredient_context_menu
      */
     storage: number;
     /**
@@ -3430,12 +3870,15 @@ export interface Sync {
     path?: string;
     /**
      *
+<<<<<<< HEAD
      * @type {boolean}
      * @memberof Sync
      */
     active?: boolean;
     /**
      *
+=======
+>>>>>>> ingredient_context_menu
      * @type {string}
      * @memberof Sync
      */
@@ -3465,7 +3908,7 @@ export interface SyncLog {
      * @type {number}
      * @memberof SyncLog
      */
-    id?: number;
+    created_at?: string;
     /**
      *
      * @type {number}
@@ -3474,14 +3917,24 @@ export interface SyncLog {
     sync: number;
     /**
      *
+<<<<<<< HEAD
      * @type {string}
      * @memberof SyncLog
+=======
+     * @type {IngredientFood}
+     * @memberof ShoppingListEntry
+>>>>>>> ingredient_context_menu
      */
     status: string;
     /**
      *
+<<<<<<< HEAD
      * @type {string}
      * @memberof SyncLog
+=======
+     * @type {FoodPropertiesFoodUnit}
+     * @memberof ShoppingListEntry
+>>>>>>> ingredient_context_menu
      */
     msg?: string;
     /**
@@ -3505,20 +3958,30 @@ export interface Unit {
      */
     order?: number;
     /**
-     * 
+     *
      * @type {boolean}
      * @memberof ShoppingListEntry
      */
     checked?: boolean;
     /**
+<<<<<<< HEAD
      * 
      * @type {ShoppingListEntryRecipeMealplan}
+=======
+     *
+     * @type {ShoppingListRecipeMealplan}
+>>>>>>> ingredient_context_menu
      * @memberof ShoppingListEntry
      */
     recipe_mealplan?: ShoppingListEntryRecipeMealplan;
     /**
+<<<<<<< HEAD
      * 
      * @type {CookLogCreatedBy}
+=======
+     *
+     * @type {ShoppingListCreatedBy}
+>>>>>>> ingredient_context_menu
      * @memberof ShoppingListEntry
      */
     created_by?: CookLogCreatedBy;
@@ -3550,17 +4013,37 @@ export interface Unit {
      * @type {string}
      * @memberof Unit
      */
+<<<<<<< HEAD
     base_unit?: string | null;
     /**
      *
      * @type {string}
      * @memberof Unit
+=======
+    delay_until?: string | null;
+}
+/**
+ *
+ * @export
+ * @interface ShoppingListEntryBulk
+ */
+export interface ShoppingListEntryBulk {
+    /**
+     *
+     * @type {Array<any>}
+     * @memberof ShoppingListEntryBulk
+>>>>>>> ingredient_context_menu
      */
     base_unit?: string | null;
     /**
      *
+<<<<<<< HEAD
      * @type {string}
      * @memberof Unit
+=======
+     * @type {boolean}
+     * @memberof ShoppingListEntryBulk
+>>>>>>> ingredient_context_menu
      */
     open_data_slug?: string | null;
 }
@@ -3582,21 +4065,21 @@ export interface UnitConversion {
 <<<<<<< HEAD
      * @memberof ShoppingListEntryRecipeMealplan
      */
-    id?: number;
+    list_recipe?: number | null;
     /**
-     * 
+     *
      * @type {string}
      * @memberof ShoppingListEntryRecipeMealplan
      */
     recipe_name?: string;
     /**
-     * 
+     *
      * @type {string}
      * @memberof ShoppingListEntryRecipeMealplan
      */
     name?: string;
     /**
-     * 
+     *
      * @type {number}
      * @memberof ShoppingListEntryRecipeMealplan
 =======
@@ -3618,7 +4101,11 @@ export interface UnitConversion {
     base_amount: string;
     /**
 <<<<<<< HEAD
+<<<<<<< HEAD
      * 
+=======
+     *
+>>>>>>> ingredient_context_menu
      * @type {number}
      * @memberof ShoppingListEntryRecipeMealplan
 =======
@@ -3640,7 +4127,11 @@ export interface UnitConversion {
     converted_amount: string;
     /**
 <<<<<<< HEAD
+<<<<<<< HEAD
      * 
+=======
+     *
+>>>>>>> ingredient_context_menu
      * @type {string}
      * @memberof ShoppingListEntryRecipeMealplan
 =======
@@ -3652,7 +4143,11 @@ export interface UnitConversion {
     converted_unit: UnitConversionBaseUnit;
     /**
 <<<<<<< HEAD
+<<<<<<< HEAD
      * 
+=======
+     *
+>>>>>>> ingredient_context_menu
      * @type {string}
      * @memberof ShoppingListEntryRecipeMealplan
 =======
@@ -3699,7 +4194,23 @@ export interface UnitConversionBaseUnit {
     /**
      *
      * @type {string}
+<<<<<<< HEAD
      * @memberof UnitConversionBaseUnit
+=======
+     * @memberof ShoppingListRecipeMealplan
+     */
+    name?: string;
+    /**
+     *
+     * @type {number}
+     * @memberof ShoppingListRecipeMealplan
+     */
+    recipe?: number | null;
+    /**
+     *
+     * @type {number}
+     * @memberof ShoppingListRecipeMealplan
+>>>>>>> ingredient_context_menu
      */
     plural_name?: string | null;
     /**
@@ -3710,6 +4221,21 @@ export interface UnitConversionBaseUnit {
     description?: string | null;
     /**
      *
+<<<<<<< HEAD
+=======
+     * @type {number}
+     * @memberof ShoppingListRecipeMealplan
+     */
+    recipe?: number | null;
+    /**
+     *
+     * @type {number}
+     * @memberof ShoppingListRecipeMealplan
+     */
+    mealplan?: number | null;
+    /**
+     *
+>>>>>>> ingredient_context_menu
      * @type {string}
      * @memberof UnitConversionBaseUnit
      */
@@ -3742,59 +4268,60 @@ export interface User {
      */
     id?: number;
     /**
-     * 
+     *
      * @type {string}
      * @memberof ShoppingListRecipe
      */
     recipe_name?: string;
     /**
-     * 
+     *
      * @type {string}
      * @memberof ShoppingListRecipe
      */
     name?: string;
     /**
-     * 
+     *
      * @type {number}
      * @memberof ShoppingListRecipe
      */
     recipe?: number | null;
     /**
-     * 
+     *
      * @type {number}
      * @memberof ShoppingListRecipe
      */
     mealplan?: number | null;
     /**
-     * 
+     *
      * @type {string}
      * @memberof ShoppingListRecipe
      */
     servings: string;
     /**
-     * 
+     *
      * @type {string}
      * @memberof ShoppingListRecipe
      */
     mealplan_note?: string;
     /**
-     * 
+     *
      * @type {string}
      * @memberof ShoppingListRecipe
      */
     mealplan_from_date?: string;
     /**
-     * 
+     *
      * @type {string}
      * @memberof ShoppingListRecipe
      */
     mealplan_type?: string;
 }
 /**
- * 
+ *
  * @export
  * @interface Space
  */
+<<<<<<< HEAD
 export interface Space {
 =======
      * @memberof User
@@ -3802,6 +4329,17 @@ export interface Space {
     id?: number;
     /**
      * Required. 150 characters or fewer. Letters, digits and @/./+/-/_ only.
+=======
+export interface ShoppingListSupermarket {
+    /**
+     *
+     * @type {number}
+     * @memberof ShoppingListSupermarket
+     */
+    id?: number;
+    /**
+     *
+>>>>>>> ingredient_context_menu
      * @type {string}
      * @memberof User
      */
@@ -3814,8 +4352,13 @@ export interface Space {
     first_name?: string;
     /**
      *
+<<<<<<< HEAD
      * @type {string}
      * @memberof User
+=======
+     * @type {Array<ShoppingListSupermarketCategoryToSupermarket>}
+     * @memberof ShoppingListSupermarket
+>>>>>>> ingredient_context_menu
      */
     last_name?: string;
     /**
@@ -3845,20 +4388,48 @@ export interface UserFile {
     name: string;
     /**
      *
+<<<<<<< HEAD
      * @type {any}
      * @memberof UserFile
+=======
+     * @type {string}
+     * @memberof ShoppingListSupermarketCategory
+     */
+    description?: string | null;
+}
+/**
+ *
+ * @export
+ * @interface ShoppingListSupermarketCategoryToSupermarket
+ */
+export interface ShoppingListSupermarketCategoryToSupermarket {
+    /**
+     *
+     * @type {number}
+     * @memberof ShoppingListSupermarketCategoryToSupermarket
+>>>>>>> ingredient_context_menu
      */
     file: any;
     /**
      *
+<<<<<<< HEAD
      * @type {string}
      * @memberof UserFile
+=======
+     * @type {ShoppingListSupermarketCategory}
+     * @memberof ShoppingListSupermarketCategoryToSupermarket
+>>>>>>> ingredient_context_menu
      */
     file_download?: string;
     /**
      *
+<<<<<<< HEAD
      * @type {string}
      * @memberof UserFile
+=======
+     * @type {number}
+     * @memberof ShoppingListSupermarketCategoryToSupermarket
+>>>>>>> ingredient_context_menu
      */
     preview?: string;
     /**
@@ -3882,8 +4453,13 @@ export interface UserPreference {
     user: number;
     /**
      *
+<<<<<<< HEAD
      * @type {RecipeFile}
      * @memberof UserPreference
+=======
+     * @type {string}
+     * @memberof Space
+>>>>>>> ingredient_context_menu
      */
     image?: RecipeFile | null;
     /**
@@ -3906,9 +4482,15 @@ export interface UserPreference {
      */
     nav_text_color?: UserPreferenceNavTextColorEnum;
     /**
+<<<<<<< HEAD
      *
      * @type {boolean}
      * @memberof UserPreference
+=======
+     * Maximum file storage for space in MB. 0 for unlimited, -1 to disable file upload.
+     * @type {number}
+     * @memberof Space
+>>>>>>> ingredient_context_menu
      */
     nav_show_logo?: boolean;
     /**
@@ -3919,8 +4501,13 @@ export interface UserPreference {
     default_unit?: string;
     /**
      *
+<<<<<<< HEAD
      * @type {string}
      * @memberof UserPreference
+=======
+     * @type {number}
+     * @memberof Space
+>>>>>>> ingredient_context_menu
      */
     default_page?: UserPreferenceDefaultPageEnum;
     /**
@@ -3937,38 +4524,68 @@ export interface UserPreference {
     use_kj?: boolean;
     /**
      *
+<<<<<<< HEAD
      * @type {Array<CustomFilterShared>}
      * @memberof UserPreference
+=======
+     * @type {Array<FoodInheritFields>}
+     * @memberof Space
+>>>>>>> ingredient_context_menu
      */
     plan_share?: Array<CustomFilterShared> | null;
     /**
      *
+<<<<<<< HEAD
      * @type {boolean}
      * @memberof UserPreference
+=======
+     * @type {string}
+     * @memberof Space
+>>>>>>> ingredient_context_menu
      */
     nav_sticky?: boolean;
     /**
      *
+<<<<<<< HEAD
      * @type {number}
      * @memberof UserPreference
+=======
+     * @type {string}
+     * @memberof Space
+>>>>>>> ingredient_context_menu
      */
     ingredient_decimals?: number;
     /**
      *
+<<<<<<< HEAD
      * @type {boolean}
      * @memberof UserPreference
+=======
+     * @type {string}
+     * @memberof Space
+>>>>>>> ingredient_context_menu
      */
     comments?: boolean;
     /**
      *
+<<<<<<< HEAD
      * @type {number}
      * @memberof UserPreference
+=======
+     * @type {RecipeFile}
+     * @memberof Space
+>>>>>>> ingredient_context_menu
      */
     shopping_auto_sync?: number;
     /**
      *
+<<<<<<< HEAD
      * @type {boolean}
      * @memberof UserPreference
+=======
+     * @type {RecipeFile}
+     * @memberof Space
+>>>>>>> ingredient_context_menu
      */
     mealplan_autoadd_shopping?: boolean;
     /**
@@ -3979,62 +4596,112 @@ export interface UserPreference {
     food_inherit_default?: string;
     /**
      *
+<<<<<<< HEAD
      * @type {string}
      * @memberof UserPreference
+=======
+     * @type {RecipeFile}
+     * @memberof Space
+>>>>>>> ingredient_context_menu
      */
     default_delay?: string;
     /**
      *
+<<<<<<< HEAD
      * @type {boolean}
      * @memberof UserPreference
+=======
+     * @type {string}
+     * @memberof Space
+>>>>>>> ingredient_context_menu
      */
     mealplan_autoinclude_related?: boolean;
     /**
      *
+<<<<<<< HEAD
      * @type {boolean}
      * @memberof UserPreference
+=======
+     * @type {string}
+     * @memberof Space
+>>>>>>> ingredient_context_menu
      */
     mealplan_autoexclude_onhand?: boolean;
     /**
      *
+<<<<<<< HEAD
      * @type {Array<CustomFilterShared>}
      * @memberof UserPreference
+=======
+     * @type {RecipeFile}
+     * @memberof Space
+>>>>>>> ingredient_context_menu
      */
     shopping_share?: Array<CustomFilterShared> | null;
     /**
      *
+<<<<<<< HEAD
      * @type {number}
      * @memberof UserPreference
+=======
+     * @type {RecipeFile}
+     * @memberof Space
+>>>>>>> ingredient_context_menu
      */
     shopping_recent_days?: number;
     /**
      *
+<<<<<<< HEAD
      * @type {string}
      * @memberof UserPreference
+=======
+     * @type {RecipeFile}
+     * @memberof Space
+>>>>>>> ingredient_context_menu
      */
     csv_delim?: string;
     /**
      *
+<<<<<<< HEAD
      * @type {string}
      * @memberof UserPreference
+=======
+     * @type {RecipeFile}
+     * @memberof Space
+>>>>>>> ingredient_context_menu
      */
     csv_prefix?: string;
     /**
      *
+<<<<<<< HEAD
      * @type {boolean}
      * @memberof UserPreference
+=======
+     * @type {RecipeFile}
+     * @memberof Space
+>>>>>>> ingredient_context_menu
      */
     filter_to_supermarket?: boolean;
     /**
      *
+<<<<<<< HEAD
      * @type {boolean}
      * @memberof UserPreference
+=======
+     * @type {RecipeFile}
+     * @memberof Space
+>>>>>>> ingredient_context_menu
      */
     shopping_add_onhand?: boolean;
     /**
      *
+<<<<<<< HEAD
      * @type {boolean}
      * @memberof UserPreference
+=======
+     * @type {RecipeFile}
+     * @memberof Space
+>>>>>>> ingredient_context_menu
      */
     left_handed?: boolean;
     /**
@@ -4092,34 +4759,63 @@ export interface UserSpace {
      * @type {number}
      * @memberof UserSpace
      */
-    id?: number;
+    time?: number;
     /**
      *
+<<<<<<< HEAD
      * @type {ShoppingListCreatedBy}
      * @memberof UserSpace
+=======
+     * @type {string}
+     * @memberof Step
+>>>>>>> ingredient_context_menu
      */
     user?: ShoppingListCreatedBy;
     /**
      *
      * @type {string}
+<<<<<<< HEAD
      * @memberof UserSpace
+=======
+     * @memberof Step
+     */
+    instruction?: string;
+    /**
+     *
+     * @type {Array<RecipeIngredients>}
+     * @memberof Step
+>>>>>>> ingredient_context_menu
      */
     space?: string;
     /**
      *
+<<<<<<< HEAD
      * @type {Array<InviteLinkGroup>}
      * @memberof UserSpace
+=======
+     * @type {string}
+     * @memberof Step
+>>>>>>> ingredient_context_menu
      */
     groups: Array<InviteLinkGroup>;
     /**
      *
+<<<<<<< HEAD
      * @type {boolean}
      * @memberof UserSpace
+=======
+     * @type {string}
+     * @memberof Step
+>>>>>>> ingredient_context_menu
      */
     active?: boolean;
     /**
 <<<<<<< HEAD
+<<<<<<< HEAD
      * 
+=======
+     *
+>>>>>>> ingredient_context_menu
      * @type {number}
      * @memberof Step
 =======
@@ -4131,20 +4827,35 @@ export interface UserSpace {
     internal_note?: string | null;
     /**
      *
+<<<<<<< HEAD
      * @type {string}
      * @memberof UserSpace
+=======
+     * @type {number}
+     * @memberof Step
+>>>>>>> ingredient_context_menu
      */
     invite_link?: string | null;
     /**
      *
+<<<<<<< HEAD
      * @type {string}
      * @memberof UserSpace
+=======
+     * @type {boolean}
+     * @memberof Step
+>>>>>>> ingredient_context_menu
      */
     created_at?: string;
     /**
      *
+<<<<<<< HEAD
      * @type {string}
      * @memberof UserSpace
+=======
+     * @type {RecipeFile}
+     * @memberof Step
+>>>>>>> ingredient_context_menu
      */
     updated_at?: string;
 }
@@ -4157,16 +4868,47 @@ export interface ViewLog {
     /**
      *
      * @type {number}
+<<<<<<< HEAD
      * @memberof ViewLog
+=======
+     * @memberof Step
+     */
+    step_recipe?: number | null;
+    /**
+     *
+     * @type {string}
+     * @memberof Step
+>>>>>>> ingredient_context_menu
      */
     last_name?: string;
     /**
      *
      * @type {string}
+<<<<<<< HEAD
      * @memberof User
+=======
+     * @memberof Step
+     */
+    numrecipe?: string;
+    /**
+     *
+     * @type {boolean}
+     * @memberof Step
+>>>>>>> ingredient_context_menu
      */
     display_name?: string;
 }
+
+/**
+    * @export
+    * @enum {string}
+    */
+export enum StorageMethodEnum {
+    Db = 'DB',
+    Nextcloud = 'NEXTCLOUD',
+    Local = 'LOCAL'
+}
+
 /**
  *
  * @export
@@ -4187,8 +4929,19 @@ export interface UserFile {
     name: string;
     /**
      *
+<<<<<<< HEAD
      * @type {any}
      * @memberof UserFile
+=======
+     * @type {string}
+     * @memberof Storage
+     */
+    method?: StorageMethodEnum;
+    /**
+     *
+     * @type {string}
+     * @memberof Storage
+>>>>>>> ingredient_context_menu
      */
     file: any;
     /**
@@ -4205,8 +4958,13 @@ export interface UserFile {
     preview?: string;
     /**
      *
+<<<<<<< HEAD
      * @type {number}
      * @memberof UserFile
+=======
+     * @type {string}
+     * @memberof Storage
+>>>>>>> ingredient_context_menu
      */
     file_size_kb?: number;
 }
@@ -4224,8 +4982,13 @@ export interface UserPreference {
     user: number;
     /**
      *
+<<<<<<< HEAD
      * @type {RecipeFile}
      * @memberof UserPreference
+=======
+     * @type {string}
+     * @memberof Supermarket
+>>>>>>> ingredient_context_menu
      */
     image?: RecipeFile | null;
     /**
@@ -4236,22 +4999,46 @@ export interface UserPreference {
     theme?: UserPreferenceThemeEnum;
     /**
 <<<<<<< HEAD
+<<<<<<< HEAD
      * 
      * @type {Array<SupermarketCategoryToSupermarket>}
      * @memberof Supermarket
      */
     category_to_supermarket?: Array<SupermarketCategoryToSupermarket>;
 =======
+=======
+     *
+     * @type {Array<ShoppingListSupermarketCategoryToSupermarket>}
+     * @memberof Supermarket
+     */
+    category_to_supermarket?: Array<ShoppingListSupermarketCategoryToSupermarket>;
+    /**
+>>>>>>> ingredient_context_menu
      *
      * @type {string}
      * @memberof UserPreference
      */
+<<<<<<< HEAD
     nav_color?: UserPreferenceNavColorEnum;
 >>>>>>> fresh_filter
     /**
      *
      * @type {string}
      * @memberof UserPreference
+=======
+    open_data_slug?: string | null;
+}
+/**
+ *
+ * @export
+ * @interface SupermarketCategory
+ */
+export interface SupermarketCategory {
+    /**
+     *
+     * @type {number}
+     * @memberof SupermarketCategory
+>>>>>>> ingredient_context_menu
      */
     default_unit?: string;
     /**
@@ -4280,9 +5067,15 @@ export interface UserPreference {
     plan_share?: Array<CustomFilterShared> | null;
     /**
 <<<<<<< HEAD
+<<<<<<< HEAD
      * 
      * @type {SupermarketCategory}
      * @memberof SupermarketCategoryRelation
+=======
+     *
+     * @type {string}
+     * @memberof SupermarketCategory
+>>>>>>> ingredient_context_menu
      */
     category: SupermarketCategory;
 =======
@@ -4307,38 +5100,44 @@ export interface UserPreference {
     order?: number;
 }
 /**
- * 
+ *
  * @export
  * @interface SupermarketCategoryToSupermarket
  */
 export interface SupermarketCategoryToSupermarket {
     /**
-     * 
+     *
      * @type {number}
      * @memberof SupermarketCategoryToSupermarket
      */
     id?: number;
     /**
+<<<<<<< HEAD
      * 
      * @type {SupermarketCategory}
      * @memberof SupermarketCategoryToSupermarket
+=======
+     *
+     * @type {ShoppingListSupermarketCategory}
+     * @memberof SupermarketCategoryRelation
+>>>>>>> ingredient_context_menu
      */
     category: SupermarketCategory;
     /**
-     * 
+     *
      * @type {number}
      * @memberof SupermarketCategoryToSupermarket
      */
     supermarket: number;
     /**
-     * 
+     *
      * @type {number}
      * @memberof SupermarketCategoryToSupermarket
      */
     order?: number;
 }
 /**
- * 
+ *
  * @export
  * @interface Sync
  */
@@ -4354,14 +5153,29 @@ export interface Sync {
     shopping_auto_sync?: number;
     /**
      *
+<<<<<<< HEAD
      * @type {boolean}
      * @memberof UserPreference
+=======
+     * @type {number}
+     * @memberof Sync
+>>>>>>> ingredient_context_menu
      */
     mealplan_autoadd_shopping?: boolean;
     /**
      *
      * @type {string}
+<<<<<<< HEAD
      * @memberof UserPreference
+=======
+     * @memberof Sync
+     */
+    path?: string;
+    /**
+     *
+     * @type {boolean}
+     * @memberof Sync
+>>>>>>> ingredient_context_menu
      */
     food_inherit_default?: string;
     /**
@@ -4372,12 +5186,18 @@ export interface Sync {
     default_delay?: string;
     /**
      *
+<<<<<<< HEAD
      * @type {boolean}
      * @memberof UserPreference
+=======
+     * @type {string}
+     * @memberof Sync
+>>>>>>> ingredient_context_menu
      */
     mealplan_autoinclude_related?: boolean;
     /**
      *
+<<<<<<< HEAD
      * @type {boolean}
      * @memberof UserPreference
      */
@@ -4386,6 +5206,23 @@ export interface Sync {
      *
      * @type {Array<CustomFilterShared>}
      * @memberof UserPreference
+=======
+     * @type {string}
+     * @memberof Sync
+     */
+    updated_at?: string;
+}
+/**
+ *
+ * @export
+ * @interface SyncLog
+ */
+export interface SyncLog {
+    /**
+     *
+     * @type {number}
+     * @memberof SyncLog
+>>>>>>> ingredient_context_menu
      */
     shopping_share?: Array<CustomFilterShared> | null;
     /**
@@ -4408,6 +5245,7 @@ export interface Sync {
     csv_prefix?: string;
     /**
      *
+<<<<<<< HEAD
      * @type {boolean}
      * @memberof UserPreference
      */
@@ -4416,18 +5254,57 @@ export interface Sync {
      *
      * @type {boolean}
      * @memberof UserPreference
+=======
+     * @type {string}
+     * @memberof SyncLog
+     */
+    created_at?: string;
+}
+/**
+ *
+ * @export
+ * @interface Unit
+ */
+export interface Unit {
+    /**
+     *
+     * @type {number}
+     * @memberof Unit
+     */
+    id?: number;
+    /**
+     *
+     * @type {string}
+     * @memberof Unit
+     */
+    name: string;
+    /**
+     *
+     * @type {string}
+     * @memberof Unit
+>>>>>>> ingredient_context_menu
      */
     shopping_add_onhand?: boolean;
     /**
      *
+<<<<<<< HEAD
      * @type {boolean}
      * @memberof UserPreference
+=======
+     * @type {string}
+     * @memberof Unit
+>>>>>>> ingredient_context_menu
      */
     left_handed?: boolean;
     /**
      *
+<<<<<<< HEAD
      * @type {boolean}
      * @memberof UserPreference
+=======
+     * @type {string}
+     * @memberof Unit
+>>>>>>> ingredient_context_menu
      */
     show_step_ingredients?: boolean;
     /**
@@ -4439,6 +5316,7 @@ export interface Sync {
 }
 
 /**
+<<<<<<< HEAD
     * @export
     * @enum {string}
     */
@@ -4475,6 +5353,63 @@ export enum UserPreferenceDefaultPageEnum {
 }
 
 /**
+=======
+ *
+ * @export
+ * @interface UnitConversion
+ */
+export interface UnitConversion {
+    /**
+     *
+     * @type {number}
+     * @memberof UnitConversion
+     */
+    id?: number;
+    /**
+     *
+     * @type {string}
+     * @memberof UnitConversion
+     */
+    name?: string;
+    /**
+     *
+     * @type {string}
+     * @memberof UnitConversion
+     */
+    base_amount: string;
+    /**
+     *
+     * @type {UnitConversionBaseUnit}
+     * @memberof UnitConversion
+     */
+    base_unit: UnitConversionBaseUnit;
+    /**
+     *
+     * @type {string}
+     * @memberof UnitConversion
+     */
+    converted_amount: string;
+    /**
+     *
+     * @type {UnitConversionBaseUnit}
+     * @memberof UnitConversion
+     */
+    converted_unit: UnitConversionBaseUnit;
+    /**
+     *
+     * @type {IngredientFood}
+     * @memberof UnitConversion
+     */
+    food?: IngredientFood | null;
+    /**
+     *
+     * @type {string}
+     * @memberof UnitConversion
+     */
+    open_data_slug?: string | null;
+}
+/**
+>>>>>>> ingredient_context_menu
  *
  * @export
  * @interface UserSpace
@@ -4488,8 +5423,25 @@ export interface UserSpace {
     id?: number;
     /**
      *
+<<<<<<< HEAD
      * @type {ShoppingListCreatedBy}
      * @memberof UserSpace
+=======
+     * @type {string}
+     * @memberof UnitConversionBaseUnit
+     */
+    name: string;
+    /**
+     *
+     * @type {string}
+     * @memberof UnitConversionBaseUnit
+     */
+    plural_name?: string | null;
+    /**
+     *
+     * @type {string}
+     * @memberof UnitConversionBaseUnit
+>>>>>>> ingredient_context_menu
      */
     user?: ShoppingListCreatedBy;
     /**
@@ -4500,6 +5452,7 @@ export interface UserSpace {
     space?: string;
     /**
      *
+<<<<<<< HEAD
      * @type {Array<InviteLinkGroup>}
      * @memberof UserSpace
      */
@@ -4508,6 +5461,23 @@ export interface UserSpace {
      *
      * @type {boolean}
      * @memberof UserSpace
+=======
+     * @type {string}
+     * @memberof UnitConversionBaseUnit
+     */
+    open_data_slug?: string | null;
+}
+/**
+ *
+ * @export
+ * @interface User
+ */
+export interface User {
+    /**
+     *
+     * @type {number}
+     * @memberof User
+>>>>>>> ingredient_context_menu
      */
     active?: boolean;
     /**
@@ -4537,224 +5507,228 @@ export interface UserSpace {
 }
 /**
 <<<<<<< HEAD
+<<<<<<< HEAD
  * 
+=======
+ *
+>>>>>>> ingredient_context_menu
  * @export
  * @interface UserFile
  */
 export interface UserFile {
     /**
-     * 
+     *
      * @type {number}
      * @memberof UserFile
      */
     id?: number;
     /**
-     * 
+     *
      * @type {string}
      * @memberof UserFile
      */
     name: string;
     /**
-     * 
+     *
      * @type {any}
      * @memberof UserFile
      */
     file: any;
     /**
-     * 
+     *
      * @type {string}
      * @memberof UserFile
      */
     file_download?: string;
     /**
-     * 
+     *
      * @type {string}
      * @memberof UserFile
      */
     preview?: string;
     /**
-     * 
+     *
      * @type {number}
      * @memberof UserFile
      */
     file_size_kb?: number;
 }
 /**
- * 
+ *
  * @export
  * @interface UserPreference
  */
 export interface UserPreference {
     /**
-     * 
+     *
      * @type {number}
      * @memberof UserPreference
      */
     user: number;
     /**
-     * 
+     *
      * @type {RecipeFile}
      * @memberof UserPreference
      */
     image?: RecipeFile | null;
     /**
-     * 
+     *
      * @type {string}
      * @memberof UserPreference
      */
     theme?: UserPreferenceThemeEnum;
     /**
-     * 
+     *
      * @type {string}
      * @memberof UserPreference
      */
     nav_bg_color?: string;
     /**
-     * 
+     *
      * @type {string}
      * @memberof UserPreference
      */
     nav_text_color?: UserPreferenceNavTextColorEnum;
     /**
-     * 
+     *
      * @type {boolean}
      * @memberof UserPreference
      */
     nav_show_logo?: boolean;
     /**
-     * 
+     *
      * @type {string}
      * @memberof UserPreference
      */
     default_unit?: string;
     /**
-     * 
+     *
      * @type {string}
      * @memberof UserPreference
      */
     default_page?: UserPreferenceDefaultPageEnum;
     /**
-     * 
+     *
      * @type {boolean}
      * @memberof UserPreference
      */
     use_fractions?: boolean;
     /**
-     * 
+     *
      * @type {boolean}
      * @memberof UserPreference
      */
     use_kj?: boolean;
     /**
-     * 
+     *
      * @type {Array<CustomFilterShared>}
      * @memberof UserPreference
      */
     plan_share?: Array<CustomFilterShared> | null;
     /**
-     * 
+     *
      * @type {boolean}
      * @memberof UserPreference
      */
     nav_sticky?: boolean;
     /**
-     * 
+     *
      * @type {number}
      * @memberof UserPreference
      */
     ingredient_decimals?: number;
     /**
-     * 
+     *
      * @type {boolean}
      * @memberof UserPreference
      */
     comments?: boolean;
     /**
-     * 
+     *
      * @type {number}
      * @memberof UserPreference
      */
     shopping_auto_sync?: number;
     /**
-     * 
+     *
      * @type {boolean}
      * @memberof UserPreference
      */
     mealplan_autoadd_shopping?: boolean;
     /**
-     * 
+     *
      * @type {string}
      * @memberof UserPreference
      */
     food_inherit_default?: string;
     /**
-     * 
+     *
      * @type {string}
      * @memberof UserPreference
      */
     default_delay?: string;
     /**
-     * 
+     *
      * @type {boolean}
      * @memberof UserPreference
      */
     mealplan_autoinclude_related?: boolean;
     /**
-     * 
+     *
      * @type {boolean}
      * @memberof UserPreference
      */
     mealplan_autoexclude_onhand?: boolean;
     /**
-     * 
+     *
      * @type {Array<CustomFilterShared>}
      * @memberof UserPreference
      */
     shopping_share?: Array<CustomFilterShared> | null;
     /**
-     * 
+     *
      * @type {number}
      * @memberof UserPreference
      */
     shopping_recent_days?: number;
     /**
-     * 
+     *
      * @type {string}
      * @memberof UserPreference
      */
     csv_delim?: string;
     /**
-     * 
+     *
      * @type {string}
      * @memberof UserPreference
      */
     csv_prefix?: string;
     /**
-     * 
+     *
      * @type {boolean}
      * @memberof UserPreference
      */
     filter_to_supermarket?: boolean;
     /**
-     * 
+     *
      * @type {boolean}
      * @memberof UserPreference
      */
     shopping_add_onhand?: boolean;
     /**
-     * 
+     *
      * @type {boolean}
      * @memberof UserPreference
      */
     left_handed?: boolean;
     /**
-     * 
+     *
      * @type {boolean}
      * @memberof UserPreference
      */
     show_step_ingredients?: boolean;
     /**
-     * 
+     *
      * @type {string}
      * @memberof UserPreference
      */
@@ -4798,111 +5772,136 @@ export enum UserPreferenceDefaultPageEnum {
 }
 
 /**
- * 
+ *
  * @export
  * @interface UserSpace
  */
 export interface UserSpace {
     /**
-     * 
+     *
      * @type {number}
      * @memberof UserSpace
      */
     id?: number;
     /**
+<<<<<<< HEAD
      * 
      * @type {CookLogCreatedBy}
+=======
+     *
+     * @type {ShoppingListCreatedBy}
+>>>>>>> ingredient_context_menu
      * @memberof UserSpace
      */
     user?: CookLogCreatedBy;
     /**
-     * 
+     *
      * @type {string}
      * @memberof UserSpace
      */
     space?: string;
     /**
-     * 
+     *
      * @type {Array<InviteLinkGroup>}
      * @memberof UserSpace
      */
     groups: Array<InviteLinkGroup>;
     /**
-     * 
+     *
      * @type {boolean}
      * @memberof UserSpace
      */
     active?: boolean;
     /**
-     * 
+     *
      * @type {string}
      * @memberof UserSpace
      */
     internal_note?: string | null;
     /**
-     * 
+     *
      * @type {string}
      * @memberof UserSpace
      */
     invite_link?: string | null;
     /**
-     * 
+     *
      * @type {string}
      * @memberof UserSpace
      */
     created_at?: string;
     /**
-     * 
+     *
      * @type {string}
      * @memberof UserSpace
      */
     updated_at?: string;
 }
 /**
+<<<<<<< HEAD
  * 
 =======
  *
 >>>>>>> fresh_filter
+=======
+ *
+>>>>>>> ingredient_context_menu
  * @export
  * @interface ViewLog
  */
 export interface ViewLog {
     /**
 <<<<<<< HEAD
+<<<<<<< HEAD
      * 
 =======
      *
 >>>>>>> fresh_filter
+=======
+     *
+>>>>>>> ingredient_context_menu
      * @type {number}
      * @memberof ViewLog
      */
     id?: number;
     /**
 <<<<<<< HEAD
+<<<<<<< HEAD
      * 
 =======
      *
 >>>>>>> fresh_filter
+=======
+     *
+>>>>>>> ingredient_context_menu
      * @type {number}
      * @memberof ViewLog
      */
     recipe: number;
     /**
 <<<<<<< HEAD
+<<<<<<< HEAD
      * 
 =======
      *
 >>>>>>> fresh_filter
+=======
+     *
+>>>>>>> ingredient_context_menu
      * @type {string}
      * @memberof ViewLog
      */
     created_by?: string;
     /**
 <<<<<<< HEAD
+<<<<<<< HEAD
      * 
 =======
      *
 >>>>>>> fresh_filter
+=======
+     *
+>>>>>>> ingredient_context_menu
      * @type {string}
      * @memberof ViewLog
      */
@@ -4917,8 +5916,8 @@ export interface ViewLog {
 export const ApiApiAxiosParamCreator = function (configuration?: Configuration) {
     return {
         /**
-         * 
-         * @param {ShoppingListEntryBulk} [shoppingListEntryBulk] 
+         *
+         * @param {ShoppingListEntryBulk} [shoppingListEntryBulk]
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -4936,7 +5935,7 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
             const localVarQueryParameter = {} as any;
 
 
-    
+
             localVarHeaderParameter['Content-Type'] = 'application/json';
 
             setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
@@ -4950,8 +5949,8 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
             };
         },
         /**
-         * 
-         * @param {AccessToken} [accessToken] 
+         *
+         * @param {AccessToken} [accessToken]
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -4969,7 +5968,7 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
             const localVarQueryParameter = {} as any;
 
 
-    
+
             localVarHeaderParameter['Content-Type'] = 'application/json';
 
             setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
@@ -4983,8 +5982,8 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
             };
         },
         /**
-         * 
-         * @param {any} [body] 
+         *
+         * @param {any} [body]
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -5002,6 +6001,7 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
             const localVarQueryParameter = {} as any;
 
 
+<<<<<<< HEAD
     
             localVarHeaderParameter['Content-Type'] = 'application/json';
 
@@ -5303,6 +6303,11 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
 
 
 
+=======
+
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+>>>>>>> ingredient_context_menu
             localVarHeaderParameter['Content-Type'] = 'application/json';
 
             setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
@@ -5336,6 +6341,11 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
 
 
 
+<<<<<<< HEAD
+=======
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+>>>>>>> ingredient_context_menu
             localVarHeaderParameter['Content-Type'] = 'application/json';
 
             setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
@@ -5369,6 +6379,11 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
 
 
 
+<<<<<<< HEAD
+=======
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+>>>>>>> ingredient_context_menu
             localVarHeaderParameter['Content-Type'] = 'application/json';
 
             setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
@@ -5402,6 +6417,11 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
 
 
 
+<<<<<<< HEAD
+=======
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+>>>>>>> ingredient_context_menu
             localVarHeaderParameter['Content-Type'] = 'application/json';
 
             setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
@@ -5435,6 +6455,11 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
 
 
 
+<<<<<<< HEAD
+=======
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+>>>>>>> ingredient_context_menu
             localVarHeaderParameter['Content-Type'] = 'application/json';
 
             setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
@@ -5468,6 +6493,11 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
 
 
 
+<<<<<<< HEAD
+=======
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+>>>>>>> ingredient_context_menu
             localVarHeaderParameter['Content-Type'] = 'application/json';
 
             setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
@@ -5501,6 +6531,11 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
 
 
 
+<<<<<<< HEAD
+=======
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+>>>>>>> ingredient_context_menu
             localVarHeaderParameter['Content-Type'] = 'application/json';
 
             setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
@@ -5534,6 +6569,11 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
 
 
 
+<<<<<<< HEAD
+=======
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+>>>>>>> ingredient_context_menu
             localVarHeaderParameter['Content-Type'] = 'application/json';
 
             setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
@@ -5567,6 +6607,11 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
 
 
 
+<<<<<<< HEAD
+=======
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+>>>>>>> ingredient_context_menu
             localVarHeaderParameter['Content-Type'] = 'application/json';
 
             setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
@@ -5600,6 +6645,11 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
 
 
 
+<<<<<<< HEAD
+=======
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+>>>>>>> ingredient_context_menu
             localVarHeaderParameter['Content-Type'] = 'application/json';
 
             setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
@@ -5633,6 +6683,11 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
 
 
 
+<<<<<<< HEAD
+=======
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+>>>>>>> ingredient_context_menu
             localVarHeaderParameter['Content-Type'] = 'application/json';
 
             setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
@@ -5647,9 +6702,12 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
         },
         /**
 <<<<<<< HEAD
+<<<<<<< HEAD
          * 
          * @param {ShoppingListEntry} [shoppingListEntry] 
 =======
+=======
+>>>>>>> ingredient_context_menu
          *
          * @param {MealPlan} [mealPlan]
          * @param {*} [options] Override http request option.
@@ -5670,6 +6728,11 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
 
 
 
+<<<<<<< HEAD
+=======
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+>>>>>>> ingredient_context_menu
             localVarHeaderParameter['Content-Type'] = 'application/json';
 
             setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
@@ -5685,7 +6748,10 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
         /**
          * returns list of meal types created by the requesting user ordered by the order field.
          * @param {MealType} [mealType]
+<<<<<<< HEAD
 >>>>>>> fresh_filter
+=======
+>>>>>>> ingredient_context_menu
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -5704,6 +6770,11 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
 
 
 
+<<<<<<< HEAD
+=======
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+>>>>>>> ingredient_context_menu
             localVarHeaderParameter['Content-Type'] = 'application/json';
 
             setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
@@ -5737,6 +6808,11 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
 
 
 
+<<<<<<< HEAD
+=======
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+>>>>>>> ingredient_context_menu
             localVarHeaderParameter['Content-Type'] = 'application/json';
 
             setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
@@ -5770,6 +6846,11 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
 
 
 
+<<<<<<< HEAD
+=======
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+>>>>>>> ingredient_context_menu
             localVarHeaderParameter['Content-Type'] = 'application/json';
 
             setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
@@ -5803,6 +6884,11 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
 
 
 
+<<<<<<< HEAD
+=======
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+>>>>>>> ingredient_context_menu
             localVarHeaderParameter['Content-Type'] = 'application/json';
 
             setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
@@ -5836,6 +6922,11 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
 
 
 
+<<<<<<< HEAD
+=======
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+>>>>>>> ingredient_context_menu
             localVarHeaderParameter['Content-Type'] = 'application/json';
 
             setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
@@ -5868,7 +6959,48 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
             const localVarQueryParameter = {} as any;
 
 
+<<<<<<< HEAD
 
+=======
+
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(recipeBookEntry, localVarRequestOptions, configuration)
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * function to retrieve a recipe from a given url or source string :param request: standard request with additional post parameters         - url: url to use for importing recipe         - data: if no url is given recipe is imported from provided source data         - (optional) bookmarklet: id of bookmarklet import to use, overrides URL and data attributes :return: JsonResponse containing the parsed json and images
+         * @param {any} [body]
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        createRecipeUrlImport: async (body?: any, options: any = {}): Promise<RequestArgs> => {
+            const localVarPath = `/api/recipe-from-source/`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+>>>>>>> ingredient_context_menu
             localVarHeaderParameter['Content-Type'] = 'application/json';
 
             setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
@@ -5902,6 +7034,11 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
 
 
 
+<<<<<<< HEAD
+=======
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+>>>>>>> ingredient_context_menu
             localVarHeaderParameter['Content-Type'] = 'application/json';
 
             setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
@@ -5934,6 +7071,12 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
             const localVarQueryParameter = {} as any;
 
 
+<<<<<<< HEAD
+=======
+
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+>>>>>>> ingredient_context_menu
             localVarHeaderParameter['Content-Type'] = 'application/json';
 
             setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
@@ -5966,6 +7109,12 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
             const localVarQueryParameter = {} as any;
 
 
+<<<<<<< HEAD
+=======
+
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+>>>>>>> ingredient_context_menu
             localVarHeaderParameter['Content-Type'] = 'application/json';
 
             setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
@@ -5999,6 +7148,11 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
 
 
 
+<<<<<<< HEAD
+=======
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+>>>>>>> ingredient_context_menu
             localVarHeaderParameter['Content-Type'] = 'application/json';
 
             setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
@@ -6032,6 +7186,11 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
 
 
 
+<<<<<<< HEAD
+=======
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+>>>>>>> ingredient_context_menu
             localVarHeaderParameter['Content-Type'] = 'application/json';
 
             setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
@@ -6065,6 +7224,11 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
 
 
 
+<<<<<<< HEAD
+=======
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+>>>>>>> ingredient_context_menu
             localVarHeaderParameter['Content-Type'] = 'application/json';
 
             setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
@@ -6080,7 +7244,11 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
     return {
         /**
          *
+<<<<<<< HEAD
          * @param {ShoppingListEntryBulk} [shoppingListEntryBulk]
+=======
+         * @param {SupermarketCategory} [supermarketCategory]
+>>>>>>> ingredient_context_menu
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -6099,6 +7267,11 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
 
 
 
+<<<<<<< HEAD
+=======
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+>>>>>>> ingredient_context_menu
             localVarHeaderParameter['Content-Type'] = 'application/json';
 
             setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
@@ -6113,7 +7286,11 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
         },
         /**
          *
+<<<<<<< HEAD
          * @param {AccessToken} [accessToken]
+=======
+         * @param {SupermarketCategoryRelation} [supermarketCategoryRelation]
+>>>>>>> ingredient_context_menu
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -6131,6 +7308,12 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
             const localVarQueryParameter = {} as any;
 
 
+<<<<<<< HEAD
+=======
+
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+>>>>>>> ingredient_context_menu
             localVarHeaderParameter['Content-Type'] = 'application/json';
 
             setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
@@ -6145,7 +7328,11 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
         },
         /**
          *
+<<<<<<< HEAD
          * @param {any} [body]
+=======
+         * @param {Sync} [sync]
+>>>>>>> ingredient_context_menu
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -6161,6 +7348,8 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
             const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
+            const localVarFormParams = new ((configuration && configuration.formDataCtor) || FormData)();
+
 
 
             localVarHeaderParameter['Content-Type'] = 'application/json';
@@ -6177,8 +7366,13 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
         },
         /**
 <<<<<<< HEAD
+<<<<<<< HEAD
          * 
          * @param {string} id A unique integer value identifying this connector config.
+=======
+         *
+         * @param {Unit} [unit]
+>>>>>>> ingredient_context_menu
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -6199,7 +7393,15 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
             const localVarQueryParameter = {} as any;
 
 
+<<<<<<< HEAD
     
+=======
+
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+>>>>>>> ingredient_context_menu
             setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
@@ -6210,12 +7412,17 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
             };
         },
         /**
+<<<<<<< HEAD
          * 
          * @param {string} id A unique integer value identifying this cook log.
 =======
          *
          * @param {Automation} [automation]
 >>>>>>> fresh_filter
+=======
+         *
+         * @param {UnitConversion} [unitConversion]
+>>>>>>> ingredient_context_menu
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -6234,6 +7441,11 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
 
 
 
+<<<<<<< HEAD
+=======
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+>>>>>>> ingredient_context_menu
             localVarHeaderParameter['Content-Type'] = 'application/json';
 
             setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
@@ -6248,7 +7460,16 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
         },
         /**
          *
+<<<<<<< HEAD
          * @param {BookmarkletImport} [bookmarkletImport]
+=======
+         * @param {string} name
+         * @param {any} file
+         * @param {number} [id]
+         * @param {string} [fileDownload]
+         * @param {string} [preview]
+         * @param {number} [fileSizeKb]
+>>>>>>> ingredient_context_menu
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -6266,8 +7487,37 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
             const localVarQueryParameter = {} as any;
 
 
+<<<<<<< HEAD
 
             localVarHeaderParameter['Content-Type'] = 'application/json';
+=======
+            if (id !== undefined) {
+                localVarFormParams.append('id', id as any);
+            }
+
+            if (name !== undefined) {
+                localVarFormParams.append('name', name as any);
+            }
+
+            if (file !== undefined) {
+                localVarFormParams.append('file', file as any);
+            }
+
+            if (fileDownload !== undefined) {
+                localVarFormParams.append('file_download', fileDownload as any);
+            }
+
+            if (preview !== undefined) {
+                localVarFormParams.append('preview', preview as any);
+            }
+
+            if (fileSizeKb !== undefined) {
+                localVarFormParams.append('file_size_kb', fileSizeKb as any);
+            }
+
+
+            localVarHeaderParameter['Content-Type'] = 'multipart/form-data';
+>>>>>>> ingredient_context_menu
 
             setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
@@ -6281,7 +7531,11 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
         },
         /**
          *
+<<<<<<< HEAD
          * @param {CookLog} [cookLog]
+=======
+         * @param {ViewLog} [viewLog]
+>>>>>>> ingredient_context_menu
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -6313,8 +7567,13 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
             };
         },
         /**
+<<<<<<< HEAD
          *
          * @param {CustomFilter} [customFilter]
+=======
+         * function to handle files passed by application importer
+         * @param {any} [body]
+>>>>>>> ingredient_context_menu
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -6347,7 +7606,11 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
         },
         /**
          *
+<<<<<<< HEAD
          * @param {ExportLog} [exportLog]
+=======
+         * @param {string} id A unique integer value identifying this access token.
+>>>>>>> ingredient_context_menu
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -6366,8 +7629,11 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
 
 
 
+<<<<<<< HEAD
             localVarHeaderParameter['Content-Type'] = 'application/json';
 
+=======
+>>>>>>> ingredient_context_menu
             setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
@@ -6380,7 +7646,11 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
         },
         /**
          *
+<<<<<<< HEAD
          * @param {Food} [food]
+=======
+         * @param {string} id A unique integer value identifying this automation.
+>>>>>>> ingredient_context_menu
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -6398,9 +7668,12 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
             const localVarQueryParameter = {} as any;
 
 
+<<<<<<< HEAD
 
             localVarHeaderParameter['Content-Type'] = 'application/json';
 
+=======
+>>>>>>> ingredient_context_menu
             setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
@@ -6413,12 +7686,24 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
         },
         /**
          *
+<<<<<<< HEAD
          * @param {ImportLog} [importLog]
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
         createImportLog: async (importLog?: ImportLog, options: any = {}): Promise<RequestArgs> => {
             const localVarPath = `/api/import-log/`;
+=======
+         * @param {string} id A unique integer value identifying this bookmarklet import.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        destroyBookmarkletImport: async (id: string, options: any = {}): Promise<RequestArgs> => {
+            // verify required parameter 'id' is not null or undefined
+            assertParamExists('destroyBookmarkletImport', 'id', id)
+            const localVarPath = `/api/bookmarklet-import/{id}/`
+                .replace(`{${"id"}}`, encodeURIComponent(String(id)));
+>>>>>>> ingredient_context_menu
             // use dummy base URL string because the URL constructor only accepts absolute URLs.
             const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
             let baseOptions;
@@ -6432,8 +7717,11 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
 
 
 
+<<<<<<< HEAD
             localVarHeaderParameter['Content-Type'] = 'application/json';
 
+=======
+>>>>>>> ingredient_context_menu
             setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
@@ -6446,7 +7734,11 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
         },
         /**
          *
+<<<<<<< HEAD
          * @param {string} id A unique integer value identifying this food.
+=======
+         * @param {string} id A unique integer value identifying this cook log.
+>>>>>>> ingredient_context_menu
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -6468,8 +7760,11 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
 
 
 
+<<<<<<< HEAD
             localVarHeaderParameter['Content-Type'] = 'application/json';
 
+=======
+>>>>>>> ingredient_context_menu
             setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
@@ -6482,7 +7777,11 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
         },
         /**
          *
+<<<<<<< HEAD
          * @param {string} id A unique integer value identifying this import log.
+=======
+         * @param {string} id A unique integer value identifying this custom filter.
+>>>>>>> ingredient_context_menu
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -6503,9 +7802,12 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
             const localVarQueryParameter = {} as any;
 
 
+<<<<<<< HEAD
 
             localVarHeaderParameter['Content-Type'] = 'application/json';
 
+=======
+>>>>>>> ingredient_context_menu
             setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
@@ -6518,7 +7820,11 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
         },
         /**
          *
+<<<<<<< HEAD
          * @param {string} id A unique integer value identifying this ingredient.
+=======
+         * @param {string} id A unique integer value identifying this export log.
+>>>>>>> ingredient_context_menu
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -6540,8 +7846,11 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
 
 
 
+<<<<<<< HEAD
             localVarHeaderParameter['Content-Type'] = 'application/json';
 
+=======
+>>>>>>> ingredient_context_menu
             setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
@@ -6554,7 +7863,11 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
         },
         /**
          *
+<<<<<<< HEAD
          * @param {string} id A unique integer value identifying this invite link.
+=======
+         * @param {string} id A unique integer value identifying this food.
+>>>>>>> ingredient_context_menu
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -6576,8 +7889,11 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
 
 
 
+<<<<<<< HEAD
             localVarHeaderParameter['Content-Type'] = 'application/json';
 
+=======
+>>>>>>> ingredient_context_menu
             setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
@@ -6590,7 +7906,11 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
         },
         /**
          *
+<<<<<<< HEAD
          * @param {string} id A unique integer value identifying this keyword.
+=======
+         * @param {string} id A unique integer value identifying this import log.
+>>>>>>> ingredient_context_menu
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -6612,8 +7932,11 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
 
 
 
+<<<<<<< HEAD
             localVarHeaderParameter['Content-Type'] = 'application/json';
 
+=======
+>>>>>>> ingredient_context_menu
             setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
@@ -6626,7 +7949,11 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
         },
         /**
          *
+<<<<<<< HEAD
          * @param {string} id A unique integer value identifying this meal plan.
+=======
+         * @param {string} id A unique integer value identifying this ingredient.
+>>>>>>> ingredient_context_menu
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -6648,8 +7975,11 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
 
 
 
+<<<<<<< HEAD
             localVarHeaderParameter['Content-Type'] = 'application/json';
 
+=======
+>>>>>>> ingredient_context_menu
             setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
@@ -6661,8 +7991,13 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
             };
         },
         /**
+<<<<<<< HEAD
          * returns list of meal types created by the requesting user ordered by the order field.
          * @param {string} id A unique integer value identifying this meal type.
+=======
+         *
+         * @param {string} id A unique integer value identifying this invite link.
+>>>>>>> ingredient_context_menu
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -6684,8 +8019,11 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
 
 
 
+<<<<<<< HEAD
             localVarHeaderParameter['Content-Type'] = 'application/json';
 
+=======
+>>>>>>> ingredient_context_menu
             setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
@@ -6698,7 +8036,11 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
         },
         /**
          *
+<<<<<<< HEAD
          * @param {Step} [step]
+=======
+         * @param {string} id A unique integer value identifying this keyword.
+>>>>>>> ingredient_context_menu
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -6717,8 +8059,11 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
 
 
 
+<<<<<<< HEAD
             localVarHeaderParameter['Content-Type'] = 'application/json';
 
+=======
+>>>>>>> ingredient_context_menu
             setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
@@ -6731,11 +8076,16 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
         },
         /**
 <<<<<<< HEAD
+<<<<<<< HEAD
          * 
          * @param {string} id A unique integer value identifying this shopping list entry.
 =======
          *
          * @param {Storage} [storage]
+=======
+         *
+         * @param {string} id A unique integer value identifying this meal plan.
+>>>>>>> ingredient_context_menu
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -6754,8 +8104,11 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
 
 
 
+<<<<<<< HEAD
             localVarHeaderParameter['Content-Type'] = 'application/json';
 
+=======
+>>>>>>> ingredient_context_menu
             setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
@@ -6788,8 +8141,11 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
 
 
 
+<<<<<<< HEAD
             localVarHeaderParameter['Content-Type'] = 'application/json';
 
+=======
+>>>>>>> ingredient_context_menu
             setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
@@ -6802,7 +8158,11 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
         },
         /**
          *
+<<<<<<< HEAD
          * @param {SupermarketCategory} [supermarketCategory]
+=======
+         * @param {string} id A unique integer value identifying this property.
+>>>>>>> ingredient_context_menu
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -6821,8 +8181,11 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
 
 
 
+<<<<<<< HEAD
             localVarHeaderParameter['Content-Type'] = 'application/json';
 
+=======
+>>>>>>> ingredient_context_menu
             setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
@@ -6835,7 +8198,11 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
         },
         /**
          *
+<<<<<<< HEAD
          * @param {SupermarketCategoryRelation} [supermarketCategoryRelation]
+=======
+         * @param {string} id A unique integer value identifying this property type.
+>>>>>>> ingredient_context_menu
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -6854,8 +8221,11 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
 
 
 
+<<<<<<< HEAD
             localVarHeaderParameter['Content-Type'] = 'application/json';
 
+=======
+>>>>>>> ingredient_context_menu
             setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
@@ -6868,7 +8238,11 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
         },
         /**
          *
+<<<<<<< HEAD
          * @param {Sync} [sync]
+=======
+         * @param {string} id A unique integer value identifying this recipe.
+>>>>>>> ingredient_context_menu
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -6887,8 +8261,11 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
 
 
 
+<<<<<<< HEAD
             localVarHeaderParameter['Content-Type'] = 'application/json';
 
+=======
+>>>>>>> ingredient_context_menu
             setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
@@ -6901,7 +8278,11 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
         },
         /**
          *
+<<<<<<< HEAD
          * @param {Unit} [unit]
+=======
+         * @param {string} id A unique integer value identifying this recipe book.
+>>>>>>> ingredient_context_menu
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -6920,8 +8301,11 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
 
 
 
+<<<<<<< HEAD
             localVarHeaderParameter['Content-Type'] = 'application/json';
 
+=======
+>>>>>>> ingredient_context_menu
             setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
@@ -6934,7 +8318,11 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
         },
         /**
          *
+<<<<<<< HEAD
          * @param {UnitConversion} [unitConversion]
+=======
+         * @param {string} id A unique integer value identifying this recipe book entry.
+>>>>>>> ingredient_context_menu
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -6953,8 +8341,11 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
 
 
 
+<<<<<<< HEAD
             localVarHeaderParameter['Content-Type'] = 'application/json';
 
+=======
+>>>>>>> ingredient_context_menu
             setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
@@ -6967,12 +8358,16 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
         },
         /**
          *
+<<<<<<< HEAD
          * @param {string} name
          * @param {any} file
          * @param {number} [id]
          * @param {string} [fileDownload]
          * @param {string} [preview]
          * @param {number} [fileSizeKb]
+=======
+         * @param {string} id A unique integer value identifying this shopping list.
+>>>>>>> ingredient_context_menu
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -6995,6 +8390,7 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
             const localVarFormParams = new ((configuration && configuration.formDataCtor) || FormData)();
 
 
+<<<<<<< HEAD
             if (id !== undefined) {
                 localVarFormParams.append('id', id as any);
             }
@@ -7021,6 +8417,8 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
 
 
             localVarHeaderParameter['Content-Type'] = 'multipart/form-data';
+=======
+>>>>>>> ingredient_context_menu
 
             setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
@@ -7034,7 +8432,11 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
         },
         /**
          *
+<<<<<<< HEAD
          * @param {ViewLog} [viewLog]
+=======
+         * @param {string} id A unique integer value identifying this shopping list entry.
+>>>>>>> ingredient_context_menu
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -7053,8 +8455,11 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
 
 
 
+<<<<<<< HEAD
             localVarHeaderParameter['Content-Type'] = 'application/json';
 
+=======
+>>>>>>> ingredient_context_menu
             setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
@@ -7066,8 +8471,13 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
             };
         },
         /**
+<<<<<<< HEAD
          * function to handle files passed by application importer
          * @param {any} [body]
+=======
+         *
+         * @param {string} id A unique integer value identifying this shopping list recipe.
+>>>>>>> ingredient_context_menu
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -7086,8 +8496,11 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
 
 
 
+<<<<<<< HEAD
             localVarHeaderParameter['Content-Type'] = 'application/json';
 
+=======
+>>>>>>> ingredient_context_menu
             setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
@@ -7100,7 +8513,11 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
         },
         /**
          *
+<<<<<<< HEAD
          * @param {string} id A unique integer value identifying this access token.
+=======
+         * @param {string} id A unique integer value identifying this step.
+>>>>>>> ingredient_context_menu
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -7133,7 +8550,11 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
         },
         /**
          *
+<<<<<<< HEAD
          * @param {string} id A unique integer value identifying this automation.
+=======
+         * @param {string} id A unique integer value identifying this storage.
+>>>>>>> ingredient_context_menu
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -7166,7 +8587,11 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
         },
         /**
          *
+<<<<<<< HEAD
          * @param {string} id A unique integer value identifying this bookmarklet import.
+=======
+         * @param {string} id A unique integer value identifying this supermarket.
+>>>>>>> ingredient_context_menu
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -7199,7 +8624,11 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
         },
         /**
          *
+<<<<<<< HEAD
          * @param {string} id A unique integer value identifying this cook log.
+=======
+         * @param {string} id A unique integer value identifying this supermarket category.
+>>>>>>> ingredient_context_menu
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -7220,6 +8649,10 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
             const localVarQueryParameter = {} as any;
 
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> ingredient_context_menu
             setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
@@ -7231,7 +8664,11 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
         },
         /**
          *
+<<<<<<< HEAD
          * @param {string} id A unique integer value identifying this custom filter.
+=======
+         * @param {string} id A unique integer value identifying this supermarket category relation.
+>>>>>>> ingredient_context_menu
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -7264,7 +8701,11 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
         },
         /**
          *
+<<<<<<< HEAD
          * @param {string} id A unique integer value identifying this export log.
+=======
+         * @param {string} id A unique integer value identifying this sync.
+>>>>>>> ingredient_context_menu
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -7297,7 +8738,11 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
         },
         /**
          *
+<<<<<<< HEAD
          * @param {string} id A unique integer value identifying this food.
+=======
+         * @param {string} id A unique integer value identifying this unit.
+>>>>>>> ingredient_context_menu
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -7330,7 +8775,11 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
         },
         /**
          *
+<<<<<<< HEAD
          * @param {string} id A unique integer value identifying this import log.
+=======
+         * @param {string} id A unique integer value identifying this unit conversion.
+>>>>>>> ingredient_context_menu
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -7362,9 +8811,14 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
             };
         },
         /**
+<<<<<<< HEAD
          * updates the food with all possible data from the FDC Api if properties with a fdc_id already exist they will be overridden, if existing properties don\'t have a fdc_id they won\'t be changed
          * @param {string} id A unique integer value identifying this food.
          * @param {Food} [food]
+=======
+         *
+         * @param {string} id A unique integer value identifying this user file.
+>>>>>>> ingredient_context_menu
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -7386,9 +8840,15 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
 
 
 
+<<<<<<< HEAD
+=======
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+>>>>>>> ingredient_context_menu
             setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(food, localVarRequestOptions, configuration)
 
             return {
                 url: toPathString(localVarUrlObj),
@@ -7397,7 +8857,12 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
         },
         /**
 <<<<<<< HEAD
+<<<<<<< HEAD
          * 
+=======
+         *
+         * @param {string} id A unique integer value identifying this user space.
+>>>>>>> ingredient_context_menu
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -7413,9 +8878,10 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
             const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
+            const localVarFormParams = new ((configuration && configuration.formDataCtor) || FormData)();
 
 
-    
+
             setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
@@ -7426,6 +8892,7 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
             };
         },
         /**
+<<<<<<< HEAD
          * 
          * @param {number} [page] A page number within the paginated result set.
          * @param {number} [pageSize] Number of results to return per page.
@@ -7433,6 +8900,10 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
          *
          * @param {string} id A unique integer value identifying this invite link.
 >>>>>>> fresh_filter
+=======
+         *
+         * @param {string} id A unique integer value identifying this view log.
+>>>>>>> ingredient_context_menu
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -7464,8 +8935,14 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
             };
         },
         /**
+<<<<<<< HEAD
          *
          * @param {string} id A unique integer value identifying this keyword.
+=======
+         * updates the food with all possible data from the FDC Api if properties with a fdc_id already exist they will be overridden, if existing properties don\'t have a fdc_id they won\'t be changed
+         * @param {string} id A unique integer value identifying this food.
+         * @param {Food} [food]
+>>>>>>> ingredient_context_menu
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -7486,6 +8963,11 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
             const localVarQueryParameter = {} as any;
 
 
+<<<<<<< HEAD
+=======
+
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+>>>>>>> ingredient_context_menu
 
             setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
@@ -7498,7 +8980,13 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
         },
         /**
          *
+<<<<<<< HEAD
          * @param {string} id A unique integer value identifying this meal plan.
+=======
+         * @param {string} id A unique integer value identifying this recipe.
+         * @param {any} [image]
+         * @param {string} [imageUrl]
+>>>>>>> ingredient_context_menu
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -7519,6 +9007,20 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
             const localVarQueryParameter = {} as any;
 
 
+<<<<<<< HEAD
+=======
+            if (image !== undefined) {
+                localVarFormParams.append('image', image as any);
+            }
+
+            if (imageUrl !== undefined) {
+                localVarFormParams.append('image_url', imageUrl as any);
+            }
+
+
+            localVarHeaderParameter['Content-Type'] = 'multipart/form-data';
+
+>>>>>>> ingredient_context_menu
 
             setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
@@ -7530,8 +9032,12 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
             };
         },
         /**
+<<<<<<< HEAD
          * returns list of meal types created by the requesting user ordered by the order field.
          * @param {string} id A unique integer value identifying this meal type.
+=======
+         *
+>>>>>>> ingredient_context_menu
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -7586,6 +9092,10 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
 
 
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> ingredient_context_menu
             setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
@@ -7597,7 +9107,12 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
         },
         /**
          *
+<<<<<<< HEAD
          * @param {string} id A unique integer value identifying this property type.
+=======
+         * @param {number} [page] A page number within the paginated result set.
+         * @param {number} [pageSize] Number of results to return per page.
+>>>>>>> ingredient_context_menu
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -7617,8 +9132,20 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
 
+            if (page !== undefined) {
+                localVarQueryParameter['page'] = page;
+            }
+
+            if (pageSize !== undefined) {
+                localVarQueryParameter['page_size'] = pageSize;
+            }
 
 
+
+<<<<<<< HEAD
+
+=======
+>>>>>>> ingredient_context_menu
             setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
@@ -7630,7 +9157,12 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
         },
         /**
          *
+<<<<<<< HEAD
          * @param {string} id A unique integer value identifying this recipe.
+=======
+         * @param {number} [page] A page number within the paginated result set.
+         * @param {number} [pageSize] Number of results to return per page.
+>>>>>>> ingredient_context_menu
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -7652,6 +9184,11 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
 
 
 
+<<<<<<< HEAD
+=======
+
+
+>>>>>>> ingredient_context_menu
             setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
@@ -7663,7 +9200,12 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
         },
         /**
          *
+<<<<<<< HEAD
          * @param {string} id A unique integer value identifying this recipe book.
+=======
+         * @param {number} [page] A page number within the paginated result set.
+         * @param {number} [pageSize] Number of results to return per page.
+>>>>>>> ingredient_context_menu
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -7685,6 +9227,10 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
 
 
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> ingredient_context_menu
             setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
@@ -7696,7 +9242,10 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
         },
         /**
          *
+<<<<<<< HEAD
          * @param {string} id A unique integer value identifying this recipe book entry.
+=======
+>>>>>>> ingredient_context_menu
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -7729,7 +9278,10 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
         },
         /**
          *
+<<<<<<< HEAD
          * @param {string} id A unique integer value identifying this shopping list.
+=======
+>>>>>>> ingredient_context_menu
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -7751,6 +9303,10 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
 
 
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> ingredient_context_menu
             setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
@@ -7762,7 +9318,15 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
         },
         /**
          *
+<<<<<<< HEAD
          * @param {string} id A unique integer value identifying this shopping list entry.
+=======
+         * @param {string} [query] Query string matched against food name.
+         * @param {number} [root] Return first level children of food with ID [int].  Integer 0 will return root foods.
+         * @param {number} [tree] Return all self and children of food with ID [int].
+         * @param {number} [page] A page number within the paginated result set.
+         * @param {number} [pageSize] Number of results to return per page.
+>>>>>>> ingredient_context_menu
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -7784,6 +9348,10 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
 
 
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> ingredient_context_menu
             setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
@@ -7795,7 +9363,10 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
         },
         /**
          *
+<<<<<<< HEAD
          * @param {string} id A unique integer value identifying this shopping list recipe.
+=======
+>>>>>>> ingredient_context_menu
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -7817,6 +9388,10 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
 
 
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> ingredient_context_menu
             setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
@@ -7828,7 +9403,12 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
         },
         /**
          *
+<<<<<<< HEAD
          * @param {string} id A unique integer value identifying this step.
+=======
+         * @param {number} [page] A page number within the paginated result set.
+         * @param {number} [pageSize] Number of results to return per page.
+>>>>>>> ingredient_context_menu
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -7850,6 +9430,10 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
 
 
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> ingredient_context_menu
             setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
@@ -7861,7 +9445,12 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
         },
         /**
          *
+<<<<<<< HEAD
          * @param {string} id A unique integer value identifying this storage.
+=======
+         * @param {number} [page] A page number within the paginated result set.
+         * @param {number} [pageSize] Number of results to return per page.
+>>>>>>> ingredient_context_menu
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -7913,7 +9502,11 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
             };
         },
         /**
+<<<<<<< HEAD
          * optional parameters  - **from_date**: filter from (inclusive) a certain date onward - **to_date**: filter upward to (inclusive) certain date
+=======
+         *
+>>>>>>> ingredient_context_menu
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -7942,7 +9535,16 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
             };
         },
         /**
+<<<<<<< HEAD
          * returns list of meal types created by the requesting user ordered by the order field.
+=======
+         *
+         * @param {string} [query] Query string matched against keyword name.
+         * @param {number} [root] Return first level children of keyword with ID [int].  Integer 0 will return root keywords.
+         * @param {number} [tree] Return all self and children of keyword with ID [int].
+         * @param {number} [page] A page number within the paginated result set.
+         * @param {number} [pageSize] Number of results to return per page.
+>>>>>>> ingredient_context_menu
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -7961,6 +9563,10 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
 
 
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> ingredient_context_menu
             setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
@@ -8042,6 +9648,7 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
                 localVarQueryParameter['page'] = page;
             }
 
+<<<<<<< HEAD
             if (pageSize !== undefined) {
                 localVarQueryParameter['page_size'] = pageSize;
 =======
@@ -8049,6 +9656,13 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
             localVarHeaderParameter['Content-Type'] = 'application/json';
 
             localVarHeaderParameter['Content-Type'] = 'application/json';
+=======
+            if (mealType !== undefined) {
+                localVarQueryParameter['meal_type'] = mealType;
+            }
+
+
+>>>>>>> ingredient_context_menu
 
             setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
@@ -8086,6 +9700,7 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
             const localVarFormParams = new ((configuration && configuration.formDataCtor) || FormData)();
 
 
+<<<<<<< HEAD
             if (image !== undefined) {
                 localVarFormParams.append('image', image as any);
             }
@@ -8093,11 +9708,39 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
             if (imageUrl !== undefined) {
                 localVarFormParams.append('image_url', imageUrl as any);
 >>>>>>> fresh_filter
+=======
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         *
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        listPropertyTypes: async (options: any = {}): Promise<RequestArgs> => {
+            const localVarPath = `/api/food-property-type/`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+>>>>>>> ingredient_context_menu
             }
 
 
             localVarHeaderParameter['Content-Type'] = 'multipart/form-data';
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> ingredient_context_menu
             setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
@@ -8110,10 +9753,14 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
         },
         /**
 <<<<<<< HEAD
+<<<<<<< HEAD
          * 
          * @param {number} [id] Returns the shopping list entry with a primary key of id.  Multiple values allowed.
          * @param {string} [checked] Filter shopping list entries on checked.  [true, false, both, &lt;b&gt;recent&lt;/b&gt;]&lt;br&gt;                  - recent includes unchecked items and recently completed items.
          * @param {number} [supermarket] Returns the shopping list entries sorted by supermarket category order.
+=======
+         *
+>>>>>>> ingredient_context_menu
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -8152,6 +9799,10 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
 
 
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> ingredient_context_menu
             setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
@@ -8201,6 +9852,10 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
 
 
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> ingredient_context_menu
             setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
@@ -8407,8 +10062,15 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
                 localVarQueryParameter['page_size'] = pageSize;
             }
 
+            if (internal !== undefined) {
+                localVarQueryParameter['internal'] = internal;
+            }
 
 
+<<<<<<< HEAD
+
+=======
+>>>>>>> ingredient_context_menu
             setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
@@ -8420,8 +10082,14 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
         },
         /**
          *
+<<<<<<< HEAD
          * @param {number} [page] A page number within the paginated result set.
          * @param {number} [pageSize] Number of results to return per page.
+=======
+         * @param {number} [id] Returns the shopping list entry with a primary key of id.  Multiple values allowed.
+         * @param {string} [checked] Filter shopping list entries on checked.  [true, false, both, &lt;b&gt;recent&lt;/b&gt;]&lt;br&gt;                  - recent includes unchecked items and recently completed items.
+         * @param {number} [supermarket] Returns the shopping list entries sorted by supermarket category order.
+>>>>>>> ingredient_context_menu
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -8446,6 +10114,27 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
                 localVarQueryParameter['page_size'] = pageSize;
             }
 
+            if (updatedon !== undefined) {
+                localVarQueryParameter['updatedon'] = updatedon;
+            }
+
+            if (viewedon !== undefined) {
+                localVarQueryParameter['viewedon'] = viewedon;
+            }
+
+            if (makenow !== undefined) {
+                localVarQueryParameter['makenow'] = makenow;
+            }
+
+            if (page !== undefined) {
+                localVarQueryParameter['page'] = page;
+            }
+
+            if (pageSize !== undefined) {
+                localVarQueryParameter['page_size'] = pageSize;
+            }
+
+
 
             setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
@@ -8458,8 +10147,11 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
         },
         /**
          *
+<<<<<<< HEAD
          * @param {number} [page] A page number within the paginated result set.
          * @param {number} [pageSize] Number of results to return per page.
+=======
+>>>>>>> ingredient_context_menu
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -8476,6 +10168,7 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
 
+<<<<<<< HEAD
             if (page !== undefined) {
                 localVarQueryParameter['page'] = page;
             }
@@ -8485,6 +10178,19 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
             }
 
 
+=======
+            if (id !== undefined) {
+                localVarQueryParameter['id'] = id;
+            }
+
+            if (checked !== undefined) {
+                localVarQueryParameter['checked'] = checked;
+            }
+
+            if (supermarket !== undefined) {
+                localVarQueryParameter['supermarket'] = supermarket;
+            }
+>>>>>>> ingredient_context_menu
 
             setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
@@ -8525,11 +10231,14 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
         },
         /**
          *
+<<<<<<< HEAD
          * @param {string} [query] Query string matched against food name.
          * @param {number} [root] Return first level children of food with ID [int].  Integer 0 will return root foods.
          * @param {number} [tree] Return all self and children of food with ID [int].
          * @param {number} [page] A page number within the paginated result set.
          * @param {number} [pageSize] Number of results to return per page.
+=======
+>>>>>>> ingredient_context_menu
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -8579,6 +10288,13 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
         },
         /**
          *
+<<<<<<< HEAD
+=======
+         * @param {number} [recipe] ID of recipe a step is part of. For multiple repeat parameter.
+         * @param {string} [query] Query string matched (fuzzy) against object name.
+         * @param {number} [page] A page number within the paginated result set.
+         * @param {number} [pageSize] Number of results to return per page.
+>>>>>>> ingredient_context_menu
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -8596,6 +10312,19 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
             const localVarQueryParameter = {} as any;
 
 
+            if (query !== undefined) {
+                localVarQueryParameter['query'] = query;
+            }
+
+            if (page !== undefined) {
+                localVarQueryParameter['page'] = page;
+            }
+
+            if (pageSize !== undefined) {
+                localVarQueryParameter['page_size'] = pageSize;
+            }
+
+
 
             setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
@@ -8608,8 +10337,11 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
         },
         /**
          *
+<<<<<<< HEAD
          * @param {number} [page] A page number within the paginated result set.
          * @param {number} [pageSize] Number of results to return per page.
+=======
+>>>>>>> ingredient_context_menu
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -8673,8 +10405,16 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
                 localVarQueryParameter['page_size'] = pageSize;
             }
 
+            if (pageSize !== undefined) {
+                localVarQueryParameter['page_size'] = pageSize;
+            }
 
 
+
+<<<<<<< HEAD
+
+=======
+>>>>>>> ingredient_context_menu
             setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
@@ -8686,6 +10426,10 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
         },
         /**
          *
+<<<<<<< HEAD
+=======
+         * @param {string} [query] Query string matched against supermarket-category name.
+>>>>>>> ingredient_context_menu
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -8715,11 +10459,15 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
         },
         /**
          *
+<<<<<<< HEAD
          * @param {string} [query] Query string matched against keyword name.
          * @param {number} [root] Return first level children of keyword with ID [int].  Integer 0 will return root keywords.
          * @param {number} [tree] Return all self and children of keyword with ID [int].
          * @param {number} [page] A page number within the paginated result set.
          * @param {number} [pageSize] Number of results to return per page.
+=======
+         * @param {string} [query] Query string matched against supermarket name.
+>>>>>>> ingredient_context_menu
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -8767,10 +10515,16 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
             };
         },
         /**
+<<<<<<< HEAD
          * optional parameters  - **from_date**: filter from (inclusive) a certain date onward - **to_date**: filter upward to (inclusive) certain date - **meal_type**: filter meal plans based on meal_type ID
          * @param {string} [fromDate] Filter meal plans from date (inclusive) in the format of YYYY-MM-DD.
          * @param {string} [toDate] Filter meal plans to date (inclusive) in the format of YYYY-MM-DD.
          * @param {number} [mealType] Filter meal plans with MealType ID. For multiple repeat parameter.
+=======
+         *
+         * @param {number} [page] A page number within the paginated result set.
+         * @param {number} [pageSize] Number of results to return per page.
+>>>>>>> ingredient_context_menu
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -8799,9 +10553,17 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
                 localVarQueryParameter['meal_type'] = mealType;
             }
 
+            if (pageSize !== undefined) {
+                localVarQueryParameter['page_size'] = pageSize;
+            }
 
 
 
+<<<<<<< HEAD
+
+
+=======
+>>>>>>> ingredient_context_menu
             setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
@@ -8812,7 +10574,11 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
             };
         },
         /**
+<<<<<<< HEAD
          * returns list of meal types created by the requesting user ordered by the order field.
+=======
+         *
+>>>>>>> ingredient_context_menu
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -8830,7 +10596,10 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
             const localVarQueryParameter = {} as any;
 
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> ingredient_context_menu
             setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
@@ -8842,6 +10611,10 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
         },
         /**
          *
+<<<<<<< HEAD
+=======
+         * @param {number} [foodId] ID of food to filter for
+>>>>>>> ingredient_context_menu
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -8871,6 +10644,12 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
         },
         /**
          *
+<<<<<<< HEAD
+=======
+         * @param {string} [query] Query string matched against unit name.
+         * @param {number} [page] A page number within the paginated result set.
+         * @param {number} [pageSize] Number of results to return per page.
+>>>>>>> ingredient_context_menu
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -8889,6 +10668,15 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
 
 
 
+<<<<<<< HEAD
+=======
+            if (pageSize !== undefined) {
+                localVarQueryParameter['page_size'] = pageSize;
+            }
+
+
+
+>>>>>>> ingredient_context_menu
             setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
@@ -8899,7 +10687,12 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
             };
         },
         /**
+<<<<<<< HEAD
          * optional parameters  - **recipe**: id of recipe - only return books for that recipe - **book**: id of book - only return recipes in that book
+=======
+         *
+         * @param {string} [query] Query string matched against user-file name.
+>>>>>>> ingredient_context_menu
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -8946,7 +10739,10 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
             const localVarQueryParameter = {} as any;
 
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> ingredient_context_menu
             setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
@@ -8958,6 +10754,7 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
         },
         /**
          *
+<<<<<<< HEAD
          * @param {string} [query] Query string matched (fuzzy) against recipe name. In the future also fulltext search.
          * @param {number} [keywords] ID of keyword a recipe should have. For multiple repeat parameter. Equivalent to keywords_or
          * @param {number} [keywordsOr] Keyword IDs, repeat for multiple. Return recipes with any of the keywords
@@ -8986,6 +10783,8 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
          * @param {string} [viewedon] Filter recipes lasts viewed on or after YYYY-MM-DD. Prepending - filters on or before date.
          * @param {string} [makenow] Filter recipes that can be made with OnHand food. [true/&lt;b&gt;false&lt;/b&gt;]
          * @param {string} [neverUsedFood] Filter recipes that contain food that have never been used. [true/&lt;b&gt;false&lt;/b&gt;]
+=======
+>>>>>>> ingredient_context_menu
          * @param {number} [page] A page number within the paginated result set.
          * @param {number} [pageSize] Number of results to return per page.
          * @param {*} [options] Override http request option.
@@ -9124,8 +10923,16 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
                 localVarQueryParameter['page_size'] = pageSize;
             }
 
+            if (pageSize !== undefined) {
+                localVarQueryParameter['page_size'] = pageSize;
+            }
 
 
+
+<<<<<<< HEAD
+
+=======
+>>>>>>> ingredient_context_menu
             setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
@@ -9156,8 +10963,35 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
 
+<<<<<<< HEAD
             if (id !== undefined) {
                 localVarQueryParameter['id'] = id;
+=======
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         *
+         * @param {number} [page] A page number within the paginated result set.
+         * @param {number} [pageSize] Number of results to return per page.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        listViewLogs: async (page?: number, pageSize?: number, options: any = {}): Promise<RequestArgs> => {
+            const localVarPath = `/api/view-log/`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+>>>>>>> ingredient_context_menu
             }
 
             if (checked !== undefined) {
@@ -9167,6 +11001,11 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
             if (supermarket !== undefined) {
                 localVarQueryParameter['supermarket'] = supermarket;
             }
+
+            if (pageSize !== undefined) {
+                localVarQueryParameter['page_size'] = pageSize;
+            }
+
 
 
             setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
@@ -9197,7 +11036,10 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
             const localVarQueryParameter = {} as any;
 
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> ingredient_context_menu
             setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
@@ -9209,6 +11051,12 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
         },
         /**
          *
+<<<<<<< HEAD
+=======
+         * @param {string} id A unique integer value identifying this food.
+         * @param {string} target
+         * @param {Food} [food]
+>>>>>>> ingredient_context_menu
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -9226,6 +11074,11 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
             const localVarQueryParameter = {} as any;
 
 
+<<<<<<< HEAD
+=======
+
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+>>>>>>> ingredient_context_menu
 
             setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
@@ -9238,6 +11091,12 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
         },
         /**
          *
+<<<<<<< HEAD
+=======
+         * @param {string} id A unique integer value identifying this keyword.
+         * @param {string} target
+         * @param {Keyword} [keyword]
+>>>>>>> ingredient_context_menu
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -9255,6 +11114,11 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
             const localVarQueryParameter = {} as any;
 
 
+<<<<<<< HEAD
+=======
+
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+>>>>>>> ingredient_context_menu
 
             setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
@@ -9267,10 +11131,16 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
         },
         /**
          *
+<<<<<<< HEAD
          * @param {number} [recipe] ID of recipe a step is part of. For multiple repeat parameter.
          * @param {string} [query] Query string matched (fuzzy) against object name.
          * @param {number} [page] A page number within the paginated result set.
          * @param {number} [pageSize] Number of results to return per page.
+=======
+         * @param {string} id A unique integer value identifying this supermarket category.
+         * @param {string} target
+         * @param {SupermarketCategory} [supermarketCategory]
+>>>>>>> ingredient_context_menu
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -9291,8 +11161,45 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
                 localVarQueryParameter['recipe'] = recipe;
             }
 
+<<<<<<< HEAD
             if (query !== undefined) {
                 localVarQueryParameter['query'] = query;
+=======
+
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(supermarketCategory, localVarRequestOptions, configuration)
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         *
+         * @param {string} id A unique integer value identifying this unit.
+         * @param {string} target
+         * @param {Unit} [unit]
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        mergeUnit: async (id: string, target: string, unit?: Unit, options: any = {}): Promise<RequestArgs> => {
+            // verify required parameter 'id' is not null or undefined
+            assertParamExists('mergeUnit', 'id', id)
+            // verify required parameter 'target' is not null or undefined
+            assertParamExists('mergeUnit', 'target', target)
+            const localVarPath = `/api/unit/{id}/merge/{target}/`
+                .replace(`{${"id"}}`, encodeURIComponent(String(id)))
+                .replace(`{${"target"}}`, encodeURIComponent(String(target)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+>>>>>>> ingredient_context_menu
             }
 
             if (page !== undefined) {
@@ -9303,6 +11210,11 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
                 localVarQueryParameter['page_size'] = pageSize;
             }
 
+<<<<<<< HEAD
+=======
+
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+>>>>>>> ingredient_context_menu
 
             setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
@@ -9315,6 +11227,12 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
         },
         /**
          *
+<<<<<<< HEAD
+=======
+         * @param {string} id A unique integer value identifying this food.
+         * @param {string} parent
+         * @param {Food} [food]
+>>>>>>> ingredient_context_menu
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -9332,6 +11250,11 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
             const localVarQueryParameter = {} as any;
 
 
+<<<<<<< HEAD
+=======
+
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+>>>>>>> ingredient_context_menu
 
             setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
@@ -9344,9 +11267,16 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
         },
         /**
 <<<<<<< HEAD
+<<<<<<< HEAD
          * 
          * @param {string} id A unique integer value identifying this connector config.
          * @param {ConnectorConfigConfig} [connectorConfigConfig] 
+=======
+         *
+         * @param {string} id A unique integer value identifying this keyword.
+         * @param {string} parent
+         * @param {Keyword} [keyword]
+>>>>>>> ingredient_context_menu
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -9367,7 +11297,7 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
             const localVarQueryParameter = {} as any;
 
 
-    
+
             localVarHeaderParameter['Content-Type'] = 'application/json';
 
             setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
@@ -9381,6 +11311,7 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
             };
         },
         /**
+<<<<<<< HEAD
          * 
          * @param {string} id A unique integer value identifying this cook log.
          * @param {CookLog} [cookLog] 
@@ -9389,6 +11320,11 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
          * @param {number} [page] A page number within the paginated result set.
          * @param {number} [pageSize] Number of results to return per page.
 >>>>>>> fresh_filter
+=======
+         *
+         * @param {string} id A unique integer value identifying this access token.
+         * @param {AccessToken} [accessToken]
+>>>>>>> ingredient_context_menu
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -9413,6 +11349,11 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
                 localVarQueryParameter['page_size'] = pageSize;
             }
 
+<<<<<<< HEAD
+=======
+
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+>>>>>>> ingredient_context_menu
 
             setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
@@ -9425,7 +11366,12 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
         },
         /**
          *
+<<<<<<< HEAD
          * @param {string} [query] Query string matched against supermarket-category name.
+=======
+         * @param {string} id A unique integer value identifying this automation.
+         * @param {Automation} [automation]
+>>>>>>> ingredient_context_menu
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -9446,6 +11392,11 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
                 localVarQueryParameter['query'] = query;
             }
 
+<<<<<<< HEAD
+=======
+
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+>>>>>>> ingredient_context_menu
 
             setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
@@ -9458,7 +11409,12 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
         },
         /**
          *
+<<<<<<< HEAD
          * @param {string} [query] Query string matched against supermarket name.
+=======
+         * @param {string} id A unique integer value identifying this bookmarklet import.
+         * @param {BookmarkletImport} [bookmarkletImport]
+>>>>>>> ingredient_context_menu
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -9479,6 +11435,11 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
                 localVarQueryParameter['query'] = query;
             }
 
+<<<<<<< HEAD
+=======
+
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+>>>>>>> ingredient_context_menu
 
             setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
@@ -9491,8 +11452,13 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
         },
         /**
          *
+<<<<<<< HEAD
          * @param {number} [page] A page number within the paginated result set.
          * @param {number} [pageSize] Number of results to return per page.
+=======
+         * @param {string} id A unique integer value identifying this cook log.
+         * @param {CookLog} [cookLog]
+>>>>>>> ingredient_context_menu
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -9517,6 +11483,11 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
                 localVarQueryParameter['page_size'] = pageSize;
             }
 
+<<<<<<< HEAD
+=======
+
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+>>>>>>> ingredient_context_menu
 
             setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
@@ -9529,6 +11500,11 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
         },
         /**
          *
+<<<<<<< HEAD
+=======
+         * @param {string} id A unique integer value identifying this custom filter.
+         * @param {CustomFilter} [customFilter]
+>>>>>>> ingredient_context_menu
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -9546,6 +11522,11 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
             const localVarQueryParameter = {} as any;
 
 
+<<<<<<< HEAD
+=======
+
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+>>>>>>> ingredient_context_menu
 
             setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
@@ -9558,7 +11539,12 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
         },
         /**
          *
+<<<<<<< HEAD
          * @param {number} [foodId] ID of food to filter for
+=======
+         * @param {string} id A unique integer value identifying this export log.
+         * @param {ExportLog} [exportLog]
+>>>>>>> ingredient_context_menu
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -9579,6 +11565,11 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
                 localVarQueryParameter['food_id'] = foodId;
             }
 
+<<<<<<< HEAD
+=======
+
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+>>>>>>> ingredient_context_menu
 
             setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
@@ -9591,9 +11582,14 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
         },
         /**
          *
+<<<<<<< HEAD
          * @param {string} [query] Query string matched against unit name.
          * @param {number} [page] A page number within the paginated result set.
          * @param {number} [pageSize] Number of results to return per page.
+=======
+         * @param {string} id A unique integer value identifying this food.
+         * @param {Food} [food]
+>>>>>>> ingredient_context_menu
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -9622,6 +11618,11 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
                 localVarQueryParameter['page_size'] = pageSize;
             }
 
+<<<<<<< HEAD
+=======
+
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+>>>>>>> ingredient_context_menu
 
             setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
@@ -9634,8 +11635,13 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
         },
         /**
          *
+<<<<<<< HEAD
          * @param {string} id A unique integer value identifying this keyword.
          * @param {Keyword} [keyword]
+=======
+         * @param {string} id A unique integer value identifying this import log.
+         * @param {ImportLog} [importLog]
+>>>>>>> ingredient_context_menu
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -9671,8 +11677,13 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
         },
         /**
          *
+<<<<<<< HEAD
          * @param {string} id A unique integer value identifying this meal plan.
          * @param {MealPlan} [mealPlan]
+=======
+         * @param {string} id A unique integer value identifying this ingredient.
+         * @param {Ingredient} [ingredient]
+>>>>>>> ingredient_context_menu
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -9707,9 +11718,15 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
             };
         },
         /**
+<<<<<<< HEAD
          * returns list of meal types created by the requesting user ordered by the order field.
          * @param {string} id A unique integer value identifying this meal type.
          * @param {MealType} [mealType]
+=======
+         *
+         * @param {string} id A unique integer value identifying this invite link.
+         * @param {InviteLink} [inviteLink]
+>>>>>>> ingredient_context_menu
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -9745,9 +11762,14 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
         },
         /**
          *
+<<<<<<< HEAD
          * @param {string} id A unique integer value identifying this food.
          * @param {string} parent
          * @param {Food} [food]
+=======
+         * @param {string} id A unique integer value identifying this keyword.
+         * @param {Keyword} [keyword]
+>>>>>>> ingredient_context_menu
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -9786,9 +11808,14 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
         },
         /**
          *
+<<<<<<< HEAD
          * @param {string} id A unique integer value identifying this keyword.
          * @param {string} parent
          * @param {Keyword} [keyword]
+=======
+         * @param {string} id A unique integer value identifying this meal plan.
+         * @param {MealPlan} [mealPlan]
+>>>>>>> ingredient_context_menu
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -9812,6 +11839,10 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
             const localVarQueryParameter = {} as any;
 
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> ingredient_context_menu
             localVarHeaderParameter['Content-Type'] = 'application/json';
 
             setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
@@ -9825,9 +11856,15 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
             };
         },
         /**
+<<<<<<< HEAD
          *
          * @param {string} id A unique integer value identifying this access token.
          * @param {AccessToken} [accessToken]
+=======
+         * returns list of meal types created by the requesting user ordered by the order field.
+         * @param {string} id A unique integer value identifying this meal type.
+         * @param {MealType} [mealType]
+>>>>>>> ingredient_context_menu
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -9848,6 +11885,10 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
             const localVarQueryParameter = {} as any;
 
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> ingredient_context_menu
             localVarHeaderParameter['Content-Type'] = 'application/json';
 
             setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
@@ -9862,8 +11903,13 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
         },
         /**
          *
+<<<<<<< HEAD
          * @param {string} id A unique integer value identifying this automation.
          * @param {Automation} [automation]
+=======
+         * @param {string} id A unique integer value identifying this property.
+         * @param {Property} [property]
+>>>>>>> ingredient_context_menu
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -9899,8 +11945,13 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
         },
         /**
          *
+<<<<<<< HEAD
          * @param {string} id A unique integer value identifying this bookmarklet import.
          * @param {BookmarkletImport} [bookmarkletImport]
+=======
+         * @param {string} id A unique integer value identifying this property type.
+         * @param {PropertyType} [propertyType]
+>>>>>>> ingredient_context_menu
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -9936,6 +11987,7 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
         },
         /**
 <<<<<<< HEAD
+<<<<<<< HEAD
          * 
          * @param {string} id A unique integer value identifying this shopping list entry.
          * @param {ShoppingListEntry} [shoppingListEntry] 
@@ -9943,6 +11995,11 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
          *
          * @param {string} id A unique integer value identifying this cook log.
          * @param {CookLog} [cookLog]
+=======
+         *
+         * @param {string} id A unique integer value identifying this recipe.
+         * @param {Recipe} [recipe]
+>>>>>>> ingredient_context_menu
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -9978,9 +12035,14 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
         },
         /**
          *
+<<<<<<< HEAD
          * @param {string} id A unique integer value identifying this custom filter.
          * @param {CustomFilter} [customFilter]
 >>>>>>> fresh_filter
+=======
+         * @param {string} id A unique integer value identifying this recipe book.
+         * @param {RecipeBook} [recipeBook]
+>>>>>>> ingredient_context_menu
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -10016,8 +12078,13 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
         },
         /**
          *
+<<<<<<< HEAD
          * @param {string} id A unique integer value identifying this export log.
          * @param {ExportLog} [exportLog]
+=======
+         * @param {string} id A unique integer value identifying this recipe book entry.
+         * @param {RecipeBookEntry} [recipeBookEntry]
+>>>>>>> ingredient_context_menu
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -10053,8 +12120,13 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
         },
         /**
          *
+<<<<<<< HEAD
          * @param {string} id A unique integer value identifying this food.
          * @param {Food} [food]
+=======
+         * @param {string} id A unique integer value identifying this shopping list.
+         * @param {ShoppingList} [shoppingList]
+>>>>>>> ingredient_context_menu
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -10090,8 +12162,13 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
         },
         /**
          *
+<<<<<<< HEAD
          * @param {string} id A unique integer value identifying this import log.
          * @param {ImportLog} [importLog]
+=======
+         * @param {string} id A unique integer value identifying this shopping list entry.
+         * @param {ShoppingListEntry} [shoppingListEntry]
+>>>>>>> ingredient_context_menu
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -10127,8 +12204,13 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
         },
         /**
          *
+<<<<<<< HEAD
          * @param {string} id A unique integer value identifying this ingredient.
          * @param {Ingredient} [ingredient]
+=======
+         * @param {string} id A unique integer value identifying this shopping list recipe.
+         * @param {ShoppingListRecipe} [shoppingListRecipe]
+>>>>>>> ingredient_context_menu
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -10150,6 +12232,11 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
 
 
 
+<<<<<<< HEAD
+=======
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+>>>>>>> ingredient_context_menu
             localVarHeaderParameter['Content-Type'] = 'application/json';
 
             setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
@@ -10164,8 +12251,13 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
         },
         /**
          *
+<<<<<<< HEAD
          * @param {string} id A unique integer value identifying this invite link.
          * @param {InviteLink} [inviteLink]
+=======
+         * @param {string} id A unique integer value identifying this space.
+         * @param {Space} [space]
+>>>>>>> ingredient_context_menu
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -10187,6 +12279,11 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
 
 
 
+<<<<<<< HEAD
+=======
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+>>>>>>> ingredient_context_menu
             localVarHeaderParameter['Content-Type'] = 'application/json';
 
             setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
@@ -10201,8 +12298,13 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
         },
         /**
          *
+<<<<<<< HEAD
          * @param {string} id A unique integer value identifying this keyword.
          * @param {Keyword} [keyword]
+=======
+         * @param {string} id A unique integer value identifying this step.
+         * @param {Step} [step]
+>>>>>>> ingredient_context_menu
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -10223,6 +12325,12 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
             const localVarQueryParameter = {} as any;
 
 
+<<<<<<< HEAD
+=======
+
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+>>>>>>> ingredient_context_menu
             localVarHeaderParameter['Content-Type'] = 'application/json';
 
             setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
@@ -10237,8 +12345,13 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
         },
         /**
          *
+<<<<<<< HEAD
          * @param {string} id A unique integer value identifying this meal plan.
          * @param {MealPlan} [mealPlan]
+=======
+         * @param {string} id A unique integer value identifying this storage.
+         * @param {Storage} [storage]
+>>>>>>> ingredient_context_menu
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -10259,6 +12372,12 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
             const localVarQueryParameter = {} as any;
 
 
+<<<<<<< HEAD
+=======
+
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+>>>>>>> ingredient_context_menu
             localVarHeaderParameter['Content-Type'] = 'application/json';
 
             setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
@@ -10272,9 +12391,15 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
             };
         },
         /**
+<<<<<<< HEAD
          * returns list of meal types created by the requesting user ordered by the order field.
          * @param {string} id A unique integer value identifying this meal type.
          * @param {MealType} [mealType]
+=======
+         *
+         * @param {string} id A unique integer value identifying this supermarket.
+         * @param {Supermarket} [supermarket]
+>>>>>>> ingredient_context_menu
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -10296,6 +12421,11 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
 
 
 
+<<<<<<< HEAD
+=======
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+>>>>>>> ingredient_context_menu
             localVarHeaderParameter['Content-Type'] = 'application/json';
 
             setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
@@ -10310,8 +12440,13 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
         },
         /**
          *
+<<<<<<< HEAD
          * @param {string} id A unique integer value identifying this property.
          * @param {Property} [property]
+=======
+         * @param {string} id A unique integer value identifying this supermarket category.
+         * @param {SupermarketCategory} [supermarketCategory]
+>>>>>>> ingredient_context_menu
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -10333,6 +12468,11 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
 
 
 
+<<<<<<< HEAD
+=======
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+>>>>>>> ingredient_context_menu
             localVarHeaderParameter['Content-Type'] = 'application/json';
 
             setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
@@ -10347,8 +12487,13 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
         },
         /**
          *
+<<<<<<< HEAD
          * @param {string} id A unique integer value identifying this property type.
          * @param {PropertyType} [propertyType]
+=======
+         * @param {string} id A unique integer value identifying this supermarket category relation.
+         * @param {SupermarketCategoryRelation} [supermarketCategoryRelation]
+>>>>>>> ingredient_context_menu
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -10370,6 +12515,11 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
 
 
 
+<<<<<<< HEAD
+=======
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+>>>>>>> ingredient_context_menu
             localVarHeaderParameter['Content-Type'] = 'application/json';
 
             setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
@@ -10384,8 +12534,13 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
         },
         /**
          *
+<<<<<<< HEAD
          * @param {string} id A unique integer value identifying this recipe.
          * @param {Recipe} [recipe]
+=======
+         * @param {string} id A unique integer value identifying this sync.
+         * @param {Sync} [sync]
+>>>>>>> ingredient_context_menu
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -10407,6 +12562,11 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
 
 
 
+<<<<<<< HEAD
+=======
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+>>>>>>> ingredient_context_menu
             localVarHeaderParameter['Content-Type'] = 'application/json';
 
             setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
@@ -10421,8 +12581,13 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
         },
         /**
          *
+<<<<<<< HEAD
          * @param {string} id A unique integer value identifying this recipe book.
          * @param {RecipeBook} [recipeBook]
+=======
+         * @param {string} id A unique integer value identifying this unit.
+         * @param {Unit} [unit]
+>>>>>>> ingredient_context_menu
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -10444,6 +12609,11 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
 
 
 
+<<<<<<< HEAD
+=======
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+>>>>>>> ingredient_context_menu
             localVarHeaderParameter['Content-Type'] = 'application/json';
 
             setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
@@ -10458,8 +12628,13 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
         },
         /**
          *
+<<<<<<< HEAD
          * @param {string} id A unique integer value identifying this recipe book entry.
          * @param {RecipeBookEntry} [recipeBookEntry]
+=======
+         * @param {string} id A unique integer value identifying this unit conversion.
+         * @param {UnitConversion} [unitConversion]
+>>>>>>> ingredient_context_menu
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -10481,6 +12656,11 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
 
 
 
+<<<<<<< HEAD
+=======
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+>>>>>>> ingredient_context_menu
             localVarHeaderParameter['Content-Type'] = 'application/json';
 
             setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
@@ -10495,8 +12675,13 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
         },
         /**
          *
+<<<<<<< HEAD
          * @param {string} id A unique integer value identifying this shopping list.
          * @param {ShoppingList} [shoppingList]
+=======
+         * @param {string} id A unique integer value identifying this user.
+         * @param {User} [user]
+>>>>>>> ingredient_context_menu
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -10518,6 +12703,11 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
 
 
 
+<<<<<<< HEAD
+=======
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+>>>>>>> ingredient_context_menu
             localVarHeaderParameter['Content-Type'] = 'application/json';
 
             setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
@@ -10532,8 +12722,18 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
         },
         /**
          *
+<<<<<<< HEAD
          * @param {string} id A unique integer value identifying this shopping list entry.
          * @param {ShoppingListEntry} [shoppingListEntry]
+=======
+         * @param {string} id A unique integer value identifying this user file.
+         * @param {string} name
+         * @param {any} file
+         * @param {number} [id2]
+         * @param {string} [fileDownload]
+         * @param {string} [preview]
+         * @param {number} [fileSizeKb]
+>>>>>>> ingredient_context_menu
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -10554,460 +12754,10 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
             const localVarQueryParameter = {} as any;
 
 
-
-            localVarHeaderParameter['Content-Type'] = 'application/json';
-
-            setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
-            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
-            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
-            localVarRequestOptions.data = serializeDataIfNeeded(shoppingListEntry, localVarRequestOptions, configuration)
-
-            return {
-                url: toPathString(localVarUrlObj),
-                options: localVarRequestOptions,
-            };
-        },
-        /**
-         *
-         * @param {string} id A unique integer value identifying this shopping list recipe.
-         * @param {ShoppingListRecipe} [shoppingListRecipe]
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        partialUpdateShoppingListRecipe: async (id: string, shoppingListRecipe?: ShoppingListRecipe, options: any = {}): Promise<RequestArgs> => {
-            // verify required parameter 'id' is not null or undefined
-            assertParamExists('partialUpdateShoppingListRecipe', 'id', id)
-            const localVarPath = `/api/shopping-list-recipe/{id}/`
-                .replace(`{${"id"}}`, encodeURIComponent(String(id)));
-            // use dummy base URL string because the URL constructor only accepts absolute URLs.
-            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
-            let baseOptions;
-            if (configuration) {
-                baseOptions = configuration.baseOptions;
-            }
-
-            const localVarRequestOptions = { method: 'PATCH', ...baseOptions, ...options};
-            const localVarHeaderParameter = {} as any;
-            const localVarQueryParameter = {} as any;
-
-
-
-            localVarHeaderParameter['Content-Type'] = 'application/json';
-
-            setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
-            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
-            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
-            localVarRequestOptions.data = serializeDataIfNeeded(shoppingListRecipe, localVarRequestOptions, configuration)
-
-            return {
-                url: toPathString(localVarUrlObj),
-                options: localVarRequestOptions,
-            };
-        },
-        /**
-         *
-         * @param {string} id A unique integer value identifying this space.
-         * @param {Space} [space]
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        partialUpdateSpace: async (id: string, space?: Space, options: any = {}): Promise<RequestArgs> => {
-            // verify required parameter 'id' is not null or undefined
-            assertParamExists('partialUpdateSpace', 'id', id)
-            const localVarPath = `/api/space/{id}/`
-                .replace(`{${"id"}}`, encodeURIComponent(String(id)));
-            // use dummy base URL string because the URL constructor only accepts absolute URLs.
-            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
-            let baseOptions;
-            if (configuration) {
-                baseOptions = configuration.baseOptions;
-            }
-
-            const localVarRequestOptions = { method: 'PATCH', ...baseOptions, ...options};
-            const localVarHeaderParameter = {} as any;
-            const localVarQueryParameter = {} as any;
-
-
-
-            localVarHeaderParameter['Content-Type'] = 'application/json';
-
-            setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
-            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
-            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
-            localVarRequestOptions.data = serializeDataIfNeeded(space, localVarRequestOptions, configuration)
-
-            return {
-                url: toPathString(localVarUrlObj),
-                options: localVarRequestOptions,
-            };
-        },
-        /**
-         *
-         * @param {string} id A unique integer value identifying this step.
-         * @param {Step} [step]
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        partialUpdateStep: async (id: string, step?: Step, options: any = {}): Promise<RequestArgs> => {
-            // verify required parameter 'id' is not null or undefined
-            assertParamExists('partialUpdateStep', 'id', id)
-            const localVarPath = `/api/step/{id}/`
-                .replace(`{${"id"}}`, encodeURIComponent(String(id)));
-            // use dummy base URL string because the URL constructor only accepts absolute URLs.
-            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
-            let baseOptions;
-            if (configuration) {
-                baseOptions = configuration.baseOptions;
-            }
-
-            const localVarRequestOptions = { method: 'PATCH', ...baseOptions, ...options};
-            const localVarHeaderParameter = {} as any;
-            const localVarQueryParameter = {} as any;
-
-
-
-            localVarHeaderParameter['Content-Type'] = 'application/json';
-
-            setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
-            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
-            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
-            localVarRequestOptions.data = serializeDataIfNeeded(step, localVarRequestOptions, configuration)
-
-            return {
-                url: toPathString(localVarUrlObj),
-                options: localVarRequestOptions,
-            };
-        },
-        /**
-         *
-         * @param {string} id A unique integer value identifying this storage.
-         * @param {Storage} [storage]
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        partialUpdateStorage: async (id: string, storage?: Storage, options: any = {}): Promise<RequestArgs> => {
-            // verify required parameter 'id' is not null or undefined
-            assertParamExists('partialUpdateStorage', 'id', id)
-            const localVarPath = `/api/storage/{id}/`
-                .replace(`{${"id"}}`, encodeURIComponent(String(id)));
-            // use dummy base URL string because the URL constructor only accepts absolute URLs.
-            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
-            let baseOptions;
-            if (configuration) {
-                baseOptions = configuration.baseOptions;
-            }
-
-            const localVarRequestOptions = { method: 'PATCH', ...baseOptions, ...options};
-            const localVarHeaderParameter = {} as any;
-            const localVarQueryParameter = {} as any;
-
-
-
-            localVarHeaderParameter['Content-Type'] = 'application/json';
-
-            setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
-            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
-            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
-            localVarRequestOptions.data = serializeDataIfNeeded(storage, localVarRequestOptions, configuration)
-
-            return {
-                url: toPathString(localVarUrlObj),
-                options: localVarRequestOptions,
-            };
-        },
-        /**
 <<<<<<< HEAD
-         * 
-         * @param {string} id A unique integer value identifying this connector config.
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        retrieveConnectorConfig: async (id: string, options: any = {}): Promise<RequestArgs> => {
-            // verify required parameter 'id' is not null or undefined
-            assertParamExists('retrieveConnectorConfig', 'id', id)
-            const localVarPath = `/api/connector-config/{id}/`
-                .replace(`{${"id"}}`, encodeURIComponent(String(id)));
-            // use dummy base URL string because the URL constructor only accepts absolute URLs.
-            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
-            let baseOptions;
-            if (configuration) {
-                baseOptions = configuration.baseOptions;
-            }
 
-            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
-            const localVarHeaderParameter = {} as any;
-            const localVarQueryParameter = {} as any;
-
-
-    
-            setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
-            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
-            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
-
-            return {
-                url: toPathString(localVarUrlObj),
-                options: localVarRequestOptions,
-            };
-        },
-        /**
-         * 
-         * @param {string} id A unique integer value identifying this cook log.
+            localVarHeaderParameter['Content-Type'] = 'application/json';
 =======
-         *
-         * @param {string} id A unique integer value identifying this supermarket.
-         * @param {Supermarket} [supermarket]
->>>>>>> fresh_filter
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        partialUpdateSupermarket: async (id: string, supermarket?: Supermarket, options: any = {}): Promise<RequestArgs> => {
-            // verify required parameter 'id' is not null or undefined
-            assertParamExists('partialUpdateSupermarket', 'id', id)
-            const localVarPath = `/api/supermarket/{id}/`
-                .replace(`{${"id"}}`, encodeURIComponent(String(id)));
-            // use dummy base URL string because the URL constructor only accepts absolute URLs.
-            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
-            let baseOptions;
-            if (configuration) {
-                baseOptions = configuration.baseOptions;
-            }
-
-            const localVarRequestOptions = { method: 'PATCH', ...baseOptions, ...options};
-            const localVarHeaderParameter = {} as any;
-            const localVarQueryParameter = {} as any;
-
-
-
-            localVarHeaderParameter['Content-Type'] = 'application/json';
-
-            setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
-            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
-            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
-            localVarRequestOptions.data = serializeDataIfNeeded(supermarket, localVarRequestOptions, configuration)
-
-            return {
-                url: toPathString(localVarUrlObj),
-                options: localVarRequestOptions,
-            };
-        },
-        /**
-         *
-         * @param {string} id A unique integer value identifying this supermarket category.
-         * @param {SupermarketCategory} [supermarketCategory]
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        partialUpdateSupermarketCategory: async (id: string, supermarketCategory?: SupermarketCategory, options: any = {}): Promise<RequestArgs> => {
-            // verify required parameter 'id' is not null or undefined
-            assertParamExists('partialUpdateSupermarketCategory', 'id', id)
-            const localVarPath = `/api/supermarket-category/{id}/`
-                .replace(`{${"id"}}`, encodeURIComponent(String(id)));
-            // use dummy base URL string because the URL constructor only accepts absolute URLs.
-            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
-            let baseOptions;
-            if (configuration) {
-                baseOptions = configuration.baseOptions;
-            }
-
-            const localVarRequestOptions = { method: 'PATCH', ...baseOptions, ...options};
-            const localVarHeaderParameter = {} as any;
-            const localVarQueryParameter = {} as any;
-
-
-
-            localVarHeaderParameter['Content-Type'] = 'application/json';
-
-            setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
-            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
-            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
-            localVarRequestOptions.data = serializeDataIfNeeded(supermarketCategory, localVarRequestOptions, configuration)
-
-            return {
-                url: toPathString(localVarUrlObj),
-                options: localVarRequestOptions,
-            };
-        },
-        /**
-         *
-         * @param {string} id A unique integer value identifying this supermarket category relation.
-         * @param {SupermarketCategoryRelation} [supermarketCategoryRelation]
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        partialUpdateSupermarketCategoryRelation: async (id: string, supermarketCategoryRelation?: SupermarketCategoryRelation, options: any = {}): Promise<RequestArgs> => {
-            // verify required parameter 'id' is not null or undefined
-            assertParamExists('partialUpdateSupermarketCategoryRelation', 'id', id)
-            const localVarPath = `/api/supermarket-category-relation/{id}/`
-                .replace(`{${"id"}}`, encodeURIComponent(String(id)));
-            // use dummy base URL string because the URL constructor only accepts absolute URLs.
-            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
-            let baseOptions;
-            if (configuration) {
-                baseOptions = configuration.baseOptions;
-            }
-
-            const localVarRequestOptions = { method: 'PATCH', ...baseOptions, ...options};
-            const localVarHeaderParameter = {} as any;
-            const localVarQueryParameter = {} as any;
-
-
-
-            localVarHeaderParameter['Content-Type'] = 'application/json';
-
-            setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
-            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
-            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
-            localVarRequestOptions.data = serializeDataIfNeeded(supermarketCategoryRelation, localVarRequestOptions, configuration)
-
-            return {
-                url: toPathString(localVarUrlObj),
-                options: localVarRequestOptions,
-            };
-        },
-        /**
-         *
-         * @param {string} id A unique integer value identifying this food.
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        partialUpdateUnit: async (id: string, unit?: Unit, options: any = {}): Promise<RequestArgs> => {
-            // verify required parameter 'id' is not null or undefined
-            assertParamExists('partialUpdateUnit', 'id', id)
-            const localVarPath = `/api/unit/{id}/`
-                .replace(`{${"id"}}`, encodeURIComponent(String(id)));
-            // use dummy base URL string because the URL constructor only accepts absolute URLs.
-            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
-            let baseOptions;
-            if (configuration) {
-                baseOptions = configuration.baseOptions;
-            }
-
-            const localVarRequestOptions = { method: 'PATCH', ...baseOptions, ...options};
-            const localVarHeaderParameter = {} as any;
-            const localVarQueryParameter = {} as any;
-
-
-
-            localVarHeaderParameter['Content-Type'] = 'application/json';
-
-            setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
-            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
-            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
-            localVarRequestOptions.data = serializeDataIfNeeded(unit, localVarRequestOptions, configuration)
-
-            return {
-                url: toPathString(localVarUrlObj),
-                options: localVarRequestOptions,
-            };
-        },
-        /**
-         *
-         * @param {string} id A unique integer value identifying this unit conversion.
-         * @param {UnitConversion} [unitConversion]
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        partialUpdateUnitConversion: async (id: string, unitConversion?: UnitConversion, options: any = {}): Promise<RequestArgs> => {
-            // verify required parameter 'id' is not null or undefined
-            assertParamExists('partialUpdateUnitConversion', 'id', id)
-            const localVarPath = `/api/unit-conversion/{id}/`
-                .replace(`{${"id"}}`, encodeURIComponent(String(id)));
-            // use dummy base URL string because the URL constructor only accepts absolute URLs.
-            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
-            let baseOptions;
-            if (configuration) {
-                baseOptions = configuration.baseOptions;
-            }
-
-            const localVarRequestOptions = { method: 'PATCH', ...baseOptions, ...options};
-            const localVarHeaderParameter = {} as any;
-            const localVarQueryParameter = {} as any;
-
-
-
-            localVarHeaderParameter['Content-Type'] = 'application/json';
-
-            setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
-            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
-            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
-            localVarRequestOptions.data = serializeDataIfNeeded(unitConversion, localVarRequestOptions, configuration)
-
-            return {
-                url: toPathString(localVarUrlObj),
-                options: localVarRequestOptions,
-            };
-        },
-        /**
-         *
-         * @param {string} id A unique integer value identifying this user.
-         * @param {User} [user]
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        partialUpdateUser: async (id: string, user?: User, options: any = {}): Promise<RequestArgs> => {
-            // verify required parameter 'id' is not null or undefined
-            assertParamExists('partialUpdateUser', 'id', id)
-            const localVarPath = `/api/user/{id}/`
-                .replace(`{${"id"}}`, encodeURIComponent(String(id)));
-            // use dummy base URL string because the URL constructor only accepts absolute URLs.
-            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
-            let baseOptions;
-            if (configuration) {
-                baseOptions = configuration.baseOptions;
-            }
-
-            const localVarRequestOptions = { method: 'PATCH', ...baseOptions, ...options};
-            const localVarHeaderParameter = {} as any;
-            const localVarQueryParameter = {} as any;
-
-
-
-            localVarHeaderParameter['Content-Type'] = 'application/json';
-
-            setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
-            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
-            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
-            localVarRequestOptions.data = serializeDataIfNeeded(user, localVarRequestOptions, configuration)
-
-            return {
-                url: toPathString(localVarUrlObj),
-                options: localVarRequestOptions,
-            };
-        },
-        /**
-         *
-         * @param {string} id A unique integer value identifying this user file.
-         * @param {string} name
-         * @param {any} file
-         * @param {number} [id2]
-         * @param {string} [fileDownload]
-         * @param {string} [preview]
-         * @param {number} [fileSizeKb]
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        partialUpdateUserFile: async (id: string, name: string, file: any, id2?: number, fileDownload?: string, preview?: string, fileSizeKb?: number, options: any = {}): Promise<RequestArgs> => {
-            // verify required parameter 'id' is not null or undefined
-            assertParamExists('partialUpdateUserFile', 'id', id)
-            // verify required parameter 'name' is not null or undefined
-            assertParamExists('partialUpdateUserFile', 'name', name)
-            // verify required parameter 'file' is not null or undefined
-            assertParamExists('partialUpdateUserFile', 'file', file)
-            const localVarPath = `/api/user-file/{id}/`
-                .replace(`{${"id"}}`, encodeURIComponent(String(id)));
-            // use dummy base URL string because the URL constructor only accepts absolute URLs.
-            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
-            let baseOptions;
-            if (configuration) {
-                baseOptions = configuration.baseOptions;
-            }
-
-            const localVarRequestOptions = { method: 'PATCH', ...baseOptions, ...options};
-            const localVarHeaderParameter = {} as any;
-            const localVarQueryParameter = {} as any;
-            const localVarFormParams = new ((configuration && configuration.formDataCtor) || FormData)();
-
-
             if (id2 !== undefined) {
                 localVarFormParams.append('id', id2 as any);
             }
@@ -11034,6 +12784,577 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
 
 
             localVarHeaderParameter['Content-Type'] = 'multipart/form-data';
+>>>>>>> ingredient_context_menu
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(shoppingListEntry, localVarRequestOptions, configuration)
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         *
+<<<<<<< HEAD
+         * @param {string} id A unique integer value identifying this shopping list recipe.
+         * @param {ShoppingListRecipe} [shoppingListRecipe]
+=======
+         * @param {string} user A unique value identifying this user preference.
+         * @param {UserPreference} [userPreference]
+>>>>>>> ingredient_context_menu
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        partialUpdateShoppingListRecipe: async (id: string, shoppingListRecipe?: ShoppingListRecipe, options: any = {}): Promise<RequestArgs> => {
+            // verify required parameter 'id' is not null or undefined
+            assertParamExists('partialUpdateShoppingListRecipe', 'id', id)
+            const localVarPath = `/api/shopping-list-recipe/{id}/`
+                .replace(`{${"id"}}`, encodeURIComponent(String(id)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'PATCH', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+
+<<<<<<< HEAD
+=======
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+>>>>>>> ingredient_context_menu
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(shoppingListRecipe, localVarRequestOptions, configuration)
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         *
+<<<<<<< HEAD
+         * @param {string} id A unique integer value identifying this space.
+         * @param {Space} [space]
+=======
+         * @param {string} id A unique integer value identifying this user space.
+         * @param {UserSpace} [userSpace]
+>>>>>>> ingredient_context_menu
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        partialUpdateSpace: async (id: string, space?: Space, options: any = {}): Promise<RequestArgs> => {
+            // verify required parameter 'id' is not null or undefined
+            assertParamExists('partialUpdateSpace', 'id', id)
+            const localVarPath = `/api/space/{id}/`
+                .replace(`{${"id"}}`, encodeURIComponent(String(id)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'PATCH', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+
+<<<<<<< HEAD
+=======
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+>>>>>>> ingredient_context_menu
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(space, localVarRequestOptions, configuration)
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         *
+<<<<<<< HEAD
+         * @param {string} id A unique integer value identifying this step.
+         * @param {Step} [step]
+=======
+         * @param {string} id A unique integer value identifying this view log.
+         * @param {ViewLog} [viewLog]
+>>>>>>> ingredient_context_menu
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        partialUpdateStep: async (id: string, step?: Step, options: any = {}): Promise<RequestArgs> => {
+            // verify required parameter 'id' is not null or undefined
+            assertParamExists('partialUpdateStep', 'id', id)
+            const localVarPath = `/api/step/{id}/`
+                .replace(`{${"id"}}`, encodeURIComponent(String(id)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'PATCH', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+
+<<<<<<< HEAD
+=======
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+>>>>>>> ingredient_context_menu
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(step, localVarRequestOptions, configuration)
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         *
+<<<<<<< HEAD
+         * @param {string} id A unique integer value identifying this storage.
+         * @param {Storage} [storage]
+=======
+         * @param {string} id A unique integer value identifying this recipe.
+>>>>>>> ingredient_context_menu
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        partialUpdateStorage: async (id: string, storage?: Storage, options: any = {}): Promise<RequestArgs> => {
+            // verify required parameter 'id' is not null or undefined
+            assertParamExists('partialUpdateStorage', 'id', id)
+            const localVarPath = `/api/storage/{id}/`
+                .replace(`{${"id"}}`, encodeURIComponent(String(id)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'PATCH', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+
+<<<<<<< HEAD
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+=======
+>>>>>>> ingredient_context_menu
+            setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(storage, localVarRequestOptions, configuration)
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+<<<<<<< HEAD
+<<<<<<< HEAD
+         * 
+         * @param {string} id A unique integer value identifying this connector config.
+=======
+         *
+         * @param {string} id A unique integer value identifying this access token.
+>>>>>>> ingredient_context_menu
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        retrieveConnectorConfig: async (id: string, options: any = {}): Promise<RequestArgs> => {
+            // verify required parameter 'id' is not null or undefined
+            assertParamExists('retrieveConnectorConfig', 'id', id)
+            const localVarPath = `/api/connector-config/{id}/`
+                .replace(`{${"id"}}`, encodeURIComponent(String(id)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+<<<<<<< HEAD
+         * 
+         * @param {string} id A unique integer value identifying this cook log.
+=======
+         *
+         * @param {string} id A unique integer value identifying this supermarket.
+         * @param {Supermarket} [supermarket]
+>>>>>>> fresh_filter
+=======
+         *
+         * @param {string} id A unique integer value identifying this automation.
+>>>>>>> ingredient_context_menu
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        partialUpdateSupermarket: async (id: string, supermarket?: Supermarket, options: any = {}): Promise<RequestArgs> => {
+            // verify required parameter 'id' is not null or undefined
+            assertParamExists('partialUpdateSupermarket', 'id', id)
+            const localVarPath = `/api/supermarket/{id}/`
+                .replace(`{${"id"}}`, encodeURIComponent(String(id)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'PATCH', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+
+<<<<<<< HEAD
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+=======
+>>>>>>> ingredient_context_menu
+            setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(supermarket, localVarRequestOptions, configuration)
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         *
+<<<<<<< HEAD
+         * @param {string} id A unique integer value identifying this supermarket category.
+         * @param {SupermarketCategory} [supermarketCategory]
+=======
+         * @param {string} id A unique integer value identifying this bookmarklet import.
+>>>>>>> ingredient_context_menu
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        partialUpdateSupermarketCategory: async (id: string, supermarketCategory?: SupermarketCategory, options: any = {}): Promise<RequestArgs> => {
+            // verify required parameter 'id' is not null or undefined
+            assertParamExists('partialUpdateSupermarketCategory', 'id', id)
+            const localVarPath = `/api/supermarket-category/{id}/`
+                .replace(`{${"id"}}`, encodeURIComponent(String(id)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'PATCH', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+
+<<<<<<< HEAD
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+=======
+>>>>>>> ingredient_context_menu
+            setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(supermarketCategory, localVarRequestOptions, configuration)
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         *
+<<<<<<< HEAD
+         * @param {string} id A unique integer value identifying this supermarket category relation.
+         * @param {SupermarketCategoryRelation} [supermarketCategoryRelation]
+=======
+         * @param {string} id A unique integer value identifying this cook log.
+>>>>>>> ingredient_context_menu
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        partialUpdateSupermarketCategoryRelation: async (id: string, supermarketCategoryRelation?: SupermarketCategoryRelation, options: any = {}): Promise<RequestArgs> => {
+            // verify required parameter 'id' is not null or undefined
+            assertParamExists('partialUpdateSupermarketCategoryRelation', 'id', id)
+            const localVarPath = `/api/supermarket-category-relation/{id}/`
+                .replace(`{${"id"}}`, encodeURIComponent(String(id)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'PATCH', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+
+<<<<<<< HEAD
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+=======
+>>>>>>> ingredient_context_menu
+            setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(supermarketCategoryRelation, localVarRequestOptions, configuration)
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         *
+<<<<<<< HEAD
+         * @param {string} id A unique integer value identifying this food.
+=======
+         * @param {string} id A unique integer value identifying this custom filter.
+>>>>>>> ingredient_context_menu
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        partialUpdateUnit: async (id: string, unit?: Unit, options: any = {}): Promise<RequestArgs> => {
+            // verify required parameter 'id' is not null or undefined
+            assertParamExists('partialUpdateUnit', 'id', id)
+            const localVarPath = `/api/unit/{id}/`
+                .replace(`{${"id"}}`, encodeURIComponent(String(id)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'PATCH', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+
+<<<<<<< HEAD
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+=======
+>>>>>>> ingredient_context_menu
+            setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(unit, localVarRequestOptions, configuration)
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         *
+<<<<<<< HEAD
+         * @param {string} id A unique integer value identifying this unit conversion.
+         * @param {UnitConversion} [unitConversion]
+=======
+         * @param {string} id A unique integer value identifying this export log.
+>>>>>>> ingredient_context_menu
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        partialUpdateUnitConversion: async (id: string, unitConversion?: UnitConversion, options: any = {}): Promise<RequestArgs> => {
+            // verify required parameter 'id' is not null or undefined
+            assertParamExists('partialUpdateUnitConversion', 'id', id)
+            const localVarPath = `/api/unit-conversion/{id}/`
+                .replace(`{${"id"}}`, encodeURIComponent(String(id)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'PATCH', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+
+<<<<<<< HEAD
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+=======
+>>>>>>> ingredient_context_menu
+            setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(unitConversion, localVarRequestOptions, configuration)
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         *
+<<<<<<< HEAD
+         * @param {string} id A unique integer value identifying this user.
+         * @param {User} [user]
+=======
+         * @param {string} id A unique integer value identifying this food.
+>>>>>>> ingredient_context_menu
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        partialUpdateUser: async (id: string, user?: User, options: any = {}): Promise<RequestArgs> => {
+            // verify required parameter 'id' is not null or undefined
+            assertParamExists('partialUpdateUser', 'id', id)
+            const localVarPath = `/api/user/{id}/`
+                .replace(`{${"id"}}`, encodeURIComponent(String(id)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'PATCH', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+<<<<<<< HEAD
+
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+=======
+>>>>>>> ingredient_context_menu
+            setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(user, localVarRequestOptions, configuration)
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         *
+<<<<<<< HEAD
+         * @param {string} id A unique integer value identifying this user file.
+         * @param {string} name
+         * @param {any} file
+         * @param {number} [id2]
+         * @param {string} [fileDownload]
+         * @param {string} [preview]
+         * @param {number} [fileSizeKb]
+=======
+         * @param {string} id A unique integer value identifying this food inherit field.
+>>>>>>> ingredient_context_menu
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        partialUpdateUserFile: async (id: string, name: string, file: any, id2?: number, fileDownload?: string, preview?: string, fileSizeKb?: number, options: any = {}): Promise<RequestArgs> => {
+            // verify required parameter 'id' is not null or undefined
+            assertParamExists('partialUpdateUserFile', 'id', id)
+            // verify required parameter 'name' is not null or undefined
+            assertParamExists('partialUpdateUserFile', 'name', name)
+            // verify required parameter 'file' is not null or undefined
+            assertParamExists('partialUpdateUserFile', 'file', file)
+            const localVarPath = `/api/user-file/{id}/`
+                .replace(`{${"id"}}`, encodeURIComponent(String(id)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'PATCH', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+            const localVarFormParams = new ((configuration && configuration.formDataCtor) || FormData)();
+
+
+<<<<<<< HEAD
+            if (id2 !== undefined) {
+                localVarFormParams.append('id', id2 as any);
+            }
+
+            if (name !== undefined) {
+                localVarFormParams.append('name', name as any);
+            }
+
+            if (file !== undefined) {
+                localVarFormParams.append('file', file as any);
+            }
+
+            if (fileDownload !== undefined) {
+                localVarFormParams.append('file_download', fileDownload as any);
+            }
+
+            if (preview !== undefined) {
+                localVarFormParams.append('preview', preview as any);
+            }
+
+            if (fileSizeKb !== undefined) {
+                localVarFormParams.append('file_size_kb', fileSizeKb as any);
+            }
+
+
+            localVarHeaderParameter['Content-Type'] = 'multipart/form-data';
+=======
+>>>>>>> ingredient_context_menu
 
             setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
@@ -11047,8 +13368,12 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
         },
         /**
          *
+<<<<<<< HEAD
          * @param {string} user A unique value identifying this user preference.
          * @param {UserPreference} [userPreference]
+=======
+         * @param {string} id A unique integer value identifying this group.
+>>>>>>> ingredient_context_menu
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -11070,8 +13395,11 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
 
 
 
+<<<<<<< HEAD
             localVarHeaderParameter['Content-Type'] = 'application/json';
 
+=======
+>>>>>>> ingredient_context_menu
             setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
@@ -11084,8 +13412,12 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
         },
         /**
          *
+<<<<<<< HEAD
          * @param {string} id A unique integer value identifying this user space.
          * @param {UserSpace} [userSpace]
+=======
+         * @param {string} id A unique integer value identifying this import log.
+>>>>>>> ingredient_context_menu
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -11107,8 +13439,11 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
 
 
 
+<<<<<<< HEAD
             localVarHeaderParameter['Content-Type'] = 'application/json';
 
+=======
+>>>>>>> ingredient_context_menu
             setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
@@ -11121,8 +13456,12 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
         },
         /**
          *
+<<<<<<< HEAD
          * @param {string} id A unique integer value identifying this view log.
          * @param {ViewLog} [viewLog]
+=======
+         * @param {string} id A unique integer value identifying this ingredient.
+>>>>>>> ingredient_context_menu
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -11144,8 +13483,11 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
 
 
 
+<<<<<<< HEAD
             localVarHeaderParameter['Content-Type'] = 'application/json';
 
+=======
+>>>>>>> ingredient_context_menu
             setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
@@ -11158,7 +13500,11 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
         },
         /**
          *
+<<<<<<< HEAD
          * @param {string} id A unique integer value identifying this recipe.
+=======
+         * @param {string} id A unique integer value identifying this invite link.
+>>>>>>> ingredient_context_menu
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -11190,8 +13536,13 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
             };
         },
         /**
+<<<<<<< HEAD
          * returns list of meal types created by the requesting user ordered by the order field.
          * @param {string} id A unique integer value identifying this meal type.
+=======
+         *
+         * @param {string} id A unique integer value identifying this keyword.
+>>>>>>> ingredient_context_menu
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -11224,7 +13575,11 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
         },
         /**
          *
+<<<<<<< HEAD
          * @param {string} id A unique integer value identifying this group.
+=======
+         * @param {string} id A unique integer value identifying this meal plan.
+>>>>>>> ingredient_context_menu
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -11278,7 +13633,10 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
             const localVarQueryParameter = {} as any;
 
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> ingredient_context_menu
             setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
@@ -11290,7 +13648,11 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
         },
         /**
          *
+<<<<<<< HEAD
          * @param {string} id A unique integer value identifying this ingredient.
+=======
+         * @param {string} id A unique integer value identifying this property.
+>>>>>>> ingredient_context_menu
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -11323,7 +13685,11 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
         },
         /**
          *
+<<<<<<< HEAD
          * @param {string} id A unique integer value identifying this invite link.
+=======
+         * @param {string} id A unique integer value identifying this property type.
+>>>>>>> ingredient_context_menu
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -11356,7 +13722,11 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
         },
         /**
          *
+<<<<<<< HEAD
          * @param {string} id A unique integer value identifying this keyword.
+=======
+         * @param {string} id A unique integer value identifying this recipe.
+>>>>>>> ingredient_context_menu
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -11389,11 +13759,16 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
         },
         /**
 <<<<<<< HEAD
+<<<<<<< HEAD
          * 
          * @param {string} id A unique integer value identifying this shopping list entry.
 =======
          *
          * @param {string} id A unique integer value identifying this meal plan.
+=======
+         *
+         * @param {string} id A unique integer value identifying this recipe book.
+>>>>>>> ingredient_context_menu
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -11414,6 +13789,10 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
             const localVarQueryParameter = {} as any;
 
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> ingredient_context_menu
             setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
@@ -11424,9 +13803,14 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
             };
         },
         /**
+<<<<<<< HEAD
          * returns list of meal types created by the requesting user ordered by the order field.
          * @param {string} id A unique integer value identifying this meal type.
 >>>>>>> fresh_filter
+=======
+         *
+         * @param {string} id A unique integer value identifying this recipe book entry.
+>>>>>>> ingredient_context_menu
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -11459,7 +13843,11 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
         },
         /**
          *
+<<<<<<< HEAD
          * @param {string} id A unique integer value identifying this property.
+=======
+         * @param {string} id A unique integer value identifying this shopping list.
+>>>>>>> ingredient_context_menu
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -11492,7 +13880,11 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
         },
         /**
          *
+<<<<<<< HEAD
          * @param {string} id A unique integer value identifying this property type.
+=======
+         * @param {string} id A unique integer value identifying this shopping list entry.
+>>>>>>> ingredient_context_menu
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -11525,7 +13917,11 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
         },
         /**
          *
+<<<<<<< HEAD
          * @param {string} id A unique integer value identifying this recipe.
+=======
+         * @param {string} id A unique integer value identifying this shopping list recipe.
+>>>>>>> ingredient_context_menu
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -11558,7 +13954,11 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
         },
         /**
          *
+<<<<<<< HEAD
          * @param {string} id A unique integer value identifying this recipe book.
+=======
+         * @param {string} id A unique integer value identifying this space.
+>>>>>>> ingredient_context_menu
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -11591,7 +13991,11 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
         },
         /**
          *
+<<<<<<< HEAD
          * @param {string} id A unique integer value identifying this recipe book entry.
+=======
+         * @param {string} id A unique integer value identifying this step.
+>>>>>>> ingredient_context_menu
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -11624,7 +14028,11 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
         },
         /**
          *
+<<<<<<< HEAD
          * @param {string} id A unique integer value identifying this shopping list.
+=======
+         * @param {string} id A unique integer value identifying this storage.
+>>>>>>> ingredient_context_menu
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -11657,7 +14065,11 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
         },
         /**
          *
+<<<<<<< HEAD
          * @param {string} id A unique integer value identifying this shopping list entry.
+=======
+         * @param {string} id A unique integer value identifying this supermarket.
+>>>>>>> ingredient_context_menu
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -11690,7 +14102,11 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
         },
         /**
          *
+<<<<<<< HEAD
          * @param {string} id A unique integer value identifying this shopping list recipe.
+=======
+         * @param {string} id A unique integer value identifying this supermarket category.
+>>>>>>> ingredient_context_menu
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -11723,7 +14139,11 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
         },
         /**
          *
+<<<<<<< HEAD
          * @param {string} id A unique integer value identifying this space.
+=======
+         * @param {string} id A unique integer value identifying this supermarket category relation.
+>>>>>>> ingredient_context_menu
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -11756,7 +14176,11 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
         },
         /**
          *
+<<<<<<< HEAD
          * @param {string} id A unique integer value identifying this step.
+=======
+         * @param {string} id A unique integer value identifying this sync.
+>>>>>>> ingredient_context_menu
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -11789,7 +14213,11 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
         },
         /**
          *
+<<<<<<< HEAD
          * @param {string} id A unique integer value identifying this storage.
+=======
+         * @param {string} id A unique integer value identifying this sync log.
+>>>>>>> ingredient_context_menu
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -11822,7 +14250,11 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
         },
         /**
          *
+<<<<<<< HEAD
          * @param {string} id A unique integer value identifying this supermarket.
+=======
+         * @param {string} id A unique integer value identifying this unit.
+>>>>>>> ingredient_context_menu
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -11855,7 +14287,11 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
         },
         /**
          *
+<<<<<<< HEAD
          * @param {string} id A unique integer value identifying this supermarket category.
+=======
+         * @param {string} id A unique integer value identifying this unit conversion.
+>>>>>>> ingredient_context_menu
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -11888,7 +14324,11 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
         },
         /**
          *
+<<<<<<< HEAD
          * @param {string} id A unique integer value identifying this supermarket category relation.
+=======
+         * @param {string} id A unique integer value identifying this user.
+>>>>>>> ingredient_context_menu
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -11921,7 +14361,11 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
         },
         /**
          *
+<<<<<<< HEAD
          * @param {string} id A unique integer value identifying this sync.
+=======
+         * @param {string} id A unique integer value identifying this user file.
+>>>>>>> ingredient_context_menu
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -11954,7 +14398,11 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
         },
         /**
          *
+<<<<<<< HEAD
          * @param {string} id A unique integer value identifying this sync log.
+=======
+         * @param {string} user A unique value identifying this user preference.
+>>>>>>> ingredient_context_menu
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -11975,7 +14423,10 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
             const localVarQueryParameter = {} as any;
 
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> ingredient_context_menu
             setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
@@ -11987,7 +14438,11 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
         },
         /**
          *
+<<<<<<< HEAD
          * @param {string} id A unique integer value identifying this unit.
+=======
+         * @param {string} id A unique integer value identifying this user space.
+>>>>>>> ingredient_context_menu
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -12008,7 +14463,10 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
             const localVarQueryParameter = {} as any;
 
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> ingredient_context_menu
             setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
@@ -12020,7 +14478,11 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
         },
         /**
          *
+<<<<<<< HEAD
          * @param {string} id
+=======
+         * @param {string} id A unique integer value identifying this view log.
+>>>>>>> ingredient_context_menu
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -12041,7 +14503,10 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
             const localVarQueryParameter = {} as any;
 
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> ingredient_context_menu
             setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
@@ -12052,8 +14517,13 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
             };
         },
         /**
+<<<<<<< HEAD
          * api endpoint to switch space function
          * @param {string} spaceId
+=======
+         * function to download a user file securely (wrapping as zip to prevent any context based XSS problems) temporary solution until a real file manager is implemented
+         * @param {string} fileId
+>>>>>>> ingredient_context_menu
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -12074,94 +14544,25 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
             const localVarQueryParameter = {} as any;
 
 
-
-            setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
-            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
-            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
-
-            return {
-                url: toPathString(localVarUrlObj),
-                options: localVarRequestOptions,
-            };
-        },
-        /**
-         *
-         * @param {string} id A unique integer value identifying this food.
-         * @param {FoodShoppingUpdate} [foodShoppingUpdate]
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        shoppingFood: async (id: string, foodShoppingUpdate?: FoodShoppingUpdate, options: any = {}): Promise<RequestArgs> => {
-            // verify required parameter 'id' is not null or undefined
-            assertParamExists('shoppingFood', 'id', id)
-            const localVarPath = `/api/food/{id}/shopping/`
-                .replace(`{${"id"}}`, encodeURIComponent(String(id)));
-            // use dummy base URL string because the URL constructor only accepts absolute URLs.
-            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
-            let baseOptions;
-            if (configuration) {
-                baseOptions = configuration.baseOptions;
-            }
-
-            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
-            const localVarHeaderParameter = {} as any;
-            const localVarQueryParameter = {} as any;
-
-
-
-            localVarHeaderParameter['Content-Type'] = 'application/json';
-
-            setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
-            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
-            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
-            localVarRequestOptions.data = serializeDataIfNeeded(foodShoppingUpdate, localVarRequestOptions, configuration)
-
-            return {
-                url: toPathString(localVarUrlObj),
-                options: localVarRequestOptions,
-            };
-        },
-        /**
-         *
-         * @param {string} id A unique integer value identifying this recipe.
-         * @param {RecipeShoppingUpdate} [recipeShoppingUpdate]
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        shoppingRecipe: async (id: string, recipeShoppingUpdate?: RecipeShoppingUpdate, options: any = {}): Promise<RequestArgs> => {
-            // verify required parameter 'id' is not null or undefined
-            assertParamExists('shoppingRecipe', 'id', id)
-            const localVarPath = `/api/recipe/{id}/shopping/`
-                .replace(`{${"id"}}`, encodeURIComponent(String(id)));
-            // use dummy base URL string because the URL constructor only accepts absolute URLs.
-            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
-            let baseOptions;
-            if (configuration) {
-                baseOptions = configuration.baseOptions;
-            }
-
-            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
-            const localVarHeaderParameter = {} as any;
-            const localVarQueryParameter = {} as any;
-
-
-
-            localVarHeaderParameter['Content-Type'] = 'application/json';
-
-            setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
-            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
-            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
-            localVarRequestOptions.data = serializeDataIfNeeded(recipeShoppingUpdate, localVarRequestOptions, configuration)
-
-            return {
-                url: toPathString(localVarUrlObj),
-                options: localVarRequestOptions,
-            };
-        },
-        /**
 <<<<<<< HEAD
-         * 
+
+=======
+>>>>>>> ingredient_context_menu
+            setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         *
          * @param {string} id A unique integer value identifying this food.
+<<<<<<< HEAD
+         * @param {FoodShoppingUpdate} [foodShoppingUpdate]
+=======
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -12182,7 +14583,6 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
             const localVarQueryParameter = {} as any;
 
 
-    
             setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
@@ -12193,12 +14593,149 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
             };
         },
         /**
+         *
+         * @param {string} id
+>>>>>>> ingredient_context_menu
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        shoppingFood: async (id: string, foodShoppingUpdate?: FoodShoppingUpdate, options: any = {}): Promise<RequestArgs> => {
+            // verify required parameter 'id' is not null or undefined
+            assertParamExists('shoppingFood', 'id', id)
+            const localVarPath = `/api/food/{id}/shopping/`
+                .replace(`{${"id"}}`, encodeURIComponent(String(id)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+<<<<<<< HEAD
+
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+=======
+>>>>>>> ingredient_context_menu
+            setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(foodShoppingUpdate, localVarRequestOptions, configuration)
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+<<<<<<< HEAD
+         *
+         * @param {string} id A unique integer value identifying this recipe.
+         * @param {RecipeShoppingUpdate} [recipeShoppingUpdate]
+=======
+         * api endpoint to switch space function
+         * @param {string} spaceId
+>>>>>>> ingredient_context_menu
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        shoppingRecipe: async (id: string, recipeShoppingUpdate?: RecipeShoppingUpdate, options: any = {}): Promise<RequestArgs> => {
+            // verify required parameter 'id' is not null or undefined
+            assertParamExists('shoppingRecipe', 'id', id)
+            const localVarPath = `/api/recipe/{id}/shopping/`
+                .replace(`{${"id"}}`, encodeURIComponent(String(id)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+<<<<<<< HEAD
+
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+=======
+>>>>>>> ingredient_context_menu
+            setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(recipeShoppingUpdate, localVarRequestOptions, configuration)
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+<<<<<<< HEAD
+<<<<<<< HEAD
+         * 
+         * @param {string} id A unique integer value identifying this food.
+=======
+         *
+         * @param {string} id A unique integer value identifying this food.
+         * @param {FoodShoppingUpdate} [foodShoppingUpdate]
+>>>>>>> ingredient_context_menu
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        substitutesFood: async (id: string, options: any = {}): Promise<RequestArgs> => {
+            // verify required parameter 'id' is not null or undefined
+            assertParamExists('substitutesFood', 'id', id)
+            const localVarPath = `/api/food/{id}/substitutes/`
+                .replace(`{${"id"}}`, encodeURIComponent(String(id)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+<<<<<<< HEAD
+    
+=======
+
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+>>>>>>> ingredient_context_menu
+            setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+<<<<<<< HEAD
          * 
 =======
          *
 >>>>>>> fresh_filter
          * @param {string} id A unique integer value identifying this access token.
          * @param {AccessToken} [accessToken]
+=======
+         *
+         * @param {string} id A unique integer value identifying this recipe.
+         * @param {RecipeShoppingUpdate} [recipeShoppingUpdate]
+>>>>>>> ingredient_context_menu
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -12219,8 +14756,11 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
             const localVarQueryParameter = {} as any;
 
 
+<<<<<<< HEAD
 
             localVarHeaderParameter['Content-Type'] = 'application/json';
+=======
+>>>>>>> ingredient_context_menu
 
             setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
@@ -12234,8 +14774,13 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
         },
         /**
          *
+<<<<<<< HEAD
          * @param {string} id A unique integer value identifying this automation.
          * @param {Automation} [automation]
+=======
+         * @param {string} id A unique integer value identifying this access token.
+         * @param {AccessToken} [accessToken]
+>>>>>>> ingredient_context_menu
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -12271,8 +14816,13 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
         },
         /**
          *
+<<<<<<< HEAD
          * @param {string} id A unique integer value identifying this bookmarklet import.
          * @param {BookmarkletImport} [bookmarkletImport]
+=======
+         * @param {string} id A unique integer value identifying this automation.
+         * @param {Automation} [automation]
+>>>>>>> ingredient_context_menu
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -12308,9 +14858,15 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
         },
         /**
 <<<<<<< HEAD
+<<<<<<< HEAD
          * 
          * @param {string} id A unique integer value identifying this connector config.
          * @param {ConnectorConfigConfig} [connectorConfigConfig] 
+=======
+         *
+         * @param {string} id A unique integer value identifying this bookmarklet import.
+         * @param {BookmarkletImport} [bookmarkletImport]
+>>>>>>> ingredient_context_menu
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -12331,7 +14887,7 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
             const localVarQueryParameter = {} as any;
 
 
-    
+
             localVarHeaderParameter['Content-Type'] = 'application/json';
 
             setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
@@ -12345,10 +14901,14 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
             };
         },
         /**
+<<<<<<< HEAD
          * 
 =======
          *
 >>>>>>> fresh_filter
+=======
+         *
+>>>>>>> ingredient_context_menu
          * @param {string} id A unique integer value identifying this cook log.
          * @param {CookLog} [cookLog]
          * @param {*} [options] Override http request option.
@@ -12904,8 +15464,11 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
         },
         /**
 <<<<<<< HEAD
+<<<<<<< HEAD
          * 
 =======
+=======
+>>>>>>> ingredient_context_menu
          *
          * @param {string} id A unique integer value identifying this shopping list.
          * @param {ShoppingList} [shoppingList]
@@ -12944,7 +15507,10 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
         },
         /**
          *
+<<<<<<< HEAD
 >>>>>>> fresh_filter
+=======
+>>>>>>> ingredient_context_menu
          * @param {string} id A unique integer value identifying this shopping list entry.
          * @param {ShoppingListEntry} [shoppingListEntry]
          * @param {*} [options] Override http request option.
@@ -13258,7 +15824,7 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
                 baseOptions = configuration.baseOptions;
             }
 
-            const localVarRequestOptions = { method: 'PUT', ...baseOptions, ...options};
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
 
@@ -13295,7 +15861,7 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
                 baseOptions = configuration.baseOptions;
             }
 
-            const localVarRequestOptions = { method: 'PUT', ...baseOptions, ...options};
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
 
@@ -13403,7 +15969,7 @@ export const ApiApiAxiosParamCreator = function (configuration?: Configuration) 
                 baseOptions = configuration.baseOptions;
             }
 
-            const localVarRequestOptions = { method: 'PUT', ...baseOptions, ...options};
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
 
@@ -13483,6 +16049,7 @@ export const ApiApiFp = function(configuration?: Configuration) {
         },
         /**
 <<<<<<< HEAD
+<<<<<<< HEAD
          * 
          * @param {ConnectorConfigConfig} [connectorConfigConfig] 
          * @param {*} [options] Override http request option.
@@ -13499,6 +16066,10 @@ export const ApiApiFp = function(configuration?: Configuration) {
          *
          * @param {CookLog} [cookLog]
 >>>>>>> fresh_filter
+=======
+         *
+         * @param {CookLog} [cookLog]
+>>>>>>> ingredient_context_menu
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -13658,9 +16229,12 @@ export const ApiApiFp = function(configuration?: Configuration) {
         },
         /**
 <<<<<<< HEAD
+<<<<<<< HEAD
          * 
          * @param {ShoppingListEntry} [shoppingListEntry] 
 =======
+=======
+>>>>>>> ingredient_context_menu
          *
          * @param {ShoppingList} [shoppingList]
          * @param {*} [options] Override http request option.
@@ -13673,7 +16247,10 @@ export const ApiApiFp = function(configuration?: Configuration) {
         /**
          *
          * @param {ShoppingListEntry} [shoppingListEntry]
+<<<<<<< HEAD
 >>>>>>> fresh_filter
+=======
+>>>>>>> ingredient_context_menu
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -13838,6 +16415,7 @@ export const ApiApiFp = function(configuration?: Configuration) {
         },
         /**
 <<<<<<< HEAD
+<<<<<<< HEAD
          * 
          * @param {string} id A unique integer value identifying this connector config.
          * @param {*} [options] Override http request option.
@@ -13852,6 +16430,9 @@ export const ApiApiFp = function(configuration?: Configuration) {
 =======
          *
 >>>>>>> fresh_filter
+=======
+         *
+>>>>>>> ingredient_context_menu
          * @param {string} id A unique integer value identifying this cook log.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -14002,8 +16583,11 @@ export const ApiApiFp = function(configuration?: Configuration) {
         },
         /**
 <<<<<<< HEAD
+<<<<<<< HEAD
          * 
 =======
+=======
+>>>>>>> ingredient_context_menu
          *
          * @param {string} id A unique integer value identifying this shopping list.
          * @param {*} [options] Override http request option.
@@ -14015,7 +16599,10 @@ export const ApiApiFp = function(configuration?: Configuration) {
         },
         /**
          *
+<<<<<<< HEAD
 >>>>>>> fresh_filter
+=======
+>>>>>>> ingredient_context_menu
          * @param {string} id A unique integer value identifying this shopping list entry.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -14199,6 +16786,7 @@ export const ApiApiFp = function(configuration?: Configuration) {
         },
         /**
 <<<<<<< HEAD
+<<<<<<< HEAD
          * 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -14212,6 +16800,9 @@ export const ApiApiFp = function(configuration?: Configuration) {
 =======
          *
 >>>>>>> fresh_filter
+=======
+         *
+>>>>>>> ingredient_context_menu
          * @param {number} [page] A page number within the paginated result set.
          * @param {number} [pageSize] Number of results to return per page.
          * @param {*} [options] Override http request option.
@@ -14723,6 +17314,7 @@ export const ApiApiFp = function(configuration?: Configuration) {
         },
         /**
 <<<<<<< HEAD
+<<<<<<< HEAD
          * 
          * @param {string} id A unique integer value identifying this connector config.
          * @param {ConnectorConfigConfig} [connectorConfigConfig] 
@@ -14738,6 +17330,9 @@ export const ApiApiFp = function(configuration?: Configuration) {
 =======
          *
 >>>>>>> fresh_filter
+=======
+         *
+>>>>>>> ingredient_context_menu
          * @param {string} id A unique integer value identifying this cook log.
          * @param {CookLog} [cookLog]
          * @param {*} [options] Override http request option.
@@ -14771,6 +17366,86 @@ export const ApiApiFp = function(configuration?: Configuration) {
         },
         /**
          *
+<<<<<<< HEAD
+=======
+         * @param {string} id A unique integer value identifying this food.
+         * @param {Food} [food]
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async partialUpdateFood(id: string, food?: Food, options?: any): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<Food>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.partialUpdateFood(id, food, options);
+            return createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration);
+        },
+        /**
+         *
+         * @param {string} id A unique integer value identifying this import log.
+         * @param {ImportLog} [importLog]
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async partialUpdateImportLog(id: string, importLog?: ImportLog, options?: any): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<ImportLog>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.partialUpdateImportLog(id, importLog, options);
+            return createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration);
+        },
+        /**
+         *
+         * @param {string} id A unique integer value identifying this ingredient.
+         * @param {Ingredient} [ingredient]
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async partialUpdateIngredient(id: string, ingredient?: Ingredient, options?: any): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<Ingredient>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.partialUpdateIngredient(id, ingredient, options);
+            return createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration);
+        },
+        /**
+         *
+         * @param {string} id A unique integer value identifying this invite link.
+         * @param {InviteLink} [inviteLink]
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async partialUpdateInviteLink(id: string, inviteLink?: InviteLink, options?: any): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<InviteLink>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.partialUpdateInviteLink(id, inviteLink, options);
+            return createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration);
+        },
+        /**
+         *
+         * @param {string} id A unique integer value identifying this keyword.
+         * @param {Keyword} [keyword]
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async partialUpdateKeyword(id: string, keyword?: Keyword, options?: any): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<Keyword>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.partialUpdateKeyword(id, keyword, options);
+            return createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration);
+        },
+        /**
+         *
+         * @param {string} id A unique integer value identifying this meal plan.
+         * @param {MealPlan} [mealPlan]
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async partialUpdateMealPlan(id: string, mealPlan?: MealPlan, options?: any): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<MealPlan>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.partialUpdateMealPlan(id, mealPlan, options);
+            return createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration);
+        },
+        /**
+         * returns list of meal types created by the requesting user ordered by the order field.
+         * @param {string} id A unique integer value identifying this meal type.
+         * @param {MealType} [mealType]
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async partialUpdateMealType(id: string, mealType?: MealType, options?: any): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<MealType>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.partialUpdateMealType(id, mealType, options);
+            return createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration);
+        },
+        /**
+         *
+>>>>>>> ingredient_context_menu
          * @param {string} id A unique integer value identifying this property.
          * @param {Property} [property]
          * @param {*} [options] Override http request option.
@@ -14826,8 +17501,11 @@ export const ApiApiFp = function(configuration?: Configuration) {
         },
         /**
 <<<<<<< HEAD
+<<<<<<< HEAD
          * 
 =======
+=======
+>>>>>>> ingredient_context_menu
          *
          * @param {string} id A unique integer value identifying this shopping list.
          * @param {ShoppingList} [shoppingList]
@@ -14840,7 +17518,10 @@ export const ApiApiFp = function(configuration?: Configuration) {
         },
         /**
          *
+<<<<<<< HEAD
 >>>>>>> fresh_filter
+=======
+>>>>>>> ingredient_context_menu
          * @param {string} id A unique integer value identifying this shopping list entry.
          * @param {ShoppingListEntry} [shoppingListEntry]
          * @param {*} [options] Override http request option.
@@ -15062,6 +17743,7 @@ export const ApiApiFp = function(configuration?: Configuration) {
         },
         /**
 <<<<<<< HEAD
+<<<<<<< HEAD
          * 
          * @param {string} id A unique integer value identifying this connector config.
          * @param {*} [options] Override http request option.
@@ -15076,6 +17758,9 @@ export const ApiApiFp = function(configuration?: Configuration) {
 =======
          *
 >>>>>>> fresh_filter
+=======
+         *
+>>>>>>> ingredient_context_menu
          * @param {string} id A unique integer value identifying this cook log.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -15246,8 +17931,11 @@ export const ApiApiFp = function(configuration?: Configuration) {
         },
         /**
 <<<<<<< HEAD
+<<<<<<< HEAD
          * 
 =======
+=======
+>>>>>>> ingredient_context_menu
          *
          * @param {string} id A unique integer value identifying this shopping list.
          * @param {*} [options] Override http request option.
@@ -15259,7 +17947,10 @@ export const ApiApiFp = function(configuration?: Configuration) {
         },
         /**
          *
+<<<<<<< HEAD
 >>>>>>> fresh_filter
+=======
+>>>>>>> ingredient_context_menu
          * @param {string} id A unique integer value identifying this shopping list entry.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -15482,7 +18173,11 @@ export const ApiApiFp = function(configuration?: Configuration) {
         },
         /**
 <<<<<<< HEAD
+<<<<<<< HEAD
          * 
+=======
+         *
+>>>>>>> ingredient_context_menu
          * @param {string} id A unique integer value identifying this food.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -15492,10 +18187,14 @@ export const ApiApiFp = function(configuration?: Configuration) {
             return createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration);
         },
         /**
+<<<<<<< HEAD
          * 
 =======
          *
 >>>>>>> fresh_filter
+=======
+         *
+>>>>>>> ingredient_context_menu
          * @param {string} id A unique integer value identifying this access token.
          * @param {AccessToken} [accessToken]
          * @param {*} [options] Override http request option.
@@ -15529,6 +18228,7 @@ export const ApiApiFp = function(configuration?: Configuration) {
         },
         /**
 <<<<<<< HEAD
+<<<<<<< HEAD
          * 
          * @param {string} id A unique integer value identifying this connector config.
          * @param {ConnectorConfigConfig} [connectorConfigConfig] 
@@ -15544,6 +18244,9 @@ export const ApiApiFp = function(configuration?: Configuration) {
 =======
          *
 >>>>>>> fresh_filter
+=======
+         *
+>>>>>>> ingredient_context_menu
          * @param {string} id A unique integer value identifying this cook log.
          * @param {CookLog} [cookLog]
          * @param {*} [options] Override http request option.
@@ -15709,8 +18412,11 @@ export const ApiApiFp = function(configuration?: Configuration) {
         },
         /**
 <<<<<<< HEAD
+<<<<<<< HEAD
          * 
 =======
+=======
+>>>>>>> ingredient_context_menu
          *
          * @param {string} id A unique integer value identifying this shopping list.
          * @param {ShoppingList} [shoppingList]
@@ -15723,7 +18429,10 @@ export const ApiApiFp = function(configuration?: Configuration) {
         },
         /**
          *
+<<<<<<< HEAD
 >>>>>>> fresh_filter
+=======
+>>>>>>> ingredient_context_menu
          * @param {string} id A unique integer value identifying this shopping list entry.
          * @param {ShoppingListEntry} [shoppingListEntry]
          * @param {*} [options] Override http request option.
@@ -15916,6 +18625,7 @@ export const ApiApiFactory = function (configuration?: Configuration, basePath?:
         },
         /**
 <<<<<<< HEAD
+<<<<<<< HEAD
          * 
          * @param {ConnectorConfigConfig} [connectorConfigConfig] 
          * @param {*} [options] Override http request option.
@@ -15931,6 +18641,10 @@ export const ApiApiFactory = function (configuration?: Configuration, basePath?:
          *
          * @param {CookLog} [cookLog]
 >>>>>>> fresh_filter
+=======
+         *
+         * @param {CookLog} [cookLog]
+>>>>>>> ingredient_context_menu
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -16074,9 +18788,12 @@ export const ApiApiFactory = function (configuration?: Configuration, basePath?:
         },
         /**
 <<<<<<< HEAD
+<<<<<<< HEAD
          * 
          * @param {ShoppingListEntry} [shoppingListEntry] 
 =======
+=======
+>>>>>>> ingredient_context_menu
          *
          * @param {ShoppingList} [shoppingList]
          * @param {*} [options] Override http request option.
@@ -16088,7 +18805,10 @@ export const ApiApiFactory = function (configuration?: Configuration, basePath?:
         /**
          *
          * @param {ShoppingListEntry} [shoppingListEntry]
+<<<<<<< HEAD
 >>>>>>> fresh_filter
+=======
+>>>>>>> ingredient_context_menu
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -16237,6 +18957,7 @@ export const ApiApiFactory = function (configuration?: Configuration, basePath?:
         },
         /**
 <<<<<<< HEAD
+<<<<<<< HEAD
          * 
          * @param {string} id A unique integer value identifying this connector config.
          * @param {*} [options] Override http request option.
@@ -16250,6 +18971,9 @@ export const ApiApiFactory = function (configuration?: Configuration, basePath?:
 =======
          *
 >>>>>>> fresh_filter
+=======
+         *
+>>>>>>> ingredient_context_menu
          * @param {string} id A unique integer value identifying this cook log.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -16385,8 +19109,11 @@ export const ApiApiFactory = function (configuration?: Configuration, basePath?:
         },
         /**
 <<<<<<< HEAD
+<<<<<<< HEAD
          * 
 =======
+=======
+>>>>>>> ingredient_context_menu
          *
          * @param {string} id A unique integer value identifying this shopping list.
          * @param {*} [options] Override http request option.
@@ -16397,7 +19124,10 @@ export const ApiApiFactory = function (configuration?: Configuration, basePath?:
         },
         /**
          *
+<<<<<<< HEAD
 >>>>>>> fresh_filter
+=======
+>>>>>>> ingredient_context_menu
          * @param {string} id A unique integer value identifying this shopping list entry.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -16563,6 +19293,7 @@ export const ApiApiFactory = function (configuration?: Configuration, basePath?:
         },
         /**
 <<<<<<< HEAD
+<<<<<<< HEAD
          * 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -16575,6 +19306,9 @@ export const ApiApiFactory = function (configuration?: Configuration, basePath?:
 =======
          *
 >>>>>>> fresh_filter
+=======
+         *
+>>>>>>> ingredient_context_menu
          * @param {number} [page] A page number within the paginated result set.
          * @param {number} [pageSize] Number of results to return per page.
          * @param {*} [options] Override http request option.
@@ -17041,6 +19775,7 @@ export const ApiApiFactory = function (configuration?: Configuration, basePath?:
         },
         /**
 <<<<<<< HEAD
+<<<<<<< HEAD
          * 
          * @param {string} id A unique integer value identifying this connector config.
          * @param {ConnectorConfigConfig} [connectorConfigConfig] 
@@ -17055,6 +19790,9 @@ export const ApiApiFactory = function (configuration?: Configuration, basePath?:
 =======
          *
 >>>>>>> fresh_filter
+=======
+         *
+>>>>>>> ingredient_context_menu
          * @param {string} id A unique integer value identifying this cook log.
          * @param {CookLog} [cookLog]
          * @param {*} [options] Override http request option.
@@ -17205,8 +19943,11 @@ export const ApiApiFactory = function (configuration?: Configuration, basePath?:
         },
         /**
 <<<<<<< HEAD
+<<<<<<< HEAD
          * 
 =======
+=======
+>>>>>>> ingredient_context_menu
          *
          * @param {string} id A unique integer value identifying this shopping list.
          * @param {ShoppingList} [shoppingList]
@@ -17218,7 +19959,10 @@ export const ApiApiFactory = function (configuration?: Configuration, basePath?:
         },
         /**
          *
+<<<<<<< HEAD
 >>>>>>> fresh_filter
+=======
+>>>>>>> ingredient_context_menu
          * @param {string} id A unique integer value identifying this shopping list entry.
          * @param {ShoppingListEntry} [shoppingListEntry]
          * @param {*} [options] Override http request option.
@@ -17420,6 +20164,7 @@ export const ApiApiFactory = function (configuration?: Configuration, basePath?:
         },
         /**
 <<<<<<< HEAD
+<<<<<<< HEAD
          * 
          * @param {string} id A unique integer value identifying this connector config.
          * @param {*} [options] Override http request option.
@@ -17433,6 +20178,9 @@ export const ApiApiFactory = function (configuration?: Configuration, basePath?:
 =======
          *
 >>>>>>> fresh_filter
+=======
+         *
+>>>>>>> ingredient_context_menu
          * @param {string} id A unique integer value identifying this cook log.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -17586,8 +20334,11 @@ export const ApiApiFactory = function (configuration?: Configuration, basePath?:
         },
         /**
 <<<<<<< HEAD
+<<<<<<< HEAD
          * 
 =======
+=======
+>>>>>>> ingredient_context_menu
          *
          * @param {string} id A unique integer value identifying this shopping list.
          * @param {*} [options] Override http request option.
@@ -17598,7 +20349,10 @@ export const ApiApiFactory = function (configuration?: Configuration, basePath?:
         },
         /**
          *
+<<<<<<< HEAD
 >>>>>>> fresh_filter
+=======
+>>>>>>> ingredient_context_menu
          * @param {string} id A unique integer value identifying this shopping list entry.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -17799,7 +20553,11 @@ export const ApiApiFactory = function (configuration?: Configuration, basePath?:
         },
         /**
 <<<<<<< HEAD
+<<<<<<< HEAD
          * 
+=======
+         *
+>>>>>>> ingredient_context_menu
          * @param {string} id A unique integer value identifying this food.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -17808,10 +20566,14 @@ export const ApiApiFactory = function (configuration?: Configuration, basePath?:
             return localVarFp.substitutesFood(id, options).then((request) => request(axios, basePath));
         },
         /**
+<<<<<<< HEAD
          * 
 =======
          *
 >>>>>>> fresh_filter
+=======
+         *
+>>>>>>> ingredient_context_menu
          * @param {string} id A unique integer value identifying this access token.
          * @param {AccessToken} [accessToken]
          * @param {*} [options] Override http request option.
@@ -17842,6 +20604,7 @@ export const ApiApiFactory = function (configuration?: Configuration, basePath?:
         },
         /**
 <<<<<<< HEAD
+<<<<<<< HEAD
          * 
          * @param {string} id A unique integer value identifying this connector config.
          * @param {ConnectorConfigConfig} [connectorConfigConfig] 
@@ -17856,6 +20619,9 @@ export const ApiApiFactory = function (configuration?: Configuration, basePath?:
 =======
          *
 >>>>>>> fresh_filter
+=======
+         *
+>>>>>>> ingredient_context_menu
          * @param {string} id A unique integer value identifying this cook log.
          * @param {CookLog} [cookLog]
          * @param {*} [options] Override http request option.
@@ -18006,8 +20772,11 @@ export const ApiApiFactory = function (configuration?: Configuration, basePath?:
         },
         /**
 <<<<<<< HEAD
+<<<<<<< HEAD
          * 
 =======
+=======
+>>>>>>> ingredient_context_menu
          *
          * @param {string} id A unique integer value identifying this shopping list.
          * @param {ShoppingList} [shoppingList]
@@ -18019,7 +20788,10 @@ export const ApiApiFactory = function (configuration?: Configuration, basePath?:
         },
         /**
          *
+<<<<<<< HEAD
 >>>>>>> fresh_filter
+=======
+>>>>>>> ingredient_context_menu
          * @param {string} id A unique integer value identifying this shopping list entry.
          * @param {ShoppingListEntry} [shoppingListEntry]
          * @param {*} [options] Override http request option.
@@ -18210,6 +20982,7 @@ export class ApiApi extends BaseAPI {
 
     /**
 <<<<<<< HEAD
+<<<<<<< HEAD
      * 
      * @param {ConnectorConfigConfig} [connectorConfigConfig] 
      * @param {*} [options] Override http request option.
@@ -18227,6 +21000,10 @@ export class ApiApi extends BaseAPI {
      *
      * @param {CookLog} [cookLog]
 >>>>>>> fresh_filter
+=======
+     *
+     * @param {CookLog} [cookLog]
+>>>>>>> ingredient_context_menu
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof ApiApi
@@ -18402,9 +21179,12 @@ export class ApiApi extends BaseAPI {
 
     /**
 <<<<<<< HEAD
+<<<<<<< HEAD
      * 
      * @param {ShoppingListEntry} [shoppingListEntry] 
 =======
+=======
+>>>>>>> ingredient_context_menu
      *
      * @param {ShoppingList} [shoppingList]
      * @param {*} [options] Override http request option.
@@ -18418,7 +21198,10 @@ export class ApiApi extends BaseAPI {
     /**
      *
      * @param {ShoppingListEntry} [shoppingListEntry]
+<<<<<<< HEAD
 >>>>>>> fresh_filter
+=======
+>>>>>>> ingredient_context_menu
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof ApiApi
@@ -18599,6 +21382,7 @@ export class ApiApi extends BaseAPI {
 
     /**
 <<<<<<< HEAD
+<<<<<<< HEAD
      * 
      * @param {string} id A unique integer value identifying this connector config.
      * @param {*} [options] Override http request option.
@@ -18614,6 +21398,9 @@ export class ApiApi extends BaseAPI {
 =======
      *
 >>>>>>> fresh_filter
+=======
+     *
+>>>>>>> ingredient_context_menu
      * @param {string} id A unique integer value identifying this cook log.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
@@ -18779,8 +21566,11 @@ export class ApiApi extends BaseAPI {
 
     /**
 <<<<<<< HEAD
+<<<<<<< HEAD
      * 
 =======
+=======
+>>>>>>> ingredient_context_menu
      *
      * @param {string} id A unique integer value identifying this shopping list.
      * @param {*} [options] Override http request option.
@@ -18793,7 +21583,10 @@ export class ApiApi extends BaseAPI {
 
     /**
      *
+<<<<<<< HEAD
 >>>>>>> fresh_filter
+=======
+>>>>>>> ingredient_context_menu
      * @param {string} id A unique integer value identifying this shopping list entry.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
@@ -18995,6 +21788,7 @@ export class ApiApi extends BaseAPI {
 
     /**
 <<<<<<< HEAD
+<<<<<<< HEAD
      * 
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
@@ -19009,6 +21803,9 @@ export class ApiApi extends BaseAPI {
 =======
      *
 >>>>>>> fresh_filter
+=======
+     *
+>>>>>>> ingredient_context_menu
      * @param {number} [page] A page number within the paginated result set.
      * @param {number} [pageSize] Number of results to return per page.
      * @param {*} [options] Override http request option.
@@ -19561,6 +22358,7 @@ export class ApiApi extends BaseAPI {
 
     /**
 <<<<<<< HEAD
+<<<<<<< HEAD
      * 
      * @param {string} id A unique integer value identifying this connector config.
      * @param {ConnectorConfigConfig} [connectorConfigConfig] 
@@ -19577,6 +22375,9 @@ export class ApiApi extends BaseAPI {
 =======
      *
 >>>>>>> fresh_filter
+=======
+     *
+>>>>>>> ingredient_context_menu
      * @param {string} id A unique integer value identifying this cook log.
      * @param {CookLog} [cookLog]
      * @param {*} [options] Override http request option.
@@ -19757,8 +22558,11 @@ export class ApiApi extends BaseAPI {
 
     /**
 <<<<<<< HEAD
+<<<<<<< HEAD
      * 
 =======
+=======
+>>>>>>> ingredient_context_menu
      *
      * @param {string} id A unique integer value identifying this shopping list.
      * @param {ShoppingList} [shoppingList]
@@ -19772,7 +22576,10 @@ export class ApiApi extends BaseAPI {
 
     /**
      *
+<<<<<<< HEAD
 >>>>>>> fresh_filter
+=======
+>>>>>>> ingredient_context_menu
      * @param {string} id A unique integer value identifying this shopping list entry.
      * @param {ShoppingListEntry} [shoppingListEntry]
      * @param {*} [options] Override http request option.
@@ -20014,6 +22821,7 @@ export class ApiApi extends BaseAPI {
 
     /**
 <<<<<<< HEAD
+<<<<<<< HEAD
      * 
      * @param {string} id A unique integer value identifying this connector config.
      * @param {*} [options] Override http request option.
@@ -20029,6 +22837,9 @@ export class ApiApi extends BaseAPI {
 =======
      *
 >>>>>>> fresh_filter
+=======
+     *
+>>>>>>> ingredient_context_menu
      * @param {string} id A unique integer value identifying this cook log.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
@@ -20216,8 +23027,11 @@ export class ApiApi extends BaseAPI {
 
     /**
 <<<<<<< HEAD
+<<<<<<< HEAD
      * 
 =======
+=======
+>>>>>>> ingredient_context_menu
      *
      * @param {string} id A unique integer value identifying this shopping list.
      * @param {*} [options] Override http request option.
@@ -20230,7 +23044,10 @@ export class ApiApi extends BaseAPI {
 
     /**
      *
+<<<<<<< HEAD
 >>>>>>> fresh_filter
+=======
+>>>>>>> ingredient_context_menu
      * @param {string} id A unique integer value identifying this shopping list entry.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
@@ -20475,7 +23292,11 @@ export class ApiApi extends BaseAPI {
 
     /**
 <<<<<<< HEAD
+<<<<<<< HEAD
      * 
+=======
+     *
+>>>>>>> ingredient_context_menu
      * @param {string} id A unique integer value identifying this food.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
@@ -20486,10 +23307,14 @@ export class ApiApi extends BaseAPI {
     }
 
     /**
+<<<<<<< HEAD
      * 
 =======
      *
 >>>>>>> fresh_filter
+=======
+     *
+>>>>>>> ingredient_context_menu
      * @param {string} id A unique integer value identifying this access token.
      * @param {AccessToken} [accessToken]
      * @param {*} [options] Override http request option.
@@ -20526,6 +23351,7 @@ export class ApiApi extends BaseAPI {
 
     /**
 <<<<<<< HEAD
+<<<<<<< HEAD
      * 
      * @param {string} id A unique integer value identifying this connector config.
      * @param {ConnectorConfigConfig} [connectorConfigConfig] 
@@ -20542,6 +23368,9 @@ export class ApiApi extends BaseAPI {
 =======
      *
 >>>>>>> fresh_filter
+=======
+     *
+>>>>>>> ingredient_context_menu
      * @param {string} id A unique integer value identifying this cook log.
      * @param {CookLog} [cookLog]
      * @param {*} [options] Override http request option.
@@ -20722,8 +23551,11 @@ export class ApiApi extends BaseAPI {
 
     /**
 <<<<<<< HEAD
+<<<<<<< HEAD
      * 
 =======
+=======
+>>>>>>> ingredient_context_menu
      *
      * @param {string} id A unique integer value identifying this shopping list.
      * @param {ShoppingList} [shoppingList]
@@ -20737,7 +23569,10 @@ export class ApiApi extends BaseAPI {
 
     /**
      *
+<<<<<<< HEAD
 >>>>>>> fresh_filter
+=======
+>>>>>>> ingredient_context_menu
      * @param {string} id A unique integer value identifying this shopping list entry.
      * @param {ShoppingListEntry} [shoppingListEntry]
      * @param {*} [options] Override http request option.
