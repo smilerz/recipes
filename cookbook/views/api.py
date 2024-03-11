@@ -23,7 +23,7 @@ from django.contrib.postgres.search import TrigramSimilarity
 from django.core.cache import caches
 from django.core.exceptions import FieldError, ValidationError
 from django.core.files import File
-from django.db.models import Case, Count, Exists, OuterRef, ProtectedError, Q, Subquery, Value, When
+from django.db.models import Case, Count, OuterRef, ProtectedError, Q, Subquery, Value, When
 from django.db.models.fields.related import ForeignObjectRel
 from django.db.models.functions import Coalesce, Lower
 from django.db.models.signals import post_save
@@ -568,7 +568,6 @@ class FoodViewSet(viewsets.ModelViewSet, TreeMixin):
         shopping_status = ShoppingListEntry.objects.filter(space=self.request.space, food=OuterRef('id'), checked=False).values('id')
         # onhand_status = self.queryset.annotate(onhand_status=Exists(onhand_users_set__in=[shared_users]))
         return self.queryset \
-            .annotate(shopping_status=Exists(shopping_status)) \
             .prefetch_related('onhand_users', 'inherit_fields', 'child_inherit_fields', 'substitute') \
             .select_related('recipe', 'supermarket_category')
 
@@ -673,6 +672,21 @@ class FoodViewSet(viewsets.ModelViewSet, TreeMixin):
         except Exception:
             traceback.print_exc()
             return JsonResponse({'msg': 'there was an error parsing the FDC data, please check the server logs'}, status=500, json_dumps_params={'indent': 4})
+    
+    @decorators.action(detail=True, methods=['GET'], serializer_class=FoodSimpleSerializer, )
+    def substitutes(self, request, pk):
+        if self.request.space.demo:
+            raise PermissionDenied(detail='Not available in demo', code=None)
+        obj = self.get_object()
+        if obj.get_space() != request.space:
+            raise PermissionDenied(detail='You do not have the required permission to perform this action', code=403)
+
+        onhand = str2bool(request.query_params.get('onhand', False))
+        shopping_users = None
+        if onhand:
+            shopping_users = [*request.user.get_shopping_share(), request.user]
+        qs = obj.get_substitutes(onhand=onhand, shopping_users=shopping_users)
+        return Response(self.serializer_class(qs, many=True).data)
 
     def destroy(self, *args, **kwargs):
         try:
@@ -861,7 +875,7 @@ class IngredientViewSet(viewsets.ModelViewSet):
         if unit and re.match(r'^(\d)+$', unit):
             queryset = queryset.filter(unit_id=unit)
 
-        return queryset
+        return queryset.select_related('food')
 
 
 class StepViewSet(viewsets.ModelViewSet):
@@ -934,6 +948,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
         QueryParam(name='updatedon', description=_('Filter recipes updated on or after YYYY-MM-DD. Prepending ''-'' filters on or before date.')),
         QueryParam(name='viewedon', description=_('Filter recipes lasts viewed on or after YYYY-MM-DD. Prepending ''-'' filters on or before date.')),
         QueryParam(name='makenow', description=_('Filter recipes that can be made with OnHand food. [''true''/''<b>false</b>'']')),
+        QueryParam(name='never_used_food', description=_('Filter recipes that contain food that have never been used. [''true''/''<b>false</b>'']')),
     ]
     schema = QueryParamAutoSchema()
 
