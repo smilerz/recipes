@@ -53,7 +53,7 @@ docker stop {{database_container}} {{tandoor_container}}
 4. Rename the tandoor volume
 
 ``` bash
-sudo mv -R ~/.docker/compose/postgres ~/.docker/compose/postgres.old
+sudo mv ~/.docker/compose/postgres ~/.docker/compose/postgres.old
 ```
 
 5. Update image tag on postgres container.
@@ -81,7 +81,7 @@ sudo mv -R ~/.docker/compose/postgres ~/.docker/compose/postgres.old
   ```
   8. Install postgres extensions
   ``` bash
-  docker exec -it {{database_container}} psql
+  docker exec -it {{database_container}} psql postgres -U {{djangouser}}
   ```
   then
   ``` psql

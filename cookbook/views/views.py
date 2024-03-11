@@ -14,23 +14,21 @@ from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
 from django.core.management import call_command
 from django.db import models
-from django.http import HttpResponseRedirect
+from django.http import HttpResponseRedirect, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse, reverse_lazy
 from django.utils import timezone
 from django.utils.translation import gettext as _
 from django_scopes import scopes_disabled
 
-from cookbook.forms import (CommentForm, Recipe, SearchPreferenceForm, SpaceCreateForm,
-                            SpaceJoinForm, User, UserCreateForm, UserPreference)
+from cookbook.forms import CommentForm, Recipe, SearchPreferenceForm, SpaceCreateForm, SpaceJoinForm, User, UserCreateForm, UserPreference
 from cookbook.helper.HelperFunctions import str2bool
-from cookbook.helper.permission_helper import (group_required, has_group_permission,
-                                               share_link_valid, switch_user_active_space)
-from cookbook.models import (Comment, CookLog, InviteLink, SearchFields, SearchPreference,
-                             ShareLink, Space, UserSpace, ViewLog)
+from cookbook.helper.permission_helper import group_required, has_group_permission, share_link_valid, switch_user_active_space
+from cookbook.models import Comment, CookLog, InviteLink, SearchFields, SearchPreference, ShareLink, Space, UserSpace, ViewLog
 from cookbook.tables import CookLogTable, ViewLogTable
+from cookbook.templatetags.theming_tags import get_theming_values
 from cookbook.version_info import VERSION_INFO
-from recipes.settings import BASE_DIR, PLUGINS
+from recipes.settings import PLUGINS
 
 
 def index(request):
@@ -41,8 +39,7 @@ def index(request):
             return HttpResponseRedirect(reverse_lazy('view_search'))
 
     try:
-        page_map = {UserPreference.SEARCH: reverse_lazy('view_search'),            UserPreference.PLAN: reverse_lazy('view_plan'),            UserPreference.BOOKS: reverse_lazy('view_books'),
-                    }
+        page_map = {UserPreference.SEARCH: reverse_lazy('view_search'), UserPreference.PLAN: reverse_lazy('view_plan'), UserPreference.BOOKS: reverse_lazy('view_books'), UserPreference.SHOPPING: reverse_lazy('view_shopping'),}
 
         return HttpResponseRedirect(page_map.get(request.user.userpreference.default_page))
     except UserPreference.DoesNotExist:
@@ -74,14 +71,18 @@ def space_overview(request):
                 'This feature is not available in the demo version!'))
         else:
             if create_form.is_valid():
-                created_space = Space.objects.create(
-                    name=create_form.cleaned_data['name'],
-                    created_by=request.user,
-                    max_file_storage_mb=settings.SPACE_DEFAULT_MAX_FILES,
-                    max_recipes=settings.SPACE_DEFAULT_MAX_RECIPES,
-                    max_users=settings.SPACE_DEFAULT_MAX_USERS,
-                    allow_sharing=settings.SPACE_DEFAULT_ALLOW_SHARING,
-                )
+                if Space.objects.filter(created_by=request.user).count() >= request.user.userpreference.max_owned_spaces:
+                    messages.add_message(request, messages.ERROR,
+                                         _('You have the reached the maximum amount of spaces that can be owned by you.') + f' ({request.user.userpreference.max_owned_spaces})')
+                    return HttpResponseRedirect(reverse('view_space_overview'))
+
+                created_space = Space.objects.create(name=create_form.cleaned_data['name'],
+                                                     created_by=request.user,
+                                                     max_file_storage_mb=settings.SPACE_DEFAULT_MAX_FILES,
+                                                     max_recipes=settings.SPACE_DEFAULT_MAX_RECIPES,
+                                                     max_users=settings.SPACE_DEFAULT_MAX_USERS,
+                                                     allow_sharing=settings.SPACE_DEFAULT_ALLOW_SHARING,
+                                                     )
 
                 user_space = UserSpace.objects.create(
                     space=created_space, user=request.user, active=False)
@@ -130,15 +131,11 @@ def recipe_view(request, pk, share=None):
         recipe = get_object_or_404(Recipe, pk=pk)
 
         if not request.user.is_authenticated and not share_link_valid(recipe, share):
-            messages.add_message(request, messages.ERROR,
-                                 _('You do not have the required permissions to view this page!'))
+            messages.add_message(request, messages.ERROR, _('You do not have the required permissions to view this page!'))
             return HttpResponseRedirect(reverse('account_login') + '?next=' + request.path)
 
-        if not (has_group_permission(request.user,
-                                     ('guest',)) and recipe.space == request.space) and not share_link_valid(recipe,
-                                                                                                             share):
-            messages.add_message(request, messages.ERROR,
-                                 _('You do not have the required permissions to view this page!'))
+        if not (has_group_permission(request.user, ('guest',)) and recipe.space == request.space) and not share_link_valid(recipe, share):
+            messages.add_message(request, messages.ERROR, _('You do not have the required permissions to view this page!'))
             return HttpResponseRedirect(reverse('index'))
 
         comments = Comment.objects.filter(
@@ -146,8 +143,7 @@ def recipe_view(request, pk, share=None):
 
         if request.method == "POST":
             if not request.user.is_authenticated:
-                messages.add_message(request, messages.ERROR,
-                                     _('You do not have the required permissions to perform this action!'))
+                messages.add_message(request, messages.ERROR, _('You do not have the required permissions to perform this action!'))
                 return HttpResponseRedirect(reverse('view_recipe', kwargs={'pk': recipe.pk, 'share': share}))
 
             comment_form = CommentForm(request.POST, prefix='comment')
@@ -164,15 +160,14 @@ def recipe_view(request, pk, share=None):
         comment_form = CommentForm()
 
         if request.user.is_authenticated:
-            if not ViewLog.objects.filter(recipe=recipe, created_by=request.user,
-                                          created_at__gt=(
-                                              timezone.now() - timezone.timedelta(minutes=5)),
-                                          space=request.space).exists():
-                ViewLog.objects.create(
-                    recipe=recipe, created_by=request.user, space=request.space)
+            if not ViewLog.objects.filter(recipe=recipe, created_by=request.user, created_at__gt=(timezone.now() - timezone.timedelta(minutes=5)), space=request.space).exists():
+                ViewLog.objects.create(recipe=recipe, created_by=request.user, space=request.space)
 
-        return render(request, 'recipe_view.html',
-                      {'recipe': recipe, 'comments': comments, 'comment_form': comment_form, 'share': share, })
+        servings = recipe.servings
+        if request.method == "GET" and 'servings' in request.GET:
+            servings = request.GET.get("servings")
+        return render(request, 'recipe_view.html', {'recipe': recipe, 'comments': comments, 'comment_form': comment_form, 'share': share, 'servings': servings})
+
 
 
 @group_required('user')
@@ -183,16 +178,6 @@ def books(request):
 @group_required('user')
 def meal_plan(request):
     return render(request, 'meal_plan.html', {})
-
-
-@group_required('user')
-def supermarket(request):
-    return render(request, 'supermarket.html', {})
-
-
-@group_required('user')
-def view_profile(request, user_id):
-    return render(request, 'profile.html', {})
 
 
 @group_required('guest')
@@ -239,12 +224,8 @@ def shopping_settings(request):
             if search_form.is_valid():
                 if not sp:
                     sp = SearchPreferenceForm(user=request.user)
-                fields_searched = (
-                    len(search_form.cleaned_data['icontains'])
-                    + len(search_form.cleaned_data['istartswith'])
-                    + len(search_form.cleaned_data['trigram'])
-                    + len(search_form.cleaned_data['fulltext'])
-                )
+                fields_searched = (len(search_form.cleaned_data['icontains']) + len(search_form.cleaned_data['istartswith']) + len(search_form.cleaned_data['trigram'])
+                                   + len(search_form.cleaned_data['fulltext']))
                 if search_form.cleaned_data['preset'] == 'fuzzy':
                     sp.search = SearchPreference.SIMPLE
                     sp.lookup = True
@@ -271,15 +252,11 @@ def shopping_settings(request):
                     search_form.add_error(
                         None, _('You must select at least one field to search!'))
                     search_error = True
-                elif search_form.cleaned_data['search'] in ['websearch', 'raw'] and len(
-                        search_form.cleaned_data['fulltext']) == 0:
-                    search_form.add_error('search',
-                                          _('To use this search method you must select at least one full text search field!'))
+                elif search_form.cleaned_data['search'] in ['websearch', 'raw'] and len(search_form.cleaned_data['fulltext']) == 0:
+                    search_form.add_error('search', _('To use this search method you must select at least one full text search field!'))
                     search_error = True
-                elif search_form.cleaned_data['search'] in ['websearch', 'raw'] and len(
-                        search_form.cleaned_data['trigram']) > 0:
-                    search_form.add_error(
-                        None, _('Fuzzy search is not compatible with this search method!'))
+                elif search_form.cleaned_data['search'] in ['websearch', 'raw'] and len(search_form.cleaned_data['trigram']) > 0:
+                    search_form.add_error(None, _('Fuzzy search is not compatible with this search method!'))
                     search_error = True
                 else:
                     sp.search = search_form.cleaned_data['search']
@@ -294,8 +271,7 @@ def shopping_settings(request):
             else:
                 search_error = True
 
-    fields_searched = len(sp.icontains.all()) + len(sp.istartswith.all()) + len(sp.trigram.all()) + len(
-        sp.fulltext.all())
+    fields_searched = len(sp.icontains.all()) + len(sp.istartswith.all()) + len(sp.trigram.all()) + len(sp.fulltext.all())
     if sp and not search_error and fields_searched > 0:
         search_form = SearchPreferenceForm(instance=sp)
     elif not search_error:
@@ -308,23 +284,16 @@ def shopping_settings(request):
         sp.fulltext.clear()
         sp.save()
 
-    return render(request, 'settings.html', {
-        'search_form': search_form,
-    })
+    return render(request, 'settings.html', {'search_form': search_form, })
 
 
 @group_required('guest')
 def history(request):
-    view_log = ViewLogTable(
-        ViewLog.objects.filter(
-            created_by=request.user, space=request.space
-        ).order_by('-created_at').all()
-    )
-    cook_log = CookLogTable(
-        CookLog.objects.filter(
-            created_by=request.user
-        ).order_by('-created_at').all()
-    )
+    view_log = ViewLogTable(ViewLog.objects.filter(created_by=request.user, space=request.space).order_by('-created_at').all(), prefix="viewlog-")
+    view_log.paginate(page=request.GET.get("viewlog-page", 1), per_page=25)
+
+    cook_log = CookLogTable(CookLog.objects.filter(created_by=request.user).order_by('-created_at').all(), prefix="cooklog-")
+    cook_log.paginate(page=request.GET.get("cooklog-page", 1), per_page=25)
     return render(request, 'history.html', {'view_log': view_log, 'cook_log': cook_log})
 
 
@@ -337,11 +306,10 @@ def system(request):
 
     if postgres:
         postgres_current = 16  # will need to be updated as PostgreSQL releases new major versions
-        from decimal import Decimal
 
         from django.db import connection
 
-        postgres_ver = Decimal(str(connection.pg_version).replace('00', '.'))
+        postgres_ver = divmod(connection.pg_version, 10000)
         if postgres_ver >= postgres_current:
             database_status = 'success'
             database_message = _('Everything is fine!')
@@ -390,27 +358,22 @@ def system(request):
         migration_info[key]['total'] = len(
             migration_info[key]['unapplied_migrations']) + len(migration_info[key]['applied_migrations'])
 
-    return render(request, 'system.html', {
-        'gunicorn_media': settings.GUNICORN_MEDIA,
-        'debug': settings.DEBUG,
-        'postgres': postgres,
-        'postgres_version': postgres_ver,
-        'postgres_status': database_status,
-        'postgres_message': database_message,
-        'version_info': VERSION_INFO,
-        'plugins': PLUGINS,
-        'secret_key': secret_key,
-        'orphans': orphans,
-        'migration_info': migration_info,
-        'missing_migration': missing_migration,
-    })
+    return render(
+        request, 'system.html', {
+            'gunicorn_media': settings.GUNICORN_MEDIA, 'debug': settings.DEBUG, 'postgres': postgres, 'postgres_version': postgres_ver, 'postgres_status': database_status,
+            'postgres_message': database_message, 'version_info': VERSION_INFO, 'plugins': PLUGINS, 'secret_key': secret_key, 'orphans': orphans, 'migration_info': migration_info,
+            'missing_migration': missing_migration,
+        })
 
 
 def setup(request):
     with scopes_disabled():
         if User.objects.count() > 0 or 'django.contrib.auth.backends.RemoteUserBackend' in settings.AUTHENTICATION_BACKENDS:
-            messages.add_message(request, messages.ERROR,
-                                 _('The setup page can only be used to create the first user! If you have forgotten your superuser credentials please consult the django documentation on how to reset passwords.'))
+            messages.add_message(
+                request, messages.ERROR,
+                _('The setup page can only be used to create the first user! \
+                    If you have forgotten your superuser credentials please consult the django documentation on how to reset passwords.'
+                  ))
             return HttpResponseRedirect(reverse('account_login'))
 
         if request.method == 'POST':
@@ -488,15 +451,39 @@ def space_manage(request, space_id):
 
 def report_share_abuse(request, token):
     if not settings.SHARING_ABUSE:
-        messages.add_message(request, messages.WARNING,
-                             _('Reporting share links is not enabled for this instance. Please notify the page administrator to report problems.'))
+        messages.add_message(request, messages.WARNING, _('Reporting share links is not enabled for this instance. Please notify the page administrator to report problems.'))
     else:
         if link := ShareLink.objects.filter(uuid=token).first():
             link.abuse_blocked = True
             link.save()
-            messages.add_message(request, messages.WARNING,
-                                 _('Recipe sharing link has been disabled! For additional information please contact the page administrator.'))
+            messages.add_message(request, messages.WARNING, _('Recipe sharing link has been disabled! For additional information please contact the page administrator.'))
     return HttpResponseRedirect(reverse('index'))
+
+
+def web_manifest(request):
+    theme_values = get_theming_values(request)
+
+    icons = [{"src": theme_values['logo_color_svg'], "sizes": "any"}, {"src": theme_values['logo_color_144'], "type": "image/png", "sizes": "144x144"},
+             {"src": theme_values['logo_color_512'], "type": "image/png", "sizes": "512x512"}]
+
+    manifest_info = {
+        "name":
+            theme_values['app_name'], "short_name":
+            theme_values['app_name'], "description":
+            _("Manage recipes, shopping list, meal plans and more."), "icons":
+            icons, "start_url":
+            "./", "background_color":
+            theme_values['nav_bg_color'], "display":
+            "standalone", "scope":
+            ".", "theme_color":
+            theme_values['nav_bg_color'], "shortcuts":
+            [{"name": _("Plan"), "short_name": _("Plan"), "description": _("View your meal Plan"), "url":
+                "./plan"}, {"name": _("Books"), "short_name": _("Books"), "description": _("View your cookbooks"), "url": "./books"},
+             {"name": _("Shopping"), "short_name": _("Shopping"), "description": _("View your shopping lists"), "url":
+                 "./shopping/"}], "share_target": {"action": "/data/import/url", "method": "GET", "params": {"title": "title", "url": "url", "text": "text"}}
+    }
+
+    return JsonResponse(manifest_info, json_dumps_params={'indent': 4})
 
 
 def markdown_info(request):
@@ -523,9 +510,7 @@ def test(request):
     from cookbook.helper.ingredient_parser import IngredientParser
     parser = IngredientParser(request, False)
 
-    data = {
-        'original': '90g golden syrup'
-    }
+    data = {'original': '90g golden syrup'}
     data['parsed'] = parser.parse(data['original'])
 
     return render(request, 'test.html', {'data': data})

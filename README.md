@@ -63,7 +63,6 @@ a public page.
 Documentation can be found [here](https://docs.tandoor.dev/).
 
 ## Support our work
-
 Tandoor is developed by volunteers in their free time just because its fun. That said earning
 some money with the project allows us to spend more time on it and thus make improvements we otherwise couldn't.
 Because of that there are several ways you can support us

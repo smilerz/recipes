@@ -48,6 +48,31 @@ project standard configurations.
     },
     ```
 
+### Devcontainer Setup
+There is a [devcontainer](https://containers.dev) set up to ease development.  It is optimized for VSCode, but should be able to
+be used by other editors as well.  Once the container is running, you can do things like start a Django dev server, start a Vue.js
+dev server, run python tests, etc. by either using the VSCode tasks below, or manually running commands described in the individual
+technology sections below.
+
+In VSCode, simply check out the git repository, and then via the command palette, choose `Dev Containers: Reopen in container`.
+
+If you need to change python dependencies (requierments.txt) or OS packages, you will need to rebuild the container.  If you are
+changing OS package requirements, you will need to update both the main `Dockerfile` and the `.devcontainer/Dockerfile`.
+
+### VSCode Tasks
+If you use VSCode, there are a number of tasks that are available.  Here are a few of the key ones:
+
+* `Setup Dev Server` - Runs all the prerequisite steps so that the dev server can be run inside VSCode.
+* `Setup Tests` - Runs all prerequisites so tests can be run inside VSCode.
+
+Once these are run, you should be able to run/debug a django server in VSCode as well as run/debug tests directly through VSCode.
+There are also a few other tasks specified in case you have specific development needs:
+
+* `Run Dev Server` - Runs a django development server not connected to VSCode.
+* `Run all pytests` - Runs all the pytests outside of VSCode.
+* `Yarn Serve` - Runs development Vue.js server not connected to VSCode.  Useful if you want to make Vue changes and see them in realtime.
+* `Serve Documentation` - Runs a documentation server.  Useful if you want to see how changes to documentation show up.
+
 ### Django
 
 This application is developed using the Django framework for Python. They have excellent
