@@ -1,0 +1,7 @@
+[tool.black]
+line-length = 179
+
+[tool.isort]
+profile = "black"
+skip = [".gitignore", ".dockerignore"]
+line_length = 179
