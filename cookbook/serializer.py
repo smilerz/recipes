@@ -5,6 +5,7 @@ from gettext import gettext as _
 from html import escape
 from smtplib import SMTPException
 
+from annoying.functions import get_object_or_None
 from django.contrib.auth.models import AnonymousUser, Group, User
 from django.core.cache import caches
 from django.core.mail import send_mail
@@ -13,7 +14,8 @@ from django.http import BadHeaderError
 from django.urls import reverse
 from django.utils import timezone
 from django_scopes import scopes_disabled
-from drf_writable_nested import UniqueFieldsMixin, WritableNestedModelSerializer
+from drf_writable_nested import UniqueFieldsMixin
+from drf_writable_nested import WritableNestedModelSerializer as WNMS
 from oauth2_provider.models import AccessToken
 from PIL import Image
 from rest_framework import serializers
@@ -36,6 +38,41 @@ from cookbook.models import (Automation, BookmarkletImport, Comment, CookLog, Cu
                              UserFile, UserPreference, UserSpace, ViewLog, ConnectorConfig)
 from cookbook.templatetags.custom_tags import markdown
 from recipes.settings import AWS_ENABLED, MEDIA_URL
+
+
+class WritableNestedModelSerializer(WNMS):
+
+    # overload to_internal_value to allow using PK only on nested object 
+    def to_internal_value(self, data):
+
+        def get_object(field, model, serializer, value):
+            # get object with PK of <value> 
+            nested_obj = get_object_or_None(model, id=value)
+            if nested_obj is not None:
+                # convert to dictionary with default serializer
+                obj = serializer(nested_obj, context=self.context).data
+                # pop any field that isn't required to avoid errors from non-model field values
+                for key in list(serializer(nested_obj, context=self.context).data):
+                    if key not in ['id'] + [field_name for field_name, field in serializer().fields.items() if field.required]:
+                        obj.pop(key, None)
+                return obj
+            else:
+                return value
+
+        # iterate through every field on the posted object
+        for f in list(data):
+            if f not in self.fields:
+                continue
+            elif issubclass(self.fields[f].__class__, serializers.Serializer):
+                # if the field is a serializer and an integer, assume its an ID and retrieve the associated object
+                if isinstance(data[f], int):
+                    data[f] = get_object(f, self.fields[f].Meta.model, self.fields[f].__class__, data[f])
+            elif issubclass(self.fields[f].__class__, serializers.ListSerializer):
+                # if the field is a ListSerializer, iterated the list and if there is an integer, assume its an ID and retrieve the associated object
+                for idx, item in enumerate(data[f]):
+                    if isinstance(item, int):
+                        data[f][idx] = get_object(f, self.fields[f].child.Meta.model, self.fields[f].child.__class__, item)
+        return super().to_internal_value(data)
 
 
 class ExtendedRecipeMixin(serializers.ModelSerializer):
@@ -948,7 +985,7 @@ class RecipeBookSerializer(SpacedModelSerializer, WritableNestedModelSerializer)
     class Meta:
         model = RecipeBook
         fields = ('id', 'name', 'description', 'shared', 'created_by', 'filter', 'order')
-        read_only_fields = ('created_by',)
+        read_only_fields = ('created_by', )
 
 
 class RecipeBookEntrySerializer(serializers.ModelSerializer):
