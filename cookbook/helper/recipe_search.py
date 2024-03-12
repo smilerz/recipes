@@ -113,6 +113,13 @@ class RecipeSearch():
 
             if self._search_type not in ['websearch', 'raw'] and self._trigram_include:
                 self._trigram = True
+            self.search_query = SearchQuery(
+                self._string,
+                search_type=self._search_type,
+                config=self._language,
+            )
+            self.search_rank = None
+        self.orderby = []
         self._filters = None
         self._fuzzy_match = None
 
@@ -287,9 +294,8 @@ class RecipeSearch():
     def _recently_viewed(self, num_recent=None):
         if not num_recent:
             if self._sort_includes("lastviewed"):
-                self._queryset = self._queryset.annotate(
-                    lastviewed=Coalesce(Max(Case(When(viewlog__created_by=self._request.user, viewlog__space=self._request.space, then="viewlog__pk"))), Value(0))
-                )
+                self._queryset = self._queryset.annotate(lastviewed=Coalesce(
+                    Max(Case(When(viewlog__created_by=self._request.user, viewlog__space=self._request.space, then="viewlog__pk"))), Value(0)))
             return
 
         num_recent_recipes = (
@@ -556,12 +562,6 @@ class RecipeSearch():
             has_sibling_sub=Case(When(steps__ingredients__food__in=self.__sibling_substitute_filter(shopping_users), then=Value(1)), default=Value(0))
         ).annotate(missingfood=F('count_food') - F('count_onhand') - F('count_ignore_shopping')).filter(missingfood__lte=missing)
         self._queryset = self._queryset.distinct().filter(id__in=makenow_recipes.values('id'))
-
-    def _never_used_food_filter(self):
-        # filters recipes to include foods that have never been used
-        if not self._never_used_food:
-            return
-        self._queryset = self._queryset.filter(steps__ingredients__food__in=Food.objects.filter(~Q(ingredient__step__recipe__cooklog__isnull=False)).distinct())
 
     def _never_used_food_filter(self):
         # filters recipes to include foods that have never been used
