@@ -113,6 +113,13 @@ class RecipeSearch():
 
             if self._search_type not in ['websearch', 'raw'] and self._trigram_include:
                 self._trigram = True
+            self.search_query = SearchQuery(
+                self._string,
+                search_type=self._search_type,
+                config=self._language,
+            )
+            self.search_rank = None
+        self.orderby = []
         self._filters = None
         self._fuzzy_match = None
 
@@ -287,9 +294,8 @@ class RecipeSearch():
     def _recently_viewed(self, num_recent=None):
         if not num_recent:
             if self._sort_includes("lastviewed"):
-                self._queryset = self._queryset.annotate(
-                    lastviewed=Coalesce(Max(Case(When(viewlog__created_by=self._request.user, viewlog__space=self._request.space, then="viewlog__pk"))), Value(0))
-                )
+                self._queryset = self._queryset.annotate(lastviewed=Coalesce(
+                    Max(Case(When(viewlog__created_by=self._request.user, viewlog__space=self._request.space, then="viewlog__pk"))), Value(0)))
             return
 
         num_recent_recipes = (
