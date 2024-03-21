@@ -534,9 +534,6 @@ if os.getenv('S3_ACCESS_KEY', ''):
 MEDIA_URL = os.getenv('MEDIA_URL', '/media/')
 MEDIA_ROOT = os.getenv('MEDIA_ROOT', os.path.join(BASE_DIR, "mediafiles"))
 
-# Serve static files with gzip
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
-
 # settings for cross site origin (CORS)
 # all origins allowed to support bookmarklet
 # all of this may or may not work with nginx or other web servers
