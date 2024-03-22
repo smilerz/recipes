@@ -136,7 +136,7 @@ urlpatterns = [
     path('docs/markdown/', views.markdown_info, name='docs_markdown'),
     path('docs/search/', views.search_info, name='docs_search'),
     path('docs/api/', views.api_info, name='docs_api'),
-    path('openapi/', get_schema_view(title="Tandoor API", version="TANDOOR_VERSION", public=True, permission_classes=(permissions.AllowAny,)), name='openapi-schema'),
+    path('openapi/', get_schema_view(title="Tandoor API", version=TANDOOR_VERSION, public=True, permission_classes=(permissions.AllowAny,)), name='openapi-schema'),
     path('api/', include((router.urls, 'api'))),
     path('api-auth/', include('rest_framework.urls', namespace='rest_framework')),
     path('api-token-auth/', CustomAuthToken.as_view()),
