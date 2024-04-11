@@ -44,12 +44,9 @@ class WritableNestedModelSerializer(WNMS):
     def to_internal_value(self, data):
         # iterate through every field on the posted object
         for f in list(data):
-            has_nested_pk = False
             if f not in self.fields:
                 continue
             elif issubclass(self.fields[f].__class__, serializers.Serializer):
-                many = False
-                model = self.fields[f].Meta.model
                 # if the field is a serializer and an integer, assume its an ID of an existing object
                 if isinstance(data[f], int):
                     # only retrieve serializer required fields
@@ -409,7 +406,7 @@ class UserPreferenceSerializer(WritableNestedModelSerializer):
         fields = ('user', 'image', 'theme', 'nav_bg_color', 'nav_text_color', 'nav_show_logo', 'default_unit', 'default_page', 'use_fractions', 'use_kj', 'plan_share',
                   'nav_sticky', 'ingredient_decimals', 'comments', 'shopping_auto_sync', 'mealplan_autoadd_shopping', 'food_inherit_default', 'default_delay',
                   'mealplan_autoinclude_related', 'mealplan_autoexclude_onhand', 'shopping_share', 'shopping_recent_days', 'csv_delim', 'csv_prefix', 'filter_to_supermarket',
-                  'shopping_add_onhand', 'left_handed', 'show_step_ingredients', 'food_children_exist')
+                  'shopping_add_onhand', 'left_handed', 'show_step_ingredients', 'food_children_exist', 'ingredient_context')
 
 
 class StorageSerializer(SpacedModelSerializer):
