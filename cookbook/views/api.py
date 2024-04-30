@@ -80,8 +80,7 @@ from cookbook.serializer import (AccessTokenSerializer, AutomationSerializer, Au
                                  RecipeOverviewSerializer, RecipeSerializer, RecipeShoppingUpdateSerializer, RecipeSimpleSerializer, ShoppingListEntryBulkSerializer,
                                  ShoppingListEntrySerializer, ShoppingListRecipeSerializer, SpaceSerializer, StepSerializer, StorageSerializer,
                                  SupermarketCategoryRelationSerializer, SupermarketCategorySerializer, SupermarketSerializer, SyncLogSerializer, SyncSerializer,
-                                 UnitConversionSerializer, UnitSerializer, UserFileSerializer, UserPreferenceSerializer, UserSerializer, UserSpaceSerializer, ViewLogSerializer,
-                                 )
+                                 UnitConversionSerializer, UnitSerializer, UserFileSerializer, UserPreferenceSerializer, UserSerializer, UserSpaceSerializer, ViewLogSerializer)
 from cookbook.views.import_export import get_integration
 from recipes import settings
 from recipes.settings import DRF_THROTTLE_RECIPE_URL_IMPORT, FDC_API_KEY
@@ -551,6 +550,7 @@ class FoodViewSet(viewsets.ModelViewSet, TreeMixin):
         shopping_status = ShoppingListEntry.objects.filter(space=self.request.space, food=OuterRef('id'), checked=False).values('id')
         # onhand_status = self.queryset.annotate(onhand_status=Exists(onhand_users_set__in=[shared_users]))
         return self.queryset \
+            .annotate(shopping_status=Exists(shopping_status)) \
             .prefetch_related('onhand_users', 'inherit_fields', 'child_inherit_fields', 'substitute') \
             .select_related('recipe', 'supermarket_category')
 
