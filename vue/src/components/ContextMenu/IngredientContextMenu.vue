@@ -1,6 +1,6 @@
 <template>
     <div>
-        <div class="dropdown d-print-none" v-if="ingredient.food">
+        <div class="dropdown d-print-none p-0" v-if="ingredient.food">
             <a
                 class="btn shadow-none p-0"
                 href="javascript:void(0);"
@@ -11,9 +11,9 @@
                 aria-expanded="false"
                 @click="clicked = true"
             >
-                <i v-if="onhand || ignore_shopping" class="fas fa-ellipsis-v fa-sm text-success"></i>
-                <i v-else-if="!onhand && sub_onhand" class="fas fa-ellipsis-v fa-sm text-warning"></i>
-                <i v-else class="fas fa-ellipsis-v fa-sm"></i>
+                <i v-if="onhand || ignore_shopping" class="p-0 fas fa-ellipsis-v fa-sm text-success"></i>
+                <i v-else-if="!onhand && sub_onhand" class="p-0 fas fa-ellipsis-v fa-sm text-warning"></i>
+                <i v-else class="p-0 fas fa-ellipsis-v fa-sm"></i>
             </a>
 
             <div class="dropdown-menu dropdown-menu-right" aria-labelledby="dropdownMenuLink">
