@@ -264,7 +264,7 @@ class UserFileSerializer(serializers.ModelSerializer):
     class Meta:
         model = UserFile
         fields = ('id', 'name', 'file', 'file_download', 'preview', 'file_size_kb')
-        read_only_fields = ('id', 'file_size_kb')
+        read_only_fields = ['id', 'file_size_kb']
         extra_kwargs = {"file": {"required": False}}
 
 
@@ -292,7 +292,7 @@ class UserFileViewSerializer(serializers.ModelSerializer):
     class Meta:
         model = UserFile
         fields = ('id', 'name', 'file_download', 'preview')
-        read_only_fields = ('id', 'file')
+        read_only_fields = ['id', 'file']
 
 
 class SpaceSerializer(WritableNestedModelSerializer):
@@ -332,7 +332,7 @@ class SpaceSerializer(WritableNestedModelSerializer):
                   'recipe_count', 'file_size_mb', 'image', 'nav_logo', 'space_theme', 'custom_space_theme', 'nav_bg_color', 'nav_text_color', 'logo_color_32', 'logo_color_128',
                   'logo_color_144', 'logo_color_180', 'logo_color_192', 'logo_color_512', 'logo_color_svg',
                   )
-        read_only_fields = ('id', 'created_by', 'created_at', 'max_recipes', 'max_file_storage_mb', 'max_users', 'allow_sharing', 'demo')
+        read_only_fields = ['id', 'created_by', 'created_at', 'max_recipes', 'max_file_storage_mb', 'max_users', 'allow_sharing', 'demo']
 
 
 class UserSpaceSerializer(WritableNestedModelSerializer):
@@ -350,7 +350,7 @@ class UserSpaceSerializer(WritableNestedModelSerializer):
     class Meta:
         model = UserSpace
         fields = ('id', 'user', 'space', 'groups', 'active', 'internal_note', 'invite_link', 'created_at', 'updated_at', )
-        read_only_fields = ('id', 'invite_link', 'created_at', 'updated_at', 'space')
+        read_only_fields = ['id', 'invite_link', 'created_at', 'updated_at', 'space']
 
 
 class SpacedModelSerializer(serializers.ModelSerializer):
@@ -372,7 +372,7 @@ class MealTypeSerializer(SpacedModelSerializer, WritableNestedModelSerializer):
         list_serializer_class = SpaceFilterSerializer
         model = MealType
         fields = ('id', 'name', 'order', 'time', 'color', 'default', 'created_by')
-        read_only_fields = ('created_by')
+        read_only_fields = ['created_by']
 
 
 class UserPreferenceSerializer(WritableNestedModelSerializer):
@@ -457,7 +457,7 @@ class KeywordLabelSerializer(serializers.ModelSerializer):
         list_serializer_class = SpaceFilterSerializer
         model = Keyword
         fields = ('id', 'label')
-        read_only_fields = ('id', 'label')
+        read_only_fields = ['id', 'label']
 
 
 class KeywordSerializer(UniqueFieldsMixin, ExtendedRecipeMixin):
@@ -478,7 +478,7 @@ class KeywordSerializer(UniqueFieldsMixin, ExtendedRecipeMixin):
     class Meta:
         model = Keyword
         fields = ('id', 'name', 'label', 'description', 'image', 'parent', 'numchild', 'numrecipe', 'created_at', 'updated_at', 'full_name')
-        read_only_fields = ('id', 'label', 'numchild', 'parent', 'image')
+        read_only_fields = ['id', 'label', 'numchild', 'parent', 'image']
 
 
 class UnitSerializer(UniqueFieldsMixin, ExtendedRecipeMixin, OpenDataModelMixin):
@@ -507,7 +507,7 @@ class UnitSerializer(UniqueFieldsMixin, ExtendedRecipeMixin, OpenDataModelMixin)
     class Meta:
         model = Unit
         fields = ('id', 'name', 'plural_name', 'description', 'base_unit', 'numrecipe', 'image', 'open_data_slug')
-        read_only_fields = ('id', 'numrecipe', 'image')
+        read_only_fields = ['id', 'numrecipe', 'image']
 
 
 class SupermarketCategorySerializer(UniqueFieldsMixin, WritableNestedModelSerializer, OpenDataModelMixin):
@@ -713,7 +713,7 @@ class FoodSerializer(UniqueFieldsMixin, WritableNestedModelSerializer, ExtendedR
                   'supermarket_category', 'image', 'parent', 'numchild', 'numrecipe', 'inherit_fields', 'full_name', 'ignore_shopping', 'substitute', 'substitute_siblings',
                   'substitute_children', 'substitute_onhand', 'child_inherit_fields', 'open_data_slug',
                   )
-        read_only_fields = ('id', 'numchild', 'parent', 'image', 'numrecipe')
+        read_only_fields = ['id', 'numchild', 'parent', 'image', 'numrecipe']
 
 
 class IngredientSimpleSerializer(WritableNestedModelSerializer):
@@ -1103,7 +1103,7 @@ class ShoppingListEntrySerializer(WritableNestedModelSerializer):
     class Meta:
         model = ShoppingListEntry
         fields = ('id', 'list_recipe', 'food', 'unit', 'amount', 'order', 'checked', 'recipe_mealplan', 'created_by', 'created_at', 'updated_at', 'completed_at', 'delay_until')
-        read_only_fields = ('id', 'created_by', 'created_at', 'updated_at')
+        read_only_fields = ['id', 'created_by', 'created_at', 'updated_at']
 
 
 class ShoppingListEntryBulkSerializer(serializers.Serializer):
@@ -1135,7 +1135,7 @@ class CookLogSerializer(serializers.ModelSerializer):
     class Meta:
         model = CookLog
         fields = ('id', 'recipe', 'servings', 'rating', 'comment', 'created_by', 'created_at', 'updated_at')
-        read_only_fields = ('id', 'created_by')
+        read_only_fields = ['id', 'created_by']
 
 
 class ViewLogSerializer(serializers.ModelSerializer):
@@ -1218,7 +1218,7 @@ class InviteLinkSerializer(WritableNestedModelSerializer):
     class Meta:
         model = InviteLink
         fields = ('id', 'uuid', 'email', 'group', 'valid_until', 'used_by', 'reusable', 'internal_note', 'created_by', 'created_at')
-        read_only_fields = ('id', 'uuid', 'created_by', 'created_at')
+        read_only_fields = ['id', 'uuid', 'created_by', 'created_at']
 
 
 # CORS, REST and Scopes aren't currently working
@@ -1233,14 +1233,14 @@ class BookmarkletImportListSerializer(serializers.ModelSerializer):
     class Meta:
         model = BookmarkletImport
         fields = ('id', 'url', 'created_by', 'created_at')
-        read_only_fields = ('created_by', 'space')
+        read_only_fields = ['created_by', 'space']
 
 
 class BookmarkletImportSerializer(BookmarkletImportListSerializer):
     class Meta:
         model = BookmarkletImport
         fields = ('id', 'url', 'html', 'created_by', 'created_at')
-        read_only_fields = ('created_by', 'space')
+        read_only_fields = ['created_by', 'space']
 
 
 # OAuth / Auth Token related Serializers
@@ -1261,7 +1261,7 @@ class AccessTokenSerializer(serializers.ModelSerializer):
     class Meta:
         model = AccessToken
         fields = ('id', 'token', 'expires', 'scope', 'created', 'updated')
-        read_only_fields = ('id', 'token')
+        read_only_fields = ['id', 'token']
 
 
 # Export/Import Serializers
