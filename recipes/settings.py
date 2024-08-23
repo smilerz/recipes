@@ -30,6 +30,8 @@ SECRET_KEY = os.getenv('SECRET_KEY') if os.getenv('SECRET_KEY') else 'INSECURE_S
 DEBUG = bool(int(os.getenv('DEBUG', True)))
 DEBUG_TOOLBAR = bool(int(os.getenv('DEBUG_TOOLBAR', True)))
 
+LOG_LEVEL = os.getenv("LOG_LEVEL", "WARNING")
+
 SOCIAL_DEFAULT_ACCESS = bool(int(os.getenv('SOCIAL_DEFAULT_ACCESS', False)))
 SOCIAL_DEFAULT_GROUP = os.getenv('SOCIAL_DEFAULT_GROUP', 'guest')
 
@@ -39,6 +41,31 @@ SPACE_DEFAULT_MAX_FILES = int(os.getenv('SPACE_DEFAULT_MAX_FILES', 0))
 SPACE_DEFAULT_ALLOW_SHARING = bool(int(os.getenv('SPACE_DEFAULT_ALLOW_SHARING', True)))
 
 INTERNAL_IPS = os.getenv('INTERNAL_IPS').split(',') if os.getenv('INTERNAL_IPS') else ['127.0.0.1']
+
+# Django Logging
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    'formatters': {
+        'verbose': {
+            "format": "{threadName} {levelname} {asctime} {name} {message}",
+            'style': '{',
+        },
+    },
+    "handlers": {
+        "console": {
+            "class": "logging.StreamHandler",
+            'formatter': 'verbose',
+        },
+    },
+    "loggers": {
+        'recipes': {
+            'handlers': ['console'],
+            'level': LOG_LEVEL,
+        },
+    },
+}
+
 
 # allow djangos wsgi server to server mediafiles
 GUNICORN_MEDIA = bool(int(os.getenv('GUNICORN_MEDIA', False)))
@@ -104,10 +131,30 @@ MESSAGE_TAGS = {messages.ERROR: 'danger'}
 # Application definition
 
 INSTALLED_APPS = [
-    'django.contrib.admin', 'django.contrib.auth', 'django.contrib.contenttypes', 'django.contrib.sessions', 'django.contrib.messages', 'django.contrib.sites',
-    'django.contrib.staticfiles', 'django.contrib.postgres', 'oauth2_provider', 'django_prometheus', 'django_tables2', 'corsheaders', 'crispy_forms', 'crispy_bootstrap4',
-    'rest_framework', 'rest_framework.authtoken', 'django_cleanup.apps.CleanupConfig', 'webpack_loader', 'django_js_reverse', 'hcaptcha', 'allauth', 'allauth.account',
-    'allauth.socialaccount', 'cookbook.apps.CookbookConfig', 'treebeard',
+    'django.contrib.admin',
+    'django.contrib.auth',
+    'django.contrib.contenttypes',
+    'django.contrib.sessions',
+    'django.contrib.messages',
+    'django.contrib.sites',
+    'django.contrib.staticfiles',
+    'django.contrib.postgres',
+    'oauth2_provider',
+    'django_tables2',
+    'corsheaders',
+    'crispy_forms',
+    'crispy_bootstrap4',
+    'rest_framework',
+    'rest_framework.authtoken',
+    'django_cleanup.apps.CleanupConfig',
+    'webpack_loader',
+    'django_js_reverse',
+    'hcaptcha',
+    'allauth',
+    'allauth.account',
+    'allauth.socialaccount',
+    'cookbook.apps.CookbookConfig',
+    'treebeard',
 ]
 
 PLUGINS_DIRECTORY = os.path.join(BASE_DIR, 'recipes', 'plugins')
@@ -177,10 +224,18 @@ ENABLE_PDF_EXPORT = bool(int(os.getenv('ENABLE_PDF_EXPORT', False)))
 EXPORT_FILE_CACHE_DURATION = int(os.getenv('EXPORT_FILE_CACHE_DURATION', 600))
 
 MIDDLEWARE = [
-    'corsheaders.middleware.CorsMiddleware', 'django.middleware.security.SecurityMiddleware', 'whitenoise.middleware.WhiteNoiseMiddleware',
-    'django.contrib.sessions.middleware.SessionMiddleware', 'django.middleware.common.CommonMiddleware', 'django.middleware.csrf.CsrfViewMiddleware',
-    'django.contrib.auth.middleware.AuthenticationMiddleware', 'django.contrib.messages.middleware.MessageMiddleware', 'django.middleware.locale.LocaleMiddleware',
-    'django.middleware.clickjacking.XFrameOptionsMiddleware', 'cookbook.helper.scope_middleware.ScopeMiddleware', 'allauth.account.middleware.AccountMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
+    'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
+    'django.contrib.sessions.middleware.SessionMiddleware',
+    'django.middleware.common.CommonMiddleware',
+    'django.middleware.csrf.CsrfViewMiddleware',
+    'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'django.contrib.messages.middleware.MessageMiddleware',
+    'django.middleware.locale.LocaleMiddleware',
+    'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'cookbook.helper.scope_middleware.ScopeMiddleware',
+    'allauth.account.middleware.AccountMiddleware',
 ]
 
 if DEBUG_TOOLBAR:
@@ -195,6 +250,7 @@ if bool(int(os.getenv('SQL_DEBUG', False))):
 
 if ENABLE_METRICS:
     MIDDLEWARE += 'django_prometheus.middleware.PrometheusAfterMiddleware',
+    INSTALLED_APPS += 'django_prometheus',
 
 # Auth related settings
 AUTHENTICATION_BACKENDS = []
@@ -210,7 +266,11 @@ if LDAP_AUTH:
     AUTH_LDAP_START_TLS = bool(int(os.getenv('AUTH_LDAP_START_TLS', False)))
     AUTH_LDAP_BIND_DN = os.getenv('AUTH_LDAP_BIND_DN')
     AUTH_LDAP_BIND_PASSWORD = os.getenv('AUTH_LDAP_BIND_PASSWORD')
-    AUTH_LDAP_USER_SEARCH = LDAPSearch(os.getenv('AUTH_LDAP_USER_SEARCH_BASE_DN'), ldap.SCOPE_SUBTREE, os.getenv('AUTH_LDAP_USER_SEARCH_FILTER_STR', '(uid=%(user)s)'), )
+    AUTH_LDAP_USER_SEARCH = LDAPSearch(
+        os.getenv('AUTH_LDAP_USER_SEARCH_BASE_DN'),
+        ldap.SCOPE_SUBTREE,
+        os.getenv('AUTH_LDAP_USER_SEARCH_FILTER_STR', '(uid=%(user)s)'),
+    )
     AUTH_LDAP_USER_ATTR_MAP = ast.literal_eval(os.getenv('AUTH_LDAP_USER_ATTR_MAP')) if os.getenv('AUTH_LDAP_USER_ATTR_MAP') else {
         'first_name': 'givenName',
         'last_name': 'sn',
@@ -221,23 +281,16 @@ if LDAP_AUTH:
     if 'AUTH_LDAP_TLS_CACERTFILE' in os.environ:
         AUTH_LDAP_GLOBAL_OPTIONS = {ldap.OPT_X_TLS_CACERTFILE: os.getenv('AUTH_LDAP_TLS_CACERTFILE')}
     if DEBUG:
-        LOGGING = {
-            "version": 1,
-            "disable_existing_loggers": False,
-            "handlers": {
-                "console": {
-                    "class": "logging.StreamHandler"
-                }
-            },
-            "loggers": {
-                "django_auth_ldap": {
-                    "level": "DEBUG",
-                    "handlers": ["console"]
-                }
-            },
+        LOGGING["loggers"]["django_auth_ldap"] = {
+            "level": "DEBUG",
+            "handlers": ["console"]
         }
 
-AUTHENTICATION_BACKENDS += ['django.contrib.auth.backends.ModelBackend', 'allauth.account.auth_backends.AuthenticationBackend', ]
+
+AUTHENTICATION_BACKENDS += [
+    'django.contrib.auth.backends.ModelBackend',
+    'allauth.account.auth_backends.AuthenticationBackend',
+]
 
 # django allauth site id
 SITE_ID = int(os.getenv('ALLAUTH_SITE_ID', 1))
@@ -251,15 +304,20 @@ if REMOTE_USER_AUTH:
 # Password validation
 # https://docs.djangoproject.com/en/2.0/ref/settings/#auth-password-validators
 
-AUTH_PASSWORD_VALIDATORS = [{
-    'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
-}, {
-    'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
-}, {
-    'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
-}, {
-    'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
-}, ]
+AUTH_PASSWORD_VALIDATORS = [
+    {
+        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
+    },
+    {
+        'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
+    },
+    {
+        'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
+    },
+    {
+        'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
+    },
+]
 
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
@@ -268,94 +326,111 @@ READ_SCOPE = 'read'
 WRITE_SCOPE = 'write'
 
 REST_FRAMEWORK = {
-    'DEFAULT_AUTHENTICATION_CLASSES':
-    ('rest_framework.authentication.SessionAuthentication', 'oauth2_provider.contrib.rest_framework.OAuth2Authentication', 'rest_framework.authentication.BasicAuthentication',
-     ),
-    'DEFAULT_PERMISSION_CLASSES': ['rest_framework.permissions.IsAuthenticated', ],
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework.authentication.SessionAuthentication',
+        'oauth2_provider.contrib.rest_framework.OAuth2Authentication',
+        'rest_framework.authentication.BasicAuthentication',
+    ),
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.IsAuthenticated',
+    ],
 }
 
 ROOT_URLCONF = 'recipes.urls'
 
-TEMPLATES = [{
-    'BACKEND': 'django.template.backends.django.DjangoTemplates',
-    'DIRS': [os.path.join(BASE_DIR, 'templates'), os.path.join(BASE_DIR, 'cookbook', 'templates')],
-    'APP_DIRS': True,
-    'OPTIONS': {
-        'context_processors': [
-            'django.template.context_processors.debug', 'django.template.context_processors.request', 'django.contrib.auth.context_processors.auth',
-            'django.contrib.messages.context_processors.messages', 'django.template.context_processors.media', 'cookbook.helper.context_processors.context_settings',
-        ],
+TEMPLATES = [
+    {
+        'BACKEND': 'django.template.backends.django.DjangoTemplates',
+        'DIRS': [os.path.join(BASE_DIR, 'templates'), os.path.join(BASE_DIR, 'cookbook', 'templates')],
+        'APP_DIRS': True,
+        'OPTIONS': {
+            'context_processors': [
+                'django.template.context_processors.debug',
+                'django.template.context_processors.request',
+                'django.contrib.auth.context_processors.auth',
+                'django.contrib.messages.context_processors.messages',
+                'django.template.context_processors.media',
+                'cookbook.helper.context_processors.context_settings',
+            ],
+        },
     },
-}, ]
+]
 
 WSGI_APPLICATION = 'recipes.wsgi.application'
 
 # Database
 # Load settings from env files
-if os.getenv('DATABASE_URL'):
-    match = re.match(r'(?P<schema>\w+):\/\/(?:(?P<user>[\w\d_-]+)(?::(?P<password>[^@]+))?@)?(?P<host>[^:/]+)(?::(?P<port>\d+))?(?:/(?P<database>[\w\d/._-]+))?',
-                     os.getenv('DATABASE_URL'))
-    settings = match.groupdict()
-    schema = settings['schema']
-    if schema.startswith('postgres'):
-        engine = 'django.db.backends.postgresql'
-    elif schema == 'sqlite':
-        if not os.path.exists(db_path := os.path.dirname(settings['database'])):
-            os.makedirs(db_path)
-        engine = 'django.db.backends.sqlite3'
+DATABASE_URL = os.getenv('DATABASE_URL') or None
+DB_OPTIONS = os.getenv('DB_OPTIONS') or None
+DB_ENGINE = os.getenv('DB_ENGINE') or None
+POSTGRES_HOST = os.getenv('POSTGRES_HOST') or None
+POSTGRES_PORT = os.getenv('POSTGRES_PORT') or None
+POSTGRES_USER = os.getenv('POSTGRES_USER') or None
+POSTGRES_PASSWORD = os.getenv('POSTGRES_PASSWORD') or None
+POSTGRES_DB = os.getenv('POSTGRES_DB') or None
+
+
+def setup_database(db_url=None, db_options=None, db_engine=None, pg_host=None, pg_port=None, pg_user=None, pg_password=None, pg_db=None):
+    global DATABASE_URL, DB_ENGINE, DB_OPTIONS, POSTGRES_HOST, POSTGRES_PORT, POSTGRES_USER, POSTGRES_PASSWORD, POSTGRES_DB
+
+    DATABASE_URL = db_url or DATABASE_URL
+    DB_OPTIONS = db_options or DB_OPTIONS
+    DB_ENGINE = db_engine or DB_ENGINE
+    POSTGRES_HOST = pg_host or POSTGRES_HOST
+    POSTGRES_PORT = pg_port or POSTGRES_PORT
+    POSTGRES_USER = pg_user or POSTGRES_USER
+    POSTGRES_PASSWORD = pg_password or POSTGRES_PASSWORD
+    POSTGRES_DB = pg_db or POSTGRES_DB
+
+    if DATABASE_URL:
+        match = re.match(r'(?P<schema>\w+):\/\/(?:(?P<user>[\w\d_-]+)(?::(?P<password>[^@]+))?@)?(?P<host>[^:/]+)(?::(?P<port>\d+))?(?:/(?P<database>[\w\d/._-]+))?', DATABASE_URL)
+        settings = match.groupdict()
+        schema = settings['schema']
+        if schema.startswith('postgres'):
+            engine = 'django.db.backends.postgresql'
+        elif schema == 'sqlite':
+            if (db_path := os.path.dirname(settings['database'])) and not os.path.exists(db_path):
+                os.makedirs(db_path)
+            engine = 'django.db.backends.sqlite3'
+        else:
+            raise Exception("Unsupported database schema: '%s'" % schema)
+
+        DATABASES = {
+            'default': {
+                'ENGINE': engine,
+                'OPTIONS': ast.literal_eval(DB_OPTIONS) if DB_OPTIONS else {},
+                'HOST': settings['host'],
+                'PORT': settings['port'],
+                'USER': settings['user'],
+                'PASSWORD': settings['password'],
+                'NAME': settings['database'],
+                'CONN_MAX_AGE': 600,
+            }
+        }
     else:
-        raise Exception("Unsupported database schema: '%s'" % schema)
-
-    DATABASES = {
-        'default': {
-            'ENGINE': engine,
-            'OPTIONS': ast.literal_eval(os.getenv('DB_OPTIONS')) if os.getenv('DB_OPTIONS') else {},
-            'HOST': settings['host'],
-            'PORT': settings['port'],
-            'USER': settings['user'],
-            'PASSWORD': settings['password'],
-            'NAME': settings['database'],
-            'CONN_MAX_AGE': 600,
+        DATABASES = {
+            'default': {
+                'ENGINE': DB_ENGINE if DB_ENGINE else 'django.db.backends.sqlite3',
+                'OPTIONS': ast.literal_eval(DB_OPTIONS) if DB_OPTIONS else {},
+                'HOST': POSTGRES_HOST,
+                'PORT': POSTGRES_PORT,
+                'USER': POSTGRES_USER,
+                'PASSWORD': POSTGRES_PASSWORD,
+                'NAME': POSTGRES_DB if POSTGRES_DB else 'db.sqlite3',
+                'CONN_MAX_AGE': 60,
+            }
         }
+    return DATABASES
+
+
+DATABASES = setup_database()
+
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+        'LOCATION': 'default',
     }
-else:
-    DATABASES = {
-        'default': {
-            'ENGINE': os.getenv('DB_ENGINE') if os.getenv('DB_ENGINE') else 'django.db.backends.sqlite3',
-            'OPTIONS': ast.literal_eval(os.getenv('DB_OPTIONS')) if os.getenv('DB_OPTIONS') else {},
-            'HOST': os.getenv('POSTGRES_HOST'),
-            'PORT': os.getenv('POSTGRES_PORT'),
-            'USER': os.getenv('POSTGRES_USER'),
-            'PASSWORD': os.getenv('POSTGRES_PASSWORD'),
-            'NAME': os.getenv('POSTGRES_DB') if os.getenv('POSTGRES_DB') else 'db.sqlite3',
-            'CONN_MAX_AGE': 60,
-        }
-    }
-
-# Local testing DB
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.postgresql',
-#         'HOST': 'localhost',
-#         'PORT': 5432,
-#         'USER': 'postgres',
-#         'PASSWORD': 'postgres',  # set to local pw
-#         'NAME': 'tandoor_app',
-#         'CONN_MAX_AGE': 600,
-#     }
-# }
-
-# SQLite testing DB
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.sqlite3',
-#         'OPTIONS': ast.literal_eval(os.getenv('DB_OPTIONS')) if os.getenv('DB_OPTIONS') else {},
-#         'NAME': 'db.sqlite3',
-#         'CONN_MAX_AGE': 600,
-#     }
-# }
-
-CACHES = {'default': {'BACKEND': 'django.core.cache.backends.locmem.LocMemCache', 'LOCATION': 'default', }}
+}
 
 # Vue webpack settings
 VUE_DIR = os.path.join(BASE_DIR, 'vue')
@@ -399,9 +474,25 @@ USE_L10N = True
 
 USE_TZ = True
 
-LANGUAGES = [('hy', _('Armenian ')), ('bg', _('Bulgarian')), ('ca', _('Catalan')), ('cs', _('Czech')), ('da', _('Danish')), ('nl', _('Dutch')), ('en', _('English')),
-             ('fr', _('French')), ('de', _('German')), ('hu', _('Hungarian')), ('it', _('Italian')), ('lv', _('Latvian')), ('nb', _('Norwegian ')), ('pl', _('Polish')),
-             ('ru', _('Russian')), ('es', _('Spanish')), ('sv', _('Swedish')), ]
+LANGUAGES = [
+    ('hy', _('Armenian ')),
+    ('bg', _('Bulgarian')),
+    ('ca', _('Catalan')),
+    ('cs', _('Czech')),
+    ('da', _('Danish')),
+    ('nl', _('Dutch')),
+    ('en', _('English')),
+    ('fr', _('French')),
+    ('de', _('German')),
+    ('hu', _('Hungarian')),
+    ('it', _('Italian')),
+    ('lv', _('Latvian')),
+    ('nb', _('Norwegian ')),
+    ('pl', _('Polish')),
+    ('ru', _('Russian')),
+    ('es', _('Spanish')),
+    ('sv', _('Swedish')),
+]
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/2.0/howto/static-files/
@@ -441,8 +532,6 @@ else:
 # Serve static files with gzip
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
-TEST_RUNNER = "cookbook.helper.CustomTestRunner.CustomTestRunner"
-
 # settings for cross site origin (CORS)
 # all origins allowed to support bookmarklet
 # all of this may or may not work with nginx or other web servers
@@ -469,7 +558,13 @@ ACCOUNT_EMAIL_SUBJECT_PREFIX = os.getenv('ACCOUNT_EMAIL_SUBJECT_PREFIX', '[Tando
 ACCOUNT_FORMS = {'signup': 'cookbook.forms.AllAuthSignupForm', 'reset_password': 'cookbook.forms.CustomPasswordResetForm'}
 
 ACCOUNT_EMAIL_UNKNOWN_ACCOUNTS = False
-ACCOUNT_RATE_LIMITS = {"change_password": "1/m/user", "reset_password": "1/m/ip,1/m/key", "reset_password_from_key": "1/m/ip", "signup": "5/m/ip", "login": "5/m/ip", }
+ACCOUNT_RATE_LIMITS = {
+    "change_password": "1/m/user",
+    "reset_password": "1/m/ip,1/m/key",
+    "reset_password_from_key": "1/m/ip",
+    "signup": "5/m/ip",
+    "login": "5/m/ip",
+}
 
 DISABLE_EXTERNAL_CONNECTORS = bool(int(os.getenv('DISABLE_EXTERNAL_CONNECTORS', False)))
 EXTERNAL_CONNECTORS_QUEUE_SIZE = int(os.getenv('EXTERNAL_CONNECTORS_QUEUE_SIZE', 100))

@@ -10,7 +10,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2024-03-10 07:18+0100\n"
+"POT-Creation-Date: 2024-08-01 15:04+0200\n"
 "PO-Revision-Date: 2023-12-05 09:15+0000\n"
 "Last-Translator: Ferenc <ugyes@freemail.hu>\n"
 "Language-Team: Hungarian <http://translate.tandoor.dev/projects/tandoor/"
@@ -281,31 +281,31 @@ msgstr "Elérte a maximális számú receptet a helyén."
 msgid "You have more users than allowed in your space."
 msgstr "Több felhasználója van, mint amennyit engedélyeztek a térben."
 
-#: .\cookbook\helper\recipe_url_import.py:304
+#: .\cookbook\helper\recipe_url_import.py:310
 msgid "reverse rotation"
 msgstr "Ellentétes irány"
 
-#: .\cookbook\helper\recipe_url_import.py:305
+#: .\cookbook\helper\recipe_url_import.py:311
 msgid "careful rotation"
 msgstr ""
 
-#: .\cookbook\helper\recipe_url_import.py:306
+#: .\cookbook\helper\recipe_url_import.py:312
 msgid "knead"
 msgstr "dagasztás"
 
-#: .\cookbook\helper\recipe_url_import.py:307
+#: .\cookbook\helper\recipe_url_import.py:313
 msgid "thicken"
 msgstr "sűrítés"
 
-#: .\cookbook\helper\recipe_url_import.py:308
+#: .\cookbook\helper\recipe_url_import.py:314
 msgid "warm up"
 msgstr "melegítés"
 
-#: .\cookbook\helper\recipe_url_import.py:309
+#: .\cookbook\helper\recipe_url_import.py:315
 msgid "ferment"
 msgstr "fermentálás"
 
-#: .\cookbook\helper\recipe_url_import.py:310
+#: .\cookbook\helper\recipe_url_import.py:316
 msgid "sous-vide"
 msgstr "sous-vide"
 
@@ -427,7 +427,7 @@ msgstr "Ebéd"
 msgid "Dinner"
 msgstr "Vacsora"
 
-#: .\cookbook\migrations\0047_auto_20200602_1133.py:29 .\cookbook\models.py:920
+#: .\cookbook\migrations\0047_auto_20200602_1133.py:29 .\cookbook\models.py:919
 msgid "Other"
 msgstr "Egyéb"
 
@@ -465,47 +465,47 @@ msgstr ""
 "Maximális tárhely a fájloknak MB-ban. 0 a korlátlan, -1 a fájlfeltöltés "
 "letiltásához."
 
-#: .\cookbook\models.py:455 .\cookbook\templates\search.html:7
+#: .\cookbook\models.py:454 .\cookbook\templates\search.html:7
 #: .\cookbook\templates\settings.html:18
 msgid "Search"
 msgstr "Keresés"
 
-#: .\cookbook\models.py:456 .\cookbook\templates\base.html:114
+#: .\cookbook\models.py:455 .\cookbook\templates\base.html:114
 #: .\cookbook\templates\meal_plan.html:7
 msgid "Meal-Plan"
 msgstr "Menüterv"
 
-#: .\cookbook\models.py:457 .\cookbook\templates\base.html:122
-#: .\cookbook\views\views.py:454
+#: .\cookbook\models.py:456 .\cookbook\templates\base.html:122
+#: .\cookbook\views\views.py:459
 msgid "Books"
 msgstr "Könyvek"
 
-#: .\cookbook\models.py:458 .\cookbook\templates\base.html:118
-#: .\cookbook\views\views.py:455
+#: .\cookbook\models.py:457 .\cookbook\templates\base.html:118
+#: .\cookbook\views\views.py:460
 msgid "Shopping"
 msgstr "Bevásárlás"
 
-#: .\cookbook\models.py:753
+#: .\cookbook\models.py:752
 msgid " is part of a recipe step and cannot be deleted"
 msgstr " egy recept része, ezért nem törölhető"
 
-#: .\cookbook\models.py:919
+#: .\cookbook\models.py:918
 #, fuzzy
 #| msgid "Automations"
 msgid "Nutrition"
 msgstr "Automatizációk"
 
-#: .\cookbook\models.py:919
+#: .\cookbook\models.py:918
 #, fuzzy
 #| msgid "Merge"
 msgid "Allergen"
 msgstr "Egyesítés"
 
-#: .\cookbook\models.py:920
+#: .\cookbook\models.py:919
 msgid "Price"
 msgstr ""
 
-#: .\cookbook\models.py:920
+#: .\cookbook\models.py:919
 msgid "Goal"
 msgstr ""
 
@@ -2125,14 +2125,14 @@ msgid "Media Serving"
 msgstr "Média kiszolgáló"
 
 #: .\cookbook\templates\system.html:47 .\cookbook\templates\system.html:61
-#: .\cookbook\templates\system.html:75 .\cookbook\templates\system.html:91
-#: .\cookbook\templates\system.html:102
+#: .\cookbook\templates\system.html:75 .\cookbook\templates\system.html:88
+#: .\cookbook\templates\system.html:102 .\cookbook\templates\system.html:113
 msgid "Warning"
 msgstr "Figyelmeztetés"
 
 #: .\cookbook\templates\system.html:47 .\cookbook\templates\system.html:61
-#: .\cookbook\templates\system.html:75 .\cookbook\templates\system.html:93
-#: .\cookbook\templates\system.html:102
+#: .\cookbook\templates\system.html:75 .\cookbook\templates\system.html:88
+#: .\cookbook\templates\system.html:104 .\cookbook\templates\system.html:113
 msgid "Ok"
 msgstr "Rendben"
 
@@ -2154,7 +2154,8 @@ msgstr ""
 "        "
 
 #: .\cookbook\templates\system.html:55 .\cookbook\templates\system.html:70
-#: .\cookbook\templates\system.html:83 .\cookbook\views\views.py:302
+#: .\cookbook\templates\system.html:83 .\cookbook\templates\system.html:94
+#: .\cookbook\views\views.py:303
 msgid "Everything is fine!"
 msgstr "Minden rendben van!"
 
@@ -2207,20 +2208,33 @@ msgstr ""
 "        "
 
 #: .\cookbook\templates\system.html:86
+msgid "Allowed Hosts"
+msgstr ""
+
+#: .\cookbook\templates\system.html:90
+msgid ""
+"\n"
+"            Your allowed hosts are configured to allow every host. This "
+"might be ok in some setups but should be avoided. Please see the docs about "
+"this.\n"
+"        "
+msgstr ""
+
+#: .\cookbook\templates\system.html:97
 msgid "Database"
 msgstr "Adatbázis"
 
-#: .\cookbook\templates\system.html:89
+#: .\cookbook\templates\system.html:100
 msgid "Info"
 msgstr "Információ"
 
-#: .\cookbook\templates\system.html:99 .\cookbook\templates\system.html:116
+#: .\cookbook\templates\system.html:110 .\cookbook\templates\system.html:127
 #, fuzzy
 #| msgid "Use fractions"
 msgid "Migrations"
 msgstr "Törtek használata"
 
-#: .\cookbook\templates\system.html:105
+#: .\cookbook\templates\system.html:116
 msgid ""
 "\n"
 "            Migrations should never fail!\n"
@@ -2232,19 +2246,19 @@ msgid ""
 "        "
 msgstr ""
 
-#: .\cookbook\templates\system.html:171
+#: .\cookbook\templates\system.html:182
 msgid "False"
 msgstr ""
 
-#: .\cookbook\templates\system.html:171
+#: .\cookbook\templates\system.html:182
 msgid "True"
 msgstr ""
 
-#: .\cookbook\templates\system.html:196
+#: .\cookbook\templates\system.html:207
 msgid "Hide"
 msgstr ""
 
-#: .\cookbook\templates\system.html:199
+#: .\cookbook\templates\system.html:210
 #, fuzzy
 #| msgid "Show Log"
 msgid "Show"
@@ -2254,81 +2268,81 @@ msgstr "Napló megjelenítése"
 msgid "URL Import"
 msgstr "URL importálása"
 
-#: .\cookbook\views\api.py:121 .\cookbook\views\api.py:214
+#: .\cookbook\views\api.py:120 .\cookbook\views\api.py:213
 msgid "Parameter updated_at incorrectly formatted"
 msgstr "Az updated_at paraméter helytelenül van formázva"
 
-#: .\cookbook\views\api.py:235 .\cookbook\views\api.py:341
+#: .\cookbook\views\api.py:234 .\cookbook\views\api.py:340
 #, python-brace-format
 msgid "No {self.basename} with id {pk} exists"
 msgstr "Nem létezik {self.basename} azonosítóval {pk}"
 
-#: .\cookbook\views\api.py:239
+#: .\cookbook\views\api.py:238
 msgid "Cannot merge with the same object!"
 msgstr "Nem egyesíthető ugyanazzal az objektummal!"
 
-#: .\cookbook\views\api.py:246
+#: .\cookbook\views\api.py:245
 #, python-brace-format
 msgid "No {self.basename} with id {target} exists"
 msgstr "Nem létezik {self.basename} azonosítóval {target}"
 
-#: .\cookbook\views\api.py:251
+#: .\cookbook\views\api.py:250
 msgid "Cannot merge with child object!"
 msgstr "Nem lehet egyesíteni a gyermekobjektummal!"
 
-#: .\cookbook\views\api.py:289
+#: .\cookbook\views\api.py:288
 #, python-brace-format
 msgid "{source.name} was merged successfully with {target.name}"
 msgstr "{source.name} sikeresen egyesült a {target.name} -vel"
 
-#: .\cookbook\views\api.py:294
+#: .\cookbook\views\api.py:293
 #, python-brace-format
 msgid "An error occurred attempting to merge {source.name} with {target.name}"
 msgstr "Hiba történt a {source.name} és a {target.name} egyesítése során"
 
-#: .\cookbook\views\api.py:350
+#: .\cookbook\views\api.py:349
 #, python-brace-format
 msgid "{child.name} was moved successfully to the root."
 msgstr "{child.name} sikeresen átkerült a gyökérbe."
 
-#: .\cookbook\views\api.py:353 .\cookbook\views\api.py:371
+#: .\cookbook\views\api.py:352 .\cookbook\views\api.py:370
 msgid "An error occurred attempting to move "
 msgstr "Hiba történt az áthelyezés közben "
 
-#: .\cookbook\views\api.py:356
+#: .\cookbook\views\api.py:355
 msgid "Cannot move an object to itself!"
 msgstr "Nem lehet egy objektumot önmagába mozgatni!"
 
-#: .\cookbook\views\api.py:362
+#: .\cookbook\views\api.py:361
 #, python-brace-format
 msgid "No {self.basename} with id {parent} exists"
 msgstr "Nem létezik {self.basename} azonosítóval {parent}"
 
-#: .\cookbook\views\api.py:368
+#: .\cookbook\views\api.py:367
 #, python-brace-format
 msgid "{child.name} was moved successfully to parent {parent.name}"
 msgstr "{child.name} sikeresen átkerült a {parent.name} szülőhöz"
 
-#: .\cookbook\views\api.py:590
+#: .\cookbook\views\api.py:589
 #, python-brace-format
 msgid "{obj.name} was removed from the shopping list."
 msgstr "{obj.name} lekerült a bevásárlólistáról."
 
-#: .\cookbook\views\api.py:595 .\cookbook\views\api.py:1038
-#: .\cookbook\views\api.py:1051
+#: .\cookbook\views\api.py:594 .\cookbook\views\api.py:1037
+#: .\cookbook\views\api.py:1050
 #, python-brace-format
 msgid "{obj.name} was added to the shopping list."
 msgstr "{obj.name} hozzá lett adva a bevásárlólistához."
 
-#: .\cookbook\views\api.py:743
+#: .\cookbook\views\api.py:742
 msgid "Filter meal plans from date (inclusive) in the format of YYYY-MM-DD."
 msgstr ""
 
-#: .\cookbook\views\api.py:744
+#: .\cookbook\views\api.py:743
 msgid "Filter meal plans to date (inclusive) in the format of YYYY-MM-DD."
 msgstr ""
 
-#: .\cookbook\views\api.py:745
+#: .\cookbook\views\api.py:744
 #, fuzzy
 #| msgid "ID of recipe a step is part of. For multiple repeat parameter."
 msgid "Filter meal plans with MealType ID. For multiple repeat parameter."
@@ -2336,17 +2350,17 @@ msgstr ""
 "A recept azonosítója, amelynek egy lépés része. Többszörös ismétlés esetén "
 "paraméter."
 
-#: .\cookbook\views\api.py:873
+#: .\cookbook\views\api.py:872
 msgid "ID of recipe a step is part of. For multiple repeat parameter."
 msgstr ""
 "A recept azonosítója, amelynek egy lépés része. Többszörös ismétlés esetén "
 "paraméter."
 
-#: .\cookbook\views\api.py:874
+#: .\cookbook\views\api.py:873
 msgid "Query string matched (fuzzy) against object name."
 msgstr "A lekérdezés karakterlánca az objektum nevével összevetve (fuzzy)."
 
-#: .\cookbook\views\api.py:910
+#: .\cookbook\views\api.py:909
 msgid ""
 "Query string matched (fuzzy) against recipe name. In the future also "
 "fulltext search."
@@ -2354,7 +2368,7 @@ msgstr ""
 "A lekérdezési karakterláncot a recept nevével összevetve (fuzzy). A jövőben "
 "teljes szöveges keresés is."
 
-#: .\cookbook\views\api.py:911
+#: .\cookbook\views\api.py:910
 msgid ""
 "ID of keyword a recipe should have. For multiple repeat parameter. "
 "Equivalent to keywords_or"
@@ -2362,69 +2376,69 @@ msgstr ""
 "A recept kulcsszavának azonosítója. Többszörös ismétlődő paraméter esetén. "
 "Egyenértékű a keywords_or kulcsszavakkal"
 
-#: .\cookbook\views\api.py:912
+#: .\cookbook\views\api.py:911
 msgid ""
 "Keyword IDs, repeat for multiple. Return recipes with any of the keywords"
 msgstr ""
 "Kulcsszó azonosítók. Többször is megadható. A megadott kulcsszavak "
 "mindegyikéhez tartozó receptek listázza"
 
-#: .\cookbook\views\api.py:913
+#: .\cookbook\views\api.py:912
 msgid ""
 "Keyword IDs, repeat for multiple. Return recipes with all of the keywords."
 msgstr ""
 "Kulcsszó azonosítók. Többször is megadható. Az összes megadott kulcsszót "
 "tartalmazó receptek listázása."
 
-#: .\cookbook\views\api.py:914
+#: .\cookbook\views\api.py:913
 msgid ""
 "Keyword IDs, repeat for multiple. Exclude recipes with any of the keywords."
 msgstr ""
 "Kulcsszó azonosító. Többször is megadható. Kizárja a recepteket a megadott "
 "kulcsszavak egyikéből."
 
-#: .\cookbook\views\api.py:915
+#: .\cookbook\views\api.py:914
 msgid ""
 "Keyword IDs, repeat for multiple. Exclude recipes with all of the keywords."
 msgstr ""
 "Kulcsszó azonosítók. Többször is megadható. Kizárja az összes megadott "
 "kulcsszóval rendelkező receptet."
 
-#: .\cookbook\views\api.py:916
+#: .\cookbook\views\api.py:915
 msgid "ID of food a recipe should have. For multiple repeat parameter."
 msgstr ""
 "Annak az összetevőnek az azonosítója, amelynek receptjeit fel kell sorolni. "
 "Többször is megadható."
 
-#: .\cookbook\views\api.py:917
+#: .\cookbook\views\api.py:916
 msgid "Food IDs, repeat for multiple. Return recipes with any of the foods"
 msgstr ""
 "Összetevő azonosító. Többször is megadható. Legalább egy összetevő "
 "receptjeinek listája"
 
-#: .\cookbook\views\api.py:918
+#: .\cookbook\views\api.py:917
 msgid "Food IDs, repeat for multiple. Return recipes with all of the foods."
 msgstr ""
 "Összetevő azonosító. Többször is megadható. Az összes megadott összetevőt "
 "tartalmazó receptek listája."
 
-#: .\cookbook\views\api.py:919
+#: .\cookbook\views\api.py:918
 msgid "Food IDs, repeat for multiple. Exclude recipes with any of the foods."
 msgstr ""
 "Összetevő azonosító. Többször is megadható. Kizárja azokat a recepteket, "
 "amelyek a megadott összetevők bármelyikét tartalmazzák."
 
-#: .\cookbook\views\api.py:920
+#: .\cookbook\views\api.py:919
 msgid "Food IDs, repeat for multiple. Exclude recipes with all of the foods."
 msgstr ""
 "Összetevő azonosító. Többször is megadható. Kizárja az összes megadott "
 "összetevőt tartalmazó recepteket."
 
-#: .\cookbook\views\api.py:921
+#: .\cookbook\views\api.py:920
 msgid "ID of unit a recipe should have."
 msgstr "A recepthez tartozó mértékegység azonosítója."
 
-#: .\cookbook\views\api.py:922
+#: .\cookbook\views\api.py:921
 msgid ""
 "Rating a recipe should have or greater. [0 - 5] Negative value filters "
 "rating less than."
@@ -2432,51 +2446,51 @@ msgstr ""
 "Egy recept minimális értékelése (0-5). A negatív értékek a maximális "
 "értékelés szerint szűrnek."
 
-#: .\cookbook\views\api.py:923
+#: .\cookbook\views\api.py:922
 msgid "ID of book a recipe should be in. For multiple repeat parameter."
 msgstr ""
 "A könyv azonosítója, amelyben a recept található. Többször is megadható."
 
-#: .\cookbook\views\api.py:924
+#: .\cookbook\views\api.py:923
 msgid "Book IDs, repeat for multiple. Return recipes with any of the books"
 msgstr ""
 "A könyv azonosítója. Többször is megadható. A megadott könyvek összes "
 "receptjének listája"
 
-#: .\cookbook\views\api.py:925
+#: .\cookbook\views\api.py:924
 msgid "Book IDs, repeat for multiple. Return recipes with all of the books."
 msgstr ""
 "A könyv azonosítója. Többször is megadható. Az összes könyvben szereplő "
 "recept listája."
 
-#: .\cookbook\views\api.py:926
+#: .\cookbook\views\api.py:925
 msgid "Book IDs, repeat for multiple. Exclude recipes with any of the books."
 msgstr ""
 "A könyv azonosítói. Többször is megadható. Kizárja a megadott könyvek "
 "receptjeit."
 
-#: .\cookbook\views\api.py:927
+#: .\cookbook\views\api.py:926
 msgid "Book IDs, repeat for multiple. Exclude recipes with all of the books."
 msgstr ""
 "A könyv azonosítói. Többször is megadható. Kizárja az összes megadott "
 "könyvben szereplő receptet."
 
-#: .\cookbook\views\api.py:928
+#: .\cookbook\views\api.py:927
 msgid "If only internal recipes should be returned. [true/<b>false</b>]"
 msgstr "Ha csak a belső recepteket kell visszaadni. [true/<b>false</b>]"
 
-#: .\cookbook\views\api.py:929
+#: .\cookbook\views\api.py:928
 msgid "Returns the results in randomized order. [true/<b>false</b>]"
 msgstr ""
 "Az eredményeket véletlenszerű sorrendben adja vissza. [true/<b>false</b>]"
 
-#: .\cookbook\views\api.py:930
+#: .\cookbook\views\api.py:929
 msgid "Returns new results first in search results. [true/<b>false</b>]"
 msgstr ""
 "Az új találatokat adja vissza először a keresési eredmények között. [true/"
 "<b>false</b>]"
 
-#: .\cookbook\views\api.py:931
+#: .\cookbook\views\api.py:930
 msgid ""
 "Filter recipes cooked X times or more.  Negative values returns cooked less "
 "than X times"
@@ -2484,7 +2498,7 @@ msgstr ""
 "X-szer vagy többször főzött receptek szűrése.  A negatív értékek X "
 "alkalomnál kevesebbet főzött recepteket jelenítik meg"
 
-#: .\cookbook\views\api.py:932
+#: .\cookbook\views\api.py:931
 msgid ""
 "Filter recipes last cooked on or after YYYY-MM-DD. Prepending - filters on "
 "or before date."
@@ -2493,7 +2507,7 @@ msgstr ""
 "vagy később főztek meg utoljára. A - jelölve az adott dátumon vagy azt "
 "megelőzően elkészítettek kerülnek be a receptek listájába."
 
-#: .\cookbook\views\api.py:933
+#: .\cookbook\views\api.py:932
 msgid ""
 "Filter recipes created on or after YYYY-MM-DD. Prepending - filters on or "
 "before date."
@@ -2502,7 +2516,7 @@ msgstr ""
 "vagy később hoztak létre. A - jelölve az adott dátumon vagy azt megelőzően "
 "hozták létre."
 
-#: .\cookbook\views\api.py:934
+#: .\cookbook\views\api.py:933
 msgid ""
 "Filter recipes updated on or after YYYY-MM-DD. Prepending - filters on or "
 "before date."
@@ -2511,7 +2525,7 @@ msgstr ""
 "vagy később frissültek. A - jelölve az adott dátumon vagy azt megelőzően "
 "frissültek."
 
-#: .\cookbook\views\api.py:935
+#: .\cookbook\views\api.py:934
 msgid ""
 "Filter recipes lasts viewed on or after YYYY-MM-DD. Prepending - filters on "
 "or before date."
@@ -2520,13 +2534,13 @@ msgstr ""
 "vagy később néztek meg utoljára. A - jelölve az adott dátumon vagy azt "
 "megelőzően néztek meg utoljára."
 
-#: .\cookbook\views\api.py:936
+#: .\cookbook\views\api.py:935
 msgid "Filter recipes that can be made with OnHand food. [true/<b>false</b>]"
 msgstr ""
 "Felsorolja azokat a recepteket, amelyeket a rendelkezésre álló összetevőkből "
 "el lehet készíteni. [true/<b>false</b>]"
 
-#: .\cookbook\views\api.py:1123
+#: .\cookbook\views\api.py:1122
 msgid ""
 "Returns the shopping list entry with a primary key of id.  Multiple values "
 "allowed."
@@ -2534,7 +2548,7 @@ msgstr ""
 "Visszaadja az id elsődleges kulccsal rendelkező bevásárlólista-bejegyzést.  "
 "Több érték megengedett."
 
-#: .\cookbook\views\api.py:1126
+#: .\cookbook\views\api.py:1125
 #, fuzzy
 #| msgid ""
 #| "Filter shopping list entries on checked.  [true, false, both, <b>recent</"
@@ -2548,17 +2562,17 @@ msgstr ""
 "mindkettő, <b>legutóbbi</b>]<br> – a legutóbbi a nem bejelölt és a nemrég "
 "befejezett elemeket tartalmazza."
 
-#: .\cookbook\views\api.py:1129
+#: .\cookbook\views\api.py:1128
 msgid "Returns the shopping list entries sorted by supermarket category order."
 msgstr ""
 "Visszaadja a bevásárlólista bejegyzéseit szupermarket kategóriák szerinti "
 "sorrendben."
 
-#: .\cookbook\views\api.py:1199
+#: .\cookbook\views\api.py:1210
 msgid "Filter for entries with the given recipe"
 msgstr ""
 
-#: .\cookbook\views\api.py:1281
+#: .\cookbook\views\api.py:1292
 #, fuzzy
 #| msgid ""
 #| "Returns the shopping list entry with a primary key of id.  Multiple "
@@ -2570,45 +2584,45 @@ msgstr ""
 "Visszaadja az id elsődleges kulccsal rendelkező bevásárlólista-bejegyzést.  "
 "Több érték megengedett."
 
-#: .\cookbook\views\api.py:1404
+#: .\cookbook\views\api.py:1415
 msgid "Nothing to do."
 msgstr "Semmi feladat."
 
-#: .\cookbook\views\api.py:1431
+#: .\cookbook\views\api.py:1445
 msgid "Invalid Url"
 msgstr "Érvénytelen URL"
 
-#: .\cookbook\views\api.py:1435
+#: .\cookbook\views\api.py:1449
 msgid "Connection Refused."
 msgstr "Kapcsolat megtagadva."
 
-#: .\cookbook\views\api.py:1437
+#: .\cookbook\views\api.py:1451
 msgid "Bad URL Schema."
 msgstr "Rossz URL séma."
 
-#: .\cookbook\views\api.py:1460
+#: .\cookbook\views\api.py:1474
 msgid "No usable data could be found."
 msgstr "Nem sikerült használható adatokat találni."
 
-#: .\cookbook\views\api.py:1535
+#: .\cookbook\views\api.py:1549
 msgid "File is above space limit"
 msgstr ""
 
-#: .\cookbook\views\api.py:1552 .\cookbook\views\import_export.py:114
+#: .\cookbook\views\api.py:1566 .\cookbook\views\import_export.py:114
 msgid "Importing is not implemented for this provider"
 msgstr "Az importálás nincs implementálva ennél a szolgáltatónál"
 
-#: .\cookbook\views\api.py:1636 .\cookbook\views\data.py:30
+#: .\cookbook\views\api.py:1650 .\cookbook\views\data.py:30
 #: .\cookbook\views\edit.py:88 .\cookbook\views\new.py:63
 #: .\cookbook\views\new.py:82
 msgid "This feature is not yet available in the hosted version of tandoor!"
 msgstr "Ez a funkció még nem érhető el a tandoor hosztolt verziójában!"
 
-#: .\cookbook\views\api.py:1657
+#: .\cookbook\views\api.py:1671
 msgid "Sync successful!"
 msgstr "Szinkronizálás sikeres!"
 
-#: .\cookbook\views\api.py:1660
+#: .\cookbook\views\api.py:1674
 msgid "Error synchronizing with Storage"
 msgstr "Hiba szinkronizálás közben a tárolóval"
 
@@ -2746,7 +2760,7 @@ msgid "There was an error importing this recipe!"
 msgstr "Hiba történt a recept importálásakor!"
 
 #: .\cookbook\views\views.py:69 .\cookbook\views\views.py:177
-#: .\cookbook\views\views.py:204 .\cookbook\views\views.py:418
+#: .\cookbook\views\views.py:204 .\cookbook\views\views.py:423
 msgid "This feature is not available in the demo version!"
 msgstr "Ez a funkció nem érhető el a demó verzióban!"
 
@@ -2789,17 +2803,21 @@ msgstr ""
 msgid "Fuzzy search is not compatible with this search method!"
 msgstr "A bizonytalan keresés nem kompatibilis ezzel a keresési módszerrel!"
 
-#: .\cookbook\views\views.py:305
+#: .\cookbook\views\views.py:306
 #, python-format
 msgid "PostgreSQL %(v)s is deprecated.  Upgrade to a fully supported version!"
 msgstr ""
 
-#: .\cookbook\views\views.py:308
+#: .\cookbook\views\views.py:309
 #, python-format
 msgid "You are running PostgreSQL %(v1)s.  PostgreSQL %(v2)s is recommended"
 msgstr ""
 
-#: .\cookbook\views\views.py:312
+#: .\cookbook\views\views.py:313
+msgid "Unable to determine PostgreSQL version."
+msgstr ""
+
+#: .\cookbook\views\views.py:317
 #, fuzzy
 #| msgid ""
 #| "\n"
@@ -2817,7 +2835,7 @@ msgstr ""
 "             funkciók csak Postgres adatbázisokkal működnek.\n"
 "        "
 
-#: .\cookbook\views\views.py:355
+#: .\cookbook\views\views.py:360
 #, fuzzy
 #| msgid ""
 #| "The setup page can only be used to create the first user! If you have "
@@ -2832,27 +2850,27 @@ msgstr ""
 "elfelejtette a szuperfelhasználói hitelesítő adatait, kérjük, olvassa el a "
 "django dokumentációját a jelszavak visszaállításáról."
 
-#: .\cookbook\views\views.py:364
+#: .\cookbook\views\views.py:369
 msgid "Passwords dont match!"
 msgstr "A jelszavak nem egyeznek!"
 
-#: .\cookbook\views\views.py:372
+#: .\cookbook\views\views.py:377
 msgid "User has been created, please login!"
 msgstr "A felhasználó létre lett hozva, kérjük, jelentkezzen be!"
 
-#: .\cookbook\views\views.py:388
+#: .\cookbook\views\views.py:393
 msgid "Malformed Invite Link supplied!"
 msgstr "Hibás meghívó linket küldtek!"
 
-#: .\cookbook\views\views.py:405
+#: .\cookbook\views\views.py:410
 msgid "Successfully joined space."
 msgstr "Sikeresen csatlakozott az térhez."
 
-#: .\cookbook\views\views.py:411
+#: .\cookbook\views\views.py:416
 msgid "Invite Link not valid or already used!"
 msgstr "A meghívó link nem érvényes vagy már felhasználásra került!"
 
-#: .\cookbook\views\views.py:427
+#: .\cookbook\views\views.py:432
 msgid ""
 "Reporting share links is not enabled for this instance. Please notify the "
 "page administrator to report problems."
@@ -2860,7 +2878,7 @@ msgstr ""
 "A megosztási hivatkozások jelentése nem engedélyezett ezen a példányon. "
 "Kérjük, a problémák jelentéséhez értesítse az oldal adminisztrátorát."
 
-#: .\cookbook\views\views.py:432
+#: .\cookbook\views\views.py:437
 msgid ""
 "Recipe sharing link has been disabled! For additional information please "
 "contact the page administrator."
@@ -2868,25 +2886,25 @@ msgstr ""
 "A receptmegosztó linket letiltották! További információkért kérjük, "
 "forduljon az oldal adminisztrátorához."
 
-#: .\cookbook\views\views.py:446
+#: .\cookbook\views\views.py:451
 msgid "Manage recipes, shopping list, meal plans and more."
 msgstr ""
 
-#: .\cookbook\views\views.py:453
+#: .\cookbook\views\views.py:458
 #, fuzzy
 #| msgid "Meal-Plan"
 msgid "Plan"
 msgstr "Menüterv"
 
-#: .\cookbook\views\views.py:453
+#: .\cookbook\views\views.py:458
 msgid "View your meal Plan"
 msgstr ""
 
-#: .\cookbook\views\views.py:454
+#: .\cookbook\views\views.py:459
 msgid "View your cookbooks"
 msgstr ""
 
-#: .\cookbook\views\views.py:455
+#: .\cookbook\views\views.py:460
 #, fuzzy
 #| msgid "New Shopping List"
 msgid "View your shopping lists"

@@ -27,9 +27,22 @@ SECRET_KEY_FILE=/path/to/file.txt
 #$tp%v6*(*ba01wcz(ip(i5vfz8z$f%qdio&q@anr1#$=%(m4c
 ```
 
+#### Allowed Hosts
+
+> default `*` - options: `recipes.mydomain.com,cooking.mydomain.com,...` (comma seperated domain/ip list)
+
+Security setting to prevent HTTP Host Header Attacks,
+see [Django docs](https://docs.djangoproject.com/en/5.0/ref/settings/#allowed-hosts).
+Some proxies require `*` (default) but it should be set to the actual host(s).
+
+```
+ALLOWED_HOSTS=recipes.mydomain.com
+```
+
 ### Database
 
 Multiple parameters are required to configure the database.
+*Note: You can setup parameters for a test database by defining all of the parameters preceded by `TEST_` e.g. TEST_DB_ENGINE=*
 
 | Var               | Options                                                            | Description                                                             |
 |-------------------|--------------------------------------------------------------------|-------------------------------------------------------------------------|
@@ -91,17 +104,6 @@ Port for gunicorn to bind to. Should not be changed if using docker stack with r
 TANDOOR_PORT=8080
 ```
 
-#### Allowed Hosts
-
-> default `*` - options: `recipes.mydomain.com,cooking.mydomain.com,...` (comma seperated domain/ip list)
-
-Security setting to prevent HTTP Host Header Attacks,
-see [Django docs](https://docs.djangoproject.com/en/5.0/ref/settings/#allowed-hosts).
-Many reverse proxies handle this and require the setting to be `*` (default).
-
-```
-ALLOWED_HOSTS=recipes.mydomain.com
-```
 
 #### URL Path
 
@@ -497,6 +499,18 @@ Set to `1` to enable additional query output on the search page.
 ```
 SQL_DEBUG=0
 ```
+
+#### Application Log Level
+
+> default `WARNING` - options: [see Django Docs](https://docs.djangoproject.com/en/5.0/topics/logging/#loggers)
+
+Increase or decrease the logging done by application.
+Please set to `DEBUG` when making a bug report.
+
+```
+ LOG_LEVEL="DEBUG"
+```
+
 
 #### Gunicorn Log Level
 
