@@ -9,9 +9,7 @@
       "type": "debugpy",
       "request": "launch",
       "program": "${workspaceFolder}/manage.py",
-      "args": [
-        "runserver"
-      ],
+      "args": ["runserver"],
       "django": true,
       "justMyCode": true
     },
@@ -29,7 +27,7 @@
         "PYTEST_ADDOPTS": "--no-cov"
       },
       "django": true,
-      "justMyCode": false
+      "justMyCode": true
     },
     ]
   }

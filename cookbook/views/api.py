@@ -169,8 +169,9 @@ class FuzzyFilterMixin(ViewSetMixin, ExtendedRecipeMixin):
         if query is not None and query not in ["''", '']:
             if fuzzy and (settings.DATABASES['default']['ENGINE'] == 'django.db.backends.postgresql'):
                 if self.request.user.is_authenticated and any(
-                    [self.model.__name__.lower() in x for x in self.request.user.searchpreference.unaccent.values_list('field', flat=True)]):
-                    self.queryset = self.queryset.annotate(trigram=TrigramSimilarity('name__unaccent', query))
+                    [self.model.__name__.lower() in x for x in self.request.user.searchpreference.unaccent.values_list('field', flat=True)]
+                    ):
+                        self.queryset = self.queryset.annotate(trigram=TrigramSimilarity('name__unaccent', query))
                 else:
                     self.queryset = self.queryset.annotate(trigram=TrigramSimilarity('name', query))
                 self.queryset = self.queryset.order_by('-trigram')
@@ -921,28 +922,15 @@ class RecipeViewSet(viewsets.ModelViewSet):
         QueryParam(name='books_and', description=_('Book IDs, repeat for multiple. Return recipes with all of the books.'), qtype='integer'),
         QueryParam(name='books_or_not', description=_('Book IDs, repeat for multiple. Exclude recipes with any of the books.'), qtype='integer'),
         QueryParam(name='books_and_not', description=_('Book IDs, repeat for multiple. Exclude recipes with all of the books.'), qtype='integer'),
-        QueryParam(name='internal', description=_('If only internal recipes should be returned. ['
-                                                  'true'
-                                                  '/'
-                                                  '<b>false</b>'
-                                                  ']')),
-        QueryParam(name='random', description=_('Returns the results in randomized order. ['
-                                                'true'
-                                                '/'
-                                                '<b>false</b>'
-                                                ']')),
-        QueryParam(name='new', description=_('Returns new results first in search results. ['
-                                             'true'
-                                             '/'
-                                             '<b>false</b>'
-                                             ']')),
+        QueryParam(name='internal', description=_('If only internal recipes should be returned. [''true''/''<b>false</b>'']')),
+        QueryParam(name='random', description=_('Returns the results in randomized order. [''true''/''<b>false</b>'']')),
+        QueryParam(name='new', description=_('Returns new results first in search results. [''true''/''<b>false</b>'']')),
         QueryParam(name='timescooked', description=_('Filter recipes cooked X times or more.  Negative values returns cooked less than X times'), qtype='integer'),
         QueryParam(name='cookedon', description=_('Filter recipes last cooked on or after YYYY-MM-DD. Prepending ''-'' filters on or before date.')),
         QueryParam(name='createdon', description=_('Filter recipes created on or after YYYY-MM-DD. Prepending ''-'' filters on or before date.')),
         QueryParam(name='updatedon', description=_('Filter recipes updated on or after YYYY-MM-DD. Prepending ''-'' filters on or before date.')),
         QueryParam(name='viewedon', description=_('Filter recipes lasts viewed on or after YYYY-MM-DD. Prepending ''-'' filters on or before date.')),
         QueryParam(name='makenow', description=_('Filter recipes that can be made with OnHand food. [''true''/''<b>false</b>'']')),
-        QueryParam(name='never_used_food', description=_('Filter recipes that contain food that have never been used. [''true''/''<b>false</b>'']')),
     ]
     schema = QueryParamAutoSchema()
 
@@ -1079,7 +1067,9 @@ class UnitConversionViewSet(viewsets.ModelViewSet):
     queryset = UnitConversion.objects
     serializer_class = UnitConversionSerializer
     permission_classes = [CustomIsUser & CustomTokenHasReadWriteScope]
-    query_params = [QueryParam(name='food_id', description='ID of food to filter for', qtype='integer'), ]
+    query_params = [
+        QueryParam(name='food_id', description='ID of food to filter for', qtype='integer'),
+    ]
     schema = QueryParamAutoSchema()
 
     def get_queryset(self):
@@ -1115,9 +1105,11 @@ class ShoppingListRecipeViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         self.queryset = self.queryset.filter(Q(entries__space=self.request.space) | Q(recipe__space=self.request.space))
-        return self.queryset.filter(Q(entries__isnull=True)
-                                    | Q(entries__created_by=self.request.user)
-                                    | Q(entries__created_by__in=list(self.request.user.get_shopping_share()))).distinct().all()
+        return self.queryset.filter(
+            Q(entries__isnull=True)
+            | Q(entries__created_by=self.request.user)
+            | Q(entries__created_by__in=list(self.request.user.get_shopping_share()))
+            ).distinct().all()
 
 
 class ShoppingListEntryViewSet(viewsets.ModelViewSet):
@@ -1126,19 +1118,11 @@ class ShoppingListEntryViewSet(viewsets.ModelViewSet):
     permission_classes = [(CustomIsOwner | CustomIsShared) & CustomTokenHasReadWriteScope]
     query_params = [
         QueryParam(name='id', description=_('Returns the shopping list entry with a primary key of id.  Multiple values allowed.'), qtype='integer'),
-        QueryParam(name='checked',
-                   description=_('Filter shopping list entries on checked.  ['
-                                 'true'
-                                 ', '
-                                 'false'
-                                 ', '
-                                 'both'
-                                 ', '
-                                 '<b>recent</b>'
-                                 ']<br>  \
-                - '
-                                 'recent'
-                                 ' includes unchecked items and recently completed items.')),
+        QueryParam(
+            name='checked',
+            description=_('Filter shopping list entries on checked.  [''true'', ''false'', ''both'', ''<b>recent</b>'']<br>  \
+                - ''recent'' includes unchecked items and recently completed items.')
+                   ),
         QueryParam(name='supermarket', description=_('Returns the shopping list entries sorted by supermarket category order.'), qtype='integer'),
     ]
     schema = QueryParamAutoSchema()
@@ -1220,7 +1204,9 @@ class CookLogViewSet(viewsets.ModelViewSet):
     serializer_class = CookLogSerializer
     permission_classes = [CustomIsOwner & CustomTokenHasReadWriteScope]
     pagination_class = DefaultPagination
-    query_params = [QueryParam(name='recipe', description=_('Filter for entries with the given recipe'), qtype='integer'), ]
+    query_params = [
+        QueryParam(name='recipe', description=_('Filter for entries with the given recipe'), qtype='integer'),
+    ]
 
     def get_queryset(self):
         if self.request.query_params.get('recipe', None):
@@ -1300,7 +1286,9 @@ class AutomationViewSet(viewsets.ModelViewSet, StandardFilterMixin):
     permission_classes = [CustomIsUser & CustomTokenHasReadWriteScope]
     pagination_class = DefaultPagination
 
-    query_params = [QueryParam(name='automation_type', description=_('Return the Automations matching the automation type.  Multiple values allowed.'), qtype='string'), ]
+    query_params = [
+        QueryParam(name='automation_type', description=_('Return the Automations matching the automation type.  Multiple values allowed.'), qtype='string'),
+    ]
     schema = QueryParamAutoSchema()
 
     auto_type = {
