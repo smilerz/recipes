@@ -3,7 +3,7 @@ cryptography===44.0.1
 django-annoying==0.10.6
 django-cleanup==8.0.0
 django-crispy-forms==2.3
-crispy-bootstrap4==2024.10
+crispy-bootstrap4==2025.6
 django-tables2==2.7.4
 djangorestframework==3.16.0
 drf-writable-nested==0.7.1
