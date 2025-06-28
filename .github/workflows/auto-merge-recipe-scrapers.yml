@@ -14,7 +14,7 @@ jobs:
       pull-requests: write
 
     steps:
-      - uses: hmarr/auto-approve-action@v3
+      - uses: hmarr/auto-approve-action@v4
         with:
           github-token: "${{ secrets.GITHUB_TOKEN }}"
       - uses: pascalgn/automerge-action@v0.16.3
