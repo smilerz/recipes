@@ -1,0 +1,65 @@
+name: "CodeQL"
+
+on:
+  push:
+    branches: [ "main", "master", "develop", "working" ]
+  pull_request:
+    branches: [ "main", "master", "working" ]
+  schedule:
+  # Run weekly on Tuesdays at 2:17 AM UTC
+    - cron: '17 2 * * 2'
+
+jobs:
+  analyze:
+    name: Analyze
+    runs-on: ${{ (matrix.language == 'swift' && 'macos-latest') || 'ubuntu-latest' }}
+    timeout-minutes: ${{ (matrix.language == 'swift' && 120) || 360 }}
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
+
+    strategy:
+      fail-fast: false
+      matrix:
+        # Auto-detect languages in your repo or specify manually
+        language: [ 'javascript', 'python' ]
+        # CodeQL supports: cpp, csharp, go, java, javascript, python, ruby, swift
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Initialize CodeQL
+      uses: github/codeql-action/init@v3
+      with:
+        languages: ${{ matrix.language }}
+        config: |
+          # Paths to exclude from analysis
+          paths-ignore:
+            - "vue/node_modules"
+            - "cookbook/tests/other/test_data"
+            - "**/node_modules"              # Any node_modules directory
+            - "**/*.min.js"                  # Minified files
+            - "**/*.bundle.js"               # Bundled files
+            - "docs/**"                      # Documentation
+            - "*.log"                        # Log files
+          
+          # Query suite options:
+          # - security-extended: More thorough security analysis
+          # - security-and-quality: Security + code quality (slower)
+          # - security-only: Fastest, security issues only
+          queries:
+            - uses: security-extended
+            
+          # Optional: Disable specific queries that create noise
+          # query-filters:
+          #   - exclude:
+          #       id: js/unused-local-variable
+          #   - exclude:
+          #       id: py/unused-local-variable
+
+    - name: Perform CodeQL Analysis
+      uses: github/codeql-action/analyze@v3
+      with:
+        category: "/language:${{matrix.language}}"
