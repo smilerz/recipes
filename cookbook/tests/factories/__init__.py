@@ -7,12 +7,12 @@ import pytest
 import pytz
 from django.contrib.auth.models import Group, User
 from django_scopes import scopes_disabled
-from faker import Factory as FakerFactory
+from faker import Faker
 from pytest_factoryboy import register
 
 from cookbook.models import UserSpace
 
-faker = FakerFactory.create()
+faker = Faker()
 
 
 @pytest.fixture(autouse=True)
@@ -75,7 +75,10 @@ class UserFactory(factory.django.DjangoModelFactory):
 
     class Meta:
         model = User
-        django_get_or_create = ('username', 'space', )
+        django_get_or_create = (
+            'username',
+            'space',
+        )
         skip_postgeneration_save = True
 
 
@@ -88,7 +91,10 @@ class SupermarketCategoryFactory(factory.django.DjangoModelFactory):
 
     class Meta:
         model = 'cookbook.SupermarketCategory'
-        django_get_or_create = ('name', 'space', )
+        django_get_or_create = (
+            'name',
+            'space',
+        )
 
 
 @register
@@ -97,12 +103,16 @@ class FoodFactory(factory.django.DjangoModelFactory):
     name = factory.LazyAttribute(lambda x: faker.sentence(nb_words=10)[:128])
     plural_name = factory.LazyAttribute(lambda x: faker.sentence(nb_words=3, variable_nb_words=False))
     description = factory.LazyAttribute(lambda x: faker.sentence(nb_words=10))
-    supermarket_category = factory.Maybe(factory.LazyAttribute(lambda x: x.has_category),
-                                         yes_declaration=factory.SubFactory(SupermarketCategoryFactory, space=factory.SelfAttribute('..space')),
-                                         no_declaration=None)
-    recipe = factory.Maybe(factory.LazyAttribute(lambda x: x.has_recipe),
-                           yes_declaration=factory.SubFactory('cookbook.tests.factories.RecipeFactory', space=factory.SelfAttribute('..space')),
-                           no_declaration=None)
+    supermarket_category = factory.Maybe(
+        factory.LazyAttribute(lambda x: x.has_category),
+        yes_declaration=factory.SubFactory(SupermarketCategoryFactory, space=factory.SelfAttribute('..space')),
+        no_declaration=None
+    )
+    recipe = factory.Maybe(
+        factory.LazyAttribute(lambda x: x.has_recipe),
+        yes_declaration=factory.SubFactory('cookbook.tests.factories.RecipeFactory', space=factory.SelfAttribute('..space')),
+        no_declaration=None
+    )
     path = factory.LazyAttribute(lambda x: faker.numerify(text='%###'))
     space = factory.SubFactory(SpaceFactory)
 
@@ -122,7 +132,12 @@ class FoodFactory(factory.django.DjangoModelFactory):
 
     class Meta:
         model = 'cookbook.Food'
-        django_get_or_create = ('name', 'plural_name', 'path', 'space', )
+        django_get_or_create = (
+            'name',
+            'plural_name',
+            'path',
+            'space',
+        )
         skip_postgeneration_save = True
 
 
@@ -137,7 +152,10 @@ class RecipeBookFactory(factory.django.DjangoModelFactory):
 
     class Meta:
         model = 'cookbook.RecipeBook'
-        django_get_or_create = ('name', 'space', )
+        django_get_or_create = (
+            'name',
+            'space',
+        )
 
 
 @register
@@ -148,7 +166,10 @@ class RecipeBookEntryFactory(factory.django.DjangoModelFactory):
 
     class Meta:
         model = 'cookbook.RecipeBookEntry'
-        django_get_or_create = ('book', 'recipe', )
+        django_get_or_create = (
+            'book',
+            'recipe',
+        )
 
 
 @register
@@ -161,7 +182,11 @@ class UnitFactory(factory.django.DjangoModelFactory):
 
     class Meta:
         model = 'cookbook.Unit'
-        django_get_or_create = ('name', 'plural_name', 'space', )
+        django_get_or_create = (
+            'name',
+            'plural_name',
+            'space',
+        )
 
 
 @register
@@ -212,16 +237,18 @@ class MealTypeFactory(factory.django.DjangoModelFactory):
 
 @register
 class MealPlanFactory(factory.django.DjangoModelFactory):
-    recipe = factory.Maybe(factory.LazyAttribute(lambda x: x.has_recipe),
-                           yes_declaration=factory.SubFactory('cookbook.tests.factories.RecipeFactory', space=factory.SelfAttribute('..space')),
-                           no_declaration=None)
+    recipe = factory.Maybe(
+        factory.LazyAttribute(lambda x: x.has_recipe),
+        yes_declaration=factory.SubFactory('cookbook.tests.factories.RecipeFactory', space=factory.SelfAttribute('..space')),
+        no_declaration=None
+    )
     servings = factory.LazyAttribute(lambda x: Decimal(faker.random_int(min=1, max=1000) / 100))
     title = factory.LazyAttribute(lambda x: faker.sentence(nb_words=5))
     created_by = factory.SubFactory(UserFactory, space=factory.SelfAttribute('..space'))
     meal_type = factory.SubFactory(MealTypeFactory, space=factory.SelfAttribute('..space'))
     note = factory.LazyAttribute(lambda x: faker.paragraph())
-    from_date = factory.LazyAttribute(lambda x: faker.future_date(tzinfo=pytz.UTC))
-    to_date = factory.LazyAttribute(lambda x: faker.future_date(tzinfo=pytz.UTC))
+    from_date = factory.LazyAttribute(lambda x: faker.future_datetime(tzinfo=pytz.UTC))
+    to_date = factory.LazyAttribute(lambda x: faker.future_datetime(tzinfo=pytz.UTC))
     space = factory.SubFactory(SpaceFactory)
 
     class Params:
@@ -234,9 +261,11 @@ class MealPlanFactory(factory.django.DjangoModelFactory):
 @register
 class ShoppingListRecipeFactory(factory.django.DjangoModelFactory):
     name = factory.LazyAttribute(lambda x: faker.sentence(nb_words=5))
-    recipe = factory.Maybe(factory.LazyAttribute(lambda x: x.has_recipe),
-                           yes_declaration=factory.SubFactory('cookbook.tests.factories.RecipeFactory', space=factory.SelfAttribute('..space')),
-                           no_declaration=None)
+    recipe = factory.Maybe(
+        factory.LazyAttribute(lambda x: x.has_recipe),
+        yes_declaration=factory.SubFactory('cookbook.tests.factories.RecipeFactory', space=factory.SelfAttribute('..space')),
+        no_declaration=None
+    )
     servings = factory.LazyAttribute(lambda x: faker.random_int(min=1, max=10))
     mealplan = factory.SubFactory(MealPlanFactory, space=factory.SelfAttribute('..space'))
     space = factory.SubFactory(SpaceFactory)
@@ -252,9 +281,11 @@ class ShoppingListRecipeFactory(factory.django.DjangoModelFactory):
 class ShoppingListEntryFactory(factory.django.DjangoModelFactory):
     """ShoppingListEntry factory."""
 
-    list_recipe = factory.Maybe(factory.LazyAttribute(lambda x: x.has_mealplan),
-                                yes_declaration=factory.SubFactory(ShoppingListRecipeFactory, space=factory.SelfAttribute('..space')),
-                                no_declaration=None)
+    list_recipe = factory.Maybe(
+        factory.LazyAttribute(lambda x: x.has_mealplan),
+        yes_declaration=factory.SubFactory(ShoppingListRecipeFactory, space=factory.SelfAttribute('..space')),
+        no_declaration=None
+    )
     food = factory.SubFactory(FoodFactory, space=factory.SelfAttribute('..space'))
     unit = factory.SubFactory(UnitFactory, space=factory.SelfAttribute('..space'))
     # ingredient = factory.SubFactory(IngredientFactory)
@@ -262,7 +293,7 @@ class ShoppingListEntryFactory(factory.django.DjangoModelFactory):
     order = factory.Sequence(int)
     checked = False
     created_by = factory.SubFactory(UserFactory, space=factory.SelfAttribute('..space'))
-    created_at = factory.LazyAttribute(lambda x: faker.past_date(tzinfo=pytz.UTC))
+    created_at = factory.LazyAttribute(lambda x: faker.past_datetime(start_date='-365d', tzinfo=pytz.UTC))
     completed_at = None
     delay_until = None
     space = factory.SubFactory(SpaceFactory)
@@ -356,7 +387,7 @@ class RecipeFactory(factory.django.DjangoModelFactory):
     waiting_time = factory.LazyAttribute(lambda x: faker.random_int(min=0, max=360))
     internal = False
     created_by = factory.SubFactory(UserFactory, space=factory.SelfAttribute('..space'))
-    created_at = factory.LazyAttribute(lambda x: faker.date_between_dates(date_start=pytz.UTC.localize(datetime(2000, 1, 1)), date_end=pytz.UTC.localize(datetime(2020, 12, 31))))
+    created_at = factory.LazyAttribute(lambda x: faker.date_time_between_dates(datetime_start=datetime(2000, 1, 1), datetime_end=datetime(2020, 12, 31), tzinfo=pytz.UTC))
     space = factory.SubFactory(SpaceFactory)
 
     @classmethod
@@ -400,7 +431,7 @@ class RecipeFactory(factory.django.DjangoModelFactory):
                 if food_recipe_count.get('step', None) == i:
                     ing_recipe_count = food_recipe_count.get('count', 0)
                 self.steps.add(StepFactory(space=self.space, ingredients__food_recipe_count=ing_recipe_count, ingredients__header=num_ing_headers))
-                num_ing_headers + -1
+                num_ing_headers -= 1
         if num_recipe_steps > 0:
             for j in range(num_recipe_steps):
                 self.steps.add(StepFactory(space=self.space, step_recipe__has_recipe=True, ingredients__count=0))
@@ -419,7 +450,7 @@ class CookLogFactory(factory.django.DjangoModelFactory):
     """CookLog factory."""
     recipe = factory.SubFactory(RecipeFactory, space=factory.SelfAttribute('..space'))
     created_by = factory.SubFactory(UserFactory, space=factory.SelfAttribute('..space'))
-    created_at = factory.LazyAttribute(lambda x: faker.date_this_decade())
+    created_at = factory.LazyAttribute(lambda x: faker.date_time_this_decade(tzinfo=pytz.UTC))
     rating = factory.LazyAttribute(lambda x: faker.random_int(min=1, max=5))
     servings = factory.LazyAttribute(lambda x: faker.random_int(min=1, max=32))
     space = factory.SubFactory(SpaceFactory)
@@ -443,7 +474,7 @@ class ViewLogFactory(factory.django.DjangoModelFactory):
     """ViewLog factory."""
     recipe = factory.SubFactory(RecipeFactory, space=factory.SelfAttribute('..space'))
     created_by = factory.SubFactory(UserFactory, space=factory.SelfAttribute('..space'))
-    created_at = factory.LazyAttribute(lambda x: faker.past_datetime(start_date='-365d'))
+    created_at = factory.LazyAttribute(lambda x: faker.past_datetime(start_date='-365d', tzinfo=pytz.UTC))
     space = factory.SubFactory(SpaceFactory)
 
     @classmethod
