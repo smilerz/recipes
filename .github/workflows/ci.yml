@@ -4,7 +4,7 @@ on:
   push:
     branches: [ "main", "master", "develop", "working" ]
   pull_request:
-    branches: [ "main", "master" ]
+    branches: [ "main", "master", "working" ]
 
 # Cancel redundant runs
 concurrency:
