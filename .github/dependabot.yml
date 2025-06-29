@@ -9,7 +9,7 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
-    open-pull-requests-limit: 1
+    open-pull-requests-limit: 5
     commit-message:
       prefix: "chore(deps)"
       include: "scope"
@@ -33,7 +33,7 @@ updates:
       pip-minors:
         patterns: ["*"]
         update-types: ["minor"]
-    open-pull-requests-limit: 10
+    open-pull-requests-limit: 20
     commit-message:
       prefix: "chore(deps)"
       include: "scope"
@@ -57,13 +57,15 @@ updates:
       semver-major-days: 30
       semver-minor-days: 3  
       semver-patch-days: 3
-    open-pull-requests-limit: 5
+    open-pull-requests-limit: 20
     versioning-strategy: "increase-if-necessary"
     commit-message:
       prefix: "chore(deps)"
       include: "scope"
     ignore:
-      - dependency-name: "vue*"
+      - dependency-name: "*vue*"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "pinia"
         update-types: ["version-update:semver-major"]
     labels:
       - "javascript"
@@ -78,7 +80,7 @@ updates:
           update-types: ["patch", "minor"]
     schedule:
       interval: "weekly"
-    open-pull-requests-limit: 5
+    open-pull-requests-limit: 20
     commit-message:
       prefix: "chore(deps)"
       include: "scope"
@@ -90,7 +92,7 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
-    open-pull-requests-limit: 1
+    open-pull-requests-limit: 5
     commit-message:
       prefix: "chore(deps)"
       include: "scope"
