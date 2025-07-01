@@ -21,7 +21,9 @@ jobs:
       fail-fast: false
       max-parallel: 4
       matrix:
-        python-version: ["3.12", "3.13"]
+        # 3.13 CI disabled due until https://github.com/TandoorRecipes/recipes/issues/3784 resolved
+        # python-version: ["3.12", "3.13"]
+        python-version: ["3.12"]
         node-version: ["18", "20"]
 
     steps:
@@ -101,3 +103,4 @@ jobs:
         with:
           name: test-results-${{ matrix.python-version }}-${{ matrix.node-version }}
           path: junit/test-results-*.xml
+          retention-days: 7

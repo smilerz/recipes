@@ -19,6 +19,10 @@ jobs:
       actions: read
       contents: read
       security-events: write
+    strategy:
+      fail-fast: false
+      matrix:
+        language: ['python', 'javascript-typescript', 'actions']
 
     steps:
     - name: Checkout repository
@@ -27,6 +31,7 @@ jobs:
     - name: Initialize CodeQL
       uses: github/codeql-action/init@v3
       with:
+        languages: ${{ matrix.language }}
         config: |
           # Paths to exclude from analysis
           paths-ignore:
