@@ -46,7 +46,7 @@ class SpaceFactory(factory.django.DjangoModelFactory):
 @register
 class UserFactory(factory.django.DjangoModelFactory):
     """User factory."""
-    username = factory.LazyAttribute(lambda x: faker.simple_profile()['username'])
+    username = factory.Sequence(lambda n: f"user{n}")
     first_name = factory.LazyAttribute(lambda x: faker.first_name())
     last_name = factory.LazyAttribute(lambda x: faker.last_name())
     email = factory.LazyAttribute(lambda x: faker.email())
