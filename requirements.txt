@@ -1,4 +1,4 @@
-Django==4.2.22
+Django==4.2.23
 cryptography===44.0.1
 django-annoying==0.10.6
 django-cleanup==9.0.0
