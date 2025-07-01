@@ -103,3 +103,4 @@ jobs:
         with:
           name: test-results-${{ matrix.python-version }}-${{ matrix.node-version }}
           path: junit/test-results-*.xml
+          retention-days: 7
