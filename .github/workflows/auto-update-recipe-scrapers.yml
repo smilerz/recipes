@@ -36,7 +36,7 @@ jobs:
           echo "Updated to version: $LATEST"
 
       - name: Create PR and enable automerge
-        uses: peter-evans/create-pull-request@v5
+        uses: peter-evans/create-pull-request@v7
         id: create-pr
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
