@@ -1,0 +1,32 @@
+name: Dependabot Auto-merge
+
+on:
+  pull_request_target:
+    types: [labeled, opened, synchronize, reopened]
+  workflow_dispatch:
+
+jobs:
+  auto-merge:
+    if: github.actor == 'dependabot[bot]' && contains(github.event.pull_request.labels.*.name, 'automerge') || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Auto-approve PR
+        uses: hmarr/auto-approve-action@v4
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          review-message: |
+            🤖 **Dependabot Auto-merge**
+            
+            This PR has been automatically approved and enabled for auto-merge. It will be merged automatically once all required checks pass.
+          
+      - name: Enable auto-merge
+        uses: daneden/enable-automerge-action@v1
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+          # The name of the PR author to enable automerge for
+          # Defaults to dependabot[bot]
+          allowed-author: "dependabot[bot]"
+
+          # Allowed values: MERGE | SQUASH | REBASE
+          merge-method: REBASE
