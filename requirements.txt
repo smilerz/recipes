@@ -3,6 +3,7 @@ cryptography===44.0.1
 django-annoying==0.10.6
 django-cleanup==8.0.0
 django-crispy-forms==2.3
+django-debug-toolbar==4.3.0
 crispy-bootstrap4==2025.6
 django-tables2==2.7.4
 djangorestframework==3.16.0
@@ -50,7 +51,6 @@ python3-openid==3.2.0
 python3-saml==1.16.0
 
 # Development
-django-debug-toolbar==4.3.0
 pytest==8.4.1
 pytz==2024.1
 pytest-django==4.11.1
