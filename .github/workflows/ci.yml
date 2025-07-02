@@ -2,8 +2,7 @@ name: Continuous Integration
 
 on:
   workflow_dispatch:
-  push:
-    branches: [ "main", "master", "develop", "working" ]
+  workflow_call:
   pull_request:
     branches: [ "main", "master", "working" ]
 
