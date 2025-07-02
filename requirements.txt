@@ -44,7 +44,7 @@ pyppeteer==2.0.0
 pytubefix==9.1.1
 aiohttp==3.12.13
 inflection==0.5.1
-redis==5.2.1
+redis==6.2.0
 requests-oauthlib==2.0.0
 pyjwt==2.10.1
 python3-openid==3.2.0
