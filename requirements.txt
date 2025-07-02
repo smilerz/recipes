@@ -54,7 +54,7 @@ python3-saml==1.16.0
 pytest==8.4.1
 pytz==2025.2
 pytest-django==4.11.1
-pytest-cov===6.1.1
+pytest-cov===6.2.1
 pytest-factoryboy==2.8.1
 pytest-html==4.1.1
 pytest-asyncio==1.0.0
