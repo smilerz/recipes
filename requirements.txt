@@ -30,7 +30,7 @@ Jinja2==3.1.6
 django-webpack-loader==3.2.1
 git+https://github.com/BITSOLVER/django-js-reverse@071e304fd600107bc64bbde6f2491f1fe049ec82
 django-allauth==65.9.0
-recipe-scrapers==15.7.0
+recipe-scrapers==15.8.0
 django-scopes==2.0.0
 django-treebeard==4.7.1
 django-cors-headers==4.7.0
@@ -41,7 +41,7 @@ django-hCaptcha==0.2.0
 python-ldap==3.4.4
 django-auth-ldap==5.2.0
 pyppeteer==2.0.0
-pytubefix==9.1.1
+pytubefix==9.2.2
 aiohttp==3.12.13
 inflection==0.5.1
 redis==6.2.0
