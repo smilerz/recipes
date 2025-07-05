@@ -10,6 +10,9 @@ on:
   # Run weekly on Tuesdays at 2:17 AM UTC
     - cron: '17 2 * * 2'
 
+permissions:
+  contents: read
+
 jobs:
   analyze:
     name: Analyze
@@ -26,22 +29,24 @@ jobs:
 
     steps:
     - name: Checkout repository
-      uses: actions/checkout@v4
+      uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
 
     - name: Initialize CodeQL
-      uses: github/codeql-action/init@v3
+      uses: github/codeql-action/init@b69421388d5449cc5a5e1ca344d71926bda69e07  # v3.28.0
       with:
         languages: ${{ matrix.language }}
         config: |
           # Paths to exclude from analysis
           paths-ignore:
             - "vue/node_modules"
-            - "cookbook/tests/other/test_data"
-            - "**/node_modules"              # Any node_modules directory
+            - "cookbook/tests/other/test_data/"
+            - "cookbook/tests/resources/websites/"
+            - "**/node_modules/**"           # Any node_modules directory
             - "**/*.min.js"                  # Minified files
             - "**/*.bundle.js"               # Bundled files
             - "docs/**"                      # Documentation
             - "*.log"                        # Log files
+            - "**/redoc**"                   # Redoc generated files
           
           # Query suite options:
           # - security-extended: More thorough security analysis
@@ -58,4 +63,4 @@ jobs:
           #       id: py/unused-local-variable
 
     - name: Perform CodeQL Analysis
-      uses: github/codeql-action/analyze@v3
+      uses: github/codeql-action/analyze@b69421388d5449cc5a5e1ca344d71926bda69e07  # v3.28.0
