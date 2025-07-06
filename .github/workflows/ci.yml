@@ -20,7 +20,7 @@ jobs:
     timeout-minutes: 120
     permissions:
       contents: read
-      actions: read
+      actions: none
     
     strategy:
       fail-fast: false
