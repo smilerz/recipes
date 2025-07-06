@@ -19,7 +19,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 360
     permissions:
-      actions: read
+      actions: none
       contents: read
       security-events: write
     strategy:
