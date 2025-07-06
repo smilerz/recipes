@@ -46,7 +46,7 @@ jobs:
             - "**/*.bundle.js"               # Bundled files
             - "docs/**"                      # Documentation
             - "*.log"                        # Log files
-            - "**/redoc**"                   # Redoc generated files
+            - "**/redoc*"                    # Redoc generated files
           
           # Query suite options:
           # - security-extended: More thorough security analysis
