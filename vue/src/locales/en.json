@@ -571,5 +571,7 @@
   "Unit_Replace": "Unit Replace",
   "never_used_food": "Never Food",
   "OnHand_Off": "Set not on hand",
-  "OnHand_On": "Set on hand"
+  "OnHand_On": "Set on hand",
+  "ingredient_context": "Ingredient Context",
+  "ingredient_context_help": "Show the context menu for ingredients in recipes."
 }
