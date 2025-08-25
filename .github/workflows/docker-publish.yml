@@ -10,6 +10,7 @@ jobs:
   build-container:
     concurrency:
       group: docker-build-${{ github.ref }}
+      cancel-in-progress: true
     name: Build Tandoor Container
     runs-on: ubuntu-latest
     continue-on-error: ${{ matrix.continue-on-error }}
@@ -27,6 +28,46 @@ jobs:
             continue-on-error: false
     steps:
       - uses: actions/checkout@v4
+      - name: Ensure this run is repository HEAD
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            // This script checks whether the current run's commit is the branch HEAD.
+            // It intentionally does NOT set action outputs or environment variables.
+            const core = require('@actions/core');
+            const branchRef = process.env.GITHUB_REF || '';
+            const runSha = process.env.GITHUB_SHA || '';
+            const repo = process.env.GITHUB_REPOSITORY || '';
+            const [owner, repoName] = repo.split('/');
+
+            if (!branchRef.startsWith('refs/heads/')) {
+              // Called via workflow_call or dispatch against a specific sha — allow to continue.
+              core.info('Not a branch ref (workflow_call or dispatch). Proceeding with run.');
+              return;
+            }
+
+            const branch = branchRef.replace('refs/heads/', '');
+            core.info(`Checking whether run commit ${runSha} is the HEAD of ${branch}...`);
+
+            try {
+              const refResp = await github.rest.git.getRef({ owner, repo: repoName, ref: `heads/${branch}` });
+              const headSha = refResp.data.object.sha;
+              if (headSha === runSha) {
+                core.info(`Run commit ${runSha} IS the HEAD of ${branch}. Continuing with build.`);
+                return;
+              }
+
+              // Not the branch head: log useful diagnostic info then exit early with success.
+              core.info(`Run commit ${runSha} is NOT the HEAD of ${branch} (branch head: ${headSha}).`);
+              core.info('Exiting early to avoid redundant build work.');
+              // End the script and allow the step to succeed without abruptly terminating the process.
+              return;
+            } catch (err) {
+              core.warning(`Failed to determine branch HEAD for ${branch}: ${err.message}`);
+              core.info('Exiting early to avoid running a potentially stale build.');
+              return;
+            }
       - name: Get version number
         id: get_version
         run: |
@@ -38,22 +79,27 @@ jobs:
           node-version: '20'
           cache: yarn
           cache-dependency-path: vue/yarn.lock
+
       - name: Install dependencies
         working-directory: ./vue
         run: yarn install --frozen-lockfile
+
       - name: Build dependencies
         working-directory: ./vue
         run: yarn build
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@05340d1c670183e7caabdb33ae9f1c80fae3b0c2  # v3.1.0
+
       - name: Set up Buildx
         uses: docker/setup-buildx-action@e468171a9de216ec08956ac3ada2f0791b6bd435  # v3.7.1
+
       - name: Login to Docker Hub
         uses: docker/login-action@3d100841f68d4548bf57e52eb27bd33ec5069f55  # v3.3.0
         with:
           username: ${{ secrets.USERNAME }}
           password: ${{ secrets.PASSWORD }}
+
       - name: Docker Metadata
         id: meta
         uses: docker/metadata-action@be19121bfd18b9c1ac415d9571d4f67b9b357886  # v5.6.0
@@ -62,6 +108,7 @@ jobs:
             smilerz/recipes
           tags: |
             type=raw,value=latest,enable={{is_default_branch}}
+
       - name: Build and Push
         uses: docker/build-push-action@263435318d21b8e681c14492fe198d362a7d2c83  # v6.10.0
         with:
