@@ -34,8 +34,6 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
             // This script checks whether the current run's commit is the branch HEAD.
-            // It intentionally does NOT set action outputs or environment variables.
-            const core = require('@actions/core');
             const branchRef = process.env.GITHUB_REF || '';
             const runSha = process.env.GITHUB_SHA || '';
             const repo = process.env.GITHUB_REPOSITORY || '';

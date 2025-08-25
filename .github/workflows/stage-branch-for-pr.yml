@@ -14,12 +14,76 @@ permissions:
   issues: write
 
 jobs:
+  check-dependabot-batch:
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+    outputs:
+      can_proceed: ${{ steps.batch_check.outputs.can_proceed }}
+    steps:
+      - name: Check if Dependabot batch is complete
+        id: batch_check
+        uses: actions/github-script@v7
+        with:
+          script: |
+            // Only check for batch completion if this was triggered by workflow_run
+            if (context.eventName !== 'workflow_run') {
+              core.setOutput('can_proceed', 'true');
+              return;
+            }
+            
+            try {
+              // Check if there's an active Dependabot queue
+              const { data: queueVariable } = await github.rest.actions.getRepoVariable({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                name: 'DEPENDABOT_QUEUE'
+              });
+              
+              const queueData = JSON.parse(queueVariable.value);
+              
+              // If queue is empty or no current batch, we can proceed
+              if (!queueData.current_batch || queueData.queue.length === 0) {
+                core.setOutput('can_proceed', 'true');
+                return;
+              }
+              
+              // Check if this batch was marked as complete
+              try {
+                const { data: completeVariable } = await github.rest.actions.getRepoVariable({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  name: 'DEPENDABOT_BATCH_COMPLETE'
+                });
+                
+                if (completeVariable.value === queueData.current_batch) {
+                  console.log(`Batch ${queueData.current_batch} is complete, can proceed`);
+                  core.setOutput('can_proceed', 'true');
+                  return;
+                }
+              } catch (error) {
+                // No completion marker found
+              }
+              
+              // Active batch still in progress
+              console.log(`Dependabot batch ${queueData.current_batch} still in progress, waiting...`);
+              core.setOutput('can_proceed', 'false');
+              
+            } catch (error) {
+              // No queue data found, safe to proceed
+              console.log('No Dependabot queue found, can proceed');
+              core.setOutput('can_proceed', 'true');
+            }
+
   create-upstream-pr:
+    needs: check-dependabot-batch
     runs-on: ubuntu-latest
     concurrency:
       group: upstream-pr
       cancel-in-progress: true
-    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+    if: |
+      (github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success') &&
+      needs.check-dependabot-batch.outputs.can_proceed == 'true'
     steps:
       - name: Generate GitHub App token (for branch push)
         id: generate_token_push

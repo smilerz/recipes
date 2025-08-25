@@ -2,12 +2,129 @@ name: Dependabot Auto-merge
 
 on:
   pull_request_target:
-    types: [opened,  synchronize, reopened, ready_for_review]
+    types: [opened, synchronize, reopened, ready_for_review, closed]
 
 permissions:
   contents: read
+  actions: write  # For repository variables
 
 jobs:
+  manage-queue:
+    if: github.actor == 'dependabot[bot]' && contains(github.event.pull_request.labels.*.name, 'automerge') && github.event.action != 'closed'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: write
+      pull-requests: write
+    outputs:
+      should_auto_merge: ${{ steps.queue_decision.outputs.should_auto_merge }}
+      queue_position: ${{ steps.queue_decision.outputs.queue_position }}
+    steps:
+      - name: Generate token
+        id: generate_token
+        uses: actions/create-github-app-token@v2
+        with:
+          app-id: ${{ secrets.BOT_APP_ID }}
+          private-key: ${{ secrets.BOT_PRIVATE_KEY }}
+
+      - name: Manage Dependabot queue
+        id: queue_decision
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ steps.generate_token.outputs.token }}
+          script: |
+            const prNumber = context.payload.pull_request.number;
+            const prCreatedAt = context.payload.pull_request.created_at;
+            const batchWindow = 15 * 60 * 1000; // 15 minutes in milliseconds
+            
+            // Get current queue state
+            let queueData = { current_batch: null, queue: [] };
+            try {
+              const { data: variable } = await github.rest.actions.getRepoVariable({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                name: 'DEPENDABOT_QUEUE'
+              });
+              queueData = JSON.parse(variable.value);
+            } catch (error) {
+              if (error.status !== 404) {
+                console.log('Error getting queue variable:', error.message);
+              }
+            }
+            
+            // Determine batch ID based on PR creation time
+            const prTime = new Date(prCreatedAt);
+            const batchId = prTime.toISOString().slice(0, 16); // YYYY-MM-DDTHH:MM format
+            
+            // Check if this PR is already in the queue
+            const existingPrIndex = queueData.queue.findIndex(item => item.pr === prNumber);
+            if (existingPrIndex !== -1) {
+              const existingPr = queueData.queue[existingPrIndex];
+              const queuePosition = existingPrIndex + 1;
+              const shouldAutoMerge = existingPr.status === 'active';
+              
+              core.setOutput('should_auto_merge', shouldAutoMerge);
+              core.setOutput('queue_position', queuePosition);
+              
+              if (!shouldAutoMerge) {
+                // Add comment about queue position
+                await github.rest.issues.createComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: prNumber,
+                  body: `🔄 **Dependabot Queue Status**\n\nThis PR is #${queuePosition} in the Dependabot merge queue.\nIt will be processed after the preceding PRs complete.`
+                });
+              }
+              return;
+            }
+            
+            // Check if we need a new batch (first PR or time gap > batch window)
+            const shouldStartNewBatch = !queueData.current_batch || 
+              !queueData.queue.length ||
+              (new Date(batchId).getTime() - new Date(queueData.current_batch).getTime() > batchWindow);
+            
+            if (shouldStartNewBatch) {
+              // Start new batch - this PR becomes active immediately
+              queueData = {
+                current_batch: batchId,
+                queue: [{ pr: prNumber, created: prCreatedAt, status: 'active' }]
+              };
+              core.setOutput('should_auto_merge', 'true');
+              core.setOutput('queue_position', '1');
+            } else {
+              // Add to existing batch as queued
+              queueData.queue.push({ pr: prNumber, created: prCreatedAt, status: 'queued' });
+              const queuePosition = queueData.queue.length;
+              core.setOutput('should_auto_merge', 'false');
+              core.setOutput('queue_position', queuePosition);
+              
+              // Add comment about queue position
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: prNumber,
+                body: `🔄 **Dependabot Queue Status**\n\nThis PR is #${queuePosition} in the Dependabot merge queue.\nIt will be processed after the preceding PRs complete.`
+              });
+            }
+            
+            // Save updated queue state
+            try {
+              await github.rest.actions.updateRepoVariable({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                name: 'DEPENDABOT_QUEUE',
+                value: JSON.stringify(queueData)
+              });
+            } catch (error) {
+              // Variable doesn't exist, create it
+              await github.rest.actions.createRepoVariable({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                name: 'DEPENDABOT_QUEUE',
+                value: JSON.stringify(queueData)
+              });
+            }
+
   validate:
     if: contains(github.event.pull_request.labels.*.name, 'automerge') && github.event.pull_request.user.login != 'dependabot[bot]'
     runs-on: ubuntu-latest
@@ -38,7 +155,8 @@ jobs:
             If you believe this is an error, please contact a repository maintainer.
   
   auto-merge:
-    if: github.actor == 'dependabot[bot]' && contains(github.event.pull_request.labels.*.name, 'automerge')
+    needs: manage-queue
+    if: needs.manage-queue.outputs.should_auto_merge == 'true'
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -66,3 +184,136 @@ jobs:
           github-token: ${{ steps.generate_token.outputs.token }}
           allowed-author: "dependabot[bot]"
           merge-method: REBASE # Allowed values: MERGE | SQUASH | REBASE
+
+  advance-queue:
+    if: github.event.action == 'closed' && contains(github.event.pull_request.labels.*.name, 'automerge')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: write
+      pull-requests: write
+    steps:
+      - name: Generate token
+        id: generate_token
+        uses: actions/create-github-app-token@v2
+        with:
+          app-id: ${{ secrets.BOT_APP_ID }}
+          private-key: ${{ secrets.BOT_PRIVATE_KEY }}
+
+      - name: Advance Dependabot queue
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ steps.generate_token.outputs.token }}
+          script: |
+            const closedPrNumber = context.payload.pull_request.number;
+            
+            // Get current queue state
+            let queueData = { current_batch: null, queue: [] };
+            try {
+              const { data: variable } = await github.rest.actions.getRepoVariable({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                name: 'DEPENDABOT_QUEUE'
+              });
+              queueData = JSON.parse(variable.value);
+            } catch (error) {
+              console.log('No queue data found or error:', error.message);
+              return;
+            }
+            
+            // Remove the closed PR from queue
+            const originalLength = queueData.queue.length;
+            queueData.queue = queueData.queue.filter(item => item.pr !== closedPrNumber);
+            
+            if (queueData.queue.length === originalLength) {
+              console.log('Closed PR was not in queue, nothing to do');
+              return;
+            }
+            
+            // Check if there are more PRs to process
+            if (queueData.queue.length === 0) {
+              // Queue is empty - create completion signal
+              try {
+                await github.rest.actions.updateRepoVariable({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  name: 'DEPENDABOT_BATCH_COMPLETE',
+                  value: queueData.current_batch
+                });
+              } catch (error) {
+                await github.rest.actions.createRepoVariable({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  name: 'DEPENDABOT_BATCH_COMPLETE',
+                  value: queueData.current_batch
+                });
+              }
+              
+              // Clear the queue
+              await github.rest.actions.updateRepoVariable({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                name: 'DEPENDABOT_QUEUE',
+                value: JSON.stringify({ current_batch: null, queue: [] })
+              });
+              
+              console.log(`Batch ${queueData.current_batch} completed`);
+              return;
+            }
+            
+            // Activate the next PR in queue
+            const nextPr = queueData.queue.find(item => item.status === 'queued');
+            if (nextPr) {
+              nextPr.status = 'active';
+              
+              // Save updated queue state
+              await github.rest.actions.updateRepoVariable({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                name: 'DEPENDABOT_QUEUE',
+                value: JSON.stringify(queueData)
+              });
+              
+              // Enable auto-merge on the next PR
+              console.log(`Activating PR #${nextPr.pr}`);
+              
+              // Auto-approve the PR
+              try {
+                await github.rest.pulls.createReview({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  pull_number: nextPr.pr,
+                  body: '🤖 **Dependabot Auto-merge (Queue Advanced)**\n\nThis PR has been automatically approved and enabled for auto-merge as it\'s next in the queue. It will be merged automatically once all required checks pass.',
+                  event: 'APPROVE'
+                });
+              } catch (error) {
+                console.log('Error approving PR:', error.message);
+              }
+              
+              // Enable auto-merge
+              try {
+                await github.rest.pulls.updatePullRequest({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  pull_number: nextPr.pr,
+                  auto_merge: {
+                    merge_method: 'rebase'
+                  }
+                });
+                
+                await github.rest.issues.createComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: nextPr.pr,
+                  body: '✅ **Queue Advanced**\n\nThis PR is now active and auto-merge has been enabled.'
+                });
+              } catch (error) {
+                console.log('Error enabling auto-merge:', error.message);
+                await github.rest.issues.createComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: nextPr.pr,
+                  body: '⚠️ **Queue Advanced (Manual Merge Required)**\n\nThis PR is now active but auto-merge could not be enabled automatically. Please merge manually when ready.'
+                });
+              }
+            }
