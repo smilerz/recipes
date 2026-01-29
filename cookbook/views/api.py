@@ -1165,12 +1165,12 @@ class FoodViewSet(LoggingMixin, TreeMixin, DeleteRelationMixing):
 
                 return Response(json.loads(response_text), status=status.HTTP_200_OK)
             except BadRequestError as err:
-                pass
-        response = {
-            'error': True,
-            'msg': 'The AI could not process your request. \n\n' + err.message,
-        }
-        return Response(response, status=status.HTTP_400_BAD_REQUEST)
+                response = {
+                    'error': True,
+                    'msg': 'The AI could not process your request. \n\n' + err.message,
+                }
+                return Response(response, status=status.HTTP_400_BAD_REQUEST)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def destroy(self, *args, **kwargs):
         try:
@@ -1896,12 +1896,12 @@ class RecipeViewSet(LoggingMixin, viewsets.ModelViewSet, DeleteRelationMixing):
 
                 return Response(json.loads(response_text), status=status.HTTP_200_OK)
             except BadRequestError as err:
-                pass
-        response = {
-            'error': True,
-            'msg': 'The AI could not process your request. \n\n' + err.message,
-        }
-        return Response(response, status=status.HTTP_400_BAD_REQUEST)
+                response = {
+                    'error': True,
+                    'msg': 'The AI could not process your request. \n\n' + err.message,
+                }
+                return Response(response, status=status.HTTP_400_BAD_REQUEST)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     @extend_schema(responses=RecipeSerializer(many=False))
     @decorators.action(detail=True, pagination_class=None, methods=['PATCH'], serializer_class=RecipeSerializer)
@@ -3057,7 +3057,7 @@ def ingredient_from_string(request):
     text = request.data['text']
 
     ingredient_parser = IngredientParser(request, False)
-    ingredient =  ingredient_parser.parse_as_ingredient(text)
+    ingredient = ingredient_parser.parse_as_ingredient(text)
 
     return JsonResponse(ingredient, status=200)
 
@@ -3184,5 +3184,3 @@ def meal_plans_to_ical(queryset, filename):
     response["Content-Disposition"] = f'attachment; filename={filename}'  # noqa: E501
 
     return response
-
-
