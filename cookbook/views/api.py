@@ -1034,7 +1034,10 @@ class FoodViewSet(LoggingMixin, TreeMixin, DeleteRelationMixing):
 
         supermarket_category = self.request.query_params.get('supermarket_category', None)
         if supermarket_category is not None:
-            self.queryset = self.queryset.filter(supermarket_category_id=int(supermarket_category))
+            try:
+                self.queryset = self.queryset.filter(supermarket_category_id=int(supermarket_category))
+            except ValueError:
+                self.queryset = self.queryset.none()
 
         return self.queryset
 
