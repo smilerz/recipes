@@ -819,6 +819,14 @@ def test_filter_supermarket_category(u1_s1, space_1, cat_1, cat_2):
     assert food_no_cat.id not in result_ids
 
 
+def test_filter_supermarket_category_invalid(u1_s1, space_1):
+    """Non-integer supermarket_category should not cause a 500 error."""
+    r = u1_s1.get(f'{reverse(LIST_URL)}?supermarket_category=abc')
+    assert r.status_code == 200
+    response = json.loads(r.content)
+    assert response['count'] == 0
+
+
 # ==================== combined filters ====================
 
 def test_filter_combined(u1_s1, space_1, cat_1):
