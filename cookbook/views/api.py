@@ -996,7 +996,7 @@ class FoodViewSet(LoggingMixin, TreeMixin, DeleteRelationMixing):
         onhand = self.request.query_params.get('onhand', None)
         if onhand is not None:
             if str2bool(onhand):
-                self.queryset = self.queryset.filter(onhand_users__id__in=shared_users)
+                self.queryset = self.queryset.filter(onhand_users__id__in=shared_users).distinct()
             else:
                 self.queryset = self.queryset.exclude(onhand_users__id__in=shared_users)
 
