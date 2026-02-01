@@ -954,6 +954,9 @@ class FoodInheritFieldViewSet(LoggingMixin, viewsets.ReadOnlyModelViewSet):
 
 @extend_schema_view(
     list=extend_schema(parameters=[
+        OpenApiParameter(name='root', description='Return first level children of food with ID [int]. Integer 0 will return root foods.', type=int),
+        OpenApiParameter(name='tree', description='Return all self and children of food with ID [int].', type=int),
+        OpenApiParameter(name='root_tree', description='Return all items belonging to the tree of the given food id', type=int),
         OpenApiParameter(name='onhand', type=bool, description='Filter by on-hand status for current user and shared users'),
         OpenApiParameter(name='has_substitute', type=bool, description='Filter by whether food has substitutes configured'),
         OpenApiParameter(name='in_shopping_list', type=bool, description='Filter by whether food is currently in an unchecked shopping list entry'),

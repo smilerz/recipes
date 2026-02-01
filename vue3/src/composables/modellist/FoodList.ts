@@ -26,7 +26,7 @@ export const FOOD_FILTER_DEFS: ModelFilterDef[] = [
 export const FOOD_ACTION_DEFS: ModelActionDef[] = [
     // Status toggles
     {key: 'onhand', labelKey: 'OnHand', icon: 'fa-solid fa-check-circle', isToggle: true, toggleField: 'foodOnhand', activeColor: 'success', inactiveColor: '', group: 'status'},
-    {key: 'shopping', labelKey: 'Shopping', icon: 'fa-solid fa-cart-shopping', isToggle: true, toggleField: 'shoppingStatus', activeColor: 'warning', inactiveColor: '', group: 'status'},
+    {key: 'shopping', labelKey: 'Shopping', icon: 'fa-solid fa-cart-shopping', isToggle: true, toggleField: 'shopping', activeColor: 'warning', inactiveColor: '', group: 'status'},
     {key: 'ignore', labelKey: 'IgnoreShopping', icon: 'fa-solid fa-ban', isToggle: true, toggleField: 'ignoreShopping', activeColor: 'error', inactiveColor: '', group: 'status'},
 
     // One-shot actions
