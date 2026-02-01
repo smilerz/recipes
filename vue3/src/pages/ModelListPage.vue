@@ -51,7 +51,9 @@
             <v-col>
                 <v-text-field prepend-inner-icon="$search" :label="$t('Search')" v-model="query" v-if="!genericModel.model.disableSearch" clearable></v-text-field>
 
-                <v-data-table-server
+                <model-list-data-table
+                    :key="props.model"
+                    :dynamic-slots="columnSlots"
                     v-model="selectedItems"
                     return-object
                     @update:options="loadItems"
@@ -59,7 +61,7 @@
                     :items-length="itemCount"
                     :loading="loading"
                     :search="query"
-                    :headers="genericModel.getTableHeaders()"
+                    :headers="visibleHeaders"
                     :items-per-page-options="itemsPerPageOptions"
                     :show-select="!genericModel.model.disableDelete || genericModel.model.isMerge"
                     :page="page"
@@ -136,7 +138,7 @@
                             </v-menu>
                         </v-btn>
                     </template>
-                </v-data-table-server>
+                </model-list-data-table>
             </v-col>
         </v-row>
 
@@ -155,7 +157,7 @@
 <script setup lang="ts">
 
 
-import {onBeforeMount, PropType, ref, watch} from "vue";
+import {computed, h, onBeforeMount, PropType, ref, watch} from "vue";
 import {ErrorMessageType, useMessageStore} from "@/stores/MessageStore";
 import {useI18n} from "vue-i18n";
 import {EditorSupportedModels, EditorSupportedTypes, GenericModel, getGenericModelFromString, Model, TInviteLink,} from "@/types/Models";
@@ -172,6 +174,9 @@ import AddToShoppingDialog from "@/components/dialogs/AddToShoppingDialog.vue";
 import BatchDeleteDialog from "@/components/dialogs/BatchDeleteDialog.vue";
 import {useRouteQuery} from "@vueuse/router";
 import BatchEditFoodDialog from "@/components/dialogs/BatchEditFoodDialog.vue";
+import {useModelListColumns} from "@/composables/modellist/useModelListColumns";
+import ModelListCellRenderer from "@/components/model_list/ModelListCellRenderer.vue";
+import ModelListDataTable from "@/components/model_list/ModelListDataTable.vue";
 
 const {t} = useI18n()
 const router = useRouter()
@@ -208,6 +213,25 @@ const items = ref([] as Array<any>)
 const itemCount = ref(0)
 
 const genericModel = ref({} as GenericModel)
+
+// column system: reads model reactively, handles visibility + display modes for all models
+const currentModel = computed(() => genericModel.value?.model)
+const {visibleHeaders, enhancedColumns, hasEnhancedList, getDisplayMode} = useModelListColumns(currentModel, t)
+
+// Build dynamic cell slots for enhanced columns (programmatic — Vue 3 can't v-for on template slots)
+const columnSlots = computed(() => {
+    if (!hasEnhancedList.value) return {}
+    const slots: Record<string, Function> = {}
+    for (const col of enhancedColumns.value) {
+        slots[`item.${col.key}`] = ({item}: {item: any}) =>
+            h(ModelListCellRenderer, {
+                item,
+                header: col,
+                displayMode: getDisplayMode(col.key),
+            })
+    }
+    return slots
+})
 
 // when navigating to ModelListPage from ModelListPage with a different model lifecycle hooks are not called so watch for change here
 watch(() => props.model, (newValue, oldValue) => {
