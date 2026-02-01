@@ -649,6 +649,22 @@ def test_filter_onhand_shared_user(u1_s1, u2_s1, space_1):
     assert food_onhand_user2.id in [x['id'] for x in response['results']]
 
 
+def test_filter_onhand_no_duplicates(u1_s1, u2_s1, space_1):
+    """Onhand filter should not return duplicate rows when food is onhand for multiple shared users."""
+    user1 = auth.get_user(u1_s1)
+    user2 = auth.get_user(u2_s1)
+    user2.userpreference.shopping_share.add(user1)
+    caches['default'].delete(f'shopping_shared_users_{space_1.id}_{user1.id}')
+
+    with scopes_disabled():
+        # food is onhand for both user1 AND user2 (both in shared_users)
+        food = FoodFactory(space=space_1, users_onhand=[user1, user2])
+
+    response = get_filter_results(u1_s1, '?onhand=true')
+    result_ids = [x['id'] for x in response['results']]
+    assert result_ids.count(food.id) == 1, f"Food {food.id} appears {result_ids.count(food.id)} times, expected 1"
+
+
 # ==================== has_substitute filter ====================
 
 def test_filter_has_substitute_true(u1_s1, space_1):
