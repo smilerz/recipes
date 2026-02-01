@@ -19,6 +19,7 @@ import {VDataTable} from "vuetify/components";
 import {getNestedProperty} from "@/utils/utils";
 import {useUserPreferenceStore} from "@/stores/UserPreferenceStore";
 import {defineAsyncComponent, shallowRef} from "vue";
+import type {ModelFilterDef, ModelActionDef, ModelListSettings, ModelColumnType} from "@/composables/modellist/types";
 
 type VDataTableProps = InstanceType<typeof VDataTable>['$props']
 
@@ -60,11 +61,13 @@ export function getListModels() {
 
 /**
  * common list parameters shared by all generic models
+ * index signature allows filter params to pass through to API
  */
 type GenericListRequestParameter = {
     page: number,
     pageSize: number,
     query: string,
+    [key: string]: any,
 }
 
 /**
@@ -87,8 +90,20 @@ type DeleteRelationRequestParameter = {
 type ModelTableHeaders = {
     title: string,
     key: string,
-    align: 'end' | 'start',
+    align?: 'end' | 'start',
     hidden?: boolean,
+    /** Enhanced column config: cell renderer type */
+    type?: ModelColumnType,
+    /** For boolean-indicator type: icon when true */
+    trueIcon?: string,
+    /** For boolean-indicator type: icon when false */
+    falseIcon?: string,
+    /** Whether this column supports display mode switching (icon vs text) */
+    hasDisplayMode?: boolean,
+    /** Default display mode if hasDisplayMode is true */
+    defaultDisplayMode?: 'icon' | 'text',
+    /** Dot-path to data field if different from key */
+    field?: string,
 }
 
 /**
@@ -121,6 +136,11 @@ export type Model = {
     isTree?: boolean | undefined,
 
     tableHeaders: ModelTableHeaders[],
+
+    /** Enhanced list capabilities (optional — when absent, ModelListPage uses current behavior) */
+    filterDefs?: ModelFilterDef[],
+    actionDefs?: ModelActionDef[],
+    listSettings?: ModelListSettings,
 }
 export let SUPPORTED_MODELS = new Map<string, Model>()
 
@@ -202,6 +222,8 @@ export type EditorSupportedTypes =
     | Space
     | FoodInheritField
 
+import {FOOD_FILTER_DEFS, FOOD_ACTION_DEFS, FOOD_LIST_SETTINGS} from "@/composables/modellist/FoodList";
+
 export const TFood = {
     name: 'Food',
     localizationKey: 'Food',
@@ -218,11 +240,17 @@ export const TFood = {
     toStringKeys: ['name'],
 
     tableHeaders: [
-        {title: 'Name', key: 'name'},
-        {title: 'Category', key: 'supermarketCategory.name'},
-        {title: 'Plural', key: 'plural', hidden: true},
-        {title: 'Actions', key: 'action', align: 'end'},
-    ]
+        {title: 'Name', key: 'name', type: 'text'},
+        {title: 'Category', key: 'supermarketCategory.name', type: 'text', hidden: true},
+        {title: 'Recipes', key: 'numrecipe', type: 'number', hidden: true},
+        {title: 'Children', key: 'numchild', type: 'number', hidden: true},
+        {title: 'Substitutes', key: 'hasSubstitutes', type: 'boolean-indicator', trueIcon: 'fa-solid fa-right-left', hidden: true, hasDisplayMode: true},
+        {title: 'Plural', key: 'pluralName', type: 'text', hidden: true},
+        {title: 'Actions', key: 'action', type: 'action-menu', align: 'end'},
+    ],
+    filterDefs: FOOD_FILTER_DEFS,
+    actionDefs: FOOD_ACTION_DEFS,
+    listSettings: FOOD_LIST_SETTINGS,
 } as Model
 registerModel(TFood)
 

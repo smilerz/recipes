@@ -952,6 +952,17 @@ class FoodInheritFieldViewSet(LoggingMixin, viewsets.ReadOnlyModelViewSet):
         return super().get_queryset()
 
 
+@extend_schema_view(
+    list=extend_schema(parameters=[
+        OpenApiParameter(name='onhand', type=bool, description='Filter by on-hand status for current user and shared users'),
+        OpenApiParameter(name='has_substitute', type=bool, description='Filter by whether food has substitutes configured'),
+        OpenApiParameter(name='in_shopping_list', type=bool, description='Filter by whether food is currently in an unchecked shopping list entry'),
+        OpenApiParameter(name='ignore_shopping', type=bool, description='Filter by ignore_shopping flag'),
+        OpenApiParameter(name='has_children', type=bool, description='Filter by whether food has child foods'),
+        OpenApiParameter(name='has_recipe', type=bool, description='Filter by whether food has a linked recipe'),
+        OpenApiParameter(name='supermarket_category', type=int, description='Filter by supermarket category ID'),
+    ])
+)
 class FoodViewSet(LoggingMixin, TreeMixin, DeleteRelationMixing):
     queryset = Food.objects
     model = Food
@@ -976,10 +987,56 @@ class FoodViewSet(LoggingMixin, TreeMixin, DeleteRelationMixing):
         shopping_status = ShoppingListEntry.objects.filter(space=self.request.space, food=OuterRef('id'),
                                                            checked=False).values('id')
         # onhand_status = self.queryset.annotate(onhand_status=Exists(onhand_users_set__in=[shared_users]))
-        return self.queryset \
+        self.queryset = self.queryset \
             .annotate(shopping_status=Exists(shopping_status)) \
             .prefetch_related('onhand_users', 'inherit_fields', 'child_inherit_fields', 'substitute') \
             .select_related('recipe', 'supermarket_category')
+
+        # list filters
+        onhand = self.request.query_params.get('onhand', None)
+        if onhand is not None:
+            if str2bool(onhand):
+                self.queryset = self.queryset.filter(onhand_users__id__in=shared_users)
+            else:
+                self.queryset = self.queryset.exclude(onhand_users__id__in=shared_users)
+
+        has_substitute = self.request.query_params.get('has_substitute', None)
+        if has_substitute is not None:
+            if str2bool(has_substitute):
+                self.queryset = self.queryset.filter(substitute__isnull=False).distinct()
+            else:
+                self.queryset = self.queryset.filter(substitute__isnull=True)
+
+        in_shopping_list = self.request.query_params.get('in_shopping_list', None)
+        if in_shopping_list is not None:
+            if str2bool(in_shopping_list):
+                self.queryset = self.queryset.filter(shopping_status=True)
+            else:
+                self.queryset = self.queryset.filter(shopping_status=False)
+
+        ignore_shopping = self.request.query_params.get('ignore_shopping', None)
+        if ignore_shopping is not None:
+            self.queryset = self.queryset.filter(ignore_shopping=str2bool(ignore_shopping))
+
+        has_children = self.request.query_params.get('has_children', None)
+        if has_children is not None:
+            if str2bool(has_children):
+                self.queryset = self.queryset.filter(numchild__gt=0)
+            else:
+                self.queryset = self.queryset.filter(numchild=0)
+
+        has_recipe = self.request.query_params.get('has_recipe', None)
+        if has_recipe is not None:
+            if str2bool(has_recipe):
+                self.queryset = self.queryset.filter(recipe__isnull=False)
+            else:
+                self.queryset = self.queryset.filter(recipe__isnull=True)
+
+        supermarket_category = self.request.query_params.get('supermarket_category', None)
+        if supermarket_category is not None:
+            self.queryset = self.queryset.filter(supermarket_category_id=int(supermarket_category))
+
+        return self.queryset
 
     def get_serializer_class(self):
         if self.request and self.request.query_params.get('simple', False):

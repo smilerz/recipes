@@ -28,4 +28,18 @@ export type DeviceSettings = {
 
     general_tableItemsPerPage: number
     general_closedHelpAlerts: String[]
+
+    // Food list settings
+    food_hiddenColumns: string[]
+    food_columnDisplayModes: Record<string, 'icon' | 'text'>
+    food_quickActions: string[]
+    food_treeView: boolean
+    food_showStats: boolean
+    food_showColumnHeaders: boolean
+    food_settingsPinned: boolean
+    food_swipeEnabled: boolean
+    food_swipeLeft: string[]
+    food_swipeRight: string[]
+    food_mobileSubtitle: string[]
+    food_mobileChips: string[]
 }

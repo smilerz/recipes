@@ -250,6 +250,19 @@ export const useUserPreferenceStore = defineStore('user_preference_store', () =>
 
             general_tableItemsPerPage: 10,
             general_closedHelpAlerts: [],
+
+            food_hiddenColumns: [],
+            food_columnDisplayModes: {},
+            food_quickActions: ['onhand', 'shopping', 'edit'],
+            food_treeView: false,
+            food_showStats: false,
+            food_showColumnHeaders: true,
+            food_settingsPinned: false,
+            food_swipeEnabled: true,
+            food_swipeLeft: ['edit', 'shopping'],
+            food_swipeRight: ['onhand', 'delete'],
+            food_mobileSubtitle: ['shoppingCategory'],
+            food_mobileChips: ['onhand', 'shopping'],
         }
     }
 
