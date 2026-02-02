@@ -237,17 +237,15 @@ class DefaultPagination(PageNumberPagination):
         return schema
 
 
-class ExtendedRecipeMixin():
+class RecipeCountMixin():
     """
-    ExtendedRecipe annotates a queryset with recipe_image and recipe_count values
+    Annotates a queryset with recipe_count
     """
 
     @classmethod
     def annotate_recipe(self, queryset=None, request=None, serializer=None, tree=False):
-        extended = str2bool(request.query_params.get('extended', None))
         recipe_filter = getattr(serializer, 'recipe_filter', None)
-        if extended and recipe_filter:
-            images = serializer.images
+        if recipe_filter:
             space = request.space
 
             # add a recipe count annotation to the query
@@ -255,21 +253,6 @@ class ExtendedRecipeMixin():
             recipe_count = Recipe.objects.filter(**{recipe_filter: OuterRef('id')}, space=space).values(
                 recipe_filter).annotate(count=Count('pk', distinct=True)).values('count')
             queryset = queryset.annotate(recipe_count=Coalesce(Subquery(recipe_count), 0))
-
-            # add a recipe image annotation to the query
-            image_subquery = Recipe.objects.filter(**{
-                recipe_filter: OuterRef('id')
-            }, space=space).exclude(image__isnull=True).exclude(image__exact='').order_by("?").values('image')[:1]
-            if tree:
-                image_children_subquery = Recipe.objects.filter(**{
-                    f"{recipe_filter}__path__startswith": OuterRef('path')
-                }, space=space).exclude(image__isnull=True).exclude(image__exact='').order_by("?").values('image')[:1]
-            else:
-                image_children_subquery = None
-            if images:
-                queryset = queryset.annotate(recipe_image=Coalesce(*images, image_subquery, image_children_subquery))
-            else:
-                queryset = queryset.annotate(recipe_image=Coalesce(image_subquery, image_children_subquery))
         return queryset
 
 
@@ -282,7 +265,7 @@ class ExtendedRecipeMixin():
     OpenApiParameter(name='limit', description='limit number of entries to return', type=str),
     OpenApiParameter(name='random', description='randomly orders entries (only works together with limit)', type=str),
 ]))
-class FuzzyFilterMixin(viewsets.ModelViewSet, ExtendedRecipeMixin):
+class FuzzyFilterMixin(viewsets.ModelViewSet, RecipeCountMixin):
 
     def get_queryset(self):
         self.queryset = self.queryset.filter(space=self.request.space).order_by(Lower('name').asc())

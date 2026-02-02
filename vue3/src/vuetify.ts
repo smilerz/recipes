@@ -121,8 +121,8 @@ export default createVuetify({
 
 export type VDataTableUpdateOptions = {
     page: number;
-    itemsPerPage: number;
-    search: string;
+    itemsPerPage?: number;
+    search?: string;
     sortBy?: string;
     groupBy?: string;
 }
