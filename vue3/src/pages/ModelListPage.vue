@@ -232,6 +232,7 @@ const columnSlots = computed(() => {
                 item,
                 header: col,
                 displayMode: getDisplayMode(col.key),
+                showHeaders: true,
             })
     }
     return slots
