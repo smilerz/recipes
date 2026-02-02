@@ -31,7 +31,6 @@ import type {
   FoodBatchUpdate,
   FoodInheritField,
   FoodShoppingUpdate,
-  FoodStats,
   Group,
   Household,
   ImportLog,
@@ -203,8 +202,6 @@ import {
     FoodInheritFieldToJSON,
     FoodShoppingUpdateFromJSON,
     FoodShoppingUpdateToJSON,
-    FoodStatsFromJSON,
-    FoodStatsToJSON,
     GroupFromJSON,
     GroupToJSON,
     HouseholdFromJSON,
@@ -781,7 +778,7 @@ export interface ApiFdcSearchRetrieveRequest {
 
 export interface ApiFoodAipropertiesCreateRequest {
     id: number;
-    food: Omit<Food, 'shopping'|'parent'|'numchild'|'numrecipe'|'fullName'|'substituteOnhand'|'inInventory'|'substituteInventory'>;
+    food: Omit<Food, 'shopping'|'parent'|'numchild'|'numrecipe'|'fullName'|'substituteOnhand'>;
     provider?: number;
 }
 
@@ -797,7 +794,7 @@ export interface ApiFoodCascadingListRequest {
 }
 
 export interface ApiFoodCreateRequest {
-    food: Omit<Food, 'shopping'|'parent'|'numchild'|'numrecipe'|'fullName'|'substituteOnhand'|'inInventory'|'substituteInventory'>;
+    food: Omit<Food, 'shopping'|'parent'|'numchild'|'numrecipe'|'fullName'|'substituteOnhand'>;
 }
 
 export interface ApiFoodDestroyRequest {
@@ -806,7 +803,7 @@ export interface ApiFoodDestroyRequest {
 
 export interface ApiFoodFdcCreateRequest {
     id: number;
-    food: Omit<Food, 'shopping'|'parent'|'numchild'|'numrecipe'|'fullName'|'substituteOnhand'|'inInventory'|'substituteInventory'>;
+    food: Omit<Food, 'shopping'|'parent'|'numchild'|'numrecipe'|'fullName'|'substituteOnhand'>;
 }
 
 export interface ApiFoodInheritFieldRetrieveRequest {
@@ -814,18 +811,13 @@ export interface ApiFoodInheritFieldRetrieveRequest {
 }
 
 export interface ApiFoodListRequest {
-    expired?: boolean;
-    expiringSoon?: number;
     hasChildren?: boolean;
-    hasInventory?: boolean;
     hasRecipe?: boolean;
     hasSubstitute?: boolean;
     ignoreShopping?: boolean;
     inShoppingList?: boolean;
-    inventoryLocation?: number;
     limit?: string;
     onhand?: boolean;
-    ordering?: string;
     page?: number;
     pageSize?: number;
     query?: string;
@@ -835,19 +827,18 @@ export interface ApiFoodListRequest {
     supermarketCategory?: number;
     tree?: number;
     updatedAt?: string;
-    usedInRecipes?: boolean;
 }
 
 export interface ApiFoodMergeUpdateRequest {
     id: number;
     target: number;
-    food: Omit<Food, 'shopping'|'parent'|'numchild'|'numrecipe'|'fullName'|'substituteOnhand'|'inInventory'|'substituteInventory'>;
+    food: Omit<Food, 'shopping'|'parent'|'numchild'|'numrecipe'|'fullName'|'substituteOnhand'>;
 }
 
 export interface ApiFoodMoveUpdateRequest {
     id: number;
     parent: number;
-    food: Omit<Food, 'shopping'|'parent'|'numchild'|'numrecipe'|'fullName'|'substituteOnhand'|'inInventory'|'substituteInventory'>;
+    food: Omit<Food, 'shopping'|'parent'|'numchild'|'numrecipe'|'fullName'|'substituteOnhand'>;
 }
 
 export interface ApiFoodNullingListRequest {
@@ -859,7 +850,7 @@ export interface ApiFoodNullingListRequest {
 
 export interface ApiFoodPartialUpdateRequest {
     id: number;
-    patchedFood?: Omit<PatchedFood, 'shopping'|'parent'|'numchild'|'numrecipe'|'fullName'|'substituteOnhand'|'inInventory'|'substituteInventory'>;
+    patchedFood?: Omit<PatchedFood, 'shopping'|'parent'|'numchild'|'numrecipe'|'fullName'|'substituteOnhand'>;
 }
 
 export interface ApiFoodProtectingListRequest {
@@ -873,18 +864,14 @@ export interface ApiFoodRetrieveRequest {
     id: number;
 }
 
-export interface ApiFoodShoppingDestroyRequest {
-    id: number;
-}
-
 export interface ApiFoodShoppingUpdateRequest {
     id: number;
-    foodShoppingUpdate?: FoodShoppingUpdate;
+    foodShoppingUpdate: FoodShoppingUpdate;
 }
 
 export interface ApiFoodUpdateRequest {
     id: number;
-    food: Omit<Food, 'shopping'|'parent'|'numchild'|'numrecipe'|'fullName'|'substituteOnhand'|'inInventory'|'substituteInventory'>;
+    food: Omit<Food, 'shopping'|'parent'|'numchild'|'numrecipe'|'fullName'|'substituteOnhand'>;
 }
 
 export interface ApiGetExternalFileLinkRetrieveRequest {
@@ -1657,7 +1644,6 @@ export interface ApiShoppingListEntryDestroyRequest {
 }
 
 export interface ApiShoppingListEntryListRequest {
-    food?: number;
     mealplan?: number;
     page?: number;
     pageSize?: number;
@@ -5201,20 +5187,8 @@ export class ApiApi extends runtime.BaseAPI {
     async apiFoodListRaw(requestParameters: ApiFoodListRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PaginatedFoodList>> {
         const queryParameters: any = {};
 
-        if (requestParameters['expired'] != null) {
-            queryParameters['expired'] = requestParameters['expired'];
-        }
-
-        if (requestParameters['expiringSoon'] != null) {
-            queryParameters['expiring_soon'] = requestParameters['expiringSoon'];
-        }
-
         if (requestParameters['hasChildren'] != null) {
             queryParameters['has_children'] = requestParameters['hasChildren'];
-        }
-
-        if (requestParameters['hasInventory'] != null) {
-            queryParameters['has_inventory'] = requestParameters['hasInventory'];
         }
 
         if (requestParameters['hasRecipe'] != null) {
@@ -5233,20 +5207,12 @@ export class ApiApi extends runtime.BaseAPI {
             queryParameters['in_shopping_list'] = requestParameters['inShoppingList'];
         }
 
-        if (requestParameters['inventoryLocation'] != null) {
-            queryParameters['inventory_location'] = requestParameters['inventoryLocation'];
-        }
-
         if (requestParameters['limit'] != null) {
             queryParameters['limit'] = requestParameters['limit'];
         }
 
         if (requestParameters['onhand'] != null) {
             queryParameters['onhand'] = requestParameters['onhand'];
-        }
-
-        if (requestParameters['ordering'] != null) {
-            queryParameters['ordering'] = requestParameters['ordering'];
         }
 
         if (requestParameters['page'] != null) {
@@ -5283,10 +5249,6 @@ export class ApiApi extends runtime.BaseAPI {
 
         if (requestParameters['updatedAt'] != null) {
             queryParameters['updated_at'] = requestParameters['updatedAt'];
-        }
-
-        if (requestParameters['usedInRecipes'] != null) {
-            queryParameters['used_in_recipes'] = requestParameters['usedInRecipes'];
         }
 
         const headerParameters: runtime.HTTPHeaders = {};
@@ -5599,47 +5561,18 @@ export class ApiApi extends runtime.BaseAPI {
     /**
      * logs request counts to redis cache total/per user/
      */
-    async apiFoodShoppingDestroyRaw(requestParameters: ApiFoodShoppingDestroyRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
-        if (requestParameters['id'] == null) {
-            throw new runtime.RequiredError(
-                'id',
-                'Required parameter "id" was null or undefined when calling apiFoodShoppingDestroy().'
-            );
-        }
-
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        if (this.configuration && this.configuration.apiKey) {
-            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
-        }
-
-        const response = await this.request({
-            path: `/api/food/{id}/shopping/`.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id']))),
-            method: 'DELETE',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-
-        return new runtime.VoidApiResponse(response);
-    }
-
-    /**
-     * logs request counts to redis cache total/per user/
-     */
-    async apiFoodShoppingDestroy(requestParameters: ApiFoodShoppingDestroyRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
-        await this.apiFoodShoppingDestroyRaw(requestParameters, initOverrides);
-    }
-
-    /**
-     * logs request counts to redis cache total/per user/
-     */
     async apiFoodShoppingUpdateRaw(requestParameters: ApiFoodShoppingUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<FoodShoppingUpdate>> {
         if (requestParameters['id'] == null) {
             throw new runtime.RequiredError(
                 'id',
                 'Required parameter "id" was null or undefined when calling apiFoodShoppingUpdate().'
+            );
+        }
+
+        if (requestParameters['foodShoppingUpdate'] == null) {
+            throw new runtime.RequiredError(
+                'foodShoppingUpdate',
+                'Required parameter "foodShoppingUpdate" was null or undefined when calling apiFoodShoppingUpdate().'
             );
         }
 
@@ -5669,36 +5602,6 @@ export class ApiApi extends runtime.BaseAPI {
      */
     async apiFoodShoppingUpdate(requestParameters: ApiFoodShoppingUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<FoodShoppingUpdate> {
         const response = await this.apiFoodShoppingUpdateRaw(requestParameters, initOverrides);
-        return await response.value();
-    }
-
-    /**
-     * logs request counts to redis cache total/per user/
-     */
-    async apiFoodStatsRetrieveRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<FoodStats>> {
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        if (this.configuration && this.configuration.apiKey) {
-            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
-        }
-
-        const response = await this.request({
-            path: `/api/food/stats/`,
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-
-        return new runtime.JSONApiResponse(response, (jsonValue) => FoodStatsFromJSON(jsonValue));
-    }
-
-    /**
-     * logs request counts to redis cache total/per user/
-     */
-    async apiFoodStatsRetrieve(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<FoodStats> {
-        const response = await this.apiFoodStatsRetrieveRaw(initOverrides);
         return await response.value();
     }
 
@@ -12158,10 +12061,6 @@ export class ApiApi extends runtime.BaseAPI {
      */
     async apiShoppingListEntryListRaw(requestParameters: ApiShoppingListEntryListRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PaginatedShoppingListEntryList>> {
         const queryParameters: any = {};
-
-        if (requestParameters['food'] != null) {
-            queryParameters['food'] = requestParameters['food'];
-        }
 
         if (requestParameters['mealplan'] != null) {
             queryParameters['mealplan'] = requestParameters['mealplan'];

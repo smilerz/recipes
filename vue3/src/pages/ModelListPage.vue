@@ -19,6 +19,9 @@
                         </div>
                     </template>
                     <template #append>
+                        <v-btn v-if="hasEnhancedList" icon color="primary" @click="settingsPanelOpen = !settingsPanelOpen" class="me-1">
+                            <i class="fa-solid fa-sliders"></i>
+                        </v-btn>
                         <v-btn class="float-right" icon="$create" color="create" v-if="!genericModel.model.disableCreate">
                             <i class="fa-solid fa-plus"></i>
                             <model-edit-dialog :close-after-create="false" :model="model"
@@ -53,6 +56,7 @@
 
                 <model-list-data-table
                     :key="props.model"
+                    :class="{'hide-table-headers': !showColumnHeaders}"
                     :dynamic-slots="columnSlots"
                     v-model="selectedItems"
                     return-object
@@ -146,6 +150,17 @@
             </v-col>
         </v-row>
 
+        <model-list-settings-panel
+            v-if="hasEnhancedList"
+            v-model="settingsPanelOpen"
+            :model="genericModel.model"
+            :all-columns="allColumns"
+            :is-column-visible="isColumnVisible"
+            :toggle-column="toggleColumn"
+            :get-display-mode="getDisplayMode"
+            :set-display-mode="setDisplayMode"
+        />
+
         <batch-delete-dialog :items="selectedItems" :model="props.model" v-model="batchDeleteDialog" activator="model"
                              @change="loadItems({page: page, itemsPerPage: pageSize, search: query})"></batch-delete-dialog>
 
@@ -164,7 +179,7 @@
 import {computed, h, onBeforeMount, PropType, ref, watch} from "vue";
 import {ErrorMessageType, useMessageStore} from "@/stores/MessageStore";
 import {useI18n} from "vue-i18n";
-import {EditorSupportedModels, EditorSupportedTypes, GenericModel, getGenericModelFromString, Model, TInviteLink,} from "@/types/Models";
+import {EditorSupportedModels, GenericModel, getGenericModelFromString, Model, TInviteLink,} from "@/types/Models";
 import ModelEditDialog from "@/components/dialogs/ModelEditDialog.vue";
 import {useRoute, useRouter} from "vue-router";
 import {useUserPreferenceStore} from "@/stores/UserPreferenceStore";
@@ -181,6 +196,7 @@ import BatchEditFoodDialog from "@/components/dialogs/BatchEditFoodDialog.vue";
 import {useModelListColumns} from "@/composables/modellist/useModelListColumns";
 import ModelListCellRenderer from "@/components/model_list/ModelListCellRenderer.vue";
 import ModelListDataTable from "@/components/model_list/ModelListDataTable.vue";
+import ModelListSettingsPanel from "@/components/model_list/ModelListSettingsPanel.vue";
 
 const {t} = useI18n()
 const router = useRouter()
@@ -199,13 +215,14 @@ const itemsPerPageOptions = [
     {value: 10, title: '10'},
     {value: 25, title: '25'},
     {value: 50, title: '50'},
+    {value: 100, title: '100'},
 ]
 
 const query = useRouteQuery('query', "")
 const page = useRouteQuery('page', 1, {transform: Number})
 const pageSize = useRouteQuery('pageSize', useUserPreferenceStore().deviceSettings.general_tableItemsPerPage, {transform: Number})
 
-const selectedItems = ref([] as EditorSupportedTypes[])
+const selectedItems = ref([] as any[])
 
 const batchDeleteDialog = ref(false)
 const batchMergeDialog = ref(false)
@@ -220,7 +237,16 @@ const genericModel = ref({} as GenericModel)
 
 // column system: reads model reactively, handles visibility + display modes for all models
 const currentModel = computed(() => genericModel.value?.model)
-const {visibleHeaders, enhancedColumns, hasEnhancedList, getDisplayMode} = useModelListColumns(currentModel, t)
+const {visibleHeaders, enhancedColumns, allColumns, hasEnhancedList, isColumnVisible, toggleColumn, getDisplayMode, setDisplayMode} = useModelListColumns(currentModel, t)
+
+const settingsPanelOpen = ref(false)
+
+// Show column headers setting (read from deviceSettings, controlled by settings panel)
+const showColumnHeaders = computed(() => {
+    const key = currentModel.value?.listSettings?.settingsKey
+    if (!key) return true
+    return (useUserPreferenceStore().deviceSettings as any)[`${key}_showColumnHeaders`] ?? true
+})
 
 // Build dynamic cell slots for enhanced columns (programmatic — Vue 3 can't v-for on template slots)
 const columnSlots = computed(() => {
@@ -241,7 +267,7 @@ const columnSlots = computed(() => {
 // when navigating to ModelListPage from ModelListPage with a different model lifecycle hooks are not called so watch for change here
 watch(() => props.model, (newValue, oldValue) => {
     if (newValue != oldValue) {
-        genericModel.value = getGenericModelFromString(props.model, t)
+        genericModel.value = getGenericModelFromString(props.model, t) || genericModel.value
         loadItems({page: 1})
     }
 })
@@ -250,12 +276,7 @@ watch(() => props.model, (newValue, oldValue) => {
  * select model class before mount because template renders (and requests item load) before onMounted is called
  */
 onBeforeMount(() => {
-    try {
-        genericModel.value = getGenericModelFromString(props.model, t)
-    } catch (Error) {
-        console.error('Invalid model passed to ModelListPage, loading Food instead')
-        genericModel.value = getGenericModelFromString('Food', t)
-    }
+    genericModel.value = getGenericModelFromString(props.model, t) || getGenericModelFromString('Food', t) as GenericModel
 
     title.value = t(genericModel.value.model.localizationKey)
 })
@@ -271,7 +292,10 @@ function loadItems(options: VDataTableUpdateOptions) {
     window.scrollTo({top: 0, behavior: 'smooth'})
 
     page.value = options.page
-    pageSize.value = options.itemsPerPage
+    if (options.itemsPerPage != null) {
+        pageSize.value = options.itemsPerPage
+        useUserPreferenceStore().deviceSettings.general_tableItemsPerPage = options.itemsPerPage
+    }
 
     genericModel.value.list({query: query.value, page: options.page, pageSize: pageSize.value}).then((r: any) => {
         items.value = r.results
@@ -334,5 +358,7 @@ function leaveSpace(space: Space) {
 </script>
 
 <style scoped>
-
+:deep(.hide-table-headers thead) {
+    display: none;
+}
 </style>

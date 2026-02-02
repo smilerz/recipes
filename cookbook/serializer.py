@@ -26,7 +26,7 @@ from rest_framework.fields import IntegerField
 
 from cookbook.helper.ai_helper import get_monthly_token_usage
 from cookbook.helper.image_processing import is_file_type_allowed
-from cookbook.helper.permission_helper import above_space_limit, create_space_for_user, get_household_user_ids
+from cookbook.helper.permission_helper import above_space_limit, create_space_for_user
 from cookbook.helper.property_helper import FoodPropertyHelper
 from cookbook.helper.shopping_helper import RecipeShoppingEditor
 from cookbook.helper.unit_conversion_helper import UnitConversionHelper
@@ -40,7 +40,7 @@ from cookbook.models import (Automation, BookmarkletImport, Comment, CookLog, Cu
                              UserFile, UserPreference, UserSpace, ViewLog, ConnectorConfig, SearchPreference, SearchFields, AiLog, AiProvider, ShoppingList,
                              InventoryLocation, InventoryEntry, InventoryLog, Household)
 from cookbook.templatetags.custom_tags import markdown
-from recipes.settings import EMAIL_HOST
+from recipes.settings import  EMAIL_HOST
 
 
 class WritableNestedModelSerializer(WNMS):
@@ -125,12 +125,12 @@ class CustomOnHandField(serializers.Field):
             if not self.context["request"].user.is_authenticated:
                 return []
             shared_users = []
-            if c := caches['default'].get(f'household_user_ids_{self.context["request"].space.id}_{self.context["request"].user.id}', None):
+            if c := caches['default'].get(f'shopping_shared_users_{self.context["request"].space.id}_{self.context["request"].user.id}', None):
                 shared_users = c
             else:
                 try:
-                    shared_users = get_household_user_ids(self.context["request"].user_space)
-                    caches['default'].set(f'household_user_ids_{self.context["request"].space.id}_{self.context["request"].user.id}', shared_users, timeout=5 * 60)
+                    shared_users = [x.id for x in list(self.context['request'].user.get_shopping_share())] + [self.context['request'].user.id]
+                    caches['default'].set(f'shopping_shared_users_{self.context["request"].space.id}_{self.context["request"].user.id}', shared_users, timeout=5 * 60)
                     # TODO ugly hack that improves API performance significantly, should be done properly
                 except AttributeError:  # Anonymous users (using share links) don't have shared users
                     pass
@@ -514,14 +514,15 @@ class MealTypeSerializer(SpacedModelSerializer, WritableNestedModelSerializer):
     class Meta:
         list_serializer_class = SpaceFilterSerializer
         model = MealType
-        fields = ('id', 'name', 'order', 'time', 'color', 'created_by')
+        fields = ('id', 'name', 'order', 'time', 'color', 'default', 'created_by')
         read_only_fields = ('created_by',)
 
 
 class UserPreferenceSerializer(WritableNestedModelSerializer):
     user = UserSerializer(read_only=True)
     food_inherit_default = serializers.SerializerMethodField('get_food_inherit_defaults')
-    default_meal_type = MealTypeSerializer(required=False, allow_null=True)
+    plan_share = UserSerializer(many=True, allow_null=True, required=False)
+    shopping_share = UserSerializer(many=True, allow_null=True, required=False)
     food_children_exist = serializers.SerializerMethodField('get_food_children_exist')
     image = UserFileViewSerializer(required=False, allow_null=True, many=False)
 
@@ -546,11 +547,11 @@ class UserPreferenceSerializer(WritableNestedModelSerializer):
         fields = (
             'user', 'image', 'theme', 'nav_bg_color', 'nav_text_color', 'nav_show_logo', 'default_unit', 'default_page',
             'use_fractions', 'use_kj',
-            'nav_sticky',
+            'plan_share', 'nav_sticky',
             'ingredient_decimals', 'comments', 'shopping_auto_sync', 'mealplan_autoadd_shopping',
             'food_inherit_default', 'default_delay',
-            'mealplan_autoinclude_related', 'mealplan_autoexclude_onhand', 'shopping_recent_days',
-            'csv_delim', 'csv_prefix', 'shopping_update_food_lists','default_meal_type',
+            'mealplan_autoinclude_related', 'mealplan_autoexclude_onhand', 'shopping_share', 'shopping_recent_days',
+            'csv_delim', 'csv_prefix', 'shopping_update_food_lists',
             'filter_to_supermarket', 'shopping_add_onhand', 'left_handed', 'show_step_ingredients',
             'food_children_exist'
         )
@@ -852,8 +853,6 @@ class FoodSerializer(UniqueFieldsMixin, WritableNestedModelSerializer, RecipeCou
     child_inherit_fields = FoodInheritFieldSerializer(many=True, allow_null=True, required=False)
     food_onhand = CustomOnHandField(required=False, allow_null=True)
     substitute_onhand = serializers.SerializerMethodField('get_substitute_onhand')
-    in_inventory = serializers.CharField(source='has_inventory_status', read_only=True)
-    substitute_inventory = serializers.SerializerMethodField('get_substitute_inventory')
     substitute = FoodSimpleSerializer(many=True, allow_null=True, required=False)
     parent = IntegerField(read_only=True)
     shopping_lists = ShoppingListSerializer(many=True, required=False)
@@ -865,23 +864,19 @@ class FoodSerializer(UniqueFieldsMixin, WritableNestedModelSerializer, RecipeCou
 
     @extend_schema_field(bool)
     def get_substitute_onhand(self, obj):
-        # Use batch-computed cache from FoodViewSet.list() when available
-        cached = self.context.get('_substitute_onhand')
-        if cached is not None:
-            return cached.get(obj.id, False)
-        # Fallback for single-object serialization (retrieve, create, etc.)
         try:
             if not self.context["request"].user.is_authenticated:
                 return []
             shared_users = []
             if c := caches['default'].get(
-                    f'household_user_ids_{self.context["request"].space.id}_{self.context["request"].user.id}', None):
+                    f'shopping_shared_users_{self.context["request"].space.id}_{self.context["request"].user.id}', None):
                 shared_users = c
             else:
                 try:
-                    shared_users = get_household_user_ids(self.context["request"].user_space)
+                    shared_users = [x.id for x in list(self.context['request'].user.get_shopping_share())] + [
+                        self.context['request'].user.id]
                     caches['default'].set(
-                        f'household_user_ids_{self.context["request"].space.id}_{self.context["request"].user.id}',
+                        f'shopping_shared_users_{self.context["request"].space.id}_{self.context["request"].user.id}',
                         shared_users, timeout=5 * 60)
                     # TODO ugly hack that improves API performance significantly, should be done properly
                 except AttributeError:  # Anonymous users (using share links) don't have shared users
@@ -894,24 +889,6 @@ class FoodSerializer(UniqueFieldsMixin, WritableNestedModelSerializer, RecipeCou
             return Food.objects.filter(filter).filter(onhand_users__id__in=shared_users).exists()
         except AttributeError:
             return []
-
-    @extend_schema_field(bool)
-    def get_substitute_inventory(self, obj):
-        # Use batch-computed cache from FoodViewSet.list() when available
-        cached = self.context.get('_substitute_inventory')
-        if cached is not None:
-            return cached.get(obj.id, False)
-        # Fallback for single-object serialization (retrieve, create, etc.)
-        try:
-            substitute_ids = [s.id for s in obj.substitute.all()]
-            filter = Q(id__in=substitute_ids)
-            if obj.substitute_siblings:
-                filter |= Q(path__startswith=obj.path[:Food.steplen * (obj.depth - 1)], depth=obj.depth)
-            if obj.substitute_children:
-                filter |= Q(path__startswith=obj.path, depth__gt=obj.depth)
-            return Food.objects.filter(filter).filter(inventoryentry__amount__gt=0).exists()
-        except AttributeError:
-            return False
 
     def create(self, validated_data):
         name = validated_data['name'].strip()
@@ -934,9 +911,9 @@ class FoodSerializer(UniqueFieldsMixin, WritableNestedModelSerializer, RecipeCou
         if recipe := validated_data.get('recipe', None):
             validated_data['recipe'] = Recipe.objects.get(**recipe)
 
-        # assuming if on hand for user also onhand for household members
+        # assuming if on hand for user also onhand for shopping_share users
         if onhand is not None:
-            shared_users = list(User.objects.filter(id__in=get_household_user_ids(self.context['request'].user_space)))
+            shared_users = [user := self.context['request'].user] + list(user.userpreference.shopping_share.all())
             if self.instance:
                 onhand_users = self.instance.onhand_users.all()
             else:
@@ -967,13 +944,11 @@ class FoodSerializer(UniqueFieldsMixin, WritableNestedModelSerializer, RecipeCou
             validated_data['name'] = name.strip()
         if plural_name := validated_data.get('plural_name', None):
             validated_data['plural_name'] = plural_name.strip()
-        # assuming if on hand for user also onhand for household members
+        # assuming if on hand for user also onhand for shopping_share users
         onhand = validated_data.get('food_onhand', None)
         reset_inherit = self.initial_data.get('reset_inherit', False)
         if onhand is not None:
-            shared_user_ids = get_household_user_ids(self.context["request"].user_space)
-            shared_users = list(User.objects.filter(id__in=shared_user_ids))
-
+            shared_users = [user := self.context['request'].user] + list(user.userpreference.shopping_share.all())
             if onhand:
                 validated_data['onhand_users'] = list(self.instance.onhand_users.all()) + shared_users
             else:
@@ -991,7 +966,6 @@ class FoodSerializer(UniqueFieldsMixin, WritableNestedModelSerializer, RecipeCou
             'id', 'name', 'plural_name', 'description', 'shopping', 'recipe', 'url', 'properties', 'properties_food_amount', 'properties_food_unit', 'fdc_id',
             'food_onhand', 'supermarket_category', 'parent', 'numchild', 'numrecipe', 'inherit_fields', 'full_name', 'ignore_shopping',
             'substitute', 'substitute_siblings', 'substitute_children', 'substitute_onhand', 'child_inherit_fields', 'open_data_slug', 'shopping_lists',
-            'in_inventory', 'substitute_inventory',
         )
         read_only_fields = ('id', 'numchild', 'parent', 'numrecipe')
 
@@ -1278,15 +1252,6 @@ class RecipeBatchUpdateSerializer(serializers.Serializer):
     clear_description = serializers.BooleanField(required=False, allow_null=True)
 
 
-class FoodStatsSerializer(serializers.Serializer):
-    onhand = serializers.IntegerField()
-    shopping = serializers.IntegerField()
-    ignored = serializers.IntegerField()
-    inventory = serializers.IntegerField()
-    expired = serializers.IntegerField()
-    total = serializers.IntegerField()
-
-
 class FoodBatchUpdateSerializer(serializers.Serializer):
     foods = serializers.ListField(child=serializers.IntegerField())
 
@@ -1381,6 +1346,7 @@ class MealPlanSerializer(SpacedModelSerializer, WritableNestedModelSerializer):
     meal_type_name = serializers.CharField(source='meal_type.name', read_only=True)  # TODO deprecate once old meal plan was removed
     note_markdown = serializers.SerializerMethodField('get_note_markdown')
     servings = CustomDecimalField()
+    shared = UserSerializer(many=True, required=False, allow_null=True)
     shopping = serializers.SerializerMethodField('in_shopping')
     addshopping = serializers.BooleanField(write_only=True, required=False)
 
@@ -1451,7 +1417,7 @@ class MealPlanSerializer(SpacedModelSerializer, WritableNestedModelSerializer):
         model = MealPlan
         fields = (
             'id', 'title', 'recipe', 'servings', 'note', 'note_markdown',
-            'from_date', 'to_date', 'meal_type', 'created_by', 'recipe_name',
+            'from_date', 'to_date', 'meal_type', 'created_by', 'shared', 'recipe_name',
             'meal_type_name', 'shopping', 'addshopping'
         )
         read_only_fields = ('created_by',)
@@ -1597,9 +1563,9 @@ class ShoppingListEntrySerializer(WritableNestedModelSerializer):
         if user.userpreference.shopping_add_onhand:
             if checked := validated_data.get('checked', None):
                 validated_data['completed_at'] = timezone.now()
-                instance.food.onhand_users.add(*User.objects.filter(id__in=get_household_user_ids(self.context['request'].user_space)))
+                instance.food.onhand_users.add(*user.userpreference.shopping_share.all(), user)
             elif not checked:
-                instance.food.onhand_users.remove(*User.objects.filter(id__in=get_household_user_ids(self.context['request'].user_space)))
+                instance.food.onhand_users.remove(*user.userpreference.shopping_share.all(), user)
         return super().update(instance, validated_data)
 
     class Meta:
@@ -1666,12 +1632,8 @@ class ViewLogSerializer(serializers.ModelSerializer):
         validated_data['created_by'] = self.context['request'].user
         validated_data['space'] = self.context['request'].space
 
-        view_log = ViewLog.objects.filter(
-            recipe=validated_data['recipe'],
-            created_by=self.context['request'].user,
-            created_at__gt=(timezone.now() - timezone.timedelta(minutes=5)),
-            space=self.context['request'].space
-        ).first()
+        view_log = ViewLog.objects.filter(recipe=validated_data['recipe'], created_by=self.context['request'].user, created_at__gt=(timezone.now() - timezone.timedelta(minutes=5)),
+                                          space=self.context['request'].space).first()
         if not view_log:
             view_log = ViewLog.objects.create(recipe=validated_data['recipe'], created_by=self.context['request'].user, space=self.context['request'].space)
 
@@ -2078,10 +2040,12 @@ class FoodShoppingUpdateSerializer(serializers.ModelSerializer):
                                       help_text=_("Amount of food to add to the shopping list"))
     unit = serializers.IntegerField(write_only=True, allow_null=True, required=False,
                                     help_text=_("ID of unit to use for the shopping list"))
+    delete = serializers.ChoiceField(choices=['true'], write_only=True, allow_null=True, allow_blank=True,
+                                     help_text=_("When set to true will delete all food from active shopping lists."))
 
     class Meta:
         model = Recipe
-        fields = ['id', 'amount', 'unit']
+        fields = ['id', 'amount', 'unit', 'delete', ]
 
 
 # non model serializers
