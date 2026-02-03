@@ -79,3 +79,16 @@ export type ModelListSettings = {
     /** Whether a mobile-specific list layout is available */
     mobileList?: boolean,
 }
+
+/**
+ * Sort option definition for a model list.
+ * Each option maps to a backend `ordering` query parameter value.
+ */
+export type ModelSortDef = {
+    /** Value sent as the `ordering` query param (e.g. 'name', '-name') */
+    key: string,
+    /** Localization key for the display label */
+    labelKey: string,
+    /** Icon (FontAwesome class), optional */
+    icon?: string,
+}
