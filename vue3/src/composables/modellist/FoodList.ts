@@ -3,7 +3,7 @@
  * This is the single source of truth for all Food list behavior.
  */
 
-import type {ModelFilterDef, ModelActionDef, ModelListSettings} from './types'
+import type {ModelFilterDef, ModelActionDef, ModelListSettings, ModelSortDef} from './types'
 
 /**
  * Filter definitions for the Food list.
@@ -48,3 +48,14 @@ export const FOOD_LIST_SETTINGS: ModelListSettings = {
     statsFooter: true,
     mobileList: true,
 }
+
+/**
+ * Sort option definitions for the Food list.
+ * Each key can be prefixed with `-` for descending at the point of use.
+ */
+export const FOOD_SORT_OPTIONS: ModelSortDef[] = [
+    {key: 'name', labelKey: 'Name'},
+    {key: 'numrecipe', labelKey: 'Recipes'},
+    {key: 'numchild', labelKey: 'Children'},
+    {key: 'supermarket_category__name', labelKey: 'Category'},
+]
