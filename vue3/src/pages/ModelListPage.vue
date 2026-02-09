@@ -19,9 +19,6 @@
                         </div>
                     </template>
                     <template #append>
-                        <v-btn v-if="hasEnhancedList" icon color="primary" @click="settingsPanelOpen = !settingsPanelOpen" class="me-1">
-                            <i class="fa-solid fa-sliders"></i>
-                        </v-btn>
                         <v-btn class="float-right" icon="$create" color="create" v-if="!genericModel.model.disableCreate">
                             <i class="fa-solid fa-plus"></i>
                             <model-edit-dialog :close-after-create="false" :model="model"
@@ -52,7 +49,19 @@
         </v-row>
         <v-row>
             <v-col>
-                <v-text-field prepend-inner-icon="$search" :label="$t('Search')" v-model="query" v-if="!genericModel.model.disableSearch" clearable></v-text-field>
+                <ModelListToolbar
+                    v-if="!genericModel.model.disableSearch"
+                    v-model:query="query"
+                    v-model:ordering="ordering"
+                    :sort-options="genericModel.model.sortDefs ?? []"
+                    :has-filters="hasEnhancedList"
+                    :active-filter-count="0"
+                    :has-multi-select="!genericModel.model.disableDelete || genericModel.model.isMerge"
+                    :select-mode="selectMode"
+                    @open-filters="settingsPanelOpen = true"
+                    @open-settings="settingsPanelOpen = true"
+                    @toggle-select="selectMode = !selectMode"
+                />
 
                 <model-list-data-table
                     :key="props.model"
@@ -196,7 +205,8 @@ import BatchEditFoodDialog from "@/components/dialogs/BatchEditFoodDialog.vue";
 import {useModelListColumns} from "@/composables/modellist/useModelListColumns";
 import ModelListCellRenderer from "@/components/model_list/ModelListCellRenderer.vue";
 import ModelListDataTable from "@/components/model_list/ModelListDataTable.vue";
-import ModelListSettingsPanel from "@/components/model_list/ModelListSettingsPanel.vue";
+import ModelListSettingsPanel from "@/components/model_list/ModelListSettingsPanel.vue"
+import ModelListToolbar from "@/components/model_list/ModelListToolbar.vue";
 
 const {t} = useI18n()
 const router = useRouter()
@@ -221,6 +231,7 @@ const itemsPerPageOptions = [
 const query = useRouteQuery('query', "")
 const page = useRouteQuery('page', 1, {transform: Number})
 const pageSize = useRouteQuery('pageSize', useUserPreferenceStore().deviceSettings.general_tableItemsPerPage, {transform: Number})
+const ordering = useRouteQuery('ordering', '')
 
 const selectedItems = ref([] as any[])
 
@@ -240,6 +251,7 @@ const currentModel = computed(() => genericModel.value?.model)
 const {visibleHeaders, enhancedColumns, allColumns, hasEnhancedList, isColumnVisible, toggleColumn, getDisplayMode, setDisplayMode} = useModelListColumns(currentModel, t)
 
 const settingsPanelOpen = ref(false)
+const selectMode = ref(false)
 
 // Show column headers setting (read from deviceSettings, controlled by settings panel)
 const showColumnHeaders = computed(() => {
@@ -272,6 +284,8 @@ watch(() => props.model, (newValue, oldValue) => {
     }
 })
 
+watch(ordering, () => loadItems({page: 1}))
+
 /**
  * select model class before mount because template renders (and requests item load) before onMounted is called
  */
@@ -297,7 +311,7 @@ function loadItems(options: VDataTableUpdateOptions) {
         useUserPreferenceStore().deviceSettings.general_tableItemsPerPage = options.itemsPerPage
     }
 
-    genericModel.value.list({query: query.value, page: options.page, pageSize: pageSize.value}).then((r: any) => {
+    genericModel.value.list({query: query.value, page: options.page, pageSize: pageSize.value, ordering: ordering.value || undefined}).then((r: any) => {
         items.value = r.results
         itemCount.value = r.count
     }).catch((err: any) => {
