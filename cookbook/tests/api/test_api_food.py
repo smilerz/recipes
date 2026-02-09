@@ -869,3 +869,66 @@ def test_filter_case_insensitive(u1_s1, space_1):
     for val in ['True', 'TRUE', 'true', '1']:
         response = get_filter_results(u1_s1, f'?onhand={val}')
         assert response['count'] == 1, f"onhand={val} should return 1 result"
+
+
+# ==================== ordering ====================
+
+def test_ordering_name_asc(u1_s1, space_1):
+    with scopes_disabled():
+        FoodFactory(name='Banana', space=space_1)
+        FoodFactory(name='Apple', space=space_1)
+        FoodFactory(name='Cherry', space=space_1)
+
+    response = get_filter_results(u1_s1, '?ordering=name')
+    names = [x['name'] for x in response['results']]
+    assert names == sorted(names, key=str.lower)
+
+
+def test_ordering_name_desc(u1_s1, space_1):
+    with scopes_disabled():
+        FoodFactory(name='Banana', space=space_1)
+        FoodFactory(name='Apple', space=space_1)
+        FoodFactory(name='Cherry', space=space_1)
+
+    response = get_filter_results(u1_s1, '?ordering=-name')
+    names = [x['name'] for x in response['results']]
+    assert names == sorted(names, key=str.lower, reverse=True)
+
+
+def test_ordering_numrecipe(u1_s1, space_1):
+    """Ordering by numrecipe should sort by recipe_count annotation (mapped from numrecipe)."""
+    with scopes_disabled():
+        FoodFactory(name='NoRecipes', space=space_1)
+        FoodFactory(name='WithRecipes', space=space_1)
+
+    # numrecipe ordering should not error — both foods have 0 recipes so order is stable by secondary sort
+    response = get_filter_results(u1_s1, '?ordering=numrecipe')
+    assert response['count'] == 2
+
+    response = get_filter_results(u1_s1, '?ordering=-numrecipe')
+    assert response['count'] == 2
+
+
+def test_ordering_invalid_field_ignored(u1_s1, space_1):
+    """Invalid ordering field should be silently ignored (default ordering applies)."""
+    with scopes_disabled():
+        FoodFactory(name='Banana', space=space_1)
+        FoodFactory(name='Apple', space=space_1)
+
+    response = get_filter_results(u1_s1, '?ordering=invalid_field')
+    assert response['count'] == 2
+    # Default ordering (name asc) should apply
+    names = [x['name'] for x in response['results']]
+    assert names == sorted(names, key=str.lower)
+
+
+def test_ordering_ignored_when_query_active(u1_s1, space_1):
+    """When a search query is active, ordering param should be ignored (relevance wins)."""
+    with scopes_disabled():
+        FoodFactory(name='Apple Pie', space=space_1)
+        FoodFactory(name='Banana', space=space_1)
+
+    # With query active, ordering should be ignored — no error and results returned
+    response = get_filter_results(u1_s1, '?ordering=-name&query=Apple')
+    assert response['count'] == 1
+    assert response['results'][0]['name'] == 'Apple Pie'
