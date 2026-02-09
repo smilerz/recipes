@@ -57,5 +57,5 @@ export const FOOD_SORT_OPTIONS: ModelSortDef[] = [
     {key: 'name', labelKey: 'Name'},
     {key: 'numrecipe', labelKey: 'Recipes'},
     {key: 'numchild', labelKey: 'Children'},
-    {key: 'supermarket_category__name', labelKey: 'Category'},
+    {key: 'supermarket_category__name', labelKey: 'Shopping_Category'},
 ]
