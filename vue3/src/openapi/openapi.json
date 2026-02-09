@@ -1805,10 +1805,48 @@ paths:
       description: logs request counts to redis cache total/per user/
       parameters:
       - in: query
+        name: has_children
+        schema:
+          type: boolean
+        description: Filter by whether food has child foods
+      - in: query
+        name: has_recipe
+        schema:
+          type: boolean
+        description: Filter by whether food has a linked recipe
+      - in: query
+        name: has_substitute
+        schema:
+          type: boolean
+        description: Filter by whether food has substitutes configured
+      - in: query
+        name: ignore_shopping
+        schema:
+          type: boolean
+        description: Filter by ignore_shopping flag
+      - in: query
+        name: in_shopping_list
+        schema:
+          type: boolean
+        description: Filter by whether food is currently in an unchecked shopping
+          list entry
+      - in: query
         name: limit
         schema:
           type: string
         description: limit number of entries to return
+      - in: query
+        name: onhand
+        schema:
+          type: boolean
+        description: Filter by on-hand status for current user and shared users
+      - in: query
+        name: ordering
+        schema:
+          type: string
+        description: 'Order results by field. Allowed: name, -name, numrecipe, -numrecipe,
+          numchild, -numchild, supermarket_category__name, -supermarket_category__name.
+          Ignored when query is active.'
       - name: page
         required: false
         in: query
@@ -1835,18 +1873,23 @@ paths:
         name: root
         schema:
           type: integer
-        description: Return first level children of {obj} with ID [int].  Integer
-          0 will return root {obj}s.
+        description: Return first level children of food with ID [int]. Integer 0
+          will return root foods.
       - in: query
         name: root_tree
         schema:
           type: integer
-        description: Return all items belonging to the tree of the given {obj} id
+        description: Return all items belonging to the tree of the given food id
+      - in: query
+        name: supermarket_category
+        schema:
+          type: integer
+        description: Filter by supermarket category ID
       - in: query
         name: tree
         schema:
           type: integer
-        description: Return all self and children of {obj} with ID [int].
+        description: Return all self and children of food with ID [int].
       - in: query
         name: updated_at
         schema:
@@ -2724,23 +2767,22 @@ paths:
               schema:
                 $ref: '#/components/schemas/Ingredient'
           description: ''
-  /api/ingredient-from-string/:
+  /api/ingredient-parser/post/:
     post:
-      operationId: apiIngredientFromStringCreate
+      operationId: apiIngredientParserPostCreate
       tags:
       - api
       requestBody:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/IngredientString'
+              $ref: '#/components/schemas/IngredientParserRequest'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/IngredientString'
+              $ref: '#/components/schemas/IngredientParserRequest'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/IngredientString'
-        required: true
+              $ref: '#/components/schemas/IngredientParserRequest'
       security:
       - ApiKeyAuth: []
       responses:
@@ -2748,7 +2790,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ParsedIngredient'
+                $ref: '#/components/schemas/IngredientParserResponse'
           description: ''
   /api/ingredient/{id}/:
     get:
@@ -3471,7 +3513,8 @@ paths:
         name: from_date
         schema:
           type: string
-        description: Filter meal plans from date (inclusive).
+        description: Filter meal plans from date (inclusive). If nothing is given
+          its today - 90 days.
         examples:
           DateFormat:
             value: '1972-12-05'
@@ -3499,7 +3542,8 @@ paths:
         name: to_date
         schema:
           type: string
-        description: Filter meal plans to date (inclusive).
+        description: Filter meal plans to date (inclusive). If nothing is given its
+          today + 360 days.
         examples:
           DateFormat:
             value: '1972-12-05'
@@ -3654,7 +3698,8 @@ paths:
         name: from_date
         schema:
           type: string
-        description: Filter meal plans from date (inclusive).
+        description: Filter meal plans from date (inclusive). If nothing is given
+          its today - 90 days.
         examples:
           DateFormat:
             value: '1972-12-05'
@@ -3670,7 +3715,8 @@ paths:
         name: to_date
         schema:
           type: string
-        description: Filter meal plans to date (inclusive).
+        description: Filter meal plans to date (inclusive). If nothing is given its
+          today + 360 days.
         examples:
           DateFormat:
             value: '1972-12-05'
@@ -4555,6 +4601,11 @@ paths:
             type: integer
         description: Food IDs, repeat for multiple. Exclude recipes with any of the
           foods.
+      - in: query
+        name: include_children
+        schema:
+          type: boolean
+        description: Include child keywords and foods in search results. [<b>true</b>/false]
       - in: query
         name: internal
         schema:
@@ -9622,19 +9673,6 @@ paths:
         return all userspaces for the user requesting the endpoint
         :param request:
         :return:
-      parameters:
-      - name: page
-        required: false
-        in: query
-        description: A page number within the paginated result set.
-        schema:
-          type: integer
-      - name: page_size
-        required: false
-        in: query
-        description: Number of results to return per page.
-        schema:
-          type: integer
       tags:
       - api
       security:
@@ -9644,7 +9682,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/PaginatedUserSpaceList'
+                type: array
+                items:
+                  $ref: '#/components/schemas/UserSpace'
           description: ''
   /api/user/{id}/:
     get:
@@ -10468,6 +10508,9 @@ components:
         numchild:
           type: integer
           readOnly: true
+        numrecipe:
+          type: integer
+          readOnly: true
         inherit_fields:
           type: array
           items:
@@ -10510,6 +10553,7 @@ components:
       - full_name
       - name
       - numchild
+      - numrecipe
       - parent
       - shopping
       - substitute_onhand
@@ -11015,19 +11059,90 @@ components:
           type: boolean
         always_use_plural_food:
           type: boolean
+        checked:
+          type: boolean
+          readOnly: true
+          default: false
+          description: Just laziness to have a checked field on the frontend API client
       required:
       - amount
+      - checked
       - conversions
       - food
       - unit
       - used_in_recipes
-    IngredientString:
+    IngredientParserRequest:
       type: object
       properties:
-        text:
+        ingredient:
           type: string
+        ingredients:
+          type: array
+          items:
+            type: string
+    IngredientParserResponse:
+      type: object
+      properties:
+        ingredient:
+          allOf:
+          - $ref: '#/components/schemas/IngredientSimple'
+          nullable: true
+        ingredients:
+          type: array
+          items:
+            $ref: '#/components/schemas/IngredientSimple'
       required:
-      - text
+      - ingredient
+      - ingredients
+    IngredientSimple:
+      type: object
+      description: Adds nested create feature
+      properties:
+        id:
+          type: integer
+          readOnly: false
+        food:
+          allOf:
+          - $ref: '#/components/schemas/FoodSimple'
+          nullable: true
+        unit:
+          allOf:
+          - $ref: '#/components/schemas/Unit'
+          nullable: true
+        amount:
+          type: number
+          format: double
+        note:
+          type: string
+          nullable: true
+          maxLength: 256
+        order:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: -9223372036854775808
+          format: int64
+        is_header:
+          type: boolean
+        no_amount:
+          type: boolean
+        original_text:
+          type: string
+          nullable: true
+          maxLength: 512
+        checked:
+          type: boolean
+          readOnly: true
+          default: false
+          description: Just laziness to have a checked field on the frontend API client
+        always_use_plural_unit:
+          type: boolean
+        always_use_plural_food:
+          type: boolean
+      required:
+      - amount
+      - checked
+      - food
+      - unit
     InviteLink:
       type: object
       description: Adds nested create feature
@@ -11131,6 +11246,9 @@ components:
         numchild:
           type: integer
           readOnly: true
+        numrecipe:
+          type: integer
+          readOnly: true
         created_at:
           type: string
           format: date-time
@@ -11151,6 +11269,7 @@ components:
       - label
       - name
       - numchild
+      - numrecipe
       - parent
       - updated_at
     KeywordLabel:
@@ -12289,25 +12408,6 @@ components:
         timestamp:
           type: string
           format: date-time
-    ParsedIngredient:
-      type: object
-      properties:
-        amount:
-          type: integer
-        unit:
-          type: string
-        food:
-          type: string
-        note:
-          type: string
-        original_text:
-          type: string
-      required:
-      - amount
-      - food
-      - note
-      - original_text
-      - unit
     PatchedAccessToken:
       type: object
       properties:
@@ -12644,6 +12744,9 @@ components:
         numchild:
           type: integer
           readOnly: true
+        numrecipe:
+          type: integer
+          readOnly: true
         inherit_fields:
           type: array
           items:
@@ -12763,6 +12866,11 @@ components:
           type: boolean
         always_use_plural_food:
           type: boolean
+        checked:
+          type: boolean
+          readOnly: true
+          default: false
+          description: Just laziness to have a checked field on the frontend API client
     PatchedInviteLink:
       type: object
       description: Adds nested create feature
@@ -12857,6 +12965,9 @@ components:
           type: integer
           readOnly: true
         numchild:
+          type: integer
+          readOnly: true
+        numrecipe:
           type: integer
           readOnly: true
         created_at:
@@ -13108,6 +13219,14 @@ components:
         servings_text:
           type: string
           maxLength: 32
+        diameter:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: -9223372036854775808
+          format: int64
+        diameter_text:
+          type: string
+          maxLength: 32
         rating:
           type: number
           format: double
@@ -13173,10 +13292,13 @@ components:
           readOnly: true
     PatchedRecipeImport:
       type: object
+      description: Adds nested create feature
       properties:
         id:
           type: integer
           readOnly: false
+        storage:
+          $ref: '#/components/schemas/Storage'
         name:
           type: string
           maxLength: 128
@@ -13190,10 +13312,6 @@ components:
           type: string
           format: date-time
           readOnly: true
-        storage:
-          type: integer
-        space:
-          type: integer
     PatchedSearchPreference:
       type: object
       description: Adds nested create feature
@@ -13766,6 +13884,9 @@ components:
           type: string
           nullable: true
           maxLength: 256
+        numrecipe:
+          type: integer
+          readOnly: true
         open_data_slug:
           type: string
           nullable: true
@@ -14173,6 +14294,14 @@ components:
         servings_text:
           type: string
           maxLength: 32
+        diameter:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: -9223372036854775808
+          format: int64
+        diameter_text:
+          type: string
+          maxLength: 32
         rating:
           type: number
           format: double
@@ -14390,10 +14519,13 @@ components:
           maxLength: 4096
     RecipeImport:
       type: object
+      description: Adds nested create feature
       properties:
         id:
           type: integer
           readOnly: false
+        storage:
+          $ref: '#/components/schemas/Storage'
         name:
           type: string
           maxLength: 128
@@ -14407,14 +14539,9 @@ components:
           type: string
           format: date-time
           readOnly: true
-        storage:
-          type: integer
-        space:
-          type: integer
       required:
       - created_at
       - name
-      - space
       - storage
     RecipeOverview:
       type: object
@@ -14850,6 +14977,10 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/ShoppingListEntrySimpleCreate'
+        shopping_lists_ids:
+          type: array
+          items:
+            type: integer
       required:
       - entries
     ShoppingListEntrySimpleCreate:
@@ -15566,12 +15697,16 @@ components:
           type: string
           nullable: true
           maxLength: 256
+        numrecipe:
+          type: integer
+          readOnly: true
         open_data_slug:
           type: string
           nullable: true
           maxLength: 128
       required:
       - name
+      - numrecipe
     UnitConversion:
       type: object
       description: Adds nested create feature

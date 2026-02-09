@@ -947,6 +947,7 @@ class FoodInheritFieldViewSet(LoggingMixin, viewsets.ReadOnlyModelViewSet):
         OpenApiParameter(name='has_children', type=bool, description='Filter by whether food has child foods'),
         OpenApiParameter(name='has_recipe', type=bool, description='Filter by whether food has a linked recipe'),
         OpenApiParameter(name='supermarket_category', type=int, description='Filter by supermarket category ID'),
+        OpenApiParameter(name='ordering', type=str, description='Order results by field. Allowed: name, -name, numrecipe, -numrecipe, numchild, -numchild, supermarket_category__name, -supermarket_category__name. Ignored when query is active.'),
     ])
 )
 class FoodViewSet(LoggingMixin, TreeMixin, DeleteRelationMixing):
@@ -1024,6 +1025,26 @@ class FoodViewSet(LoggingMixin, TreeMixin, DeleteRelationMixing):
                 self.queryset = self.queryset.filter(supermarket_category_id=int(supermarket_category))
             except ValueError:
                 self.queryset = self.queryset.none()
+
+        # Apply custom ordering (skip when search query active — relevance ordering takes priority)
+        ordering_param = self.request.query_params.get('ordering', None)
+        query = self.request.query_params.get('query', None)
+        if ordering_param and not query:
+            ORDERING_FIELD_MAP = {'numrecipe': 'recipe_count', '-numrecipe': '-recipe_count'}
+            ORDERING_LOWER_FIELDS = {
+                'name': Lower('name').asc(),
+                '-name': Lower('name').desc(),
+                'supermarket_category__name': Lower('supermarket_category__name').asc(),
+                '-supermarket_category__name': Lower('supermarket_category__name').desc(),
+            }
+            ALLOWED = {'name', '-name', 'numrecipe', '-numrecipe', 'numchild', '-numchild',
+                       'supermarket_category__name', '-supermarket_category__name'}
+            if ordering_param in ALLOWED:
+                if ordering_param in ORDERING_LOWER_FIELDS:
+                    self.queryset = self.queryset.order_by(ORDERING_LOWER_FIELDS[ordering_param])
+                else:
+                    db_field = ORDERING_FIELD_MAP.get(ordering_param, ordering_param)
+                    self.queryset = self.queryset.order_by(db_field)
 
         return self.queryset
 
