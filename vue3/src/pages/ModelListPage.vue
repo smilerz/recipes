@@ -1,52 +1,84 @@
 <template>
     <v-container>
-        <v-row>
+        <v-row v-if="!showDescription">
             <v-col>
                 <v-card>
-                    <v-card-text class="pt-2 pb-2">
+                    <v-card-text class="d-flex align-center pt-2 pb-2">
                         <v-btn variant="flat" @click="router.go(-1)" prepend-icon="fa-solid fa-arrow-left">{{ $t('Back') }}</v-btn>
+                        <v-spacer />
+                        <v-icon :icon="genericModel.model.icon" size="small" class="mr-2" />
+                        <span class="text-subtitle-1 font-weight-medium">{{ $t(genericModel.model.localizationKey) }}</span>
+                        <v-btn
+                            v-if="genericModel.model.localizationKeyDescription"
+                            icon="fa-solid fa-circle-info"
+                            variant="plain"
+                            size="small"
+                            @click="showDescription = true"
+                        />
+                        <v-btn prepend-icon="fa-solid fa-rotate" color="success" size="small" @click="importAllRecipes()" v-if="genericModel.model.name == 'RecipeImport'">{{ $t('ImportAll') }}</v-btn>
+                        <v-btn :prepend-icon="TInviteLink.icon" size="small" :to="{name: 'ModelListPage', params: {model: 'InviteLink'}}" v-if="genericModel.model.name == 'UserSpace'">{{ $t('Invites') }}</v-btn>
+                        <model-list-create-button :model="model" :disable-create="genericModel.model.disableCreate" compact @change="loadItems({page: page})" />
                     </v-card-text>
+                    <v-progress-linear
+                        v-if="genericModel.model.name == 'AiLog'"
+                        :model-value="useUserPreferenceStore().activeSpace.aiMonthlyCreditsUsed"
+                        :max="useUserPreferenceStore().activeSpace.aiCreditsMonthly"
+                        color="primary"
+                        height="6"
+                    />
                 </v-card>
             </v-col>
         </v-row>
 
-        <v-row dense>
-            <v-col>
-                <v-card :prepend-icon="genericModel.model.icon" :title="$t(genericModel.model.localizationKey)">
-                    <template #subtitle v-if="genericModel.model.localizationKeyDescription">
-                        <div class="text-wrap">
-                            {{ $t(genericModel.model.localizationKeyDescription) }}
-                        </div>
-                    </template>
-                    <template #append>
-                        <v-btn class="float-right" icon="$create" color="create" v-if="!genericModel.model.disableCreate">
-                            <i class="fa-solid fa-plus"></i>
-                            <model-edit-dialog :close-after-create="false" :model="model"
-                                               @create="loadItems({page: page})"
-                                               @save="loadItems({page: page })"
-                                               @delete="loadItems({page: page})"></model-edit-dialog>
-                        </v-btn>
-                    </template>
+        <template v-else>
+            <v-row>
+                <v-col>
+                    <v-card>
+                        <v-card-text class="pt-2 pb-2">
+                            <v-btn variant="flat" @click="router.go(-1)" prepend-icon="fa-solid fa-arrow-left">{{ $t('Back') }}</v-btn>
+                        </v-card-text>
+                    </v-card>
+                </v-col>
+            </v-row>
 
-                    <!-- TODO build customizable model component system -->
-                    <v-card-actions v-if="genericModel.model.name == 'RecipeImport'">
-                        <v-btn prepend-icon="fa-solid fa-rotate" color="success" @click="importAllRecipes()">{{ $t('ImportAll') }}</v-btn>
-                    </v-card-actions>
+            <v-row dense>
+                <v-col>
+                    <v-card :prepend-icon="genericModel.model.icon" :title="$t(genericModel.model.localizationKey)">
+                        <template #subtitle v-if="genericModel.model.localizationKeyDescription">
+                            <div class="text-wrap">
+                                {{ $t(genericModel.model.localizationKeyDescription) }}
+                            </div>
+                        </template>
+                        <template #append>
+                            <v-btn
+                                v-if="genericModel.model.localizationKeyDescription"
+                                icon="fa-solid fa-chevron-up"
+                                variant="plain"
+                                size="small"
+                                @click="showDescription = false"
+                            />
+                            <model-list-create-button :model="model" :disable-create="genericModel.model.disableCreate" @change="loadItems({page: page})" />
+                        </template>
 
-                    <v-card-text v-if="genericModel.model.name == 'AiLog'">
-                        {{ $t('MonthlyCreditsUsed') }} ({{ useUserPreferenceStore().activeSpace.aiMonthlyCreditsUsed }} / {{
-                            useUserPreferenceStore().activeSpace.aiCreditsMonthly
-                        }})
-                        {{ $t('AiCreditsBalance') }} : {{ useUserPreferenceStore().activeSpace.aiCreditsBalance }}
-                        <v-progress-linear :model-value="useUserPreferenceStore().activeSpace.aiMonthlyCreditsUsed"
-                                           :max="useUserPreferenceStore().activeSpace.aiCreditsMonthly"></v-progress-linear>
-                    </v-card-text>
-                    <v-card-actions v-if="genericModel.model.name == 'UserSpace'">
-                        <v-btn :prepend-icon="TInviteLink.icon" :to="{name: 'ModelListPage', params: {model: 'InviteLink'}}">{{ $t('Invites') }}</v-btn>
-                    </v-card-actions>
-                </v-card>
-            </v-col>
-        </v-row>
+                        <v-card-actions v-if="genericModel.model.name == 'RecipeImport'">
+                            <v-btn prepend-icon="fa-solid fa-rotate" color="success" @click="importAllRecipes()">{{ $t('ImportAll') }}</v-btn>
+                        </v-card-actions>
+
+                        <v-card-text v-if="genericModel.model.name == 'AiLog'">
+                            {{ $t('MonthlyCreditsUsed') }} ({{ useUserPreferenceStore().activeSpace.aiMonthlyCreditsUsed }} / {{
+                                useUserPreferenceStore().activeSpace.aiCreditsMonthly
+                            }})
+                            {{ $t('AiCreditsBalance') }} : {{ useUserPreferenceStore().activeSpace.aiCreditsBalance }}
+                            <v-progress-linear :model-value="useUserPreferenceStore().activeSpace.aiMonthlyCreditsUsed"
+                                               :max="useUserPreferenceStore().activeSpace.aiCreditsMonthly"></v-progress-linear>
+                        </v-card-text>
+                        <v-card-actions v-if="genericModel.model.name == 'UserSpace'">
+                            <v-btn :prepend-icon="TInviteLink.icon" :to="{name: 'ModelListPage', params: {model: 'InviteLink'}}">{{ $t('Invites') }}</v-btn>
+                        </v-card-actions>
+                    </v-card>
+                </v-col>
+            </v-row>
+        </template>
         <v-row>
             <v-col>
                 <ModelListToolbar
@@ -58,8 +90,8 @@
                     :active-filter-count="0"
                     :has-multi-select="!genericModel.model.disableDelete || genericModel.model.isMerge"
                     :select-mode="selectMode"
-                    @open-filters="settingsPanelOpen = true"
-                    @open-settings="settingsPanelOpen = true"
+                    @open-filters="openSettingsPanel('filters')"
+                    @open-settings="openSettingsPanel('settings')"
                     @toggle-select="selectMode = !selectMode"
                 />
 
@@ -158,6 +190,7 @@
         <model-list-settings-panel
             v-if="hasEnhancedList"
             v-model="settingsPanelOpen"
+            v-model:active-tab="settingsActiveTab"
             :model="genericModel.model"
             :all-columns="allColumns"
             :is-column-visible="isColumnVisible"
@@ -185,7 +218,7 @@ import {computed, h, onBeforeMount, PropType, ref, watch} from "vue";
 import {ErrorMessageType, useMessageStore} from "@/stores/MessageStore";
 import {useI18n} from "vue-i18n";
 import {EditorSupportedModels, GenericModel, getGenericModelFromString, Model, TInviteLink,} from "@/types/Models";
-import ModelEditDialog from "@/components/dialogs/ModelEditDialog.vue";
+
 import {useRoute, useRouter} from "vue-router";
 import {useUserPreferenceStore} from "@/stores/UserPreferenceStore";
 import ModelMergeDialog from "@/components/dialogs/ModelMergeDialog.vue";
@@ -203,6 +236,7 @@ import ModelListCellRenderer from "@/components/model_list/ModelListCellRenderer
 import ModelListDataTable from "@/components/model_list/ModelListDataTable.vue";
 import ModelListSettingsPanel from "@/components/model_list/ModelListSettingsPanel.vue"
 import ModelListToolbar from "@/components/model_list/ModelListToolbar.vue";
+import ModelListCreateButton from "@/components/model_list/ModelListCreateButton.vue";
 
 const {t} = useI18n()
 const router = useRouter()
@@ -246,8 +280,15 @@ const genericModel = ref({} as GenericModel)
 const currentModel = computed(() => genericModel.value?.model)
 const {visibleHeaders, enhancedColumns, allColumns, hasEnhancedList, isColumnVisible, toggleColumn, getDisplayMode, setDisplayMode} = useModelListColumns(currentModel, t)
 
+const showDescription = ref(true)
 const settingsPanelOpen = ref(false)
+const settingsActiveTab = ref('settings')
 const selectMode = ref(false)
+
+function openSettingsPanel(tab: string) {
+    settingsActiveTab.value = tab
+    settingsPanelOpen.value = true
+}
 
 // Show column headers setting (read from deviceSettings, controlled by settings panel)
 const showColumnHeaders = computed(() => {
