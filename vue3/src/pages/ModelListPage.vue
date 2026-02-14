@@ -87,7 +87,7 @@
                     v-model:ordering="ordering"
                     :sort-options="genericModel.model.sortDefs ?? []"
                     :has-filters="hasEnhancedList"
-                    :active-filter-count="0"
+                    :active-filter-count="activeFilterCount"
                     :has-multi-select="!genericModel.model.disableDelete || genericModel.model.isMerge"
                     :select-mode="selectMode"
                     @open-filters="openSettingsPanel('filters')"
@@ -232,6 +232,7 @@ import BatchDeleteDialog from "@/components/dialogs/BatchDeleteDialog.vue";
 import {useRouteQuery} from "@vueuse/router";
 import BatchEditFoodDialog from "@/components/dialogs/BatchEditFoodDialog.vue";
 import {useModelListColumns} from "@/composables/modellist/useModelListColumns";
+import {useModelListFilters} from "@/composables/modellist/useModelListFilters";
 import ModelListCellRenderer from "@/components/model_list/ModelListCellRenderer.vue";
 import ModelListDataTable from "@/components/model_list/ModelListDataTable.vue";
 import ModelListSettingsPanel from "@/components/model_list/ModelListSettingsPanel.vue"
@@ -279,6 +280,7 @@ const genericModel = ref({} as GenericModel)
 // column system: reads model reactively, handles visibility + display modes for all models
 const currentModel = computed(() => genericModel.value?.model)
 const {visibleHeaders, enhancedColumns, allColumns, hasEnhancedList, isColumnVisible, toggleColumn, getDisplayMode, setDisplayMode} = useModelListColumns(currentModel, t)
+const {filterDefs, groupedFilterDefs, activeFilterCount, filterParams, getFilter, setFilter, clearFilter, clearAllFilters} = useModelListFilters(currentModel)
 
 const showDescription = ref(true)
 const settingsPanelOpen = ref(false)
@@ -322,6 +324,7 @@ watch(() => props.model, (newValue, oldValue) => {
 })
 
 watch(ordering, () => loadItems({page: 1}))
+watch(filterParams, () => loadItems({page: 1}))
 
 /**
  * select model class before mount because template renders (and requests item load) before onMounted is called
@@ -348,7 +351,7 @@ function loadItems(options: VDataTableUpdateOptions) {
         useUserPreferenceStore().deviceSettings.general_tableItemsPerPage = options.itemsPerPage
     }
 
-    genericModel.value.list({query: query.value, page: options.page, pageSize: pageSize.value, ordering: ordering.value || undefined}).then((r: any) => {
+    genericModel.value.list({query: query.value, page: options.page, pageSize: pageSize.value, ordering: ordering.value || undefined, ...filterParams.value}).then((r: any) => {
         items.value = r.results
         itemCount.value = r.count
     }).catch((err: any) => {
