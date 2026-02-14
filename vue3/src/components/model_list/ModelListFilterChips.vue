@@ -1,0 +1,105 @@
+<template>
+    <div class="d-flex flex-wrap align-center ga-1 mt-1">
+        <v-chip
+            v-for="filter in activeFilters"
+            :key="filter.key"
+            closable
+            close-icon="$close"
+            size="small"
+            variant="tonal"
+            :color="chipColor(filter.def, filter.value)"
+            :prepend-icon="filter.def.icon"
+            :style="filter.def.type !== 'tristate' ? 'cursor: default' : undefined"
+            @click="toggleFilter(filter.def, filter.value)"
+            @click:close="clearFilter(filter.key)"
+        >
+            {{ chipLabel(filter.def, filter.value) }}
+        </v-chip>
+        <v-chip
+            v-if="activeFilterCount >= 2"
+            variant="text"
+            size="small"
+            @click="clearAllFilters()"
+        >
+            {{ $t('Clear_All') }}
+        </v-chip>
+    </div>
+</template>
+
+<script setup lang="ts">
+import {computed, reactive, watch} from 'vue'
+import {useI18n} from 'vue-i18n'
+import type {ModelFilterDef} from '@/composables/modellist/types'
+import {getGenericModelFromString} from '@/types/Models'
+
+const {t} = useI18n()
+
+const props = defineProps<{
+    filterDefs: ModelFilterDef[]
+    getFilter: (key: string) => string | undefined
+    setFilter: (key: string, value: string | undefined) => void
+    clearFilter: (key: string) => void
+    clearAllFilters: () => void
+    activeFilterCount: number
+}>()
+
+const activeFilters = computed(() => {
+    const result: {key: string, def: ModelFilterDef, value: string}[] = []
+    for (const def of props.filterDefs) {
+        const value = props.getFilter(def.key)
+        if (value !== undefined && value !== '') {
+            result.push({key: def.key, def, value})
+        }
+    }
+    return result
+})
+
+/** Cache resolved names for model-select filters: "modelName:id" → display name */
+const nameCache = reactive(new Map<string, string>())
+
+watch(activeFilters, (filters) => {
+    const modelSelectFilters = filters.filter(f => f.def.type === 'model-select' && f.def.modelName)
+    for (const f of modelSelectFilters) {
+        const cacheKey = `${f.def.modelName}:${f.value}`
+        if (nameCache.has(cacheKey)) continue
+        const id = Number(f.value)
+        if (Number.isNaN(id)) {
+            nameCache.set(cacheKey, String(f.value))
+            continue
+        }
+        nameCache.set(cacheKey, String(f.value))  // placeholder with ID prevents duplicate requests
+        const gm = getGenericModelFromString(f.def.modelName!, t)
+        if (!gm) continue
+        gm.retrieve(id).then((obj: any) => {
+            const label = gm.model.itemLabel ?? 'name'
+            nameCache.set(cacheKey, obj[label] ?? String(f.value))
+        }).catch(() => {
+            nameCache.set(cacheKey, String(f.value))
+        })
+    }
+}, {immediate: true})
+
+function chipLabel(def: ModelFilterDef, value: string): string {
+    if (def.type === 'tristate') {
+        return t(def.labelKey)
+    }
+    if (def.type === 'model-select' && def.modelName) {
+        const name = nameCache.get(`${def.modelName}:${value}`)
+        return name ? `${t(def.labelKey)}: ${name}` : t(def.labelKey)
+    }
+    return t(def.labelKey)
+}
+
+function chipColor(def: ModelFilterDef, value: string): string {
+    if (def.type === 'tristate') {
+        return value === '1' ? 'success' : 'error'
+    }
+    return 'primary'
+}
+
+function toggleFilter(def: ModelFilterDef, value: string): void {
+    if (def.type === 'tristate') {
+        props.setFilter(def.key, value === '1' ? '0' : '1')
+    }
+}
+</script>
