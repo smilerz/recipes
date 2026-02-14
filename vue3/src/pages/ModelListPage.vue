@@ -197,6 +197,11 @@
             :toggle-column="toggleColumn"
             :get-display-mode="getDisplayMode"
             :set-display-mode="setDisplayMode"
+            :grouped-filter-defs="groupedFilterDefs"
+            :get-filter="getFilter"
+            :set-filter="setFilter"
+            :clear-all-filters="clearAllFilters"
+            :active-filter-count="activeFilterCount"
         />
 
         <batch-delete-dialog :items="selectedItems" :model="props.model" v-model="batchDeleteDialog" activator="model"
