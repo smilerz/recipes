@@ -95,6 +95,16 @@
                     @toggle-select="selectMode = !selectMode"
                 />
 
+                <ModelListFilterChips
+                    v-if="hasEnhancedList && activeFilterCount > 0"
+                    :filter-defs="filterDefs"
+                    :get-filter="getFilter"
+                    :set-filter="setFilter"
+                    :clear-filter="clearFilter"
+                    :clear-all-filters="clearAllFilters"
+                    :active-filter-count="activeFilterCount"
+                />
+
                 <model-list-data-table
                     :key="props.model"
                     :class="{'hide-table-headers': !showColumnHeaders}"
@@ -247,6 +257,7 @@ import ModelListDataTable from "@/components/model_list/ModelListDataTable.vue";
 import ModelListSettingsPanel from "@/components/model_list/ModelListSettingsPanel.vue"
 import ModelListToolbar from "@/components/model_list/ModelListToolbar.vue";
 import ModelListCreateButton from "@/components/model_list/ModelListCreateButton.vue";
+import ModelListFilterChips from "@/components/model_list/ModelListFilterChips.vue";
 
 const {t} = useI18n()
 const router = useRouter()
