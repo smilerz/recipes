@@ -10,13 +10,13 @@ import type {ModelFilterDef, ModelActionDef, ModelListSettings, ModelSortDef} fr
  * Each maps to a query parameter on the /api/food/ endpoint.
  */
 export const FOOD_FILTER_DEFS: ModelFilterDef[] = [
-    {key: 'onhand', labelKey: 'OnHand', type: 'tristate', icon: 'fa-solid fa-check-circle', group: 'status'},
-    {key: 'in_shopping_list', labelKey: 'Shopping', type: 'tristate', icon: 'fa-solid fa-cart-shopping', group: 'status'},
-    {key: 'ignore_shopping', labelKey: 'IgnoreShopping', type: 'tristate', icon: 'fa-solid fa-ban', group: 'status'},
-    {key: 'has_substitute', labelKey: 'Substitute', type: 'tristate', icon: 'fa-solid fa-right-left', group: 'attributes'},
-    {key: 'has_children', labelKey: 'Children', type: 'tristate', icon: 'fa-solid fa-sitemap', group: 'attributes'},
-    {key: 'has_recipe', labelKey: 'Recipe', type: 'tristate', icon: 'fa-solid fa-book', group: 'attributes'},
-    {key: 'supermarket_category', labelKey: 'Category', type: 'model-select', icon: 'fa-solid fa-boxes-stacked', modelName: 'SupermarketCategory', group: 'attributes'},
+    {key: 'onhand', labelKey: 'OnHand', type: 'tristate', icon: 'fa-solid fa-check-circle', group: 'Status'},
+    {key: 'in_shopping_list', labelKey: 'Shopping', type: 'tristate', icon: 'fa-solid fa-cart-shopping', group: 'Status'},
+    {key: 'ignore_shopping', labelKey: 'IgnoreShopping', type: 'tristate', icon: 'fa-solid fa-ban', group: 'Status'},
+    {key: 'has_substitute', labelKey: 'Substitute', type: 'tristate', icon: 'fa-solid fa-right-left', group: 'Attributes'},
+    {key: 'has_children', labelKey: 'Children', type: 'tristate', icon: 'fa-solid fa-sitemap', group: 'Attributes'},
+    {key: 'has_recipe', labelKey: 'Recipe', type: 'tristate', icon: 'fa-solid fa-book', group: 'Attributes'},
+    {key: 'supermarket_category', labelKey: 'Category', type: 'model-select', icon: 'fa-solid fa-boxes-stacked', modelName: 'SupermarketCategory', group: 'Attributes'},
 ]
 
 /**
@@ -25,9 +25,9 @@ export const FOOD_FILTER_DEFS: ModelFilterDef[] = [
  */
 export const FOOD_ACTION_DEFS: ModelActionDef[] = [
     // Status toggles
-    {key: 'onhand', labelKey: 'OnHand', icon: 'fa-solid fa-check-circle', isToggle: true, toggleField: 'foodOnhand', activeColor: 'success', inactiveColor: '', group: 'status'},
-    {key: 'shopping', labelKey: 'Shopping', icon: 'fa-solid fa-cart-shopping', isToggle: true, toggleField: 'shopping', activeColor: 'warning', inactiveColor: '', group: 'status'},
-    {key: 'ignore', labelKey: 'IgnoreShopping', icon: 'fa-solid fa-ban', isToggle: true, toggleField: 'ignoreShopping', activeColor: 'error', inactiveColor: '', group: 'status'},
+    {key: 'onhand', labelKey: 'OnHand', icon: 'fa-solid fa-check-circle', isToggle: true, toggleField: 'foodOnhand', activeColor: 'success', inactiveColor: '', group: 'Status'},
+    {key: 'shopping', labelKey: 'Shopping', icon: 'fa-solid fa-cart-shopping', isToggle: true, toggleField: 'shopping', activeColor: 'warning', inactiveColor: '', group: 'Status'},
+    {key: 'ignore', labelKey: 'IgnoreShopping', icon: 'fa-solid fa-ban', isToggle: true, toggleField: 'ignoreShopping', activeColor: 'error', inactiveColor: '', group: 'Status'},
 
     // One-shot actions
     {key: 'edit', labelKey: 'Edit', icon: 'fa-solid fa-pen', group: 'actions', routeName: 'ModelEditPage'},
