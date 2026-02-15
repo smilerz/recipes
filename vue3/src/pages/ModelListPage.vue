@@ -176,42 +176,48 @@
                         <v-chip label v-else color="info">{{ $t('No') }}</v-chip>
                     </template>
                     <template v-slot:item.action="{ item }">
-                        <v-btn class="float-right" icon="$menu" variant="plain">
-                            <v-icon icon="$menu"></v-icon>
-                            <v-menu activator="parent" close-on-content-click>
-                                <v-list density="compact">
-                                    <v-list-item prepend-icon="$edit" :to="{name: 'ModelEditPage', params: {model: model, id: item.id}}"
-                                                 v-if="!(genericModel.model.disableCreate && genericModel.model.disableUpdate && genericModel.model.disableDelete)">
-                                        {{ $t('Edit') }}
-                                    </v-list-item>
-                                    <v-list-item prepend-icon="fa-solid fa-arrows-to-dot" v-if="genericModel.model.isMerge" link>
-                                        {{ $t('Merge') }}
-                                        <model-merge-dialog :model="model" :source="[item]"
-                                                            @change="loadItems({page: page, itemsPerPage: pageSize, search: query})"></model-merge-dialog>
-                                    </v-list-item>
-                                    <v-list-item prepend-icon="fa-solid fa-table-list" :to="{name: 'IngredientEditorPage', query: {food_id: item.id}}"
-                                                 v-if="genericModel.model.name == 'Food'">
-                                        {{ $t('Ingredient Editor') }}
-                                    </v-list-item>
-                                    <v-list-item prepend-icon="fa-solid fa-table-list" :to="{name: 'IngredientEditorPage', query: {unit_id: item.id}}"
-                                                 v-if="genericModel.model.name == 'Unit'">
-                                        {{ $t('Ingredient Editor') }}
-                                    </v-list-item>
-                                    <v-list-item prepend-icon="fa-solid fa-rotate" v-if="genericModel.model.name == 'Sync'" link>
-                                        {{ $t('Import') }}
-                                        <sync-dialog :sync="item"></sync-dialog>
-                                    </v-list-item>
-                                    <v-list-item prepend-icon="fa-solid fa-rotate" v-if="genericModel.model.name == 'RecipeImport'" @click="importRecipe(item)">
-                                        {{ $t('Import') }}
-                                    </v-list-item>
-                                    <v-list-item prepend-icon="fa-solid fa-arrow-right-from-bracket"
-                                                 v-if="genericModel.model.name == 'Space'  && item.createdBy.id != useUserPreferenceStore().userSettings.user.id!"
-                                                 @click="leaveSpace(item)">
-                                        {{ $t('LeaveSpace') }}
-                                    </v-list-item>
-                                </v-list>
-                            </v-menu>
-                        </v-btn>
+                        <ModelListActionMenu
+                            v-if="currentModel?.actionDefs"
+                            :item="item"
+                            :action-defs="actionDefs"
+                            :grouped-action-defs="groupedActionDefs"
+                            :get-toggle-state="getToggleState"
+                            @action="executeAction"
+                        />
+                        <template v-else>
+                            <v-btn class="float-right" icon="$menu" variant="plain">
+                                <v-icon icon="$menu"></v-icon>
+                                <v-menu activator="parent" close-on-content-click>
+                                    <v-list density="compact">
+                                        <v-list-item prepend-icon="$edit" :to="{name: 'ModelEditPage', params: {model: model, id: item.id}}"
+                                                     v-if="!(genericModel.model.disableCreate && genericModel.model.disableUpdate && genericModel.model.disableDelete)">
+                                            {{ $t('Edit') }}
+                                        </v-list-item>
+                                        <v-list-item prepend-icon="fa-solid fa-arrows-to-dot" v-if="genericModel.model.isMerge" link>
+                                            {{ $t('Merge') }}
+                                            <model-merge-dialog :model="model" :source="[item]"
+                                                                @change="loadItems({page: page, itemsPerPage: pageSize, search: query})"></model-merge-dialog>
+                                        </v-list-item>
+                                        <v-list-item prepend-icon="fa-solid fa-table-list" :to="{name: 'IngredientEditorPage', query: {unit_id: item.id}}"
+                                                     v-if="genericModel.model.name == 'Unit'">
+                                            {{ $t('Ingredient Editor') }}
+                                        </v-list-item>
+                                        <v-list-item prepend-icon="fa-solid fa-rotate" v-if="genericModel.model.name == 'Sync'" link>
+                                            {{ $t('Import') }}
+                                            <sync-dialog :sync="item"></sync-dialog>
+                                        </v-list-item>
+                                        <v-list-item prepend-icon="fa-solid fa-rotate" v-if="genericModel.model.name == 'RecipeImport'" @click="importRecipe(item)">
+                                            {{ $t('Import') }}
+                                        </v-list-item>
+                                        <v-list-item prepend-icon="fa-solid fa-arrow-right-from-bracket"
+                                                     v-if="genericModel.model.name == 'Space'  && item.createdBy.id != useUserPreferenceStore().userSettings.user.id!"
+                                                     @click="leaveSpace(item)">
+                                            {{ $t('LeaveSpace') }}
+                                        </v-list-item>
+                                    </v-list>
+                                </v-menu>
+                            </v-btn>
+                        </template>
                     </template>
                 </model-list-data-table>
             </v-col>
@@ -240,6 +246,9 @@
         <model-merge-dialog :model="model" :source="selectedItems" v-model="batchMergeDialog" activator="model"
                             @change="loadItems({page: page, itemsPerPage: pageSize, search: query}); exitSelectMode()"></model-merge-dialog>
 
+        <model-merge-dialog :model="model" :source="singleMergeSource" v-model="singleMergeDialog" activator="model"
+                            @change="loadItems({page: page, itemsPerPage: pageSize, search: query})"></model-merge-dialog>
+
         <batch-edit-food-dialog :items="selectedItems" v-model="batchEditDialog" v-if="model == 'Food'" activator="model"
                                 @change="loadItems({page: page, itemsPerPage: pageSize, search: query}); exitSelectMode()"></batch-edit-food-dialog>
 
@@ -249,7 +258,7 @@
 <script setup lang="ts">
 
 
-import {computed, h, onBeforeMount, PropType, ref, watch} from "vue";
+import {computed, h, onBeforeMount, PropType, ref, toRef, watch} from "vue";
 import {ErrorMessageType, useMessageStore} from "@/stores/MessageStore";
 import {useI18n} from "vue-i18n";
 import {EditorSupportedModels, GenericModel, getGenericModelFromString, Model, TInviteLink,} from "@/types/Models";
@@ -275,6 +284,8 @@ import ModelListToolbar from "@/components/model_list/ModelListToolbar.vue";
 import ModelListCreateButton from "@/components/model_list/ModelListCreateButton.vue";
 import ModelListFilterChips from "@/components/model_list/ModelListFilterChips.vue";
 import ModelListSelectionBar from "@/components/model_list/ModelListSelectionBar.vue";
+import ModelListActionMenu from "@/components/model_list/ModelListActionMenu.vue";
+import {useModelListActions} from "@/composables/modellist/useModelListActions";
 
 const {t} = useI18n()
 const router = useRouter()
@@ -318,6 +329,28 @@ const genericModel = ref({} as GenericModel)
 const currentModel = computed(() => genericModel.value?.model)
 const {visibleHeaders, enhancedColumns, allColumns, hasEnhancedList, isColumnVisible, toggleColumn, getDisplayMode, setDisplayMode} = useModelListColumns(currentModel, t)
 const {filterDefs, groupedFilterDefs, activeFilterCount, filterParams, getFilter, setFilter, clearFilter, clearAllFilters} = useModelListFilters(currentModel)
+
+const modelNameRef = toRef(props, 'model')
+const singleMergeDialog = ref(false)
+const singleMergeSource = ref([] as any[])
+
+function handleAction(key: string, item: any) {
+    switch (key) {
+        case 'merge':
+            singleMergeSource.value = [item]
+            singleMergeDialog.value = true
+            break
+        case 'merge-auto':
+        case 'move':
+        case 'delete':
+            useMessageStore().addError('Coming soon')
+            break
+    }
+}
+
+const {actionDefs, groupedActionDefs, executeAction, getToggleState} = useModelListActions(
+    currentModel, genericModel, modelNameRef, handleAction,
+)
 
 const showDescription = computed({
     get: () => useUserPreferenceStore().deviceSettings.general_showModelListDescription,

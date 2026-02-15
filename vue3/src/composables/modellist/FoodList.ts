@@ -4,6 +4,7 @@
  */
 
 import type {ModelFilterDef, ModelActionDef, ModelListSettings, ModelSortDef} from './types'
+import {ApiApi, DeleteEnum} from '@/openapi'
 
 /**
  * Filter definitions for the Food list.
@@ -26,11 +27,28 @@ export const FOOD_FILTER_DEFS: ModelFilterDef[] = [
 export const FOOD_ACTION_DEFS: ModelActionDef[] = [
     // Status toggles
     {key: 'onhand', labelKey: 'OnHand', icon: 'fa-solid fa-check-circle', isToggle: true, toggleField: 'foodOnhand', activeColor: 'success', inactiveColor: '', group: 'Status'},
-    {key: 'shopping', labelKey: 'Shopping', icon: 'fa-solid fa-cart-shopping', isToggle: true, toggleField: 'shopping', activeColor: 'warning', inactiveColor: '', group: 'Status'},
+    {key: 'shopping', labelKey: 'Shopping', icon: 'fa-solid fa-cart-shopping', isToggle: true, toggleField: 'shopping', activeColor: 'warning', inactiveColor: '', group: 'Status',
+        handler: async (item) => {
+            const api = new ApiApi()
+            const oldValue = item.shopping
+            try {
+                if (item.shopping) {
+                    item.shopping = ''
+                    await api.apiFoodShoppingUpdate({id: item.id, foodShoppingUpdate: {_delete: DeleteEnum.True}})
+                } else {
+                    item.shopping = 'true'
+                    await api.apiFoodShoppingUpdate({id: item.id, foodShoppingUpdate: {_delete: null}})
+                }
+            } catch (e) {
+                item.shopping = oldValue
+                throw e
+            }
+        },
+    },
     {key: 'ignore', labelKey: 'IgnoreShopping', icon: 'fa-solid fa-ban', isToggle: true, toggleField: 'ignoreShopping', activeColor: 'error', inactiveColor: '', group: 'Status'},
 
     // One-shot actions
-    {key: 'edit', labelKey: 'Edit', icon: 'fa-solid fa-pen', group: 'actions', routeName: 'ModelEditPage'},
+    {key: 'edit', labelKey: 'Edit', icon: 'fa-solid fa-pen', group: 'actions', routeName: 'ModelEditPage', routeParams: (item, modelName) => ({model: modelName, id: item.id})},
     {key: 'merge', labelKey: 'Merge', icon: 'fa-solid fa-arrows-to-dot', group: 'actions'},
     {key: 'merge-auto', labelKey: 'AutoMerge', icon: 'fa-solid fa-wand-magic-sparkles', group: 'actions'},
     {key: 'move', labelKey: 'Move', icon: 'fa-solid fa-arrow-right', group: 'actions'},
