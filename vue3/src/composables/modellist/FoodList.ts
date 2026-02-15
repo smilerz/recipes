@@ -59,14 +59,21 @@ export const FOOD_ACTION_DEFS: ModelActionDef[] = [
             }
         },
     },
-    {key: 'ignore', labelKey: 'IgnoreShopping', icon: 'fa-solid fa-ban', isToggle: true, toggleField: 'ignoreShopping', activeColor: 'error', inactiveColor: '', group: 'Status'},
+    {key: 'ignore', labelKey: 'IgnoreShopping', icon: 'fa-solid fa-ban', isToggle: true, toggleField: 'ignoreShopping', activeColor: 'error', inactiveColor: '', group: 'Status',
+        colorResolver: (item: any) => item.ignoreShopping ? 'error' : undefined,
+    },
 
     // One-shot actions
     {key: 'edit', labelKey: 'Edit', icon: 'fa-solid fa-pen', group: 'Actions', routeName: 'ModelEditPage', routeParams: (item, modelName) => ({model: modelName, id: item.id})},
     {key: 'merge', labelKey: 'Merge', icon: 'fa-solid fa-arrows-to-dot', group: 'Actions'},
-    {key: 'move', labelKey: 'Move', icon: 'fa-solid fa-arrow-right', group: 'Actions'},
+    {key: 'move', labelKey: 'Move', icon: 'fa-solid fa-arrow-right', group: 'Actions',
+        routeName: 'ModelEditPage',
+        routeParams: (item, modelName) => ({model: modelName, id: item.id}),
+        routeQuery: (_item: any) => ({tab: 'hierarchy'})},
     {key: 'ingredient-editor', labelKey: 'Ingredient Editor', icon: 'fa-solid fa-table-list', group: 'Actions', routeName: 'IngredientEditorPage', routeQuery: (item: any) => ({food_id: item.id})},
-    {key: 'delete', labelKey: 'Delete', icon: 'fa-solid fa-trash', group: 'Actions', requiresConfirmation: true, isDanger: true},
+    {key: 'delete', labelKey: 'Delete', icon: 'fa-solid fa-trash', group: 'Actions', isDanger: true,
+        routeName: 'ModelDeletePage',
+        routeParams: (item, modelName) => ({model: modelName, id: item.id})},
 ]
 
 /**
