@@ -1,6 +1,40 @@
 <template>
     <v-container>
-        <v-row v-if="!showDescription">
+        <v-row v-if="selectMode">
+            <v-col>
+                <ModelListSelectionBar
+                    :selected-count="selectedItems.length"
+                    @close="exitSelectMode"
+                    @select-all="selectedItems = [...items]"
+                    @select-none="selectedItems = []"
+                >
+                    <template #actions>
+                        <v-btn variant="text" prepend-icon="fa-solid fa-list-check" class="text-none" @click="batchEditDialog = true" v-if="genericModel.model.name == 'Food'">
+                            {{ $t('BatchEdit') }}
+                        </v-btn>
+                        <v-btn variant="text" prepend-icon="fa-solid fa-arrows-to-dot" class="text-none" @click="batchMergeDialog = true" v-if="genericModel.model.isMerge">
+                            {{ $t('Merge') }}
+                        </v-btn>
+                        <v-btn variant="text" prepend-icon="$delete" class="text-none" @click="batchDeleteDialog = true" v-if="!genericModel.model.disableDelete">
+                            {{ $t('Delete_All') }}
+                        </v-btn>
+                    </template>
+                    <template #actions-menu>
+                        <v-list-item prepend-icon="fa-solid fa-list-check" @click="batchEditDialog = true" v-if="genericModel.model.name == 'Food'">
+                            {{ $t('BatchEdit') }}
+                        </v-list-item>
+                        <v-list-item prepend-icon="fa-solid fa-arrows-to-dot" @click="batchMergeDialog = true" v-if="genericModel.model.isMerge">
+                            {{ $t('Merge') }}
+                        </v-list-item>
+                        <v-list-item prepend-icon="$delete" @click="batchDeleteDialog = true" v-if="!genericModel.model.disableDelete">
+                            {{ $t('Delete_All') }}
+                        </v-list-item>
+                    </template>
+                </ModelListSelectionBar>
+            </v-col>
+        </v-row>
+
+        <v-row v-else-if="!showDescription">
             <v-col>
                 <v-card>
                     <v-card-text class="d-flex align-center pt-2 pb-2">
@@ -118,29 +152,11 @@
                     :search="query"
                     :headers="visibleHeaders"
                     :items-per-page-options="itemsPerPageOptions"
-                    :show-select="!genericModel.model.disableDelete || genericModel.model.isMerge"
+                    :show-select="selectMode"
                     :page="page"
                     :items-per-page="pageSize"
                     disable-sort
                 >
-                    <template v-slot:header.action v-if="selectedItems.length > 0">
-                        <v-btn icon="fa-solid fa-ellipsis-v" variant="plain" color="info">
-                            <v-icon icon="fa-solid fa-ellipsis-v"></v-icon>
-                            <v-menu activator="parent" close-on-content-click>
-                                <v-list density="compact" class="pt-1 pb-1" activatable>
-                                    <v-list-item prepend-icon="fa-solid fa-list-check" @click="batchEditDialog = true" v-if="genericModel.model.name == 'Food'">
-                                        {{ $t('BatchEdit') }}
-                                    </v-list-item>
-                                    <v-list-item prepend-icon="fa-solid fa-arrows-to-dot" @click="batchMergeDialog = true" v-if="genericModel.model.isMerge">
-                                        {{ $t('Merge') }}
-                                    </v-list-item>
-                                    <v-list-item prepend-icon="$delete" @click="batchDeleteDialog = true" v-if="!genericModel.model.disableDelete">
-                                        {{ $t('Delete_All') }}
-                                    </v-list-item>
-                                </v-list>
-                            </v-menu>
-                        </v-btn>
-                    </template>
                     <template v-slot:item.space="{ item }" v-if="genericModel.model.name == 'AiProvider'">
                         <v-chip label v-if="item.space == null" color="success">{{ $t('Global') }}</v-chip>
                         <v-chip label v-else color="info">{{ $t('Space') }}</v-chip>
@@ -219,13 +235,13 @@
         />
 
         <batch-delete-dialog :items="selectedItems" :model="props.model" v-model="batchDeleteDialog" activator="model"
-                             @change="loadItems({page: page, itemsPerPage: pageSize, search: query})"></batch-delete-dialog>
+                             @change="loadItems({page: page, itemsPerPage: pageSize, search: query}); exitSelectMode()"></batch-delete-dialog>
 
         <model-merge-dialog :model="model" :source="selectedItems" v-model="batchMergeDialog" activator="model"
-                            @change="loadItems({page: page, itemsPerPage: pageSize, search: query})"></model-merge-dialog>
+                            @change="loadItems({page: page, itemsPerPage: pageSize, search: query}); exitSelectMode()"></model-merge-dialog>
 
         <batch-edit-food-dialog :items="selectedItems" v-model="batchEditDialog" v-if="model == 'Food'" activator="model"
-                                @change="loadItems({page: page, itemsPerPage: pageSize, search: query})"></batch-edit-food-dialog>
+                                @change="loadItems({page: page, itemsPerPage: pageSize, search: query}); exitSelectMode()"></batch-edit-food-dialog>
 
     </v-container>
 </template>
@@ -258,6 +274,7 @@ import ModelListSettingsPanel from "@/components/model_list/ModelListSettingsPan
 import ModelListToolbar from "@/components/model_list/ModelListToolbar.vue";
 import ModelListCreateButton from "@/components/model_list/ModelListCreateButton.vue";
 import ModelListFilterChips from "@/components/model_list/ModelListFilterChips.vue";
+import ModelListSelectionBar from "@/components/model_list/ModelListSelectionBar.vue";
 
 const {t} = useI18n()
 const router = useRouter()
@@ -302,10 +319,21 @@ const currentModel = computed(() => genericModel.value?.model)
 const {visibleHeaders, enhancedColumns, allColumns, hasEnhancedList, isColumnVisible, toggleColumn, getDisplayMode, setDisplayMode} = useModelListColumns(currentModel, t)
 const {filterDefs, groupedFilterDefs, activeFilterCount, filterParams, getFilter, setFilter, clearFilter, clearAllFilters} = useModelListFilters(currentModel)
 
-const showDescription = ref(true)
+const showDescription = computed({
+    get: () => useUserPreferenceStore().deviceSettings.general_showModelListDescription,
+    set: (val: boolean) => { useUserPreferenceStore().deviceSettings.general_showModelListDescription = val },
+})
 const settingsPanelOpen = ref(false)
 const settingsActiveTab = ref('settings')
 const selectMode = ref(false)
+
+function exitSelectMode() {
+    selectMode.value = false
+}
+
+watch(selectMode, (val) => {
+    if (!val) selectedItems.value = []
+})
 
 function openSettingsPanel(tab: string) {
     settingsActiveTab.value = tab
