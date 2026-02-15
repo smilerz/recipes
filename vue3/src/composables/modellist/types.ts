@@ -59,8 +59,12 @@ export type ModelActionDef = {
     requiresConfirmation?: boolean,
     /** Route name to navigate to (instead of API action) */
     routeName?: string,
+    /** Route params builder for navigation actions */
+    routeParams?: (item: any, modelName: string) => Record<string, any>,
     /** Query params builder for route navigation */
     routeQuery?: (item: any) => Record<string, any>,
+    /** Custom async handler for non-standard actions (e.g., shopping toggle endpoint) */
+    handler?: (item: any, genericModel: any) => Promise<void>,
 }
 
 /**
