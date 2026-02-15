@@ -139,6 +139,15 @@
                     :active-filter-count="activeFilterCount"
                 />
 
+                <div v-if="treeActive && hasExpandableItems(rawItems)" class="d-flex ga-1 mb-1">
+                    <v-btn variant="text" size="small" prepend-icon="fa-solid fa-angles-down" @click="expandAll(rawItems)">
+                        {{ $t('ExpandAll') }}
+                    </v-btn>
+                    <v-btn variant="text" size="small" prepend-icon="fa-solid fa-angles-up" @click="collapseAll()">
+                        {{ $t('CollapseAll') }}
+                    </v-btn>
+                </div>
+
                 <model-list-data-table
                     :key="props.model"
                     :class="{'hide-table-headers': !showColumnHeaders}"
@@ -239,16 +248,16 @@
         />
 
         <batch-delete-dialog :items="selectedItems" :model="props.model" v-model="batchDeleteDialog" activator="model"
-                             @change="loadItems({page: page, itemsPerPage: pageSize, search: query}); exitSelectMode()"></batch-delete-dialog>
+                             @change="reloadAfterMutation(); exitSelectMode()"></batch-delete-dialog>
 
         <model-merge-dialog :model="model" :source="selectedItems" v-model="batchMergeDialog" activator="model"
-                            @change="loadItems({page: page, itemsPerPage: pageSize, search: query}); exitSelectMode()"></model-merge-dialog>
+                            @change="reloadAfterMutation(); exitSelectMode()"></model-merge-dialog>
 
         <model-merge-dialog :model="model" :source="singleMergeSource" v-model="singleMergeDialog" activator="model"
-                            @change="loadItems({page: page, itemsPerPage: pageSize, search: query})"></model-merge-dialog>
+                            @change="reloadAfterMutation()"></model-merge-dialog>
 
         <batch-edit-food-dialog :items="selectedItems" v-model="batchEditDialog" v-if="model == 'Food'" activator="model"
-                                @change="loadItems({page: page, itemsPerPage: pageSize, search: query}); exitSelectMode()"></batch-edit-food-dialog>
+                                @change="reloadAfterMutation(); exitSelectMode()"></batch-edit-food-dialog>
 
         <action-confirm-dialog ref="confirmDialogRef" />
 
@@ -286,9 +295,11 @@ import ModelListFilterChips from "@/components/model_list/ModelListFilterChips.v
 import ModelListSelectionBar from "@/components/model_list/ModelListSelectionBar.vue";
 import ModelListActionMenu from "@/components/model_list/ModelListActionMenu.vue";
 import {useModelListActions} from "@/composables/modellist/useModelListActions";
+import {useModelListTree, MAX_CHILDREN} from "@/composables/modellist/useModelListTree";
 import type {ModelActionDef} from "@/composables/modellist/types";
 import ActionConfirmDialog from "@/components/dialogs/ActionConfirmDialog.vue";
 import type {ActionConfirmEntry} from "@/components/dialogs/ActionConfirmDialog.vue";
+import {useDisplay} from "vuetify";
 
 const {t} = useI18n()
 const router = useRouter()
@@ -323,7 +334,7 @@ const batchEditDialog = ref(false)
 
 // data
 const loading = ref(false);
-const items = ref([] as Array<any>)
+const rawItems = ref([] as Array<any>)
 const itemCount = ref(0)
 
 const genericModel = ref({} as GenericModel)
@@ -332,6 +343,23 @@ const genericModel = ref({} as GenericModel)
 const currentModel = computed(() => genericModel.value?.model)
 const {visibleHeaders, enhancedColumns, allColumns, hasEnhancedList, isColumnVisible, toggleColumn, getDisplayMode, setDisplayMode} = useModelListColumns(currentModel, t)
 const {filterDefs, groupedFilterDefs, activeFilterCount, filterParams, getFilter, setFilter, clearFilter, clearAllFilters} = useModelListFilters(currentModel)
+
+// tree view
+const {mobile} = useDisplay()
+const fetchChildren = (parentId: number) =>
+    genericModel.value.list({root: parentId, pageSize: MAX_CHILDREN, ...filterParams.value})
+        .then((r: any) => r.results ?? [])
+const {treeActive, expandedIds, loadingIds, toggleExpand, expandAll, collapseAll,
+    buildFlatList, getTreeLoadParams, clearTreeState, hasExpandableItems, setOnCollapse} =
+    useModelListTree(currentModel, fetchChildren)
+
+const items = computed(() => treeActive.value ? buildFlatList(rawItems.value) : rawItems.value)
+
+// When children are collapsed, remove them from selection
+setOnCollapse((removedIds) => {
+    const removedSet = new Set(removedIds)
+    selectedItems.value = selectedItems.value.filter((item: any) => !removedSet.has(item.id))
+})
 
 const modelNameRef = toRef(props, 'model')
 const singleMergeDialog = ref(false)
@@ -472,13 +500,53 @@ const columnSlots = computed(() => {
     if (!hasEnhancedList.value) return {}
     const slots: Record<string, Function> = {}
     for (const col of enhancedColumns.value) {
-        slots[`item.${col.key}`] = ({item}: {item: any}) =>
-            h(ModelListCellRenderer, {
-                item,
-                header: col,
-                displayMode: getDisplayMode(col.key),
-                showHeaders: true,
-            })
+        if (treeActive.value && col.key === 'name') {
+            slots[`item.${col.key}`] = ({item}: {item: any}) => {
+                const depth = item._depth ?? 0
+                const indent = depth * (mobile.value ? 20 : 28)
+                const hasChildren = (item.numchild ?? 0) > 0
+                const isExpanded = expandedIds.value.has(item.id)
+                const isLoading = item._isLoading
+
+                const children: any[] = []
+
+                if (hasChildren) {
+                    if (isLoading) {
+                        children.push(h('span', {class: 'tree-expand-btn', style: {width: '28px', display: 'inline-flex', justifyContent: 'center', alignItems: 'center'}},
+                            [h('i', {class: 'fa-solid fa-spinner fa-spin', style: {fontSize: '12px'}})]
+                        ))
+                    } else {
+                        children.push(h('span', {
+                            class: ['tree-expand-btn', isExpanded ? 'tree-chevron-expanded' : ''],
+                            style: {cursor: 'pointer', width: '28px', display: 'inline-flex', justifyContent: 'center', alignItems: 'center'},
+                            onClick: (e: Event) => { e.stopPropagation(); toggleExpand(item.id) },
+                        }, [h('i', {class: 'fa-solid fa-chevron-right', style: {fontSize: '12px'}})]))
+                    }
+                } else if (depth > 0) {
+                    children.push(h('span', {style: {width: '28px', display: 'inline-block'}}))
+                }
+
+                children.push(h(ModelListCellRenderer, {
+                    item,
+                    header: col,
+                    displayMode: getDisplayMode(col.key),
+                    showHeaders: true,
+                }))
+
+                return h('div', {
+                    class: 'd-flex align-center',
+                    style: {paddingLeft: `${indent}px`},
+                }, children)
+            }
+        } else {
+            slots[`item.${col.key}`] = ({item}: {item: any}) =>
+                h(ModelListCellRenderer, {
+                    item,
+                    header: col,
+                    displayMode: getDisplayMode(col.key),
+                    showHeaders: true,
+                })
+        }
     }
     return slots
 })
@@ -493,6 +561,9 @@ watch(() => props.model, (newValue, oldValue) => {
 
 watch(ordering, () => loadItems({page: 1}))
 watch(filterParams, () => loadItems({page: 1}))
+watch(treeActive, () => {
+    loadItems({page: 1})
+})
 
 /**
  * select model class before mount because template renders (and requests item load) before onMounted is called
@@ -508,6 +579,12 @@ onBeforeMount(() => {
  * parameters defined by vuetify
  * @param options
  */
+/** Reload after a mutation (delete, merge, edit) — clears tree cache so re-expand shows fresh data */
+function reloadAfterMutation() {
+    clearTreeState()
+    loadItems({page: page.value, itemsPerPage: pageSize.value, search: query.value})
+}
+
 function loadItems(options: VDataTableUpdateOptions) {
     loading.value = true
     selectedItems.value = []
@@ -519,8 +596,8 @@ function loadItems(options: VDataTableUpdateOptions) {
         useUserPreferenceStore().deviceSettings.general_tableItemsPerPage = options.itemsPerPage
     }
 
-    genericModel.value.list({query: query.value, page: options.page, pageSize: pageSize.value, ordering: ordering.value || undefined, ...filterParams.value}).then((r: any) => {
-        items.value = r.results
+    genericModel.value.list({query: query.value, page: options.page, pageSize: pageSize.value, ordering: ordering.value || undefined, ...filterParams.value, ...getTreeLoadParams()}).then((r: any) => {
+        rawItems.value = r.results
         itemCount.value = r.count
     }).catch((err: any) => {
         useMessageStore().addError(ErrorMessageType.FETCH_ERROR, err)
@@ -582,5 +659,12 @@ function leaveSpace(space: Space) {
 <style scoped>
 :deep(.hide-table-headers thead) {
     display: none;
+}
+:deep(.tree-chevron-expanded) {
+    transform: rotate(90deg);
+}
+.tree-expand-btn i {
+    transition: transform 0.2s;
+    font-size: 12px;
 }
 </style>
