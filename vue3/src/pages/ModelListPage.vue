@@ -178,7 +178,8 @@
                             :action-defs="actionDefs"
                             :grouped-action-defs="groupedActionDefs"
                             :get-toggle-state="getToggleState"
-                            @action="executeAction"
+                            :quick-action-keys="quickActionKeys"
+                            @action="handleActionWithConfirmation"
                         />
                         <template v-else>
                             <v-btn class="float-right" icon="$menu" variant="plain">
@@ -234,6 +235,7 @@
             :set-filter="setFilter"
             :clear-all-filters="clearAllFilters"
             :active-filter-count="activeFilterCount"
+            :action-defs="actionDefs"
         />
 
         <batch-delete-dialog :items="selectedItems" :model="props.model" v-model="batchDeleteDialog" activator="model"
@@ -247,6 +249,8 @@
 
         <batch-edit-food-dialog :items="selectedItems" v-model="batchEditDialog" v-if="model == 'Food'" activator="model"
                                 @change="loadItems({page: page, itemsPerPage: pageSize, search: query}); exitSelectMode()"></batch-edit-food-dialog>
+
+        <action-confirm-dialog ref="confirmDialogRef" />
 
     </v-container>
 </template>
@@ -282,6 +286,9 @@ import ModelListFilterChips from "@/components/model_list/ModelListFilterChips.v
 import ModelListSelectionBar from "@/components/model_list/ModelListSelectionBar.vue";
 import ModelListActionMenu from "@/components/model_list/ModelListActionMenu.vue";
 import {useModelListActions} from "@/composables/modellist/useModelListActions";
+import type {ModelActionDef} from "@/composables/modellist/types";
+import ActionConfirmDialog from "@/components/dialogs/ActionConfirmDialog.vue";
+import type {ActionConfirmEntry} from "@/components/dialogs/ActionConfirmDialog.vue";
 
 const {t} = useI18n()
 const router = useRouter()
@@ -329,6 +336,7 @@ const {filterDefs, groupedFilterDefs, activeFilterCount, filterParams, getFilter
 const modelNameRef = toRef(props, 'model')
 const singleMergeDialog = ref(false)
 const singleMergeSource = ref([] as any[])
+const confirmDialogRef = ref<InstanceType<typeof ActionConfirmDialog> | null>(null)
 
 function handleAction(key: string, item: any) {
     switch (key) {
@@ -336,7 +344,6 @@ function handleAction(key: string, item: any) {
             singleMergeSource.value = [item]
             singleMergeDialog.value = true
             break
-        case 'merge-auto':
         case 'move':
         case 'delete':
             useMessageStore().addError('Coming soon')
@@ -347,6 +354,87 @@ function handleAction(key: string, item: any) {
 const {actionDefs, groupedActionDefs, executeAction, getToggleState} = useModelListActions(
     currentModel, genericModel, modelNameRef, handleAction,
 )
+
+/**
+ * Intercepts actions that need confirmation before executing.
+ * For toggle actions: confirms when toggling OFF (active → inactive).
+ * For non-toggle actions: confirms unconditionally.
+ */
+async function handleActionWithConfirmation(key: string, item: any) {
+    const action = actionDefs.value.find(a => a.key === key)
+    if (!action) return
+
+    if (action.requiresConfirmation) {
+        if (action.isToggle && getToggleState(action, item)) {
+            // Toggle is active → user wants to deactivate → confirm
+            if (key === 'shopping') {
+                const confirmed = await showShoppingRemoveConfirm(action, item)
+                if (!confirmed) return
+            }
+        } else if (!action.isToggle) {
+            // Non-toggle destructive action → generic confirm
+            const confirmed = await confirmDialogRef.value?.open({
+                title: t('Confirm'),
+                message: t('ConfirmAction', {action: t(action.labelKey), name: item.name}),
+                confirmLabel: t(action.labelKey),
+                confirmColor: action.isDanger ? 'error' : 'primary',
+                confirmIcon: action.icon,
+            })
+            if (!confirmed) return
+        }
+    }
+    executeAction(key, item)
+}
+
+async function showShoppingRemoveConfirm(action: ModelActionDef, item: any): Promise<boolean> {
+    // Open dialog immediately with loading state, fetch entries in background
+    const confirmPromise = confirmDialogRef.value?.open({
+        title: t('Confirm'),
+        message: t('RemoveFromShoppingConfirm', {name: item.name}),
+        loading: true,
+        confirmLabel: t('Remove'),
+        confirmColor: 'warning',
+        confirmIcon: action.icon,
+    })
+
+    // Fetch shopping list entries for this food (API lacks a food filter, so fetch and filter client-side)
+    try {
+        const api = new ApiApi()
+        const allEntries = []
+        let page = 1
+        let hasMore = true
+        while (hasMore) {
+            const result = await api.apiShoppingListEntryList({pageSize: 100, page})
+            allEntries.push(...(result.results ?? []))
+            hasMore = !!result.next
+            page++
+        }
+        const foodEntries = allEntries.filter(
+            (e: any) => e.food?.id === item.id && !e.checked
+        )
+        const entries: ActionConfirmEntry[] = foodEntries.map((e: any) => {
+            const parts: string[] = []
+            if (e.amount) parts.push(String(e.amount))
+            if (e.unit?.name) parts.push(e.unit.name)
+            const text = parts.length > 0 ? parts.join(' ') : t('Shopping')
+            const subtextParts: string[] = []
+            const recipeName = e.listRecipeData?.recipeData?.name
+            if (recipeName) subtextParts.push(recipeName)
+            if (e.createdBy?.displayName || e.createdBy?.username) {
+                subtextParts.push(e.createdBy.displayName || e.createdBy.username)
+            }
+            if (e.createdAt) {
+                subtextParts.push(new Date(e.createdAt).toLocaleString())
+            }
+            return {text, subtext: subtextParts.join(' · ') || undefined, icon: 'fa-solid fa-cart-shopping'} as ActionConfirmEntry
+        })
+        confirmDialogRef.value?.setEntries(entries)
+    } catch {
+        confirmDialogRef.value?.setEntries([])
+    }
+
+    return (await confirmPromise) ?? false
+}
 
 const showDescription = computed({
     get: () => useUserPreferenceStore().deviceSettings.general_showModelListDescription,
@@ -374,6 +462,13 @@ const showColumnHeaders = computed(() => {
     const key = currentModel.value?.listSettings?.settingsKey
     if (!key) return true
     return (useUserPreferenceStore().deviceSettings as any)[`${key}_showColumnHeaders`] ?? true
+})
+
+// Quick action keys for inline icon buttons (default lives in UserPreferenceStore)
+const quickActionKeys = computed(() => {
+    const key = currentModel.value?.listSettings?.settingsKey
+    if (!key) return []
+    return (useUserPreferenceStore().deviceSettings as any)[`${key}_quickActions`] ?? []
 })
 
 // Build dynamic cell slots for enhanced columns (programmatic — Vue 3 can't v-for on template slots)
