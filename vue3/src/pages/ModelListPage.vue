@@ -348,10 +348,6 @@ function handleAction(key: string, item: any) {
             singleMergeSource.value = [item]
             singleMergeDialog.value = true
             break
-        case 'move':
-        case 'delete':
-            useMessageStore().addError('Coming soon')
-            break
     }
 }
 
