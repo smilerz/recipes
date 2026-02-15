@@ -55,8 +55,10 @@ export type ModelActionDef = {
     inactiveColor?: string,
     /** Group key for organizing actions in the menu */
     group?: string,
-    /** Whether this action requires confirmation */
+    /** Whether this action requires confirmation before executing */
     requiresConfirmation?: boolean,
+    /** Whether this is a destructive/danger action (renders in red) */
+    isDanger?: boolean,
     /** Route name to navigate to (instead of API action) */
     routeName?: string,
     /** Route params builder for navigation actions */
@@ -65,6 +67,10 @@ export type ModelActionDef = {
     routeQuery?: (item: any) => Record<string, any>,
     /** Custom async handler for non-standard actions (e.g., shopping toggle endpoint) */
     handler?: (item: any, genericModel: any) => Promise<void>,
+    /** Custom predicate for toggle state (overrides default !!item[toggleField] check) */
+    isActive?: (item: any) => boolean,
+    /** Custom color resolver for actions with more than 2 states (overrides activeColor/inactiveColor) */
+    colorResolver?: (item: any) => string | undefined,
 }
 
 /**

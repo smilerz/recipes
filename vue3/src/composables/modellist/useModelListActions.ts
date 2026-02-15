@@ -25,6 +25,7 @@ export function useModelListActions(
     })
 
     function getToggleState(action: ModelActionDef, item: any): boolean {
+        if (action.isActive) return action.isActive(item)
         return !!item[action.toggleField!]
     }
 

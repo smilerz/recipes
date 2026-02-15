@@ -5,23 +5,17 @@
 
             <v-card-text v-if="message" class="pb-2 text-body-1">{{ message }}</v-card-text>
 
-            <v-card-text v-if="selectOptions.length > 0" class="pb-2">
-                <v-select
-                    v-model="selectedValue"
-                    :items="selectOptions"
-                    item-title="label"
-                    item-value="value"
-                    :aria-label="title"
-                    variant="outlined"
-                    density="compact"
-                    hide-details
-                />
-            </v-card-text>
-
             <v-list v-if="entries.length > 0" density="compact" class="py-0">
                 <v-list-item v-for="(entry, idx) in entries" :key="idx" :prepend-icon="entry.icon">
                     <v-list-item-title>{{ entry.text }}</v-list-item-title>
                     <v-list-item-subtitle v-if="entry.subtext">{{ entry.subtext }}</v-list-item-subtitle>
+                </v-list-item>
+            </v-list>
+
+            <v-list v-if="details.length > 0" density="compact" class="py-0">
+                <v-list-item v-for="d in details" :key="d.label" :prepend-icon="d.icon">
+                    <v-list-item-subtitle>{{ d.label }}</v-list-item-subtitle>
+                    <v-list-item-title>{{ d.value }}</v-list-item-title>
                 </v-list-item>
             </v-list>
 
@@ -31,7 +25,6 @@
                 <v-btn
                     :color="confirmColor"
                     :prepend-icon="confirmIcon"
-                    :disabled="selectOptions.length > 0 && selectedValue == null"
                     variant="flat"
                     @click="confirm"
                 >
@@ -43,8 +36,14 @@
 </template>
 
 <script setup lang="ts">
-import {ref, watch} from 'vue'
+import {ref} from 'vue'
 import VClosableCardTitle from '@/components/dialogs/VClosableCardTitle.vue'
+
+export type ActionConfirmDetail = {
+    label: string,
+    value: string,
+    icon?: string,
+}
 
 export type ActionConfirmEntry = {
     text: string,
@@ -57,9 +56,8 @@ const loading = ref(false)
 const title = ref('')
 const icon = ref('')
 const message = ref('')
+const details = ref<ActionConfirmDetail[]>([])
 const entries = ref<ActionConfirmEntry[]>([])
-const selectOptions = ref<{value: number | string, label: string}[]>([])
-const selectedValue = ref<number | string | null>(null)
 const confirmLabel = ref('')
 const confirmColor = ref('primary')
 const confirmIcon = ref('')
@@ -70,6 +68,7 @@ function open(opts: {
     title: string,
     icon?: string,
     message?: string,
+    details?: ActionConfirmDetail[],
     entries?: ActionConfirmEntry[],
     loading?: boolean,
     confirmLabel: string,
@@ -79,9 +78,8 @@ function open(opts: {
     title.value = opts.title
     icon.value = opts.icon ?? ''
     message.value = opts.message ?? ''
+    details.value = opts.details ?? []
     entries.value = opts.entries ?? []
-    selectOptions.value = []
-    selectedValue.value = null
     loading.value = opts.loading ?? false
     confirmLabel.value = opts.confirmLabel
     confirmColor.value = opts.confirmColor ?? 'primary'
@@ -89,20 +87,12 @@ function open(opts: {
     dialog.value = true
 
     return new Promise((resolve) => {
-        // Resolve any pending promise from a prior open() call to prevent leak
-        resolvePromise?.(false)
         resolvePromise = resolve
     })
 }
 
 function setEntries(newEntries: ActionConfirmEntry[]) {
     entries.value = newEntries
-    loading.value = false
-}
-
-function setSelectOptions(opts: {value: number | string, label: string}[]) {
-    selectOptions.value = opts
-    selectedValue.value = null
     loading.value = false
 }
 
@@ -118,13 +108,5 @@ function cancel() {
     resolvePromise = null
 }
 
-// Resolve as false if dialog closes without confirm/cancel (e.g. via title X button)
-watch(dialog, (val) => {
-    if (!val && resolvePromise) {
-        resolvePromise(false)
-        resolvePromise = null
-    }
-})
-
-defineExpose({open, setEntries, setSelectOptions, selectedValue})
+defineExpose({open, setEntries})
 </script>

@@ -6,6 +6,12 @@
 import type {ModelFilterDef, ModelActionDef, ModelListSettings, ModelSortDef} from './types'
 import {ApiApi, DeleteEnum} from '@/openapi'
 
+/** The backend annotates shopping_status via Exists() → CharField, yielding "True"/"False" strings. */
+function isOnShoppingList(item: any): boolean {
+    const v = item.shopping
+    return v === true || v === 'True' || v === 'true'
+}
+
 /**
  * Filter definitions for the Food list.
  * Each maps to a query parameter on the /api/food/ endpoint.
@@ -26,17 +32,25 @@ export const FOOD_FILTER_DEFS: ModelFilterDef[] = [
  */
 export const FOOD_ACTION_DEFS: ModelActionDef[] = [
     // Status toggles
-    {key: 'onhand', labelKey: 'OnHand', icon: 'fa-solid fa-check-circle', isToggle: true, toggleField: 'foodOnhand', activeColor: 'success', inactiveColor: '', group: 'Status'},
-    {key: 'shopping', labelKey: 'Shopping', icon: 'fa-solid fa-cart-shopping', isToggle: true, toggleField: 'shopping', activeColor: 'warning', inactiveColor: '', group: 'Status',
+    {key: 'onhand', labelKey: 'OnHand', icon: 'fa-solid fa-clipboard-check', isToggle: true, toggleField: 'foodOnhand', activeColor: 'success', inactiveColor: '', group: 'Status',
+        colorResolver: (item: any) => {
+            if (item.foodOnhand) return 'success'
+            if (item.substituteOnhand) return 'warning'
+            return undefined
+        },
+    },
+    {key: 'shopping', labelKey: 'Shopping', icon: 'fa-solid fa-cart-shopping', isToggle: true, toggleField: 'shopping', activeColor: 'success', inactiveColor: '', group: 'Status', requiresConfirmation: true,
+        isActive: isOnShoppingList,
+        colorResolver: (item: any) => isOnShoppingList(item) ? 'success' : undefined,
         handler: async (item) => {
             const api = new ApiApi()
             const oldValue = item.shopping
             try {
-                if (item.shopping) {
-                    item.shopping = ''
+                if (isOnShoppingList(item)) {
+                    item.shopping = 'False'
                     await api.apiFoodShoppingUpdate({id: item.id, foodShoppingUpdate: {_delete: DeleteEnum.True}})
                 } else {
-                    item.shopping = 'true'
+                    item.shopping = 'True'
                     await api.apiFoodShoppingUpdate({id: item.id, foodShoppingUpdate: {_delete: null}})
                 }
             } catch (e) {
@@ -48,12 +62,11 @@ export const FOOD_ACTION_DEFS: ModelActionDef[] = [
     {key: 'ignore', labelKey: 'IgnoreShopping', icon: 'fa-solid fa-ban', isToggle: true, toggleField: 'ignoreShopping', activeColor: 'error', inactiveColor: '', group: 'Status'},
 
     // One-shot actions
-    {key: 'edit', labelKey: 'Edit', icon: 'fa-solid fa-pen', group: 'actions', routeName: 'ModelEditPage', routeParams: (item, modelName) => ({model: modelName, id: item.id})},
-    {key: 'merge', labelKey: 'Merge', icon: 'fa-solid fa-arrows-to-dot', group: 'actions'},
-    {key: 'merge-auto', labelKey: 'AutoMerge', icon: 'fa-solid fa-wand-magic-sparkles', group: 'actions'},
-    {key: 'move', labelKey: 'Move', icon: 'fa-solid fa-arrow-right', group: 'actions'},
-    {key: 'ingredient-editor', labelKey: 'Ingredient Editor', icon: 'fa-solid fa-table-list', group: 'actions', routeName: 'IngredientEditorPage', routeQuery: (item: any) => ({food_id: item.id})},
-    {key: 'delete', labelKey: 'Delete', icon: 'fa-solid fa-trash', group: 'danger', requiresConfirmation: true},
+    {key: 'edit', labelKey: 'Edit', icon: 'fa-solid fa-pen', group: 'Actions', routeName: 'ModelEditPage', routeParams: (item, modelName) => ({model: modelName, id: item.id})},
+    {key: 'merge', labelKey: 'Merge', icon: 'fa-solid fa-arrows-to-dot', group: 'Actions'},
+    {key: 'move', labelKey: 'Move', icon: 'fa-solid fa-arrow-right', group: 'Actions'},
+    {key: 'ingredient-editor', labelKey: 'Ingredient Editor', icon: 'fa-solid fa-table-list', group: 'Actions', routeName: 'IngredientEditorPage', routeQuery: (item: any) => ({food_id: item.id})},
+    {key: 'delete', labelKey: 'Delete', icon: 'fa-solid fa-trash', group: 'Actions', requiresConfirmation: true, isDanger: true},
 ]
 
 /**
