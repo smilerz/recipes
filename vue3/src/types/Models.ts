@@ -19,7 +19,7 @@ import {VDataTable} from "vuetify/components";
 import {getNestedProperty} from "@/utils/utils";
 import {useUserPreferenceStore} from "@/stores/UserPreferenceStore";
 import {defineAsyncComponent, shallowRef} from "vue";
-import type {ModelFilterDef, ModelActionDef, ModelListSettings, ModelColumnType, ModelSortDef} from "@/composables/modellist/types";
+import type {ModelFilterDef, ModelActionDef, ModelListSettings, ModelColumnType, ModelSortDef, ModelStatDef} from "@/composables/modellist/types";
 
 type VDataTableProps = InstanceType<typeof VDataTable>['$props']
 
@@ -140,6 +140,7 @@ export type Model = {
     /** Enhanced list capabilities (optional — when absent, ModelListPage uses current behavior) */
     filterDefs?: ModelFilterDef[],
     actionDefs?: ModelActionDef[],
+    statDefs?: ModelStatDef[],
     listSettings?: ModelListSettings,
     sortDefs?: ModelSortDef[],
 }
@@ -223,7 +224,7 @@ export type EditorSupportedTypes =
     | Space
     | FoodInheritField
 
-import {FOOD_FILTER_DEFS, FOOD_ACTION_DEFS, FOOD_LIST_SETTINGS, FOOD_SORT_OPTIONS} from "@/composables/modellist/FoodList";
+import {FOOD_FILTER_DEFS, FOOD_ACTION_DEFS, FOOD_STAT_DEFS, FOOD_LIST_SETTINGS, FOOD_SORT_OPTIONS} from "@/composables/modellist/FoodList";
 
 export const TFood = {
     name: 'Food',
@@ -250,6 +251,7 @@ export const TFood = {
     ],
     filterDefs: FOOD_FILTER_DEFS,
     actionDefs: FOOD_ACTION_DEFS,
+    statDefs: FOOD_STAT_DEFS,
     listSettings: FOOD_LIST_SETTINGS,
     sortDefs: FOOD_SORT_OPTIONS,
 } as Model

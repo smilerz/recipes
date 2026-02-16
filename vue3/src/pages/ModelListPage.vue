@@ -253,6 +253,15 @@
             </v-col>
         </v-row>
 
+        <model-list-stats-footer
+            v-if="statsAvailable && showStats"
+            :page-count="rawItems.length"
+            :item-count="itemCount"
+            :stats="stats"
+            :stat-defs="currentModel?.statDefs ?? []"
+            :loading="loading"
+        />
+
         <model-list-settings-panel
             v-if="hasEnhancedList"
             v-model="settingsPanelOpen"
@@ -319,6 +328,7 @@ import ModelListFilterChips from "@/components/model_list/ModelListFilterChips.v
 import ModelListSelectionBar from "@/components/model_list/ModelListSelectionBar.vue";
 import ModelListActionMenu from "@/components/model_list/ModelListActionMenu.vue";
 import ModelListMobileView from "@/components/model_list/ModelListMobileView.vue";
+import ModelListStatsFooter from "@/components/model_list/ModelListStatsFooter.vue";
 import {useModelListActions} from "@/composables/modellist/useModelListActions";
 import {useModelListTree, MAX_CHILDREN} from "@/composables/modellist/useModelListTree";
 import type {ModelActionDef} from "@/composables/modellist/types";
@@ -361,6 +371,7 @@ const batchEditDialog = ref(false)
 const loading = ref(false);
 const rawItems = ref([] as Array<any>)
 const itemCount = ref(0)
+const stats = ref<Record<string, number>>({})
 
 const genericModel = ref({} as GenericModel)
 
@@ -372,6 +383,19 @@ const {filterDefs, groupedFilterDefs, activeFilterCount, filterParams, getFilter
 // tree view
 const {mobile} = useDisplay()
 const useMobileList = computed(() => mobile.value && hasEnhancedList.value && !!currentModel.value?.listSettings?.mobileList)
+const statsAvailable = computed(() => !!currentModel.value?.listSettings?.statsFooter)
+const showStats = computed({
+    get: () => {
+        const key = currentModel.value?.listSettings?.settingsKey
+        if (!key) return false
+        return (useUserPreferenceStore().deviceSettings as any)[`${key}_showStats`] ?? false
+    },
+    set: (val: boolean) => {
+        const key = currentModel.value?.listSettings?.settingsKey
+        if (!key) return
+        ;(useUserPreferenceStore().deviceSettings as any)[`${key}_showStats`] = val
+    },
+})
 const fetchChildren = (parentId: number) =>
     genericModel.value.list({root: parentId, pageSize: MAX_CHILDREN, ...filterParams.value})
         .then((r: any) => r.results ?? [])
@@ -632,6 +656,7 @@ function loadItems(options: VDataTableUpdateOptions) {
     genericModel.value.list({query: query.value, page: options.page, pageSize: pageSize.value, ordering: ordering.value || undefined, ...filterParams.value, ...getTreeLoadParams()}).then((r: any) => {
         rawItems.value = r.results
         itemCount.value = r.count
+        stats.value = r.stats ?? {}
     }).catch((err: any) => {
         useMessageStore().addError(ErrorMessageType.FETCH_ERROR, err)
     }).finally(() => {

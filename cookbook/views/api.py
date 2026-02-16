@@ -1053,6 +1053,40 @@ class FoodViewSet(LoggingMixin, TreeMixin, DeleteRelationMixing):
             return FoodSimpleSerializer
         return self.serializer_class
 
+    def list(self, request, *args, **kwargs):
+        # Compute space-wide stats in a single aggregate query
+        shared_users = []
+        if c := caches['default'].get(f'shopping_shared_users_{request.space.id}_{request.user.id}', None):
+            shared_users = c
+        else:
+            try:
+                shared_users = [x.id for x in list(request.user.get_shopping_share())] + [request.user.id]
+            except AttributeError:
+                pass
+
+        base_qs = Food.objects.filter(space=request.space)
+
+        if shared_users:
+            shopping_sub = ShoppingListEntry.objects.filter(
+                space=request.space, food=OuterRef('id'), checked=False, created_by__in=shared_users,
+            )
+            agg = base_qs.annotate(
+                _shopping=Exists(shopping_sub),
+            ).aggregate(
+                onhand=Count('pk', filter=Q(onhand_users__id__in=shared_users), distinct=True),
+                shopping=Count('pk', filter=Q(_shopping=True)),
+                ignored=Count('pk', filter=Q(ignore_shopping=True)),
+            )
+        else:
+            agg = base_qs.aggregate(
+                ignored=Count('pk', filter=Q(ignore_shopping=True)),
+            )
+            agg.update(onhand=0, shopping=0)
+
+        response = super().list(request, *args, **kwargs)
+        response.data['stats'] = {k: v or 0 for k, v in agg.items()}
+        return response
+
     # TODO I could not find any usage of this and it causes schema generation issues, so commenting it for now
     # this is used on the Shopping Badge
     @decorators.action(detail=True, methods=['PUT'], serializer_class=FoodShoppingUpdateSerializer, )
