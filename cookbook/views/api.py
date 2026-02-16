@@ -1097,11 +1097,11 @@ class FoodViewSet(LoggingMixin, TreeMixin, DeleteRelationMixing):
         obj = self.get_object()
         shared_users = list(self.request.user.get_shopping_share())
         shared_users.append(request.user)
-        if request.data.get('_delete', False) == 'true':
+        if request.data.get('delete', False) == 'true':
             ShoppingListEntry.objects.filter(food=obj, checked=False, space=request.space,
                                              created_by__in=shared_users).delete()
             content = {'msg': _(f'{obj.name} was removed from the shopping list.')}
-            return Response(content, status=status.HTTP_204_NO_CONTENT)
+            return Response(content, status=status.HTTP_200_OK)
 
         amount = request.data.get('amount', 1)
         unit = request.data.get('unit', None)
@@ -1109,7 +1109,7 @@ class FoodViewSet(LoggingMixin, TreeMixin, DeleteRelationMixing):
 
         ShoppingListEntry.objects.create(food=obj, amount=amount, unit=unit, space=request.space,
                                          created_by=request.user)
-        return Response(content, status=status.HTTP_204_NO_CONTENT)
+        return Response(content, status=status.HTTP_200_OK)
 
     @decorators.action(detail=True, methods=['POST'], )
     def fdc(self, request, pk):

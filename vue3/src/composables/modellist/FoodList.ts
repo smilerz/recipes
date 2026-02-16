@@ -44,18 +44,12 @@ export const FOOD_ACTION_DEFS: ModelActionDef[] = [
         colorResolver: (item: any) => isOnShoppingList(item) ? 'success' : undefined,
         handler: async (item) => {
             const api = new ApiApi()
-            const oldValue = item.shopping
-            try {
-                if (isOnShoppingList(item)) {
-                    item.shopping = 'False'
-                    await api.apiFoodShoppingUpdate({id: item.id, foodShoppingUpdate: {_delete: DeleteEnum.True}})
-                } else {
-                    item.shopping = 'True'
-                    await api.apiFoodShoppingUpdate({id: item.id, foodShoppingUpdate: {_delete: null}})
-                }
-            } catch (e) {
-                item.shopping = oldValue
-                throw e
+            if (isOnShoppingList(item)) {
+                await api.apiFoodShoppingUpdate({id: item.id, foodShoppingUpdate: {_delete: DeleteEnum.True}})
+                item.shopping = 'False'
+            } else {
+                await api.apiFoodShoppingUpdate({id: item.id, foodShoppingUpdate: {_delete: null}})
+                item.shopping = 'True'
             }
         },
     },

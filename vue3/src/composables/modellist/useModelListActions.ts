@@ -9,6 +9,7 @@ export function useModelListActions(
     genericModel: Ref<GenericModel>,
     modelName: Ref<string> | ComputedRef<string>,
     onAction?: (key: string, item: any) => void,
+    onToggleComplete?: (item: any, field: string) => void,
 ) {
     const router = useRouter()
 
@@ -34,22 +35,25 @@ export function useModelListActions(
         if (!action) return
 
         if (action.isToggle) {
+            const field = action.toggleField!
             if (action.handler) {
                 try {
                     await action.handler(item, genericModel.value)
+                    onToggleComplete?.(item, field)
                     useMessageStore().addPreparedMessage(PreparedMessage.UPDATE_SUCCESS)
                 } catch (e) {
                     useMessageStore().addError(ErrorMessageType.UPDATE_ERROR, e)
                 }
             } else {
-                const field = action.toggleField!
                 const oldValue = item[field]
                 item[field] = !oldValue
                 try {
                     await genericModel.value.update(item.id, item)
+                    onToggleComplete?.(item, field)
                     useMessageStore().addPreparedMessage(PreparedMessage.UPDATE_SUCCESS)
                 } catch (e) {
                     item[field] = oldValue
+                    onToggleComplete?.(item, field)
                     useMessageStore().addError(ErrorMessageType.UPDATE_ERROR, e)
                 }
             }
