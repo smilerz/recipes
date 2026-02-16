@@ -64,6 +64,9 @@ export const FOOD_ACTION_DEFS: ModelActionDef[] = [
     },
 
     // One-shot actions
+    {key: 'recipe', labelKey: 'Recipe', icon: 'fa-solid fa-book', group: 'Actions',
+        routeName: 'RecipeViewPage', routeParams: (item) => ({id: item.recipe.id}),
+        visible: (item: any) => !!item.recipe},
     {key: 'edit', labelKey: 'Edit', icon: 'fa-solid fa-pen', group: 'Actions', routeName: 'ModelEditPage', routeParams: (item, modelName) => ({model: modelName, id: item.id})},
     {key: 'merge', labelKey: 'Merge', icon: 'fa-solid fa-arrows-to-dot', group: 'Actions'},
     {key: 'move', labelKey: 'Move', icon: 'fa-solid fa-arrow-right', group: 'Actions',

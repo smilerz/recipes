@@ -71,6 +71,8 @@ export type ModelActionDef = {
     isActive?: (item: any) => boolean,
     /** Custom color resolver for actions with more than 2 states (overrides activeColor/inactiveColor) */
     colorResolver?: (item: any) => string | undefined,
+    /** Per-item visibility predicate — when provided, action only shows for items where this returns true */
+    visible?: (item: any) => boolean,
 }
 
 /**

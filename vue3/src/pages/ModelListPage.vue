@@ -139,7 +139,7 @@
                     :active-filter-count="activeFilterCount"
                 />
 
-                <div v-if="treeActive && hasExpandableItems(rawItems)" class="d-flex ga-1 mb-1">
+                <div v-if="treeActive && !useMobileList && hasExpandableItems(rawItems)" class="d-flex ga-1 mb-1">
                     <v-btn variant="text" size="small" prepend-icon="fa-solid fa-angles-down" @click="expandAll(rawItems)">
                         {{ $t('ExpandAll') }}
                     </v-btn>
@@ -148,7 +148,31 @@
                     </v-btn>
                 </div>
 
+                <model-list-mobile-view
+                    v-if="useMobileList"
+                    :key="props.model + '-mobile'"
+                    :items="items"
+                    :items-length="itemCount"
+                    :loading="loading"
+                    :page="page"
+                    :items-per-page="pageSize"
+                    :select-mode="selectMode"
+                    :selected-items="selectedItems"
+                    :enhanced-columns="enhancedColumns"
+                    :action-defs="actionDefs"
+                    :grouped-action-defs="groupedActionDefs"
+                    :get-toggle-state="getToggleState"
+                    :quick-action-keys="quickActionKeys"
+                    :tree-active="treeActive"
+                    :expanded-ids="expandedIds"
+                    :toggle-expand="toggleExpand"
+                    :mobile-subtitle-keys="mobileSubtitleKeys"
+                    @update:selected-items="selectedItems = $event"
+                    @update:options="loadItems"
+                    @action="handleActionWithConfirmation"
+                />
                 <model-list-data-table
+                    v-else
                     :key="props.model"
                     :class="{'hide-table-headers': !showColumnHeaders}"
                     :dynamic-slots="columnSlots"
@@ -298,6 +322,7 @@ import ModelListCreateButton from "@/components/model_list/ModelListCreateButton
 import ModelListFilterChips from "@/components/model_list/ModelListFilterChips.vue";
 import ModelListSelectionBar from "@/components/model_list/ModelListSelectionBar.vue";
 import ModelListActionMenu from "@/components/model_list/ModelListActionMenu.vue";
+import ModelListMobileView from "@/components/model_list/ModelListMobileView.vue";
 import {useModelListActions} from "@/composables/modellist/useModelListActions";
 import {useModelListTree, MAX_CHILDREN} from "@/composables/modellist/useModelListTree";
 import type {ModelActionDef} from "@/composables/modellist/types";
@@ -350,6 +375,7 @@ const {filterDefs, groupedFilterDefs, activeFilterCount, filterParams, getFilter
 
 // tree view
 const {mobile} = useDisplay()
+const useMobileList = computed(() => mobile.value && hasEnhancedList.value && !!currentModel.value?.listSettings?.mobileList)
 const fetchChildren = (parentId: number) =>
     genericModel.value.list({root: parentId, pageSize: MAX_CHILDREN, ...filterParams.value})
         .then((r: any) => r.results ?? [])
@@ -497,6 +523,13 @@ const quickActionKeys = computed(() => {
     const key = currentModel.value?.listSettings?.settingsKey
     if (!key) return []
     return (useUserPreferenceStore().deviceSettings as any)[`${key}_quickActions`] ?? []
+})
+
+// Mobile layout settings
+const mobileSubtitleKeys = computed(() => {
+    const key = currentModel.value?.listSettings?.settingsKey
+    if (!key) return []
+    return (useUserPreferenceStore().deviceSettings as any)[`${key}_mobileSubtitle`] ?? []
 })
 
 // Build dynamic cell slots for enhanced columns (programmatic — Vue 3 can't v-for on template slots)
