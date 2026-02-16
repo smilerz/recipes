@@ -932,3 +932,92 @@ def test_ordering_ignored_when_query_active(u1_s1, space_1):
     response = get_filter_results(u1_s1, '?ordering=-name&query=Apple')
     assert response['count'] == 1
     assert response['results'][0]['name'] == 'Apple Pie'
+
+
+# ==================== stats ====================
+
+def test_stats_present_in_list_response(u1_s1, space_1):
+    """List response should include a 'stats' dict with onhand, shopping, ignored keys."""
+    with scopes_disabled():
+        FoodFactory(space=space_1)
+
+    response = get_filter_results(u1_s1)
+    assert 'stats' in response
+    stats = response['stats']
+    assert isinstance(stats['onhand'], int)
+    assert isinstance(stats['shopping'], int)
+    assert isinstance(stats['ignored'], int)
+
+
+def test_stats_counts_are_space_wide(u1_s1, space_1):
+    """Stats should reflect totals for the entire space, not just the filtered/paginated results."""
+    user = auth.get_user(u1_s1)
+    with scopes_disabled():
+        _food_onhand = FoodFactory(space=space_1, users_onhand=[user])
+        _food_shopping = FoodFactory(space=space_1)
+        ShoppingListEntryFactory(food=_food_shopping, space=space_1, created_by=user, checked=False)
+        food_ignored = FoodFactory(space=space_1)
+        food_ignored.ignore_shopping = True
+        food_ignored.save()
+        FoodFactory(space=space_1)  # plain food
+
+    response = get_filter_results(u1_s1)
+    stats = response['stats']
+    assert stats['onhand'] == 1
+    assert stats['shopping'] == 1
+    assert stats['ignored'] == 1
+
+
+def test_stats_unaffected_by_filters(u1_s1, space_1):
+    """Stats should remain the same regardless of active filters."""
+    user = auth.get_user(u1_s1)
+    with scopes_disabled():
+        FoodFactory(space=space_1, users_onhand=[user])
+        food_ignored = FoodFactory(space=space_1)
+        food_ignored.ignore_shopping = True
+        food_ignored.save()
+
+    # Unfiltered
+    response_all = get_filter_results(u1_s1)
+    # Filtered to only on-hand
+    response_filtered = get_filter_results(u1_s1, '?onhand=true')
+
+    assert response_all['stats'] == response_filtered['stats']
+
+
+def test_stats_shopping_is_user_scoped(u1_s1, u2_s1, space_1):
+    """Shopping stats should only count entries created by the user or their shared users."""
+    user1 = auth.get_user(u1_s1)
+    user2 = auth.get_user(u2_s1)
+    with scopes_disabled():
+        food_u1 = FoodFactory(space=space_1)
+        food_u2 = FoodFactory(space=space_1)
+        ShoppingListEntryFactory(food=food_u1, space=space_1, created_by=user1, checked=False)
+        ShoppingListEntryFactory(food=food_u2, space=space_1, created_by=user2, checked=False)
+
+    # user1 should only see their own shopping entry
+    response = get_filter_results(u1_s1)
+    assert response['stats']['shopping'] == 1
+
+    # After sharing, user1 should see both
+    user2.userpreference.shopping_share.add(user1)
+    caches['default'].delete(f'shopping_shared_users_{space_1.id}_{user1.id}')
+
+    response = get_filter_results(u1_s1)
+    assert response['stats']['shopping'] == 2
+
+
+def test_stats_exclude_other_spaces(u1_s1, space_1, space_2):
+    """Stats should only count foods in the requesting user's space."""
+    user = auth.get_user(u1_s1)
+    with scopes_disabled():
+        FoodFactory(space=space_1, users_onhand=[user])
+        # Food in another space — should not appear in stats
+        other_food = FoodFactory(space=space_2)
+        other_food.ignore_shopping = True
+        other_food.save()
+
+    response = get_filter_results(u1_s1)
+    stats = response['stats']
+    assert stats['onhand'] == 1
+    assert stats['ignored'] == 0
