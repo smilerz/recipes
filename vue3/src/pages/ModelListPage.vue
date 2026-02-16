@@ -159,6 +159,10 @@
                     :expanded-ids="expandedIds"
                     :toggle-expand="toggleExpand"
                     :mobile-subtitle-keys="mobileSubtitleKeys"
+                    :swipe-enabled="swipeEnabled"
+                    :swipe-left-keys="swipeLeftKeys"
+                    :swipe-right-keys="swipeRightKeys"
+                    :settings-key="modelSettingsKey"
                     @update:selected-items="selectedItems = $event"
                     @update:options="loadItems"
                     @action="handleActionWithConfirmation"
@@ -296,7 +300,7 @@
 <script setup lang="ts">
 
 
-import {computed, h, onBeforeMount, PropType, ref, toRef, watch} from "vue";
+import {computed, h, onBeforeMount, PropType, ref, toRef, triggerRef, watch} from "vue";
 import {ErrorMessageType, useMessageStore} from "@/stores/MessageStore";
 import {useI18n} from "vue-i18n";
 import {EditorSupportedModels, GenericModel, getGenericModelFromString, Model, TInviteLink,} from "@/types/Models";
@@ -423,6 +427,13 @@ function handleAction(key: string, item: any) {
 
 const {actionDefs, groupedActionDefs, executeAction, getToggleState} = useModelListActions(
     currentModel, genericModel, modelNameRef, handleAction,
+    (item: any, field: string) => {
+        const source = rawItems.value.find((i: any) => i.id === item.id)
+        if (source && source !== item) {
+            source[field] = item[field]
+        }
+        triggerRef(rawItems)
+    },
 )
 
 /**
@@ -547,6 +558,27 @@ const mobileSubtitleKeys = computed(() => {
     if (!key) return []
     return (useUserPreferenceStore().deviceSettings as any)[`${key}_mobileSubtitle`] ?? []
 })
+
+// Swipe gesture settings
+const swipeEnabled = computed(() => {
+    const key = currentModel.value?.listSettings?.settingsKey
+    if (!key) return false
+    return (useUserPreferenceStore().deviceSettings as any)[`${key}_swipeEnabled`] ?? false
+})
+
+const swipeLeftKeys = computed(() => {
+    const key = currentModel.value?.listSettings?.settingsKey
+    if (!key) return []
+    return (useUserPreferenceStore().deviceSettings as any)[`${key}_swipeLeft`] ?? []
+})
+
+const swipeRightKeys = computed(() => {
+    const key = currentModel.value?.listSettings?.settingsKey
+    if (!key) return []
+    return (useUserPreferenceStore().deviceSettings as any)[`${key}_swipeRight`] ?? []
+})
+
+const modelSettingsKey = computed(() => currentModel.value?.listSettings?.settingsKey ?? '')
 
 // Build dynamic cell slots for enhanced columns (programmatic — Vue 3 can't v-for on template slots)
 const columnSlots = computed(() => {
