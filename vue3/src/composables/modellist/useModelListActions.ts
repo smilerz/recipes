@@ -47,9 +47,9 @@ export function useModelListActions(
             } else {
                 const oldValue = item[field]
                 item[field] = !oldValue
+                onToggleComplete?.(item, field)
                 try {
                     await genericModel.value.update(item.id, item)
-                    onToggleComplete?.(item, field)
                     useMessageStore().addPreparedMessage(PreparedMessage.UPDATE_SUCCESS)
                 } catch (e) {
                     item[field] = oldValue

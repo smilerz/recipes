@@ -297,7 +297,7 @@
 <script setup lang="ts">
 
 
-import {computed, h, onBeforeMount, PropType, ref, toRef, triggerRef, watch} from "vue";
+import {computed, h, onBeforeMount, PropType, ref, shallowRef, toRef, triggerRef, watch} from "vue";
 import {ErrorMessageType, useMessageStore} from "@/stores/MessageStore";
 import {useI18n} from "vue-i18n";
 import {EditorSupportedModels, GenericModel, getGenericModelFromString, Model, TInviteLink,} from "@/types/Models";
@@ -366,7 +366,7 @@ const batchEditDialog = ref(false)
 
 // data
 const loading = ref(false);
-const rawItems = ref([] as Array<any>)
+const rawItems = shallowRef([] as Array<any>)
 const itemCount = ref(0)
 const stats = ref<Record<string, number>>({})
 
@@ -432,12 +432,7 @@ const {actionDefs, groupedActionDefs, executeAction, getToggleState} = useModelL
     (item: any, field: string) => {
         const idx = rawItems.value.findIndex((i: any) => i.id === item.id)
         if (idx >= 0) {
-            const source = rawItems.value[idx]
-            if (source !== item) {
-                source[field] = item[field]
-            }
-            // New object reference at idx so v-for child components detect the prop change
-            rawItems.value[idx] = {...rawItems.value[idx]}
+            rawItems.value[idx] = {...rawItems.value[idx], [field]: item[field]}
             triggerRef(rawItems)
         }
     },
