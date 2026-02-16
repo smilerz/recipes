@@ -163,6 +163,7 @@
                     :swipe-left-keys="swipeLeftKeys"
                     :swipe-right-keys="swipeRightKeys"
                     :settings-key="modelSettingsKey"
+                    :show-mobile-headers="showMobileHeaders"
                     @update:selected-items="selectedItems = $event"
                     @update:options="loadItems"
                     @action="handleActionWithConfirmation"
@@ -177,7 +178,7 @@
                     @update:options="loadItems"
                     :items="items"
                     :items-length="itemCount"
-                    :loading="loading"
+                    :loading="loading || items.some((i: any) => i._isLoading)"
                     :search="query"
                     :headers="visibleHeaders"
                     :items-per-page-options="itemsPerPageOptions"
@@ -246,17 +247,17 @@
                         </template>
                     </template>
                 </model-list-data-table>
+
+                <model-list-stats-footer
+                    v-if="statsAvailable && showStats"
+                    :page-count="rawItems.length"
+                    :item-count="itemCount"
+                    :stats="stats"
+                    :stat-defs="currentModel?.statDefs ?? []"
+                    :loading="loading"
+                />
             </v-col>
         </v-row>
-
-        <model-list-stats-footer
-            v-if="statsAvailable && showStats"
-            :page-count="rawItems.length"
-            :item-count="itemCount"
-            :stats="stats"
-            :stat-defs="currentModel?.statDefs ?? []"
-            :loading="loading"
-        />
 
         <model-list-settings-panel
             v-if="hasEnhancedList"
@@ -399,7 +400,12 @@ const {treeActive, expandedIds, loadingIds, toggleExpand,
     buildFlatList, getTreeLoadParams, clearTreeState, setOnCollapse} =
     useModelListTree(currentModel, fetchChildren)
 
-const items = computed(() => treeActive.value ? buildFlatList(rawItems.value) : rawItems.value)
+// Always return a fresh array reference so that triggerRef(rawItems) propagates
+// through Vue's computed Object.is() caching to downstream v-for consumers.
+const items = computed(() => {
+    const list = treeActive.value ? buildFlatList(rawItems.value) : rawItems.value
+    return list.slice()
+})
 
 // When children are collapsed, remove them from selection
 setOnCollapse((removedIds) => {
@@ -424,11 +430,16 @@ function handleAction(key: string, item: any) {
 const {actionDefs, groupedActionDefs, executeAction, getToggleState} = useModelListActions(
     currentModel, genericModel, modelNameRef, handleAction,
     (item: any, field: string) => {
-        const source = rawItems.value.find((i: any) => i.id === item.id)
-        if (source && source !== item) {
-            source[field] = item[field]
+        const idx = rawItems.value.findIndex((i: any) => i.id === item.id)
+        if (idx >= 0) {
+            const source = rawItems.value[idx]
+            if (source !== item) {
+                source[field] = item[field]
+            }
+            // New object reference at idx so v-for child components detect the prop change
+            rawItems.value[idx] = {...rawItems.value[idx]}
+            triggerRef(rawItems)
         }
-        triggerRef(rawItems)
     },
 )
 
@@ -576,6 +587,12 @@ const swipeRightKeys = computed(() => {
 
 const modelSettingsKey = computed(() => currentModel.value?.listSettings?.settingsKey ?? '')
 
+const showMobileHeaders = computed(() => {
+    const key = currentModel.value?.listSettings?.settingsKey
+    if (!key) return false
+    return (useUserPreferenceStore().deviceSettings as any)[`${key}_showMobileHeaders`] ?? false
+})
+
 // Build dynamic cell slots for enhanced columns (programmatic — Vue 3 can't v-for on template slots)
 const columnSlots = computed(() => {
     if (!hasEnhancedList.value) return {}
@@ -593,8 +610,8 @@ const columnSlots = computed(() => {
 
                 if (hasChildren) {
                     if (isLoading) {
-                        children.push(h('span', {class: 'tree-expand-btn', style: {width: '28px', display: 'inline-flex', justifyContent: 'center', alignItems: 'center'}},
-                            [h('i', {class: 'fa-solid fa-spinner fa-spin', style: {fontSize: '12px'}})]
+                        children.push(h('span', {class: 'tree-expand-btn', style: {width: '28px', display: 'inline-flex', justifyContent: 'center', alignItems: 'center', opacity: '0.4'}},
+                            [h('i', {class: 'fa-solid fa-chevron-down', style: {fontSize: '12px'}})]
                         ))
                     } else {
                         children.push(h('button', {
