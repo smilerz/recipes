@@ -137,16 +137,8 @@
                     :clear-filter="clearFilter"
                     :clear-all-filters="clearAllFilters"
                     :active-filter-count="activeFilterCount"
+                    @open-filters="openSettingsPanel('filters')"
                 />
-
-                <div v-if="treeActive && !useMobileList && hasExpandableItems(rawItems)" class="d-flex ga-1 mb-1">
-                    <v-btn variant="text" size="small" prepend-icon="fa-solid fa-angles-down" @click="expandAll(rawItems)">
-                        {{ $t('ExpandAll') }}
-                    </v-btn>
-                    <v-btn variant="text" size="small" prepend-icon="fa-solid fa-angles-up" @click="collapseAll()">
-                        {{ $t('CollapseAll') }}
-                    </v-btn>
-                </div>
 
                 <model-list-mobile-view
                     v-if="useMobileList"
@@ -403,8 +395,8 @@ const showStats = computed({
 const fetchChildren = (parentId: number) =>
     genericModel.value.list({root: parentId, pageSize: MAX_CHILDREN, ...filterParams.value})
         .then((r: any) => r.results ?? [])
-const {treeActive, expandedIds, loadingIds, toggleExpand, expandAll, collapseAll,
-    buildFlatList, getTreeLoadParams, clearTreeState, hasExpandableItems, setOnCollapse} =
+const {treeActive, expandedIds, loadingIds, toggleExpand,
+    buildFlatList, getTreeLoadParams, clearTreeState, setOnCollapse} =
     useModelListTree(currentModel, fetchChildren)
 
 const items = computed(() => treeActive.value ? buildFlatList(rawItems.value) : rawItems.value)
@@ -577,10 +569,13 @@ const columnSlots = computed(() => {
                             [h('i', {class: 'fa-solid fa-spinner fa-spin', style: {fontSize: '12px'}})]
                         ))
                     } else {
-                        children.push(h('span', {
+                        children.push(h('button', {
                             class: ['tree-expand-btn', isExpanded ? 'tree-chevron-expanded' : ''],
-                            style: {cursor: 'pointer', width: '28px', display: 'inline-flex', justifyContent: 'center', alignItems: 'center'},
+                            style: {cursor: 'pointer', width: '28px', display: 'inline-flex', justifyContent: 'center', alignItems: 'center', appearance: 'none', border: 'none', background: 'none', padding: 0},
+                            'aria-expanded': isExpanded,
+                            'aria-label': t('Toggle'),
                             onClick: (e: Event) => { e.stopPropagation(); toggleExpand(item.id) },
+                            onKeydown: (e: KeyboardEvent) => { if (e.key === 'Enter' || e.key === ' ') e.stopPropagation() },
                         }, [h('i', {class: 'fa-solid fa-chevron-right', style: {fontSize: '12px'}})]))
                     }
                 } else if (depth > 0) {
