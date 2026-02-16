@@ -2,7 +2,7 @@ import {computed, type ComputedRef, type Ref} from 'vue'
 import {useRouter} from 'vue-router'
 import type {ModelActionDef} from './types'
 import type {Model, GenericModel} from '@/types/Models'
-import {ErrorMessageType, useMessageStore} from '@/stores/MessageStore'
+import {ErrorMessageType, PreparedMessage, useMessageStore} from '@/stores/MessageStore'
 
 export function useModelListActions(
     model: ComputedRef<Model | undefined>,
@@ -37,6 +37,7 @@ export function useModelListActions(
             if (action.handler) {
                 try {
                     await action.handler(item, genericModel.value)
+                    useMessageStore().addPreparedMessage(PreparedMessage.UPDATE_SUCCESS)
                 } catch (e) {
                     useMessageStore().addError(ErrorMessageType.UPDATE_ERROR, e)
                 }
@@ -46,6 +47,7 @@ export function useModelListActions(
                 item[field] = !oldValue
                 try {
                     await genericModel.value.update(item.id, item)
+                    useMessageStore().addPreparedMessage(PreparedMessage.UPDATE_SUCCESS)
                 } catch (e) {
                     item[field] = oldValue
                     useMessageStore().addError(ErrorMessageType.UPDATE_ERROR, e)
