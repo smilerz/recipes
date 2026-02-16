@@ -573,6 +573,8 @@
   "ConfirmAction": "{action} {name}?",
   "ShowColumnHeaders": "Show Column Headers",
   "ShowDelayed": "Show delayed items",
+  "ShowStats": "Show Stats",
+  "Showing": "Showing",
   "ShowIngredients": "Show Ingredients",
   "ShowMealPlanOnStartPage": "Show Mealplans on start page.",
   "ShowRecentlyCompleted": "Show recently completed items",

@@ -3,7 +3,7 @@
  * This is the single source of truth for all Food list behavior.
  */
 
-import type {ModelFilterDef, ModelActionDef, ModelListSettings, ModelSortDef} from './types'
+import type {ModelFilterDef, ModelActionDef, ModelStatDef, ModelListSettings, ModelSortDef} from './types'
 import {ApiApi, DeleteEnum} from '@/openapi'
 
 /** The backend annotates shopping_status via Exists() → CharField, yielding "True"/"False" strings. */
@@ -77,6 +77,16 @@ export const FOOD_ACTION_DEFS: ModelActionDef[] = [
     {key: 'delete', labelKey: 'Delete', icon: 'fa-solid fa-trash', group: 'Actions', isDanger: true,
         routeName: 'ModelDeletePage',
         routeParams: (item, modelName) => ({model: modelName, id: item.id})},
+]
+
+/**
+ * Stat definitions for the Food list stats footer.
+ * Keys match the API stats response fields.
+ */
+export const FOOD_STAT_DEFS: ModelStatDef[] = [
+    {key: 'onhand', labelKey: 'OnHand', icon: 'fa-solid fa-check-circle', color: 'success'},
+    {key: 'shopping', labelKey: 'Shopping', icon: 'fa-solid fa-cart-shopping', color: 'info'},
+    {key: 'ignored', labelKey: 'IgnoreShopping', icon: 'fa-solid fa-ban', color: 'warning'},
 ]
 
 /**
