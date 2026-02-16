@@ -542,6 +542,7 @@
   "Shopping_list": "Shopping List",
   "QuickActions": "Quick Actions",
   "QuickActionsDescription": "Select up to 4 actions to show inline next to the menu.",
+  "Subtitle": "Subtitle",
   "Selected": "selected",
   "RemoveFromShoppingConfirm": "Remove {name} from the shopping list?",
   "ConfirmAction": "{action} {name}?",
