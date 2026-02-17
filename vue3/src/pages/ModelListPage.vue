@@ -154,7 +154,7 @@
                     :action-defs="actionDefs"
                     :grouped-action-defs="groupedActionDefs"
                     :get-toggle-state="getToggleState"
-                    :quick-action-keys="quickActionKeys"
+                    :quick-action-keys="quickActionKeys.slice(0, 2)"
                     :tree-active="treeActive"
                     :expanded-ids="expandedIds"
                     :toggle-expand="toggleExpand"
