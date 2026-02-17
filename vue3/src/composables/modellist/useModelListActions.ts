@@ -61,12 +61,8 @@ export function useModelListActions(
             const params = action.routeParams?.(item, modelName.value) ?? {}
             const query = action.routeQuery?.(item)
             router.push({name: action.routeName, params, query})
-        } else {
-            if (onAction) {
-                onAction(key, item)
-            } else {
-                useMessageStore().addError('Coming soon')
-            }
+        } else if (onAction) {
+            onAction(key, item)
         }
     }
 

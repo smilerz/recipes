@@ -314,8 +314,6 @@ import {VDataTableUpdateOptions} from "@/vuetify";
 import SyncDialog from "@/components/dialogs/SyncDialog.vue";
 import {ApiApi, ApiRecipeListRequest, Group, RecipeImport, Space, UserSpace} from "@/openapi";
 import {useTitle} from "@vueuse/core";
-import RecipeShareDialog from "@/components/dialogs/RecipeShareDialog.vue";
-import AddToShoppingDialog from "@/components/dialogs/AddToShoppingDialog.vue";
 import BatchDeleteDialog from "@/components/dialogs/BatchDeleteDialog.vue";
 import {useRouteQuery} from "@vueuse/router";
 import BatchEditFoodDialog from "@/components/dialogs/BatchEditFoodDialog.vue";
@@ -688,6 +686,11 @@ watch(() => props.model, (newValue, oldValue) => {
 
 watch(ordering, () => loadItems({page: 1}))
 watch(filterParams, () => loadItems({page: 1}))
+// Mobile v-list doesn't emit update:options on search change like v-data-table does,
+// so watch query explicitly to trigger reload on mobile
+watch(query, () => {
+    if (useMobileList.value) loadItems({page: 1})
+})
 watch(treeActive, () => {
     loadItems({page: 1})
 })
