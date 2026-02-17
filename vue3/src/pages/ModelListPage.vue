@@ -164,6 +164,7 @@
                     :swipe-right-keys="swipeRightKeys"
                     :settings-key="modelSettingsKey"
                     :show-mobile-headers="showMobileHeaders"
+                    :label-field="currentModel?.itemLabel"
                     @update:selected-items="selectedItems = $event"
                     @update:options="loadItems"
                     @action="handleActionWithConfirmation"
@@ -178,7 +179,7 @@
                     @update:options="loadItems"
                     :items="items"
                     :items-length="itemCount"
-                    :loading="loading || items.some((i: any) => i._isLoading)"
+                    :loading="loading || anyItemLoading"
                     :search="query"
                     :headers="visibleHeaders"
                     :items-per-page-options="itemsPerPageOptions"
@@ -330,6 +331,7 @@ import ModelListActionMenu from "@/components/model_list/ModelListActionMenu.vue
 import ModelListMobileView from "@/components/model_list/ModelListMobileView.vue";
 import ModelListStatsFooter from "@/components/model_list/ModelListStatsFooter.vue";
 import {useModelListActions} from "@/composables/modellist/useModelListActions";
+import {useModelListSettings} from "@/composables/modellist/useModelListSettings";
 import {useModelListTree, MAX_CHILDREN} from "@/composables/modellist/useModelListTree";
 import type {ModelActionDef} from "@/composables/modellist/types";
 import ActionConfirmDialog from "@/components/dialogs/ActionConfirmDialog.vue";
@@ -380,28 +382,20 @@ const currentModel = computed(() => genericModel.value?.model)
 const {visibleHeaders, enhancedColumns, allColumns, hasEnhancedList, isColumnVisible, toggleColumn, getDisplayMode, setDisplayMode} = useModelListColumns(currentModel, t)
 const {filterDefs, groupedFilterDefs, activeFilterCount, filterParams, getFilter, setFilter, clearFilter, clearAllFilters} = useModelListFilters(currentModel)
 
-// tree view
+// device settings + tree view
 const {mobile} = useDisplay()
+const modelSettingsKey = computed(() => currentModel.value?.listSettings?.settingsKey ?? '')
+const {showStats, showColumnHeaders, quickActionKeys, desktopSubtitleKeys,
+    mobileSubtitleKeys, swipeEnabled, swipeLeftKeys, swipeRightKeys,
+    showMobileHeaders, treeEnabled} = useModelListSettings(modelSettingsKey)
 const useMobileList = computed(() => mobile.value && hasEnhancedList.value && !!currentModel.value?.listSettings?.mobileList)
 const statsAvailable = computed(() => !!currentModel.value?.listSettings?.statsFooter)
-const showStats = computed({
-    get: () => {
-        const key = currentModel.value?.listSettings?.settingsKey
-        if (!key) return false
-        return (useUserPreferenceStore().deviceSettings as any)[`${key}_showStats`] ?? false
-    },
-    set: (val: boolean) => {
-        const key = currentModel.value?.listSettings?.settingsKey
-        if (!key) return
-        ;(useUserPreferenceStore().deviceSettings as any)[`${key}_showStats`] = val
-    },
-})
 const fetchChildren = (parentId: number) =>
     genericModel.value.list({root: parentId, pageSize: MAX_CHILDREN, ...filterParams.value})
         .then((r: any) => r.results ?? [])
 const {treeActive, expandedIds, loadingIds, toggleExpand,
     buildFlatList, getTreeLoadParams, clearTreeState, setOnCollapse} =
-    useModelListTree(currentModel, fetchChildren)
+    useModelListTree(currentModel, fetchChildren, treeEnabled)
 
 // Always return a fresh array reference so that triggerRef(rawItems) propagates
 // through Vue's computed Object.is() caching to downstream v-for consumers.
@@ -409,6 +403,8 @@ const items = computed(() => {
     const list = treeActive.value ? buildFlatList(rawItems.value) : rawItems.value
     return list.slice()
 })
+
+const anyItemLoading = computed(() => items.value.some((i: any) => i._isLoading))
 
 // When children are collapsed, remove them from selection
 setOnCollapse((removedIds) => {
@@ -544,66 +540,11 @@ function openSettingsPanel(tab: string) {
     settingsPanelOpen.value = true
 }
 
-// Show column headers setting (read from deviceSettings, controlled by settings panel)
-const showColumnHeaders = computed(() => {
-    const key = currentModel.value?.listSettings?.settingsKey
-    if (!key) return true
-    return (useUserPreferenceStore().deviceSettings as any)[`${key}_showColumnHeaders`] ?? true
-})
-
-// Quick action keys for inline icon buttons (default lives in UserPreferenceStore)
-const quickActionKeys = computed(() => {
-    const key = currentModel.value?.listSettings?.settingsKey
-    if (!key) return []
-    return (useUserPreferenceStore().deviceSettings as any)[`${key}_quickActions`] ?? []
-})
-
-// Desktop subtitle settings
-const desktopSubtitleKeys = computed(() => {
-    const key = currentModel.value?.listSettings?.settingsKey
-    if (!key) return []
-    return (useUserPreferenceStore().deviceSettings as any)[`${key}_desktopSubtitle`] ?? []
-})
-
 const desktopSubtitleColumns = computed(() =>
     desktopSubtitleKeys.value
         .map((key: string) => enhancedColumns.value.find(c => c.key === key))
         .filter((c: ModelTableHeaders | undefined): c is ModelTableHeaders => !!c)
 )
-
-// Mobile layout settings
-const mobileSubtitleKeys = computed(() => {
-    const key = currentModel.value?.listSettings?.settingsKey
-    if (!key) return []
-    return (useUserPreferenceStore().deviceSettings as any)[`${key}_mobileSubtitle`] ?? []
-})
-
-// Swipe gesture settings
-const swipeEnabled = computed(() => {
-    const key = currentModel.value?.listSettings?.settingsKey
-    if (!key) return false
-    return (useUserPreferenceStore().deviceSettings as any)[`${key}_swipeEnabled`] ?? false
-})
-
-const swipeLeftKeys = computed(() => {
-    const key = currentModel.value?.listSettings?.settingsKey
-    if (!key) return []
-    return (useUserPreferenceStore().deviceSettings as any)[`${key}_swipeLeft`] ?? []
-})
-
-const swipeRightKeys = computed(() => {
-    const key = currentModel.value?.listSettings?.settingsKey
-    if (!key) return []
-    return (useUserPreferenceStore().deviceSettings as any)[`${key}_swipeRight`] ?? []
-})
-
-const modelSettingsKey = computed(() => currentModel.value?.listSettings?.settingsKey ?? '')
-
-const showMobileHeaders = computed(() => {
-    const key = currentModel.value?.listSettings?.settingsKey
-    if (!key) return false
-    return (useUserPreferenceStore().deviceSettings as any)[`${key}_showMobileHeaders`] ?? false
-})
 
 /** Render name cell content with optional subtitle */
 function renderNameContent(item: any, col: ModelTableHeaders) {
@@ -648,7 +589,7 @@ const columnSlots = computed(() => {
                             'aria-expanded': isExpanded,
                             'aria-label': t('Toggle'),
                             onClick: (e: Event) => { e.stopPropagation(); toggleExpand(item.id) },
-                            onKeydown: (e: KeyboardEvent) => { if (e.key === 'Enter' || e.key === ' ') e.stopPropagation() },
+                            onKeydown: (e: KeyboardEvent) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); e.stopPropagation(); toggleExpand(item.id) } },
                         }, [h('i', {class: 'fa-solid fa-chevron-right', style: {fontSize: '12px'}})]))
                     }
                 } else if (depth > 0) {
@@ -685,15 +626,11 @@ watch(() => props.model, (newValue, oldValue) => {
     }
 })
 
-watch(ordering, () => loadItems({page: 1}))
-watch(filterParams, () => loadItems({page: 1}))
+watch([ordering, filterParams, treeActive], () => loadItems({page: 1}))
 // Mobile v-list doesn't emit update:options on search change like v-data-table does,
 // so watch query explicitly to trigger reload on mobile
 watch(query, () => {
     if (useMobileList.value) loadItems({page: 1})
-})
-watch(treeActive, () => {
-    loadItems({page: 1})
 })
 
 /**

@@ -27,7 +27,8 @@ export function useModelListActions(
 
     function getToggleState(action: ModelActionDef, item: any): boolean {
         if (action.isActive) return action.isActive(item)
-        return !!item[action.toggleField!]
+        if (!action.toggleField) return false
+        return !!item[action.toggleField]
     }
 
     async function executeAction(key: string, item: any) {
@@ -35,7 +36,8 @@ export function useModelListActions(
         if (!action) return
 
         if (action.isToggle) {
-            const field = action.toggleField!
+            const field = action.toggleField
+            if (!field) return
             if (action.handler) {
                 try {
                     await action.handler(item, genericModel.value)
