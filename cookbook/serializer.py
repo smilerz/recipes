@@ -40,7 +40,7 @@ from cookbook.models import (Automation, BookmarkletImport, Comment, CookLog, Cu
                              UserFile, UserPreference, UserSpace, ViewLog, ConnectorConfig, SearchPreference, SearchFields, AiLog, AiProvider, ShoppingList,
                              InventoryLocation, InventoryEntry, InventoryLog, Household)
 from cookbook.templatetags.custom_tags import markdown
-from recipes.settings import  EMAIL_HOST
+from recipes.settings import EMAIL_HOST
 
 
 class WritableNestedModelSerializer(WNMS):

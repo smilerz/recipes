@@ -489,7 +489,8 @@ async function showShoppingRemoveConfirm(action: ModelActionDef, item: any): Pro
         const allEntries = []
         let page = 1
         let hasMore = true
-        while (hasMore) {
+        const MAX_PAGES = 20
+        while (hasMore && page <= MAX_PAGES) {
             const result = await api.apiShoppingListEntryList({pageSize: 100, page})
             allEntries.push(...(result.results ?? []))
             hasMore = !!result.next
