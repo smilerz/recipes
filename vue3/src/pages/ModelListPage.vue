@@ -300,7 +300,8 @@
 import {computed, h, onBeforeMount, PropType, ref, shallowRef, toRef, triggerRef, watch} from "vue";
 import {ErrorMessageType, useMessageStore} from "@/stores/MessageStore";
 import {useI18n} from "vue-i18n";
-import {EditorSupportedModels, GenericModel, getGenericModelFromString, Model, TInviteLink,} from "@/types/Models";
+import {EditorSupportedModels, GenericModel, getGenericModelFromString, Model, ModelTableHeaders, TInviteLink,} from "@/types/Models";
+import {buildSubtitleText} from "@/utils/utils";
 
 import {useRoute, useRouter} from "vue-router";
 import {useUserPreferenceStore} from "@/stores/UserPreferenceStore";
@@ -554,6 +555,19 @@ const quickActionKeys = computed(() => {
     return (useUserPreferenceStore().deviceSettings as any)[`${key}_quickActions`] ?? []
 })
 
+// Desktop subtitle settings
+const desktopSubtitleKeys = computed(() => {
+    const key = currentModel.value?.listSettings?.settingsKey
+    if (!key) return []
+    return (useUserPreferenceStore().deviceSettings as any)[`${key}_desktopSubtitle`] ?? []
+})
+
+const desktopSubtitleColumns = computed(() =>
+    desktopSubtitleKeys.value
+        .map((key: string) => enhancedColumns.value.find(c => c.key === key))
+        .filter((c: ModelTableHeaders | undefined): c is ModelTableHeaders => !!c)
+)
+
 // Mobile layout settings
 const mobileSubtitleKeys = computed(() => {
     const key = currentModel.value?.listSettings?.settingsKey
@@ -587,6 +601,22 @@ const showMobileHeaders = computed(() => {
     if (!key) return false
     return (useUserPreferenceStore().deviceSettings as any)[`${key}_showMobileHeaders`] ?? false
 })
+
+/** Render name cell content with optional subtitle */
+function renderNameContent(item: any, col: ModelTableHeaders) {
+    const renderer = h(ModelListCellRenderer, {
+        item,
+        header: col,
+        displayMode: getDisplayMode(col.key),
+        showHeaders: true,
+    })
+    const subtitle = buildSubtitleText(item, desktopSubtitleColumns.value, t)
+    if (!subtitle) return renderer
+    return h('div', {class: 'd-flex flex-column'}, [
+        renderer,
+        h('span', {class: 'text-caption text-medium-emphasis text-truncate'}, subtitle),
+    ])
+}
 
 // Build dynamic cell slots for enhanced columns (programmatic — Vue 3 can't v-for on template slots)
 const columnSlots = computed(() => {
@@ -622,18 +652,15 @@ const columnSlots = computed(() => {
                     children.push(h('span', {style: {width: '28px', display: 'inline-block'}}))
                 }
 
-                children.push(h(ModelListCellRenderer, {
-                    item,
-                    header: col,
-                    displayMode: getDisplayMode(col.key),
-                    showHeaders: true,
-                }))
+                children.push(renderNameContent(item, col))
 
                 return h('div', {
                     class: 'd-flex align-center',
                     style: {paddingLeft: `${indent}px`},
                 }, children)
             }
+        } else if (col.key === 'name') {
+            slots[`item.${col.key}`] = ({item}: {item: any}) => renderNameContent(item, col)
         } else {
             slots[`item.${col.key}`] = ({item}: {item: any}) =>
                 h(ModelListCellRenderer, {
