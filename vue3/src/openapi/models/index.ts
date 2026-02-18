@@ -15,7 +15,6 @@ export * from './ConnectorConfigTypeEnum';
 export * from './CookLog';
 export * from './CustomFilter';
 export * from './DefaultPageEnum';
-export * from './DeleteEnum';
 export * from './ExportLog';
 export * from './ExportRequest';
 export * from './FdcQuery';

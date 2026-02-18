@@ -4,7 +4,7 @@
  */
 
 import type {ModelFilterDef, ModelActionDef, ModelStatDef, ModelListSettings, ModelSortDef} from './types'
-import {ApiApi, DeleteEnum} from '@/openapi'
+import {ApiApi} from '@/openapi'
 
 /** The backend annotates shopping_status via Exists() → CharField, yielding "True"/"False" strings. */
 function isOnShoppingList(item: any): boolean {
@@ -45,10 +45,10 @@ export const FOOD_ACTION_DEFS: ModelActionDef[] = [
         handler: async (item) => {
             const api = new ApiApi()
             if (isOnShoppingList(item)) {
-                await api.apiFoodShoppingUpdate({id: item.id, foodShoppingUpdate: {_delete: DeleteEnum.True}})
+                await api.apiFoodShoppingDestroy({id: item.id})
                 item.shopping = 'False'
             } else {
-                await api.apiFoodShoppingUpdate({id: item.id, foodShoppingUpdate: {_delete: null}})
+                await api.apiFoodShoppingUpdate({id: item.id, foodShoppingUpdate: {}})
                 item.shopping = 'True'
             }
         },

@@ -17,7 +17,6 @@ models/ConnectorConfigTypeEnum.ts
 models/CookLog.ts
 models/CustomFilter.ts
 models/DefaultPageEnum.ts
-models/DeleteEnum.ts
 models/ExportLog.ts
 models/ExportRequest.ts
 models/FdcQuery.ts
