@@ -336,7 +336,7 @@ import ModelListStatsFooter from "@/components/model_list/ModelListStatsFooter.v
 import {useModelListActions} from "@/composables/modellist/useModelListActions";
 import {useModelListSettings} from "@/composables/modellist/useModelListSettings";
 import {useModelListTree, CHILD_PAGE_SIZE} from "@/composables/modellist/useModelListTree";
-import type {ModelActionDef} from "@/composables/modellist/types";
+import type {ModelActionDef, ModelItem} from "@/composables/modellist/types";
 import ActionConfirmDialog from "@/components/dialogs/ActionConfirmDialog.vue";
 import type {ActionConfirmEntry} from "@/components/dialogs/ActionConfirmDialog.vue";
 import {useDisplay} from "vuetify";
@@ -366,7 +366,7 @@ const page = useRouteQuery('page', 1, {transform: Number})
 const pageSize = useRouteQuery('pageSize', useUserPreferenceStore().deviceSettings.general_tableItemsPerPage, {transform: Number})
 const ordering = useRouteQuery('ordering', '')
 
-const selectedItems = ref([] as any[])
+const selectedItems = ref<ModelItem[]>([])
 
 const batchDeleteDialog = ref(false)
 const batchMergeDialog = ref(false)
@@ -407,20 +407,20 @@ const items = computed(() => {
     return list.slice()
 })
 
-const anyItemLoading = computed(() => items.value.some((i: any) => i._isLoading))
+const anyItemLoading = computed(() => items.value.some(i => i._isLoading))
 
 // When children are collapsed, remove them from selection
 setOnCollapse((removedIds) => {
     const removedSet = new Set(removedIds)
-    selectedItems.value = selectedItems.value.filter((item: any) => !removedSet.has(item.id))
+    selectedItems.value = selectedItems.value.filter(item => !removedSet.has(item.id))
 })
 
 const modelNameRef = toRef(props, 'model')
 const singleMergeDialog = ref(false)
-const singleMergeSource = ref([] as any[])
+const singleMergeSource = ref<ModelItem[]>([])
 const confirmDialogRef = ref<InstanceType<typeof ActionConfirmDialog> | null>(null)
 
-function handleAction(key: string, item: any) {
+function handleAction(key: string, item: ModelItem) {
     switch (key) {
         case 'merge':
             singleMergeSource.value = [item]
@@ -431,8 +431,8 @@ function handleAction(key: string, item: any) {
 
 const {actionDefs, groupedActionDefs, executeAction, getToggleState} = useModelListActions(
     currentModel, genericModel, modelNameRef, handleAction,
-    (item: any, field: string) => {
-        const idx = rawItems.value.findIndex((i: any) => i.id === item.id)
+    (item: ModelItem, field: string) => {
+        const idx = rawItems.value.findIndex(i => i.id === item.id)
         if (idx >= 0) {
             rawItems.value[idx] = {...rawItems.value[idx], [field]: item[field]}
             triggerRef(rawItems)
@@ -445,7 +445,7 @@ const {actionDefs, groupedActionDefs, executeAction, getToggleState} = useModelL
  * For toggle actions: confirms when toggling OFF (active → inactive).
  * For non-toggle actions: confirms unconditionally.
  */
-async function handleActionWithConfirmation(key: string, item: any) {
+async function handleActionWithConfirmation(key: string, item: ModelItem) {
     const action = actionDefs.value.find(a => a.key === key)
     if (!action) return
 
@@ -471,7 +471,7 @@ async function handleActionWithConfirmation(key: string, item: any) {
     executeAction(key, item)
 }
 
-async function showShoppingRemoveConfirm(action: ModelActionDef, item: any): Promise<boolean> {
+async function showShoppingRemoveConfirm(action: ModelActionDef, item: ModelItem): Promise<boolean> {
     // Open dialog immediately with loading state, fetch entries in background
     const confirmPromise = confirmDialogRef.value?.open({
         title: t('Confirm'),
@@ -539,7 +539,7 @@ const desktopSubtitleColumns = computed(() =>
 )
 
 /** Render name cell content with optional subtitle */
-function renderNameContent(item: any, col: ModelTableHeaders) {
+function renderNameContent(item: ModelItem, col: ModelTableHeaders) {
     const renderer = h(ModelListCellRenderer, {
         item,
         header: col,
@@ -560,7 +560,7 @@ const columnSlots = computed(() => {
     const slots: Record<string, Function> = {}
     for (const col of enhancedColumns.value) {
         if (treeActive.value && col.key === 'name') {
-            slots[`item.${col.key}`] = ({item}: {item: any}) => {
+            slots[`item.${col.key}`] = ({item}: {item: ModelItem}) => {
                 if (item._isLoadMore) {
                     const depth = item._depth ?? 0
                     const indent = depth * (mobile.value ? 20 : 28)
@@ -589,7 +589,7 @@ const columnSlots = computed(() => {
                 const isExpanded = expandedIds.value.has(item.id)
                 const isLoading = item._isLoading
 
-                const children: any[] = []
+                const children: ReturnType<typeof h>[] = []
 
                 if (hasChildren) {
                     if (isLoading) {
@@ -618,9 +618,9 @@ const columnSlots = computed(() => {
                 }, children)
             }
         } else if (col.key === 'name') {
-            slots[`item.${col.key}`] = ({item}: {item: any}) => renderNameContent(item, col)
+            slots[`item.${col.key}`] = ({item}: {item: ModelItem}) => renderNameContent(item, col)
         } else {
-            slots[`item.${col.key}`] = ({item}: {item: any}) => {
+            slots[`item.${col.key}`] = ({item}: {item: ModelItem}) => {
                 if (item._isLoadMore) return null
                 return h(ModelListCellRenderer, {
                     item,
@@ -675,9 +675,12 @@ function reloadAfterMutation() {
 function loadItems(options: VDataTableUpdateOptions) {
     loading.value = true
     selectedItems.value = []
-    window.scrollTo({top: 0, behavior: 'smooth'})
 
+    const pageChanged = options.page !== page.value
     page.value = options.page
+    if (pageChanged) {
+        window.scrollTo({top: 0, behavior: 'smooth'})
+    }
     if (options.itemsPerPage != null) {
         pageSize.value = options.itemsPerPage
         useUserPreferenceStore().deviceSettings.general_tableItemsPerPage = options.itemsPerPage

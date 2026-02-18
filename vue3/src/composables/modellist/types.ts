@@ -5,6 +5,16 @@
  */
 
 /**
+ * Base interface for items displayed in a model list.
+ * All API model objects have at least id and name.
+ */
+export interface ModelItem {
+    id: number
+    name: string
+    [key: string]: any
+}
+
+/**
  * Column display types for enhanced table rendering.
  * Used by ModelListColumnCell to determine how to render a cell.
  */
@@ -62,17 +72,17 @@ export type ModelActionDef = {
     /** Route name to navigate to (instead of API action) */
     routeName?: string,
     /** Route params builder for navigation actions */
-    routeParams?: (item: any, modelName: string) => Record<string, any>,
+    routeParams?: (item: ModelItem, modelName: string) => Record<string, any>,
     /** Query params builder for route navigation */
-    routeQuery?: (item: any) => Record<string, any>,
+    routeQuery?: (item: ModelItem) => Record<string, any>,
     /** Custom async handler for non-standard actions (e.g., shopping toggle endpoint) */
-    handler?: (item: any, genericModel: any) => Promise<void>,
+    handler?: (item: ModelItem, genericModel: any) => Promise<void>,
     /** Custom predicate for toggle state (overrides default !!item[toggleField] check) */
-    isActive?: (item: any) => boolean,
+    isActive?: (item: ModelItem) => boolean,
     /** Custom color resolver for actions with more than 2 states (overrides activeColor/inactiveColor) */
-    colorResolver?: (item: any) => string | undefined,
+    colorResolver?: (item: ModelItem) => string | undefined,
     /** Per-item visibility predicate — when provided, action only shows for items where this returns true */
-    visible?: (item: any) => boolean,
+    visible?: (item: ModelItem) => boolean,
 }
 
 /**

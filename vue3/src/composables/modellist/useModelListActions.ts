@@ -1,6 +1,6 @@
 import {computed, type ComputedRef, type Ref} from 'vue'
 import {useRouter} from 'vue-router'
-import type {ModelActionDef} from './types'
+import type {ModelActionDef, ModelItem} from './types'
 import type {Model, GenericModel} from '@/types/Models'
 import {ErrorMessageType, PreparedMessage, useMessageStore} from '@/stores/MessageStore'
 
@@ -8,8 +8,8 @@ export function useModelListActions(
     model: ComputedRef<Model | undefined>,
     genericModel: Ref<GenericModel>,
     modelName: Ref<string> | ComputedRef<string>,
-    onAction?: (key: string, item: any) => void,
-    onToggleComplete?: (item: any, field: string) => void,
+    onAction?: (key: string, item: ModelItem) => void,
+    onToggleComplete?: (item: ModelItem, field: string) => void,
 ) {
     const router = useRouter()
 
@@ -25,13 +25,13 @@ export function useModelListActions(
         return map
     })
 
-    function getToggleState(action: ModelActionDef, item: any): boolean {
+    function getToggleState(action: ModelActionDef, item: ModelItem): boolean {
         if (action.isActive) return action.isActive(item)
         if (!action.toggleField) return false
         return !!item[action.toggleField]
     }
 
-    async function executeAction(key: string, item: any) {
+    async function executeAction(key: string, item: ModelItem) {
         const action = actionDefs.value.find(a => a.key === key)
         if (!action) return
 
