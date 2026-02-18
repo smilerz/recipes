@@ -36,7 +36,7 @@
 </template>
 
 <script setup lang="ts">
-import {ref} from 'vue'
+import {ref, watch} from 'vue'
 import VClosableCardTitle from '@/components/dialogs/VClosableCardTitle.vue'
 
 export type ActionConfirmDetail = {
@@ -107,6 +107,14 @@ function cancel() {
     resolvePromise?.(false)
     resolvePromise = null
 }
+
+// Resolve as false if dialog closes without confirm/cancel (e.g. via title X button)
+watch(dialog, (val) => {
+    if (!val && resolvePromise) {
+        resolvePromise(false)
+        resolvePromise = null
+    }
+})
 
 defineExpose({open, setEntries})
 </script>

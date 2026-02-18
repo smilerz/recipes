@@ -818,12 +818,14 @@ export interface ApiFoodListRequest {
     inShoppingList?: boolean;
     limit?: string;
     onhand?: boolean;
+    ordering?: string;
     page?: number;
     pageSize?: number;
     query?: string;
     random?: string;
     root?: number;
     rootTree?: number;
+    stats?: boolean;
     supermarketCategory?: number;
     tree?: number;
     updatedAt?: string;
@@ -1644,6 +1646,7 @@ export interface ApiShoppingListEntryDestroyRequest {
 }
 
 export interface ApiShoppingListEntryListRequest {
+    food?: number;
     mealplan?: number;
     page?: number;
     pageSize?: number;
@@ -5215,6 +5218,10 @@ export class ApiApi extends runtime.BaseAPI {
             queryParameters['onhand'] = requestParameters['onhand'];
         }
 
+        if (requestParameters['ordering'] != null) {
+            queryParameters['ordering'] = requestParameters['ordering'];
+        }
+
         if (requestParameters['page'] != null) {
             queryParameters['page'] = requestParameters['page'];
         }
@@ -5237,6 +5244,10 @@ export class ApiApi extends runtime.BaseAPI {
 
         if (requestParameters['rootTree'] != null) {
             queryParameters['root_tree'] = requestParameters['rootTree'];
+        }
+
+        if (requestParameters['stats'] != null) {
+            queryParameters['stats'] = requestParameters['stats'];
         }
 
         if (requestParameters['supermarketCategory'] != null) {
@@ -12061,6 +12072,10 @@ export class ApiApi extends runtime.BaseAPI {
      */
     async apiShoppingListEntryListRaw(requestParameters: ApiShoppingListEntryListRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PaginatedShoppingListEntryList>> {
         const queryParameters: any = {};
+
+        if (requestParameters['food'] != null) {
+            queryParameters['food'] = requestParameters['food'];
+        }
 
         if (requestParameters['mealplan'] != null) {
             queryParameters['mealplan'] = requestParameters['mealplan'];

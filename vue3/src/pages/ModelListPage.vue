@@ -9,7 +9,7 @@
                     @select-none="selectedItems = []"
                 >
                     <template #actions>
-                        <v-btn variant="text" prepend-icon="fa-solid fa-list-check" class="text-none" @click="batchEditDialog = true" v-if="genericModel.model.name == 'Food'">
+                        <v-btn variant="text" prepend-icon="fa-solid fa-list-check" class="text-none" @click="batchEditDialog = true" v-if="genericModel.model.name === 'Food'">
                             {{ $t('BatchEdit') }}
                         </v-btn>
                         <v-btn variant="text" prepend-icon="fa-solid fa-arrows-to-dot" class="text-none" @click="batchMergeDialog = true" v-if="genericModel.model.isMerge">
@@ -20,7 +20,7 @@
                         </v-btn>
                     </template>
                     <template #actions-menu>
-                        <v-list-item prepend-icon="fa-solid fa-list-check" @click="batchEditDialog = true" v-if="genericModel.model.name == 'Food'">
+                        <v-list-item prepend-icon="fa-solid fa-list-check" @click="batchEditDialog = true" v-if="genericModel.model.name === 'Food'">
                             {{ $t('BatchEdit') }}
                         </v-list-item>
                         <v-list-item prepend-icon="fa-solid fa-arrows-to-dot" @click="batchMergeDialog = true" v-if="genericModel.model.isMerge">
@@ -49,12 +49,12 @@
                             size="small"
                             @click="showDescription = true"
                         />
-                        <v-btn prepend-icon="fa-solid fa-rotate" color="success" size="small" @click="importAllRecipes()" v-if="genericModel.model.name == 'RecipeImport'">{{ $t('ImportAll') }}</v-btn>
-                        <v-btn :prepend-icon="TInviteLink.icon" size="small" :to="{name: 'ModelListPage', params: {model: 'InviteLink'}}" v-if="genericModel.model.name == 'UserSpace'">{{ $t('Invites') }}</v-btn>
+                        <v-btn prepend-icon="fa-solid fa-rotate" color="success" size="small" @click="importAllRecipes()" v-if="genericModel.model.name === 'RecipeImport'">{{ $t('ImportAll') }}</v-btn>
+                        <v-btn :prepend-icon="TInviteLink.icon" size="small" :to="{name: 'ModelListPage', params: {model: 'InviteLink'}}" v-if="genericModel.model.name === 'UserSpace'">{{ $t('Invites') }}</v-btn>
                         <model-list-create-button :model="model" :disable-create="genericModel.model.disableCreate" compact @change="loadItems({page: page})" />
                     </v-card-text>
                     <v-progress-linear
-                        v-if="genericModel.model.name == 'AiLog'"
+                        v-if="genericModel.model.name === 'AiLog'"
                         :model-value="useUserPreferenceStore().activeSpace.aiMonthlyCreditsUsed"
                         :max="useUserPreferenceStore().activeSpace.aiCreditsMonthly"
                         color="primary"
@@ -94,11 +94,11 @@
                             <model-list-create-button :model="model" :disable-create="genericModel.model.disableCreate" @change="loadItems({page: page})" />
                         </template>
 
-                        <v-card-actions v-if="genericModel.model.name == 'RecipeImport'">
+                        <v-card-actions v-if="genericModel.model.name === 'RecipeImport'">
                             <v-btn prepend-icon="fa-solid fa-rotate" color="success" @click="importAllRecipes()">{{ $t('ImportAll') }}</v-btn>
                         </v-card-actions>
 
-                        <v-card-text v-if="genericModel.model.name == 'AiLog'">
+                        <v-card-text v-if="genericModel.model.name === 'AiLog'">
                             {{ $t('MonthlyCreditsUsed') }} ({{ useUserPreferenceStore().activeSpace.aiMonthlyCreditsUsed }} / {{
                                 useUserPreferenceStore().activeSpace.aiCreditsMonthly
                             }})
@@ -106,7 +106,7 @@
                             <v-progress-linear :model-value="useUserPreferenceStore().activeSpace.aiMonthlyCreditsUsed"
                                                :max="useUserPreferenceStore().activeSpace.aiCreditsMonthly"></v-progress-linear>
                         </v-card-text>
-                        <v-card-actions v-if="genericModel.model.name == 'UserSpace'">
+                        <v-card-actions v-if="genericModel.model.name === 'UserSpace'">
                             <v-btn :prepend-icon="TInviteLink.icon" :to="{name: 'ModelListPage', params: {model: 'InviteLink'}}">{{ $t('Invites') }}</v-btn>
                         </v-card-actions>
                     </v-card>
@@ -188,15 +188,15 @@
                     :items-per-page="pageSize"
                     disable-sort
                 >
-                    <template v-slot:item.space="{ item }" v-if="genericModel.model.name == 'AiProvider'">
+                    <template v-slot:item.space="{ item }" v-if="genericModel.model.name === 'AiProvider'">
                         <v-chip label v-if="item.space == null" color="success">{{ $t('Global') }}</v-chip>
                         <v-chip label v-else color="info">{{ $t('Space') }}</v-chip>
                     </template>
-                    <template v-slot:item.groups="{ item }" v-if="genericModel.model.name == 'UserSpace'">
+                    <template v-slot:item.groups="{ item }" v-if="genericModel.model.name === 'UserSpace'">
                         {{ item.groups.flatMap((x: Group) => x.name).join(', ') }}
                     </template>
-                    <template v-slot:item.active="{ item }" v-if="genericModel.model.name == 'Space'">
-                        <v-chip label v-if="item.id == useUserPreferenceStore().activeSpace.id!" color="success">{{ $t('Active') }}</v-chip>
+                    <template v-slot:item.active="{ item }" v-if="genericModel.model.name === 'Space'">
+                        <v-chip label v-if="item.id === useUserPreferenceStore().activeSpace.id!" color="success">{{ $t('Active') }}</v-chip>
                         <v-chip label v-else color="info" @click="useUserPreferenceStore().switchSpace(item)">{{ $t('Select') }}</v-chip>
                     </template>
                     <template v-slot:item.color="{ item }">
@@ -231,18 +231,18 @@
                                                                 @change="loadItems({page: page, itemsPerPage: pageSize, search: query})"></model-merge-dialog>
                                         </v-list-item>
                                         <v-list-item prepend-icon="fa-solid fa-table-list" :to="{name: 'IngredientEditorPage', query: {unit_id: item.id}}"
-                                                     v-if="genericModel.model.name == 'Unit'">
+                                                     v-if="genericModel.model.name === 'Unit'">
                                             {{ $t('Ingredient Editor') }}
                                         </v-list-item>
-                                        <v-list-item prepend-icon="fa-solid fa-rotate" v-if="genericModel.model.name == 'Sync'" link>
+                                        <v-list-item prepend-icon="fa-solid fa-rotate" v-if="genericModel.model.name === 'Sync'" link>
                                             {{ $t('Import') }}
                                             <sync-dialog :sync="item"></sync-dialog>
                                         </v-list-item>
-                                        <v-list-item prepend-icon="fa-solid fa-rotate" v-if="genericModel.model.name == 'RecipeImport'" @click="importRecipe(item)">
+                                        <v-list-item prepend-icon="fa-solid fa-rotate" v-if="genericModel.model.name === 'RecipeImport'" @click="importRecipe(item)">
                                             {{ $t('Import') }}
                                         </v-list-item>
                                         <v-list-item prepend-icon="fa-solid fa-arrow-right-from-bracket"
-                                                     v-if="genericModel.model.name == 'Space'  && item.createdBy.id != useUserPreferenceStore().userSettings.user.id!"
+                                                     v-if="genericModel.model.name === 'Space'  && item.createdBy.id !== useUserPreferenceStore().userSettings.user.id!"
                                                      @click="leaveSpace(item)">
                                             {{ $t('LeaveSpace') }}
                                         </v-list-item>
@@ -291,7 +291,7 @@
         <model-merge-dialog :model="model" :source="singleMergeSource" v-model="singleMergeDialog" activator="model"
                             @change="reloadAfterMutation()"></model-merge-dialog>
 
-        <batch-edit-food-dialog :items="selectedItems" v-model="batchEditDialog" v-if="model == 'Food'" activator="model"
+        <batch-edit-food-dialog :items="selectedItems" v-model="batchEditDialog" v-if="model === 'Food'" activator="model"
                                 @change="reloadAfterMutation(); exitSelectMode()"></batch-edit-food-dialog>
 
         <action-confirm-dialog ref="confirmDialogRef" />
@@ -479,22 +479,11 @@ async function showShoppingRemoveConfirm(action: ModelActionDef, item: any): Pro
         confirmIcon: action.icon,
     })
 
-    // Fetch shopping list entries for this food (API lacks a food filter, so fetch and filter client-side)
+    // Fetch shopping list entries for this specific food
     try {
         const api = new ApiApi()
-        const allEntries = []
-        let page = 1
-        let hasMore = true
-        const MAX_PAGES = 20
-        while (hasMore && page <= MAX_PAGES) {
-            const result = await api.apiShoppingListEntryList({pageSize: 100, page})
-            allEntries.push(...(result.results ?? []))
-            hasMore = !!result.next
-            page++
-        }
-        const foodEntries = allEntries.filter(
-            (e: any) => e.food?.id === item.id && !e.checked
-        )
+        const result = await api.apiShoppingListEntryList({food: item.id, pageSize: 100})
+        const foodEntries = (result.results ?? []).filter((e: any) => !e.checked)
         const entries: ActionConfirmEntry[] = foodEntries.map((e: any) => {
             const parts: string[] = []
             if (e.amount) parts.push(String(e.amount))
@@ -620,13 +609,16 @@ const columnSlots = computed(() => {
 
 // when navigating to ModelListPage from ModelListPage with a different model lifecycle hooks are not called so watch for change here
 watch(() => props.model, (newValue, oldValue) => {
-    if (newValue != oldValue) {
+    if (newValue !== oldValue) {
         genericModel.value = getGenericModelFromString(props.model, t) || genericModel.value
         loadItems({page: 1})
     }
 })
 
-watch([ordering, filterParams, treeActive], () => loadItems({page: 1}))
+watch([ordering, filterParams, treeActive], () => {
+    if (treeActive.value) clearTreeState()
+    loadItems({page: 1})
+})
 // Mobile v-list doesn't emit update:options on search change like v-data-table does,
 // so watch query explicitly to trigger reload on mobile
 watch(query, () => {
@@ -664,7 +656,7 @@ function loadItems(options: VDataTableUpdateOptions) {
         useUserPreferenceStore().deviceSettings.general_tableItemsPerPage = options.itemsPerPage
     }
 
-    genericModel.value.list({query: query.value, page: options.page, pageSize: pageSize.value, ordering: ordering.value || undefined, ...filterParams.value, ...getTreeLoadParams()}).then((r: any) => {
+    genericModel.value.list({query: query.value, page: options.page, pageSize: pageSize.value, ordering: ordering.value || undefined, stats: showStats.value && statsAvailable.value ? true : undefined, ...filterParams.value, ...getTreeLoadParams()}).then((r: any) => {
         rawItems.value = r.results
         itemCount.value = r.count
         stats.value = r.stats ?? {}
@@ -710,7 +702,7 @@ function importAllRecipes() {
 function leaveSpace(space: Space) {
     let api = new ApiApi()
     useUserPreferenceStore().userSpaces.forEach((us: UserSpace) => {
-        if (us.space == space.id!) {
+        if (us.space === space.id!) {
             loading.value = true
             api.apiUserSpaceDestroy({id: us.id!}).then(r => {
 
