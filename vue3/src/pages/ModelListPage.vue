@@ -1,5 +1,5 @@
 <template>
-    <v-container>
+    <v-container v-if="genericModel.model">
         <v-row v-if="selectMode">
             <v-col>
                 <ModelListSelectionBar
@@ -394,7 +394,7 @@ const {showStats, showColumnHeaders, quickActionKeys, desktopSubtitleKeys,
 const useMobileList = computed(() => mobile.value && hasEnhancedList.value && !!currentModel.value?.listSettings?.mobileList)
 const statsAvailable = computed(() => !!currentModel.value?.listSettings?.statsFooter)
 const fetchChildren = (parentId: number, page: number) =>
-    genericModel.value.list({root: parentId, pageSize: CHILD_PAGE_SIZE, page, ...filterParams.value})
+    genericModel.value.list({...filterParams.value, root: parentId, pageSize: CHILD_PAGE_SIZE, page})
         .then((r: any) => ({results: r.results ?? [], hasMore: !!r.next}))
 const {treeActive, expandedIds, loadingIds, toggleExpand, loadMoreChildren,
     buildFlatList, getTreeLoadParams, clearTreeState, setOnCollapse} =
@@ -686,7 +686,7 @@ function loadItems(options: VDataTableUpdateOptions) {
         useUserPreferenceStore().deviceSettings.general_tableItemsPerPage = options.itemsPerPage
     }
 
-    genericModel.value.list({query: query.value, page: options.page, pageSize: pageSize.value, ordering: ordering.value || undefined, stats: showStats.value && statsAvailable.value ? true : undefined, ...filterParams.value, ...getTreeLoadParams()}).then((r: any) => {
+    genericModel.value.list({...filterParams.value, ...getTreeLoadParams(), query: query.value, page: options.page, pageSize: pageSize.value, ordering: ordering.value || undefined, stats: showStats.value && statsAvailable.value ? true : undefined}).then((r: any) => {
         rawItems.value = r.results
         itemCount.value = r.count
         stats.value = r.stats ?? {}
