@@ -5,7 +5,7 @@
                 <ModelListSelectionBar
                     :selected-count="selectedItems.length"
                     @close="exitSelectMode"
-                    @select-all="selectedItems = [...items]"
+                    @select-all="selectedItems = items.filter(i => !i._isLoadMore)"
                     @select-none="selectedItems = []"
                 >
                     <template #actions>
@@ -157,6 +157,7 @@
                     :quick-action-keys="quickActionKeys.slice(0, 2)"
                     :tree-active="treeActive"
                     :expanded-ids="expandedIds"
+                    :loading-ids="loadingIds"
                     :toggle-expand="toggleExpand"
                     :mobile-subtitle-keys="mobileSubtitleKeys"
                     :swipe-enabled="swipeEnabled"
@@ -168,6 +169,7 @@
                     @update:selected-items="selectedItems = $event"
                     @update:options="loadItems"
                     @action="handleActionWithConfirmation"
+                    @load-more="loadMoreChildren"
                 />
                 <model-list-data-table
                     v-else
@@ -207,8 +209,9 @@
                         <v-chip label v-else color="info">{{ $t('No') }}</v-chip>
                     </template>
                     <template v-slot:item.action="{ item }">
+                        <template v-if="item._isLoadMore" />
                         <ModelListActionMenu
-                            v-if="currentModel?.actionDefs"
+                            v-else-if="currentModel?.actionDefs"
                             :item="item"
                             :action-defs="actionDefs"
                             :grouped-action-defs="groupedActionDefs"
@@ -332,7 +335,7 @@ import ModelListMobileView from "@/components/model_list/ModelListMobileView.vue
 import ModelListStatsFooter from "@/components/model_list/ModelListStatsFooter.vue";
 import {useModelListActions} from "@/composables/modellist/useModelListActions";
 import {useModelListSettings} from "@/composables/modellist/useModelListSettings";
-import {useModelListTree, MAX_CHILDREN} from "@/composables/modellist/useModelListTree";
+import {useModelListTree, CHILD_PAGE_SIZE} from "@/composables/modellist/useModelListTree";
 import type {ModelActionDef} from "@/composables/modellist/types";
 import ActionConfirmDialog from "@/components/dialogs/ActionConfirmDialog.vue";
 import type {ActionConfirmEntry} from "@/components/dialogs/ActionConfirmDialog.vue";
@@ -390,10 +393,10 @@ const {showStats, showColumnHeaders, quickActionKeys, desktopSubtitleKeys,
     showMobileHeaders, treeEnabled} = useModelListSettings(modelSettingsKey)
 const useMobileList = computed(() => mobile.value && hasEnhancedList.value && !!currentModel.value?.listSettings?.mobileList)
 const statsAvailable = computed(() => !!currentModel.value?.listSettings?.statsFooter)
-const fetchChildren = (parentId: number) =>
-    genericModel.value.list({root: parentId, pageSize: MAX_CHILDREN, ...filterParams.value})
-        .then((r: any) => r.results ?? [])
-const {treeActive, expandedIds, loadingIds, toggleExpand,
+const fetchChildren = (parentId: number, page: number) =>
+    genericModel.value.list({root: parentId, pageSize: CHILD_PAGE_SIZE, page, ...filterParams.value})
+        .then((r: any) => ({results: r.results ?? [], hasMore: !!r.next}))
+const {treeActive, expandedIds, loadingIds, toggleExpand, loadMoreChildren,
     buildFlatList, getTreeLoadParams, clearTreeState, setOnCollapse} =
     useModelListTree(currentModel, fetchChildren, treeEnabled)
 
@@ -558,6 +561,28 @@ const columnSlots = computed(() => {
     for (const col of enhancedColumns.value) {
         if (treeActive.value && col.key === 'name') {
             slots[`item.${col.key}`] = ({item}: {item: any}) => {
+                if (item._isLoadMore) {
+                    const depth = item._depth ?? 0
+                    const indent = depth * (mobile.value ? 20 : 28)
+                    const isLoading = loadingIds.value.has(item._parentId)
+                    return h('div', {
+                        class: 'd-flex align-center',
+                        style: {paddingLeft: `${indent}px`},
+                    }, [
+                        h('button', {
+                            type: 'button',
+                            class: 'text-primary text-caption font-weight-medium',
+                            style: {cursor: 'pointer', appearance: 'none', border: 'none', background: 'none', padding: '4px 8px'},
+                            disabled: isLoading,
+                            'aria-label': t('Load_More'),
+                            onClick: (e: Event) => { e.stopPropagation(); loadMoreChildren(item._parentId) },
+                        }, isLoading
+                            ? [h('i', {class: 'fa-solid fa-spinner fa-spin', style: {fontSize: '12px', marginRight: '6px'}}), t('Load_More')]
+                            : [h('i', {class: 'fa-solid fa-ellipsis', style: {fontSize: '12px', marginRight: '6px'}}), t('Load_More')]
+                        ),
+                    ])
+                }
+
                 const depth = item._depth ?? 0
                 const indent = depth * (mobile.value ? 20 : 28)
                 const hasChildren = (item.numchild ?? 0) > 0
@@ -595,13 +620,15 @@ const columnSlots = computed(() => {
         } else if (col.key === 'name') {
             slots[`item.${col.key}`] = ({item}: {item: any}) => renderNameContent(item, col)
         } else {
-            slots[`item.${col.key}`] = ({item}: {item: any}) =>
-                h(ModelListCellRenderer, {
+            slots[`item.${col.key}`] = ({item}: {item: any}) => {
+                if (item._isLoadMore) return null
+                return h(ModelListCellRenderer, {
                     item,
                     header: col,
                     displayMode: getDisplayMode(col.key),
                     showHeaders: true,
                 })
+            }
         }
     }
     return slots
