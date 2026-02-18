@@ -87,6 +87,8 @@ function open(opts: {
     dialog.value = true
 
     return new Promise((resolve) => {
+        // Resolve any pending promise from a prior open() call to prevent leak
+        resolvePromise?.(false)
         resolvePromise = resolve
     })
 }
