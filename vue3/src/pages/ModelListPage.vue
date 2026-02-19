@@ -556,7 +556,7 @@ function renderNameContent(item: ModelItem, col: ModelTableHeaders) {
 // Build dynamic cell slots for enhanced columns (programmatic — Vue 3 can't v-for on template slots)
 const columnSlots = computed(() => {
     if (!hasEnhancedList.value) return {}
-    const slots: Record<string, Function> = {}
+    const slots: Record<string, (...args: any[]) => any> = {}
     for (const col of enhancedColumns.value) {
         if (treeActive.value && col.key === 'name') {
             slots[`item.${col.key}`] = ({item}: {item: ModelItem}) => {

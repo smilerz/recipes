@@ -51,7 +51,10 @@ export function useModelListActions(
                 item[field] = !oldValue
                 onToggleComplete?.(item, field)
                 try {
-                    await genericModel.value.update(item.id, item)
+                    const cleanItem = Object.fromEntries(
+                        Object.entries(item).filter(([k]) => !k.startsWith('_'))
+                    )
+                    await genericModel.value.update(item.id, cleanItem)
                     useMessageStore().addPreparedMessage(PreparedMessage.UPDATE_SUCCESS)
                 } catch (e) {
                     item[field] = oldValue

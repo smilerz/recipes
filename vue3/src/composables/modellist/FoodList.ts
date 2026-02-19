@@ -3,11 +3,11 @@
  * This is the single source of truth for all Food list behavior.
  */
 
-import type {ModelFilterDef, ModelActionDef, ModelStatDef, ModelListSettings, ModelSortDef} from './types'
+import type {ModelFilterDef, ModelActionDef, ModelStatDef, ModelListSettings, ModelSortDef, ModelItem} from './types'
 import {ApiApi} from '@/openapi'
 
 /** The backend annotates shopping_status via Exists() → CharField, yielding "True"/"False" strings. */
-function isOnShoppingList(item: any): boolean {
+function isOnShoppingList(item: ModelItem): boolean {
     const v = item.shopping
     return v === true || v === 'True' || v === 'true'
 }
@@ -33,7 +33,7 @@ export const FOOD_FILTER_DEFS: ModelFilterDef[] = [
 export const FOOD_ACTION_DEFS: ModelActionDef[] = [
     // Status toggles
     {key: 'onhand', labelKey: 'OnHand', icon: 'fa-solid fa-clipboard-check', isToggle: true, toggleField: 'foodOnhand', activeColor: 'success', inactiveColor: '', group: 'Status',
-        colorResolver: (item: any) => {
+        colorResolver: (item: ModelItem) => {
             if (item.foodOnhand) return 'success'
             if (item.substituteOnhand) return 'warning'
             return undefined
@@ -41,7 +41,7 @@ export const FOOD_ACTION_DEFS: ModelActionDef[] = [
     },
     {key: 'shopping', labelKey: 'Shopping', icon: 'fa-solid fa-cart-shopping', isToggle: true, toggleField: 'shopping', activeColor: 'success', inactiveColor: '', group: 'Status', requiresConfirmation: true,
         isActive: isOnShoppingList,
-        colorResolver: (item: any) => isOnShoppingList(item) ? 'success' : undefined,
+        colorResolver: (item: ModelItem) => isOnShoppingList(item) ? 'success' : undefined,
         handler: async (item) => {
             const api = new ApiApi()
             if (isOnShoppingList(item)) {
@@ -54,13 +54,13 @@ export const FOOD_ACTION_DEFS: ModelActionDef[] = [
         },
     },
     {key: 'ignore', labelKey: 'IgnoreShopping', icon: 'fa-solid fa-ban', isToggle: true, toggleField: 'ignoreShopping', activeColor: 'error', inactiveColor: '', group: 'Status',
-        colorResolver: (item: any) => item.ignoreShopping ? 'error' : undefined,
+        colorResolver: (item: ModelItem) => item.ignoreShopping ? 'error' : undefined,
     },
 
     // One-shot actions
     {key: 'recipe', labelKey: 'Recipe', icon: 'fa-solid fa-book', group: 'Actions',
         routeName: 'RecipeViewPage', routeParams: (item) => ({id: item.recipe.id}),
-        visible: (item: any) => !!item.recipe},
+        visible: (item: ModelItem) => !!item.recipe},
     {key: 'edit', labelKey: 'Edit', icon: 'fa-solid fa-pen', group: 'Actions', routeName: 'ModelEditPage', routeParams: (item, modelName) => ({model: modelName, id: item.id})},
     {key: 'merge', labelKey: 'Merge', icon: 'fa-solid fa-arrows-to-dot', group: 'Actions'},
     {key: 'move', labelKey: 'Move', icon: 'fa-solid fa-arrow-right', group: 'Actions',
