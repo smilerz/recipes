@@ -305,7 +305,7 @@
 <script setup lang="ts">
 
 
-import {computed, h, onBeforeMount, PropType, ref, shallowRef, toRef, triggerRef, watch} from "vue";
+import {computed, h, onBeforeMount, ref, shallowRef, toRef, triggerRef, watch} from "vue";
 import {ErrorMessageType, useMessageStore} from "@/stores/MessageStore";
 import {useI18n} from "vue-i18n";
 import {EditorSupportedModels, GenericModel, getGenericModelFromString, Model, ModelTableHeaders, TInviteLink,} from "@/types/Models";
@@ -346,11 +346,10 @@ const router = useRouter()
 const route = useRoute()
 const title = useTitle()
 
-const props = defineProps({
-    model: {
-        type: String as PropType<EditorSupportedModels>,
-        default: 'food'
-    },
+const props = withDefaults(defineProps<{
+    model?: EditorSupportedModels
+}>(), {
+    model: 'food',
 })
 
 // table config
