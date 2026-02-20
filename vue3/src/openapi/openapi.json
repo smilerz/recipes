@@ -1875,6 +1875,11 @@ paths:
         schema:
           type: integer
         description: Return all self and children of food with ID [int].
+      - in: query
+        name: used_in_recipes
+        schema:
+          type: boolean
+        description: Filter by whether food is used as an ingredient in any recipe
       tags:
       - api
       security:

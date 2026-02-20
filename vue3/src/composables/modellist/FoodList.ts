@@ -23,6 +23,7 @@ export const FOOD_FILTER_DEFS: ModelFilterDef[] = [
     {key: 'has_substitute', labelKey: 'Substitute', type: 'tristate', icon: 'fa-solid fa-right-left', group: 'Attributes'},
     {key: 'has_children', labelKey: 'Children', type: 'tristate', icon: 'fa-solid fa-sitemap', group: 'Attributes'},
     {key: 'has_recipe', labelKey: 'Recipe', type: 'tristate', icon: 'fa-solid fa-book', group: 'Attributes'},
+    {key: 'used_in_recipes', labelKey: 'UsedInRecipes', type: 'tristate', icon: 'fa-solid fa-utensils', group: 'Attributes'},
     {key: 'supermarket_category', labelKey: 'Category', type: 'model-select', icon: 'fa-solid fa-boxes-stacked', modelName: 'SupermarketCategory', group: 'Attributes'},
 ]
 

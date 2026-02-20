@@ -824,6 +824,7 @@ export interface ApiFoodListRequest {
     rootTree?: number;
     supermarketCategory?: number;
     tree?: number;
+    usedInRecipes?: boolean;
 }
 
 export interface ApiFoodMergeUpdateRequest {
@@ -5239,6 +5240,10 @@ export class ApiApi extends runtime.BaseAPI {
 
         if (requestParameters['tree'] != null) {
             queryParameters['tree'] = requestParameters['tree'];
+        }
+
+        if (requestParameters['usedInRecipes'] != null) {
+            queryParameters['used_in_recipes'] = requestParameters['usedInRecipes'];
         }
 
         const headerParameters: runtime.HTTPHeaders = {};
