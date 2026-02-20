@@ -101,7 +101,7 @@ export const FOOD_LIST_SETTINGS: ModelListSettings = {
  */
 export const FOOD_SORT_OPTIONS: ModelSortDef[] = [
     {key: 'name', labelKey: 'Name'},
-    {key: 'numrecipe', labelKey: 'Recipes'},
-    {key: 'numchild', labelKey: 'Children'},
+    {key: 'numrecipe', labelKey: 'Recipes', defaultDescending: true},
+    {key: 'numchild', labelKey: 'Children', defaultDescending: true},
     {key: 'supermarket_category__name', labelKey: 'Shopping_Category'},
 ]

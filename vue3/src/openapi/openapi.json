@@ -1855,6 +1855,12 @@ paths:
         schema:
           type: integer
       - in: query
+        name: query
+        schema:
+          type: string
+        description: Search foods by name (fuzzy or contains depending on user search
+          preferences)
+      - in: query
         name: root
         schema:
           type: integer
@@ -1865,6 +1871,12 @@ paths:
         schema:
           type: integer
         description: Return all items belonging to the tree of the given food id
+      - in: query
+        name: stats
+        schema:
+          type: boolean
+        description: Include aggregate stats (onhand, shopping, ignored, total) in
+          the response
       - in: query
         name: supermarket_category
         schema:

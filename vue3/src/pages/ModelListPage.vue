@@ -124,9 +124,11 @@
                     :active-filter-count="activeFilterCount"
                     :has-multi-select="!genericModel.model.disableDelete || genericModel.model.isMerge"
                     :select-mode="selectMode"
+                    :show-reset="hasActiveSearchState"
                     @open-filters="openSettingsPanel('filters')"
                     @open-settings="openSettingsPanel('settings')"
                     @toggle-select="selectMode = !selectMode"
+                    @reset="resetAll"
                 />
 
                 <ModelListFilterChips
@@ -142,6 +144,7 @@
 
                 <model-list-mobile-view
                     v-if="useMobileList"
+                    class="mt-2"
                     :key="props.model + '-mobile'"
                     :items="items"
                     :items-length="itemCount"
@@ -154,8 +157,9 @@
                     :action-defs="actionDefs"
                     :grouped-action-defs="groupedActionDefs"
                     :get-toggle-state="getToggleState"
-                    :quick-action-keys="quickActionKeys.slice(0, 2)"
-                    :tree-active="treeActive"
+                    :quick-action-keys="quickActionKeys.slice(0, 3)"
+                    :tree-active="effectiveTreeActive"
+                    :tree-suspended="treeActive && !effectiveTreeActive"
                     :expanded-ids="expandedIds"
                     :loading-ids="loadingIds"
                     :toggle-expand="toggleExpand"
@@ -174,7 +178,7 @@
                 <model-list-data-table
                     v-else
                     :key="props.model"
-                    :class="{'hide-table-headers': !showColumnHeaders}"
+                    :class="['mt-2 bg-transparent', {'hide-table-headers': !showColumnHeaders}]"
                     :dynamic-slots="columnSlots"
                     v-model="selectedItems"
                     return-object
@@ -337,6 +341,7 @@ import {useModelListActions} from "@/composables/modellist/useModelListActions";
 import {useModelListSettings} from "@/composables/modellist/useModelListSettings";
 import {useModelListTree, CHILD_PAGE_SIZE} from "@/composables/modellist/useModelListTree";
 import type {ModelActionDef, ModelItem} from "@/composables/modellist/types";
+import {getAncestorPath} from "@/composables/modellist/types";
 import ActionConfirmDialog from "@/components/dialogs/ActionConfirmDialog.vue";
 import type {ActionConfirmEntry} from "@/components/dialogs/ActionConfirmDialog.vue";
 import {useDisplay} from "vuetify";
@@ -396,13 +401,32 @@ const fetchChildren = (parentId: number, page: number) =>
     genericModel.value.list({...filterParams.value, root: parentId, pageSize: CHILD_PAGE_SIZE, page})
         .then((r: any) => ({results: r.results ?? [], hasMore: !!r.next}))
 const {treeActive, expandedIds, loadingIds, toggleExpand, loadMoreChildren,
-    buildFlatList, getTreeLoadParams, clearTreeState, setOnCollapse} =
+    buildFlatList, clearTreeState, setOnCollapse} =
     useModelListTree(currentModel, fetchChildren, treeEnabled)
+
+/** Tree is suspended when search, filters, or non-default sorting are active.
+ *  Name ascending is the default backend ordering, so it's compatible with tree mode. */
+const effectiveTreeActive = computed(() =>
+    treeActive.value
+    && (!ordering.value || ordering.value === 'name')
+    && !query.value
+    && activeFilterCount.value === 0
+)
+
+const hasActiveSearchState = computed(() =>
+    !!query.value || activeFilterCount.value > 0 || (!!ordering.value && ordering.value !== 'name')
+)
+
+function resetAll() {
+    query.value = ''
+    ordering.value = ''
+    clearAllFilters()
+}
 
 // Always return a fresh array reference so that triggerRef(rawItems) propagates
 // through Vue's computed Object.is() caching to downstream v-for consumers.
 const items = computed(() => {
-    const list = treeActive.value ? buildFlatList(rawItems.value) : rawItems.value
+    const list = effectiveTreeActive.value ? buildFlatList(rawItems.value) : rawItems.value
     return list.slice()
 })
 
@@ -545,20 +569,33 @@ function renderNameContent(item: ModelItem, col: ModelTableHeaders) {
         displayMode: getDisplayMode(col.key),
         showHeaders: true,
     })
+    const lines: ReturnType<typeof h>[] = [renderer]
+
+    // Show ancestor path when tree mode is suspended by filters/search/sort
+    if (treeActive.value && !effectiveTreeActive.value) {
+        const path = getAncestorPath(item)
+        if (path) {
+            lines.push(h('span', {class: 'text-caption text-disabled text-truncate'}, path))
+        }
+    }
+
     const subtitle = buildSubtitleText(item, desktopSubtitleColumns.value, t)
-    if (!subtitle) return renderer
-    return h('div', {class: 'd-flex flex-column'}, [
-        renderer,
-        h('span', {class: 'text-caption text-medium-emphasis text-truncate'}, subtitle),
-    ])
+    if (subtitle) {
+        lines.push(h('span', {class: 'text-caption text-medium-emphasis text-truncate'}, subtitle))
+    }
+
+    if (lines.length === 1) return renderer
+    return h('div', {class: 'd-flex flex-column'}, lines)
 }
 
 // Build dynamic cell slots for enhanced columns (programmatic — Vue 3 can't v-for on template slots)
 const columnSlots = computed(() => {
     if (!hasEnhancedList.value) return {}
+    // Access to register as reactive dependency — recompute slots when subtitle settings change
+    const _subtitleCols = desktopSubtitleColumns.value
     const slots: Record<string, (...args: any[]) => any> = {}
     for (const col of enhancedColumns.value) {
-        if (treeActive.value && col.key === 'name') {
+        if (effectiveTreeActive.value && col.key === 'name') {
             slots[`item.${col.key}`] = ({item}: {item: ModelItem}) => {
                 if (item._isLoadMore) {
                     const depth = item._depth ?? 0
@@ -642,7 +679,7 @@ watch(() => props.model, (newValue, oldValue) => {
 })
 
 watch([ordering, filterParams, treeActive], () => {
-    if (treeActive.value) clearTreeState()
+    clearTreeState()
     loadItems({page: 1})
 })
 // Mobile v-list doesn't emit update:options on search change like v-data-table does,
@@ -685,7 +722,16 @@ function loadItems(options: VDataTableUpdateOptions) {
         useUserPreferenceStore().deviceSettings.general_tableItemsPerPage = options.itemsPerPage
     }
 
-    genericModel.value.list({...filterParams.value, ...getTreeLoadParams(), query: query.value, page: options.page, pageSize: pageSize.value, ordering: ordering.value || undefined, stats: showStats.value && statsAvailable.value ? true : undefined}).then((r: any) => {
+    const listParams = {
+        ...filterParams.value,
+        ...(effectiveTreeActive.value ? {root: 0} : {}),
+        query: query.value,
+        page: options.page,
+        pageSize: pageSize.value,
+        ordering: ordering.value || undefined,
+        stats: showStats.value && statsAvailable.value ? true : undefined,
+    }
+    genericModel.value.list(listParams).then((r: any) => {
         rawItems.value = r.results
         itemCount.value = r.count
         stats.value = r.stats ?? {}
@@ -749,6 +795,24 @@ function leaveSpace(space: Space) {
 <style scoped>
 :deep(.hide-table-headers thead) {
     display: none;
+}
+:deep(.bg-transparent .v-table__wrapper > table) {
+    background: transparent;
+}
+:deep(.bg-transparent .v-table__wrapper td) {
+    border-bottom: none !important;
+}
+:deep(.bg-transparent .v-table__wrapper tbody tr) {
+    background-image: linear-gradient(rgba(var(--v-theme-on-surface), 0.12), rgba(var(--v-theme-on-surface), 0.12));
+    background-size: 100% 1px;
+    background-repeat: no-repeat;
+    background-position: bottom;
+}
+:deep(.bg-transparent .v-data-table-footer) {
+    background: transparent;
+}
+:deep(.bg-transparent > .v-divider) {
+    border-color: rgba(var(--v-theme-on-surface), 0.08);
 }
 :deep(.tree-chevron-expanded) {
     transform: rotate(90deg);
