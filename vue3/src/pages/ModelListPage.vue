@@ -51,7 +51,7 @@
                         />
                         <v-btn prepend-icon="fa-solid fa-rotate" color="success" size="small" @click="importAllRecipes()" v-if="genericModel.model.name === 'RecipeImport'">{{ $t('ImportAll') }}</v-btn>
                         <v-btn :prepend-icon="TInviteLink.icon" size="small" :to="{name: 'ModelListPage', params: {model: 'InviteLink'}}" v-if="genericModel.model.name === 'UserSpace'">{{ $t('Invites') }}</v-btn>
-                        <model-list-create-button :model="model" :disable-create="genericModel.model.disableCreate" compact @change="loadItems({page: page})" />
+                        <model-list-create-button :model="model" :disable-create="genericModel.model.disableCreate" compact @change="loadItems({page: page}); loadStats()" />
                     </v-card-text>
                     <v-progress-linear
                         v-if="genericModel.model.name === 'AiLog'"
@@ -91,7 +91,7 @@
                                 size="small"
                                 @click="showDescription = false"
                             />
-                            <model-list-create-button :model="model" :disable-create="genericModel.model.disableCreate" @change="loadItems({page: page})" />
+                            <model-list-create-button :model="model" :disable-create="genericModel.model.disableCreate" @change="loadItems({page: page}); loadStats()" />
                         </template>
 
                         <v-card-actions v-if="genericModel.model.name === 'RecipeImport'">
@@ -266,7 +266,7 @@
                     :item-count="itemCount"
                     :stats="stats"
                     :stat-defs="currentModel?.statDefs ?? []"
-                    :loading="loading"
+                    :loading="statsLoading"
                 />
             </v-col>
         </v-row>
@@ -378,6 +378,7 @@ const batchEditDialog = ref(false)
 
 // data
 const loading = ref(false);
+const statsLoading = ref(false);
 const rawItems = shallowRef([] as Array<any>)
 const itemCount = ref(0)
 const stats = ref<Record<string, number>>({})
@@ -691,10 +692,15 @@ watch(query, () => {
 /**
  * select model class before mount because template renders (and requests item load) before onMounted is called
  */
+watch(showStats, (val) => {
+    if (val && statsAvailable.value && Object.keys(stats.value).length === 0) loadStats()
+})
+
 onBeforeMount(() => {
     genericModel.value = getGenericModelFromString(props.model, t) || getGenericModelFromString('Food', t) as GenericModel
 
     title.value = t(genericModel.value.model.localizationKey)
+    loadStats()
 })
 
 /**
@@ -706,6 +712,7 @@ onBeforeMount(() => {
 function reloadAfterMutation() {
     clearTreeState()
     loadItems({page: page.value, itemsPerPage: pageSize.value, search: query.value})
+    loadStats()
 }
 
 function loadItems(options: VDataTableUpdateOptions) {
@@ -729,17 +736,24 @@ function loadItems(options: VDataTableUpdateOptions) {
         page: options.page,
         pageSize: pageSize.value,
         ordering: ordering.value || undefined,
-        stats: showStats.value && statsAvailable.value ? true : undefined,
     }
     genericModel.value.list(listParams).then((r: any) => {
         rawItems.value = r.results
         itemCount.value = r.count
-        stats.value = r.stats ?? {}
     }).catch((err: any) => {
         useMessageStore().addError(ErrorMessageType.FETCH_ERROR, err)
     }).finally(() => {
         loading.value = false
     })
+}
+
+function loadStats() {
+    if (!showStats.value || !statsAvailable.value) return
+    statsLoading.value = true
+    genericModel.value.stats()
+        .then((r: Record<string, number>) => { stats.value = r })
+        .catch((err: any) => { useMessageStore().addError(ErrorMessageType.FETCH_ERROR, err) })
+        .finally(() => { statsLoading.value = false })
 }
 
 // model specific functions

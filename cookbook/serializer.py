@@ -1252,6 +1252,13 @@ class RecipeBatchUpdateSerializer(serializers.Serializer):
     clear_description = serializers.BooleanField(required=False, allow_null=True)
 
 
+class FoodStatsSerializer(serializers.Serializer):
+    onhand = serializers.IntegerField()
+    shopping = serializers.IntegerField()
+    ignored = serializers.IntegerField()
+    total = serializers.IntegerField()
+
+
 class FoodBatchUpdateSerializer(serializers.Serializer):
     foods = serializers.ListField(child=serializers.IntegerField())
 
