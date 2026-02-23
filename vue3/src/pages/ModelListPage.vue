@@ -2,15 +2,15 @@
     <v-container v-if="genericModel.model">
         <v-row v-if="selectMode">
             <v-col>
-                <ModelListSelectionBar
+                <SelectionBar
                     :selected-count="selectedItems.length"
                     @close="exitSelectMode"
                     @select-all="selectedItems = items.filter(i => !i._isLoadMore)"
                     @select-none="selectedItems = []"
                 >
                     <template #actions>
-                        <v-btn variant="text" prepend-icon="fa-solid fa-list-check" class="text-none" @click="batchEditDialog = true" v-if="genericModel.model.name === 'Food'">
-                            {{ $t('BatchEdit') }}
+                        <v-btn v-for="ba in genericModel.model.batchActions" :key="ba.key" variant="text" :prepend-icon="ba.icon" class="text-none" @click="handleBatchAction(ba.key)">
+                            {{ $t(ba.labelKey) }}
                         </v-btn>
                         <v-btn variant="text" prepend-icon="fa-solid fa-arrows-to-dot" class="text-none" @click="batchMergeDialog = true" v-if="genericModel.model.isMerge">
                             {{ $t('Merge') }}
@@ -20,8 +20,8 @@
                         </v-btn>
                     </template>
                     <template #actions-menu>
-                        <v-list-item prepend-icon="fa-solid fa-list-check" @click="batchEditDialog = true" v-if="genericModel.model.name === 'Food'">
-                            {{ $t('BatchEdit') }}
+                        <v-list-item v-for="ba in genericModel.model.batchActions" :key="ba.key" :prepend-icon="ba.icon" @click="handleBatchAction(ba.key)">
+                            {{ $t(ba.labelKey) }}
                         </v-list-item>
                         <v-list-item prepend-icon="fa-solid fa-arrows-to-dot" @click="batchMergeDialog = true" v-if="genericModel.model.isMerge">
                             {{ $t('Merge') }}
@@ -30,7 +30,7 @@
                             {{ $t('Delete_All') }}
                         </v-list-item>
                     </template>
-                </ModelListSelectionBar>
+                </SelectionBar>
             </v-col>
         </v-row>
 
@@ -49,17 +49,16 @@
                             size="small"
                             @click="showDescription = true"
                         />
-                        <v-btn prepend-icon="fa-solid fa-rotate" color="success" size="small" @click="importAllRecipes()" v-if="genericModel.model.name === 'RecipeImport'">{{ $t('ImportAll') }}</v-btn>
-                        <v-btn :prepend-icon="TInviteLink.icon" size="small" :to="{name: 'ModelListPage', params: {model: 'InviteLink'}}" v-if="genericModel.model.name === 'UserSpace'">{{ $t('Invites') }}</v-btn>
+                        <template v-for="ha in genericModel.model.headerActions" :key="ha.type === 'button' ? ha.key : 'widget'">
+                            <v-btn v-if="ha.type === 'button'" :prepend-icon="ha.icon" :color="ha.color" :size="ha.size ?? 'small'"
+                                   v-bind="ha.routeName ? {to: {name: ha.routeName, params: ha.routeParams}} : {}"
+                                   @click="ha.handler && executeHeaderAction(ha.handler)">{{ $t(ha.labelKey) }}</v-btn>
+                        </template>
                         <model-list-create-button :model="model" :disable-create="genericModel.model.disableCreate" compact @change="loadItems({page: page}); loadStats()" />
                     </v-card-text>
-                    <v-progress-linear
-                        v-if="genericModel.model.name === 'AiLog'"
-                        :model-value="useUserPreferenceStore().activeSpace.aiMonthlyCreditsUsed"
-                        :max="useUserPreferenceStore().activeSpace.aiCreditsMonthly"
-                        color="primary"
-                        height="6"
-                    />
+                    <template v-for="ha in genericModel.model.headerActions" :key="'cw-' + (ha.type === 'button' ? ha.key : 'widget')">
+                        <component v-if="ha.type === 'widget'" :is="ha.component" />
+                    </template>
                 </v-card>
             </v-col>
         </v-row>
@@ -94,21 +93,14 @@
                             <model-list-create-button :model="model" :disable-create="genericModel.model.disableCreate" @change="loadItems({page: page}); loadStats()" />
                         </template>
 
-                        <v-card-actions v-if="genericModel.model.name === 'RecipeImport'">
-                            <v-btn prepend-icon="fa-solid fa-rotate" color="success" @click="importAllRecipes()">{{ $t('ImportAll') }}</v-btn>
-                        </v-card-actions>
-
-                        <v-card-text v-if="genericModel.model.name === 'AiLog'">
-                            {{ $t('MonthlyCreditsUsed') }} ({{ useUserPreferenceStore().activeSpace.aiMonthlyCreditsUsed }} / {{
-                                useUserPreferenceStore().activeSpace.aiCreditsMonthly
-                            }})
-                            {{ $t('AiCreditsBalance') }} : {{ useUserPreferenceStore().activeSpace.aiCreditsBalance }}
-                            <v-progress-linear :model-value="useUserPreferenceStore().activeSpace.aiMonthlyCreditsUsed"
-                                               :max="useUserPreferenceStore().activeSpace.aiCreditsMonthly"></v-progress-linear>
-                        </v-card-text>
-                        <v-card-actions v-if="genericModel.model.name === 'UserSpace'">
-                            <v-btn :prepend-icon="TInviteLink.icon" :to="{name: 'ModelListPage', params: {model: 'InviteLink'}}">{{ $t('Invites') }}</v-btn>
-                        </v-card-actions>
+                        <template v-for="ha in genericModel.model.headerActions" :key="ha.type === 'button' ? ha.key : 'widget'">
+                            <v-card-actions v-if="ha.type === 'button'">
+                                <v-btn :prepend-icon="ha.icon" :color="ha.color"
+                                       v-bind="ha.routeName ? {to: {name: ha.routeName, params: ha.routeParams}} : {}"
+                                       @click="ha.handler && executeHeaderAction(ha.handler)">{{ $t(ha.labelKey) }}</v-btn>
+                            </v-card-actions>
+                            <component v-else-if="ha.type === 'widget'" :is="ha.component" />
+                        </template>
                     </v-card>
                 </v-col>
             </v-row>
@@ -154,6 +146,7 @@
                     :select-mode="selectMode"
                     :selected-items="selectedItems"
                     :enhanced-columns="enhancedColumns"
+                    :all-columns="allColumns"
                     :action-defs="actionDefs"
                     :grouped-action-defs="groupedActionDefs"
                     :get-toggle-state="getToggleState"
@@ -194,27 +187,9 @@
                     :items-per-page="pageSize"
                     disable-sort
                 >
-                    <template v-slot:item.space="{ item }" v-if="genericModel.model.name === 'AiProvider'">
-                        <v-chip label v-if="item.space == null" color="success">{{ $t('Global') }}</v-chip>
-                        <v-chip label v-else color="info">{{ $t('Space') }}</v-chip>
-                    </template>
-                    <template v-slot:item.groups="{ item }" v-if="genericModel.model.name === 'UserSpace'">
-                        {{ item.groups.flatMap((x: Group) => x.name).join(', ') }}
-                    </template>
-                    <template v-slot:item.active="{ item }" v-if="genericModel.model.name === 'Space'">
-                        <v-chip label v-if="item.id === useUserPreferenceStore().activeSpace.id!" color="success">{{ $t('Active') }}</v-chip>
-                        <v-chip label v-else color="info" @click="useUserPreferenceStore().switchSpace(item)">{{ $t('Select') }}</v-chip>
-                    </template>
-                    <template v-slot:item.color="{ item }">
-                        <v-chip label :color="item.color">{{ item.color }}</v-chip>
-                    </template>
-                    <template v-slot:item.isFreezer="{ item }" v-if="genericModel.model.name == 'InventoryLocation'">
-                        <v-chip label v-if="item.isFreezer" color="success">{{ $t('Yes') }}</v-chip>
-                        <v-chip label v-else color="info">{{ $t('No') }}</v-chip>
-                    </template>
                     <template v-slot:item.action="{ item }">
                         <template v-if="item._isLoadMore" />
-                        <ModelListActionMenu
+                        <ActionMenu
                             v-else-if="currentModel?.actionDefs"
                             :item="item"
                             :action-defs="actionDefs"
@@ -223,40 +198,6 @@
                             :quick-action-keys="quickActionKeys"
                             @action="handleActionWithConfirmation"
                         />
-                        <template v-else>
-                            <v-btn class="float-right" icon="$menu" variant="plain">
-                                <v-icon icon="$menu"></v-icon>
-                                <v-menu activator="parent" close-on-content-click>
-                                    <v-list density="compact">
-                                        <v-list-item prepend-icon="$edit" :to="{name: 'ModelEditPage', params: {model: model, id: item.id}}"
-                                                     v-if="!(genericModel.model.disableCreate && genericModel.model.disableUpdate && genericModel.model.disableDelete)">
-                                            {{ $t('Edit') }}
-                                        </v-list-item>
-                                        <v-list-item prepend-icon="fa-solid fa-arrows-to-dot" v-if="genericModel.model.isMerge" link>
-                                            {{ $t('Merge') }}
-                                            <model-merge-dialog :model="model" :source="[item]"
-                                                                @change="loadItems({page: page, itemsPerPage: pageSize, search: query})"></model-merge-dialog>
-                                        </v-list-item>
-                                        <v-list-item prepend-icon="fa-solid fa-table-list" :to="{name: 'IngredientEditorPage', query: {unit_id: item.id}}"
-                                                     v-if="genericModel.model.name === 'Unit'">
-                                            {{ $t('Ingredient Editor') }}
-                                        </v-list-item>
-                                        <v-list-item prepend-icon="fa-solid fa-rotate" v-if="genericModel.model.name === 'Sync'" link>
-                                            {{ $t('Import') }}
-                                            <sync-dialog :sync="item"></sync-dialog>
-                                        </v-list-item>
-                                        <v-list-item prepend-icon="fa-solid fa-rotate" v-if="genericModel.model.name === 'RecipeImport'" @click="importRecipe(item)">
-                                            {{ $t('Import') }}
-                                        </v-list-item>
-                                        <v-list-item prepend-icon="fa-solid fa-arrow-right-from-bracket"
-                                                     v-if="genericModel.model.name === 'Space'  && item.createdBy.id !== useUserPreferenceStore().userSettings.user.id!"
-                                                     @click="leaveSpace(item)">
-                                            {{ $t('LeaveSpace') }}
-                                        </v-list-item>
-                                    </v-list>
-                                </v-menu>
-                            </v-btn>
-                        </template>
                     </template>
                 </model-list-data-table>
 
@@ -301,6 +242,8 @@
         <batch-edit-food-dialog :items="selectedItems" v-model="batchEditDialog" v-if="model === 'Food'" activator="model"
                                 @change="reloadAfterMutation(); exitSelectMode()"></batch-edit-food-dialog>
 
+        <sync-dialog v-if="syncDialogItem" :sync="syncDialogItem" v-model="syncDialogOpen" activator="model" />
+
         <action-confirm-dialog ref="confirmDialogRef" />
 
     </v-container>
@@ -312,7 +255,7 @@
 import {computed, h, onBeforeMount, ref, shallowRef, toRef, triggerRef, watch} from "vue";
 import {ErrorMessageType, useMessageStore} from "@/stores/MessageStore";
 import {useI18n} from "vue-i18n";
-import {EditorSupportedModels, GenericModel, getGenericModelFromString, Model, ModelTableHeaders, TInviteLink,} from "@/types/Models";
+import {EditorSupportedModels, GenericModel, getGenericModelFromString, Model, ModelTableHeaders} from "@/types/Models";
 import {buildSubtitleText} from "@/utils/utils";
 
 import {useRoute, useRouter} from "vue-router";
@@ -320,7 +263,6 @@ import {useUserPreferenceStore} from "@/stores/UserPreferenceStore";
 import ModelMergeDialog from "@/components/dialogs/ModelMergeDialog.vue";
 import {VDataTableUpdateOptions} from "@/vuetify";
 import SyncDialog from "@/components/dialogs/SyncDialog.vue";
-import {ApiApi, ApiRecipeListRequest, Group, RecipeImport, Space, UserSpace} from "@/openapi";
 import {useTitle} from "@vueuse/core";
 import BatchDeleteDialog from "@/components/dialogs/BatchDeleteDialog.vue";
 import {useRouteQuery} from "@vueuse/router";
@@ -333,17 +275,16 @@ import ModelListSettingsPanel from "@/components/model_list/ModelListSettingsPan
 import ModelListToolbar from "@/components/model_list/ModelListToolbar.vue";
 import ModelListCreateButton from "@/components/model_list/ModelListCreateButton.vue";
 import ModelListFilterChips from "@/components/model_list/ModelListFilterChips.vue";
-import ModelListSelectionBar from "@/components/model_list/ModelListSelectionBar.vue";
-import ModelListActionMenu from "@/components/model_list/ModelListActionMenu.vue";
+import SelectionBar from "@/components/common/SelectionBar.vue";
+import ActionMenu from "@/components/common/ActionMenu.vue";
 import ModelListMobileView from "@/components/model_list/ModelListMobileView.vue";
 import ModelListStatsFooter from "@/components/model_list/ModelListStatsFooter.vue";
 import {useModelListActions} from "@/composables/modellist/useModelListActions";
 import {useModelListSettings} from "@/composables/modellist/useModelListSettings";
 import {useModelListTree, CHILD_PAGE_SIZE} from "@/composables/modellist/useModelListTree";
-import type {ModelActionDef, ModelItem} from "@/composables/modellist/types";
+import type {ModelItem} from "@/composables/modellist/types";
 import {getAncestorPath} from "@/composables/modellist/types";
 import ActionConfirmDialog from "@/components/dialogs/ActionConfirmDialog.vue";
-import type {ActionConfirmEntry} from "@/components/dialogs/ActionConfirmDialog.vue";
 import {useDisplay} from "vuetify";
 
 const {t} = useI18n()
@@ -376,6 +317,12 @@ const batchDeleteDialog = ref(false)
 const batchMergeDialog = ref(false)
 const batchEditDialog = ref(false)
 
+function handleBatchAction(key: string) {
+    switch (key) {
+        case 'batchEdit': batchEditDialog.value = true; break
+    }
+}
+
 // data
 const loading = ref(false);
 const statsLoading = ref(false);
@@ -402,7 +349,7 @@ const fetchChildren = (parentId: number, page: number) =>
     genericModel.value.list({...filterParams.value, root: parentId, pageSize: CHILD_PAGE_SIZE, page})
         .then((r: any) => ({results: r.results ?? [], hasMore: !!r.next}))
 const {treeActive, expandedIds, loadingIds, toggleExpand, loadMoreChildren,
-    buildFlatList, clearTreeState, setOnCollapse} =
+    buildFlatList, updateCachedChild, clearTreeState, setOnCollapse} =
     useModelListTree(currentModel, fetchChildren, treeEnabled)
 
 /** Tree is suspended when search, filters, or non-default sorting are active.
@@ -444,11 +391,18 @@ const singleMergeDialog = ref(false)
 const singleMergeSource = ref<ModelItem[]>([])
 const confirmDialogRef = ref<InstanceType<typeof ActionConfirmDialog> | null>(null)
 
+const syncDialogItem = ref<ModelItem | null>(null)
+const syncDialogOpen = ref(false)
+
 function handleAction(key: string, item: ModelItem) {
     switch (key) {
         case 'merge':
             singleMergeSource.value = [item]
             singleMergeDialog.value = true
+            break
+        case 'sync-import':
+            syncDialogItem.value = item
+            syncDialogOpen.value = true
             break
     }
 }
@@ -460,8 +414,12 @@ const {actionDefs, groupedActionDefs, executeAction, getToggleState} = useModelL
         if (idx >= 0) {
             rawItems.value[idx] = {...rawItems.value[idx], [field]: item[field]}
             triggerRef(rawItems)
+        } else {
+            // Item is a tree child — update in the children cache
+            updateCachedChild(item.id, field, item[field])
         }
     },
+    () => reloadAfterMutation(),
 )
 
 /**
@@ -476,63 +434,28 @@ async function handleActionWithConfirmation(key: string, item: ModelItem) {
     if (action.requiresConfirmation) {
         if (action.isToggle && getToggleState(action, item)) {
             // Toggle is active → user wants to deactivate → confirm
-            if (key === 'shopping') {
-                const confirmed = await showShoppingRemoveConfirm(action, item)
+            if (action.confirmationHandler) {
+                const confirmed = await action.confirmationHandler(item, confirmDialogRef.value, t)
                 if (!confirmed) return
             }
         } else if (!action.isToggle) {
-            // Non-toggle destructive action → generic confirm
-            const confirmed = await confirmDialogRef.value?.open({
-                title: t('Confirm'),
-                message: t('ConfirmAction', {action: t(action.labelKey), name: item.name}),
-                confirmLabel: t(action.labelKey),
-                confirmColor: action.isDanger ? 'error' : 'primary',
-                confirmIcon: action.icon,
-            })
-            if (!confirmed) return
+            // Non-toggle destructive action — custom handler or generic confirm
+            if (action.confirmationHandler) {
+                const confirmed = await action.confirmationHandler(item, confirmDialogRef.value, t)
+                if (!confirmed) return
+            } else {
+                const confirmed = await confirmDialogRef.value?.open({
+                    title: t('Confirm'),
+                    message: t('ConfirmAction', {action: t(action.labelKey), name: item.name}),
+                    confirmLabel: t(action.labelKey),
+                    confirmColor: action.isDanger ? 'error' : 'primary',
+                    confirmIcon: action.icon,
+                })
+                if (!confirmed) return
+            }
         }
     }
     executeAction(key, item)
-}
-
-async function showShoppingRemoveConfirm(action: ModelActionDef, item: ModelItem): Promise<boolean> {
-    // Open dialog immediately with loading state, fetch entries in background
-    const confirmPromise = confirmDialogRef.value?.open({
-        title: t('Confirm'),
-        message: t('RemoveFromShoppingConfirm', {name: item.name}),
-        loading: true,
-        confirmLabel: t('Remove'),
-        confirmColor: 'warning',
-        confirmIcon: action.icon,
-    })
-
-    // Fetch shopping list entries for this specific food
-    try {
-        const api = new ApiApi()
-        const result = await api.apiShoppingListEntryList({food: item.id, pageSize: 100})
-        const foodEntries = (result.results ?? []).filter((e: any) => !e.checked)
-        const entries: ActionConfirmEntry[] = foodEntries.map((e: any) => {
-            const parts: string[] = []
-            if (e.amount) parts.push(String(e.amount))
-            if (e.unit?.name) parts.push(e.unit.name)
-            const text = parts.length > 0 ? parts.join(' ') : t('Shopping')
-            const subtextParts: string[] = []
-            const recipeName = e.listRecipeData?.recipeData?.name
-            if (recipeName) subtextParts.push(recipeName)
-            if (e.createdBy?.displayName || e.createdBy?.username) {
-                subtextParts.push(e.createdBy.displayName || e.createdBy.username)
-            }
-            if (e.createdAt) {
-                subtextParts.push(new Date(e.createdAt).toLocaleString())
-            }
-            return {text, subtext: subtextParts.join(' · ') || undefined, icon: 'fa-solid fa-cart-shopping'} as ActionConfirmEntry
-        })
-        confirmDialogRef.value?.setEntries(entries)
-    } catch {
-        confirmDialogRef.value?.setEntries([])
-    }
-
-    return (await confirmPromise) ?? false
 }
 
 const showDescription = computed({
@@ -558,7 +481,7 @@ function openSettingsPanel(tab: string) {
 
 const desktopSubtitleColumns = computed(() =>
     desktopSubtitleKeys.value
-        .map((key: string) => enhancedColumns.value.find(c => c.key === key))
+        .map((key: string) => allColumns.value.find(c => c.key === key))
         .filter((c: ModelTableHeaders | undefined): c is ModelTableHeaders => !!c)
 )
 
@@ -756,52 +679,13 @@ function loadStats() {
         .finally(() => { statsLoading.value = false })
 }
 
-// model specific functions
-
-/**
- * convert a RecipeImport to a "real" external recipes and reload the table
- * @param item
- */
-function importRecipe(item: RecipeImport) {
-    let api = new ApiApi()
-    api.apiRecipeImportImportRecipeCreate({id: item.id!, recipeImport: item}).then(r => {
-        loadItems({page: 1})
-    }).catch(err => {
-        useMessageStore().addError(ErrorMessageType.CREATE_ERROR, err)
-    })
-}
-
-/**
- * convert all RecipeImports to "real" external recipes and reload the table (should be empty afterwards)
- */
-function importAllRecipes() {
-    let api = new ApiApi()
-
-    api.apiRecipeImportImportAllCreate({recipeImport: {} as RecipeImport}).then(r => {
-        loadItems({page: 1})
-    }).catch(err => {
-        useMessageStore().addError(ErrorMessageType.CREATE_ERROR, err)
-    })
-}
-
-/**
- * leave the selected space as a user
- * @param space to leave
- */
-function leaveSpace(space: Space) {
-    let api = new ApiApi()
-    useUserPreferenceStore().userSpaces.forEach((us: UserSpace) => {
-        if (us.space === space.id!) {
-            loading.value = true
-            api.apiUserSpaceDestroy({id: us.id!}).then(r => {
-
-            }).catch(err => {
-                useMessageStore().addError(ErrorMessageType.DELETE_ERROR, err)
-            }).finally(() => {
-                loading.value = false
-            })
-        }
-    })
+async function executeHeaderAction(handler: () => Promise<void> | void) {
+    try {
+        await handler()
+        reloadAfterMutation()
+    } catch (err) {
+        useMessageStore().addError(ErrorMessageType.UPDATE_ERROR, err)
+    }
 }
 
 </script>

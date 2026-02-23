@@ -18,24 +18,24 @@ export interface ModelItem {
  * Column display types for enhanced table rendering.
  * Used by ModelListColumnCell to determine how to render a cell.
  */
-export type ModelColumnType = 'text' | 'number' | 'boolean-indicator' | 'status-chip' | 'action-menu'
+export type ColumnType = 'text' | 'number' | 'boolean-indicator' | 'status-chip' | 'color-chip' | 'label-chip' | 'action-menu'
 
 /**
  * Filter control types for the filter panel.
  */
-export type ModelFilterType = 'tristate' | 'model-select'
+export type FilterType = 'tristate' | 'model-select'
 
 /**
  * Filter definition for a model list.
  * Each filter maps to a backend query parameter.
  */
-export type ModelFilterDef = {
+export type FilterDef = {
     /** Unique key, matches the backend query parameter name */
     key: string,
     /** Localization key for the filter label */
     labelKey: string,
     /** Type of filter control to render */
-    type: ModelFilterType,
+    type: FilterType,
     /** Icon to display next to the filter (FontAwesome class) */
     icon?: string,
     /** For model-select type: the model name to use for lookup */
@@ -48,7 +48,7 @@ export type ModelFilterDef = {
  * Action definition for a model list.
  * Defines what actions are available in the context menu and as quick actions.
  */
-export type ModelActionDef = {
+export type ActionDef = {
     /** Unique key for this action */
     key: string,
     /** Localization key for the action label */
@@ -83,13 +83,43 @@ export type ModelActionDef = {
     colorResolver?: (item: ModelItem) => string | undefined,
     /** Per-item visibility predicate — when provided, action only shows for items where this returns true */
     visible?: (item: ModelItem) => boolean,
+    /** When true, the list reloads after a successful non-toggle handler execution */
+    reloadAfterAction?: boolean,
+    /** Custom confirmation handler — returns true to proceed, false to cancel.
+     *  When provided, overrides the default confirmation dialog for this action.
+     *  Receives the confirm dialog ref and translation function for custom UI. */
+    confirmationHandler?: (item: ModelItem, confirmDialog: any, t: (key: string, params?: Record<string, any>) => string) => Promise<boolean>,
 }
+
+/**
+ * Batch action definition for model list selection bar.
+ * Data-only — no component references. The page manages which dialog to open.
+ */
+export type BatchAction = {
+    /** Unique key used by handleBatchAction to open the correct dialog */
+    key: string,
+    /** Localization key for the action label */
+    labelKey: string,
+    /** Icon (FontAwesome class) */
+    icon: string,
+}
+
+/**
+ * Header action for the model list page header bar.
+ * Button type: data-only, rendered as a v-btn with handler or route.
+ * Widget type: self-contained component rendered via <component :is>.
+ */
+export type HeaderAction =
+    | { type: 'button', key: string, labelKey: string, icon: string, color?: string, size?: string,
+        routeName?: string, routeParams?: Record<string, any>,
+        handler?: () => Promise<void> | void }
+    | { type: 'widget', component: ReturnType<typeof import('vue').defineAsyncComponent> }
 
 /**
  * Settings configuration for an enhanced model list.
  * Controls which features are available and their defaults.
  */
-export type ModelListSettings = {
+export type ListSettings = {
     /** Prefix for device settings keys (e.g., 'food' → 'food_hiddenColumns') */
     settingsKey: string,
     /** Whether the settings panel is available */
@@ -106,7 +136,7 @@ export type ModelListSettings = {
  * Stat definition for a model list stats footer.
  * Each stat maps to a key in the API response's stats object.
  */
-export type ModelStatDef = {
+export type StatDef = {
     /** Unique key, matches the API stats response key */
     key: string,
     /** Localization key for the display label */
@@ -121,7 +151,7 @@ export type ModelStatDef = {
  * Sort option definition for a model list.
  * Each option maps to a backend `ordering` query parameter value.
  */
-export type ModelSortDef = {
+export type SortDef = {
     /** Value sent as the `ordering` query param (e.g. 'name', '-name') */
     key: string,
     /** Localization key for the display label */
