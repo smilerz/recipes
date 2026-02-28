@@ -866,6 +866,11 @@ class FoodSerializer(UniqueFieldsMixin, WritableNestedModelSerializer, RecipeCou
 
     @extend_schema_field(bool)
     def get_substitute_onhand(self, obj):
+        # Use batch-computed cache from FoodViewSet.list() when available
+        cached = self.context.get('_substitute_onhand')
+        if cached is not None:
+            return cached.get(obj.id, False)
+        # Fallback for single-object serialization (retrieve, create, etc.)
         try:
             if not self.context["request"].user.is_authenticated:
                 return []
@@ -894,8 +899,11 @@ class FoodSerializer(UniqueFieldsMixin, WritableNestedModelSerializer, RecipeCou
 
     @extend_schema_field(bool)
     def get_substitute_inventory(self, obj):
-        # TODO N+1: fires a query per food in list serialization (same pattern as get_substitute_onhand).
-        # Deferring annotation-level fix due to dynamic substitute/sibling/children logic.
+        # Use batch-computed cache from FoodViewSet.list() when available
+        cached = self.context.get('_substitute_inventory')
+        if cached is not None:
+            return cached.get(obj.id, False)
+        # Fallback for single-object serialization (retrieve, create, etc.)
         try:
             substitute_ids = [s.id for s in obj.substitute.all()]
             filter = Q(id__in=substitute_ids)
