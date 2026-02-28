@@ -1639,8 +1639,12 @@ class ViewLogSerializer(serializers.ModelSerializer):
         validated_data['created_by'] = self.context['request'].user
         validated_data['space'] = self.context['request'].space
 
-        view_log = ViewLog.objects.filter(recipe=validated_data['recipe'], created_by=self.context['request'].user, created_at__gt=(timezone.now() - timezone.timedelta(minutes=5)),
-                                          space=self.context['request'].space).first()
+        view_log = ViewLog.objects.filter(
+            recipe=validated_data['recipe'],
+            created_by=self.context['request'].user,
+            created_at__gt=(timezone.now() - timezone.timedelta(minutes=5)),
+            space=self.context['request'].space
+        ).first()
         if not view_log:
             view_log = ViewLog.objects.create(recipe=validated_data['recipe'], created_by=self.context['request'].user, space=self.context['request'].space)
 
@@ -2050,7 +2054,7 @@ class FoodShoppingUpdateSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Recipe
-        fields = ['id', 'amount', 'unit', ]
+        fields = ['id', 'amount', 'unit']
 
 
 # non model serializers
