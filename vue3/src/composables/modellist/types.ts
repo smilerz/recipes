@@ -122,6 +122,12 @@ export type HeaderAction =
  * Settings configuration for an enhanced model list.
  * Controls which features are available and their defaults.
  */
+export type SettingsDefaults = {
+    quickActions?: string[],
+    showStats?: boolean,
+    showMobileHeaders?: boolean,
+}
+
 export type ListSettings = {
     /** Prefix for device settings keys (e.g., 'food' → 'food_hiddenColumns') */
     settingsKey: string,
@@ -133,6 +139,8 @@ export type ListSettings = {
     statsFooter?: boolean,
     /** Whether a mobile-specific list layout is available */
     mobileList?: boolean,
+    /** Per-model default values for device settings */
+    defaults?: SettingsDefaults,
 }
 
 /**

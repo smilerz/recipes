@@ -129,6 +129,11 @@ export const FOOD_LIST_SETTINGS: ListSettings = {
     treeEnabled: true,
     statsFooter: true,
     mobileList: true,
+    defaults: {
+        quickActions: ['shopping', 'recipe'],
+        showStats: true,
+        showMobileHeaders: true,
+    },
 }
 
 /**

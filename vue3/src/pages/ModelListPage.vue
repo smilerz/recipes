@@ -155,6 +155,7 @@
                     :loading-ids="loadingIds"
                     :toggle-expand="toggleExpand"
                     :settings-key="modelSettingsKey"
+                    :settings-defaults="currentModel?.listSettings?.defaults"
                     :label-field="currentModel?.itemLabel"
                     @update:selected-items="selectedItems = $event"
                     @update:options="loadItems"
@@ -339,9 +340,10 @@ const {filterDefs, groupedFilterDefs, activeFilterCount, filterParams, getFilter
 // device settings + tree view
 const {mobile} = useDisplay()
 const modelSettingsKey = computed(() => currentModel.value?.listSettings?.settingsKey ?? '')
+const modelDefaults = computed(() => currentModel.value?.listSettings?.defaults)
 const {showStats, showColumnHeaders, quickActionKeys, desktopSubtitleKeys,
     mobileSubtitleKeys, swipeEnabled, swipeLeftKeys, swipeRightKeys,
-    showMobileHeaders, treeEnabled} = useModelListSettings(modelSettingsKey)
+    showMobileHeaders, treeEnabled} = useModelListSettings(modelSettingsKey, modelDefaults)
 const useMobileList = computed(() => mobile.value && hasEnhancedList.value && !!currentModel.value?.listSettings?.mobileList)
 const statsAvailable = computed(() => !!currentModel.value?.listSettings?.statsFooter)
 const fetchChildren = (parentId: number, page: number) =>
