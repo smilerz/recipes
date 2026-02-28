@@ -853,6 +853,8 @@ class FoodSerializer(UniqueFieldsMixin, WritableNestedModelSerializer, RecipeCou
     child_inherit_fields = FoodInheritFieldSerializer(many=True, allow_null=True, required=False)
     food_onhand = CustomOnHandField(required=False, allow_null=True)
     substitute_onhand = serializers.SerializerMethodField('get_substitute_onhand')
+    in_inventory = serializers.CharField(source='has_inventory_status', read_only=True)
+    substitute_inventory = serializers.SerializerMethodField('get_substitute_inventory')
     substitute = FoodSimpleSerializer(many=True, allow_null=True, required=False)
     parent = IntegerField(read_only=True)
     shopping_lists = ShoppingListSerializer(many=True, required=False)
@@ -889,6 +891,21 @@ class FoodSerializer(UniqueFieldsMixin, WritableNestedModelSerializer, RecipeCou
             return Food.objects.filter(filter).filter(onhand_users__id__in=shared_users).exists()
         except AttributeError:
             return []
+
+    @extend_schema_field(bool)
+    def get_substitute_inventory(self, obj):
+        # TODO N+1: fires a query per food in list serialization (same pattern as get_substitute_onhand).
+        # Deferring annotation-level fix due to dynamic substitute/sibling/children logic.
+        try:
+            substitute_ids = [s.id for s in obj.substitute.all()]
+            filter = Q(id__in=substitute_ids)
+            if obj.substitute_siblings:
+                filter |= Q(path__startswith=obj.path[:Food.steplen * (obj.depth - 1)], depth=obj.depth)
+            if obj.substitute_children:
+                filter |= Q(path__startswith=obj.path, depth__gt=obj.depth)
+            return Food.objects.filter(filter).filter(inventoryentry__amount__gt=0).exists()
+        except AttributeError:
+            return False
 
     def create(self, validated_data):
         name = validated_data['name'].strip()
@@ -966,6 +983,7 @@ class FoodSerializer(UniqueFieldsMixin, WritableNestedModelSerializer, RecipeCou
             'id', 'name', 'plural_name', 'description', 'shopping', 'recipe', 'url', 'properties', 'properties_food_amount', 'properties_food_unit', 'fdc_id',
             'food_onhand', 'supermarket_category', 'parent', 'numchild', 'numrecipe', 'inherit_fields', 'full_name', 'ignore_shopping',
             'substitute', 'substitute_siblings', 'substitute_children', 'substitute_onhand', 'child_inherit_fields', 'open_data_slug', 'shopping_lists',
+            'in_inventory', 'substitute_inventory',
         )
         read_only_fields = ('id', 'numchild', 'parent', 'numrecipe')
 
@@ -1256,6 +1274,8 @@ class FoodStatsSerializer(serializers.Serializer):
     onhand = serializers.IntegerField()
     shopping = serializers.IntegerField()
     ignored = serializers.IntegerField()
+    inventory = serializers.IntegerField()
+    expired = serializers.IntegerField()
     total = serializers.IntegerField()
 
 

@@ -5,6 +5,19 @@
 
             <v-card-text v-if="message" class="pb-2 text-body-1">{{ message }}</v-card-text>
 
+            <v-card-text v-if="selectOptions.length > 0" class="pb-2">
+                <v-select
+                    v-model="selectedValue"
+                    :items="selectOptions"
+                    item-title="label"
+                    item-value="value"
+                    :aria-label="title"
+                    variant="outlined"
+                    density="compact"
+                    hide-details
+                />
+            </v-card-text>
+
             <v-list v-if="entries.length > 0" density="compact" class="py-0">
                 <v-list-item v-for="(entry, idx) in entries" :key="idx" :prepend-icon="entry.icon">
                     <v-list-item-title>{{ entry.text }}</v-list-item-title>
@@ -18,6 +31,7 @@
                 <v-btn
                     :color="confirmColor"
                     :prepend-icon="confirmIcon"
+                    :disabled="selectOptions.length > 0 && selectedValue == null"
                     variant="flat"
                     @click="confirm"
                 >
@@ -44,6 +58,8 @@ const title = ref('')
 const icon = ref('')
 const message = ref('')
 const entries = ref<ActionConfirmEntry[]>([])
+const selectOptions = ref<{value: number | string, label: string}[]>([])
+const selectedValue = ref<number | string | null>(null)
 const confirmLabel = ref('')
 const confirmColor = ref('primary')
 const confirmIcon = ref('')
@@ -64,6 +80,8 @@ function open(opts: {
     icon.value = opts.icon ?? ''
     message.value = opts.message ?? ''
     entries.value = opts.entries ?? []
+    selectOptions.value = []
+    selectedValue.value = null
     loading.value = opts.loading ?? false
     confirmLabel.value = opts.confirmLabel
     confirmColor.value = opts.confirmColor ?? 'primary'
@@ -79,6 +97,12 @@ function open(opts: {
 
 function setEntries(newEntries: ActionConfirmEntry[]) {
     entries.value = newEntries
+    loading.value = false
+}
+
+function setSelectOptions(opts: {value: number | string, label: string}[]) {
+    selectOptions.value = opts
+    selectedValue.value = null
     loading.value = false
 }
 
@@ -102,5 +126,5 @@ watch(dialog, (val) => {
     }
 })
 
-defineExpose({open, setEntries})
+defineExpose({open, setEntries, setSelectOptions, selectedValue})
 </script>

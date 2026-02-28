@@ -5,11 +5,22 @@
 
 import type {FilterDef, ActionDef, BatchAction, StatDef, ListSettings, SortDef, ModelItem} from './types'
 import type {ActionConfirmEntry} from '@/components/dialogs/ActionConfirmDialog.vue'
-import {ApiApi} from '@/openapi'
+import {ApiApi, type Food, type InventoryEntry, type InventoryLocation} from '@/openapi'
+import {useUserPreferenceStore} from '@/stores/UserPreferenceStore'
+import {ErrorMessageType, useMessageStore} from '@/stores/MessageStore'
+
+/** Lightweight reference to an inventory location, saved in device settings. */
+type InventoryLocationRef = {id: number, name: string}
 
 /** The backend annotates shopping_status via Exists() → CharField, yielding "True"/"False" strings. */
 function isOnShoppingList(item: ModelItem): boolean {
     const v = item.shopping
+    return v === true || v === 'True' || v === 'true'
+}
+
+/** The backend annotates has_inventory_status via Exists() → CharField, yielding "True"/"False" strings. */
+function isInInventory(item: ModelItem): boolean {
+    const v = item.inInventory
     return v === true || v === 'True' || v === 'true'
 }
 
@@ -26,6 +37,10 @@ export const FOOD_FILTER_DEFS: FilterDef[] = [
     {key: 'has_recipe', labelKey: 'Recipe', type: 'tristate', icon: 'fa-solid fa-book', group: 'Attributes'},
     {key: 'used_in_recipes', labelKey: 'UsedInRecipes', type: 'tristate', icon: 'fa-solid fa-utensils', group: 'Attributes'},
     {key: 'supermarket_category', labelKey: 'Category', type: 'model-select', icon: 'fa-solid fa-boxes-stacked', modelName: 'SupermarketCategory', group: 'Attributes'},
+    {key: 'has_inventory', labelKey: 'InInventory', type: 'tristate', icon: 'fa-solid fa-warehouse', group: 'Inventory'},
+    {key: 'inventory_location', labelKey: 'InventoryLocation', type: 'model-select', icon: 'fa-solid fa-location-dot', modelName: 'InventoryLocation', group: 'Inventory'},
+    {key: 'expired', labelKey: 'Expired', type: 'tristate', icon: 'fa-solid fa-calendar-xmark', group: 'Inventory'},
+    {key: 'expiring_soon', labelKey: 'ExpiringSoon', type: 'number', icon: 'fa-solid fa-clock', defaultValue: '3', suffixKey: 'Days', group: 'Inventory'},
 ]
 
 /**
@@ -94,7 +109,128 @@ export const FOOD_ACTION_DEFS: ActionDef[] = [
         colorResolver: (item: ModelItem) => item.ignoreShopping ? 'error' : undefined,
     },
 
+    // Pantry toggle
+    {key: 'pantry', labelKey: 'Pantry', icon: '$pantry', isToggle: true, toggleField: 'inInventory', activeColor: 'success', inactiveColor: '', group: 'Status', requiresConfirmation: true,
+        isActive: isInInventory,
+        colorResolver: (item: ModelItem) => {
+            if (isInInventory(item)) return 'success'
+            if (item.substituteInventory) return 'warning'
+            return undefined
+        },
+        handler: async (item) => {
+            const api = new ApiApi()
+            try {
+                if (isInInventory(item)) {
+                    // Remove: delete all inventory entries for this food
+                    const result = await api.apiInventoryEntryList({foodId: item.id, pageSize: 100})
+                    const invEntries = result.results ?? []
+                    await Promise.all(invEntries.filter(e => e.id != null).map(e => api.apiInventoryEntryDestroy({id: e.id!})))
+                    item.inInventory = 'False'
+                } else {
+                    // Add: use saved default location
+                    const store = useUserPreferenceStore()
+                    const locData = store.deviceSettings.food_defaultInventoryLocation as InventoryLocationRef | null
+                    if (!locData) return // activationConfirmationHandler ensures this is set
+                    try {
+                        await api.apiInventoryEntryCreate({
+                            inventoryEntry: {
+                                food: {id: item.id, name: item.name} as Food,
+                                inventoryLocation: {id: locData.id, name: locData.name} as InventoryLocation,
+                                // TODO: update OpenAPI schema to make unit optional
+                                unit: null as any,
+                                amount: 1,
+                            },
+                        })
+                        item.inInventory = 'True'
+                    } catch (err: any) {
+                        // Stale location — clear saved default so next tap re-prompts
+                        if (err?.response?.status === 400 || err?.response?.status === 404) {
+                            store.deviceSettings.food_defaultInventoryLocation = null
+                        }
+                        throw err
+                    }
+                }
+            } catch (err) {
+                useMessageStore().addError(ErrorMessageType.UPDATE_ERROR, err)
+            }
+        },
+        confirmationHandler: async (item, confirmDialog, t) => {
+            const confirmPromise = confirmDialog.open({
+                title: t('Confirm'),
+                message: t('RemoveFromInventoryConfirm', {name: item.name}),
+                loading: true,
+                confirmLabel: t('Remove'),
+                confirmColor: 'warning',
+                confirmIcon: '$pantry',
+            })
+            try {
+                const api = new ApiApi()
+                const result = await api.apiInventoryEntryList({foodId: item.id, pageSize: 100})
+                const invEntries = result.results ?? []
+                const entries: ActionConfirmEntry[] = invEntries.map((e: InventoryEntry) => {
+                    const parts: string[] = []
+                    if (e.amount) parts.push(String(e.amount))
+                    if (e.unit?.name) parts.push(e.unit.name)
+                    const text = parts.length > 0 ? parts.join(' ') : t('Pantry')
+                    const subtextParts: string[] = []
+                    if (e.inventoryLocation?.name) subtextParts.push(e.inventoryLocation.name)
+                    if (e.createdAt) subtextParts.push(new Date(e.createdAt).toLocaleString())
+                    return {text, subtext: subtextParts.join(' · ') || undefined, icon: '$pantry'} as ActionConfirmEntry
+                })
+                confirmDialog.setEntries(entries)
+            } catch {
+                confirmDialog.setEntries([])
+            }
+            return (await confirmPromise) ?? false
+        },
+        activationConfirmationHandler: async (_item, confirmDialog, t) => {
+            const store = useUserPreferenceStore()
+            const saved = store.deviceSettings.food_defaultInventoryLocation as InventoryLocationRef | null
+            if (saved) return true // default location already set, proceed immediately
+
+            const api = new ApiApi()
+            const result = await api.apiInventoryLocationList({pageSize: 100})
+            const locations = result.results ?? []
+
+            if (locations.length === 0) {
+                await confirmDialog.open({
+                    title: t('Pantry'),
+                    message: t('NoInventoryLocations'),
+                    confirmLabel: t('OK'),
+                })
+                return false
+            }
+
+            if (locations.length === 1) {
+                // Auto-save the only location
+                store.deviceSettings.food_defaultInventoryLocation = {id: locations[0].id!, name: locations[0].name} as InventoryLocationRef
+                return true
+            }
+
+            // Multiple locations — prompt user to select
+            const confirmPromise = confirmDialog.open({
+                title: t('SelectDefaultLocation'),
+                message: t('SelectDefaultLocationMessage'),
+                loading: true,
+                confirmLabel: t('Confirm'),
+                confirmColor: 'primary',
+                confirmIcon: 'fa-solid fa-location-dot',
+            })
+            confirmDialog.setSelectOptions(locations.map(l => ({value: l.id!, label: l.name})))
+            const confirmed = (await confirmPromise) ?? false
+            if (confirmed && confirmDialog.selectedValue.value != null) {
+                const selected = locations.find(l => l.id === confirmDialog.selectedValue.value)
+                if (selected) {
+                    store.deviceSettings.food_defaultInventoryLocation = {id: selected.id!, name: selected.name} as InventoryLocationRef
+                }
+                return true
+            }
+            return false
+        },
+    },
+
     // One-shot actions
+    {key: 'inventory-booking', labelKey: 'InventoryBooking', icon: 'fa-solid fa-boxes-stacked', group: 'Actions', routeName: 'InventoryBookingPage', routeQuery: (item) => ({food_id: item.id})},
     {key: 'recipe', labelKey: 'Recipe', icon: 'fa-solid fa-book', group: 'Actions',
         routeName: 'RecipeViewPage', routeParams: (item) => ({id: item.recipe.id}),
         visible: (item: ModelItem) => !!item.recipe},
@@ -118,6 +254,8 @@ export const FOOD_STAT_DEFS: StatDef[] = [
     {key: 'onhand', labelKey: 'OnHand', icon: 'fa-solid fa-check-circle', color: 'success'},
     {key: 'shopping', labelKey: 'Shopping', icon: 'fa-solid fa-cart-shopping', color: 'info'},
     {key: 'ignored', labelKey: 'IgnoreShopping', icon: 'fa-solid fa-ban', color: 'warning'},
+    {key: 'inventory', labelKey: 'InInventory', icon: 'fa-solid fa-warehouse', color: 'info'},
+    {key: 'expired', labelKey: 'Expired', icon: 'fa-solid fa-calendar-xmark', color: 'error'},
 ]
 
 /**
@@ -130,7 +268,7 @@ export const FOOD_LIST_SETTINGS: ListSettings = {
     statsFooter: true,
     mobileList: true,
     defaults: {
-        quickActions: ['shopping', 'recipe'],
+        quickActions: ['shopping', 'recipe', 'pantry'],
         showStats: true,
         showMobileHeaders: true,
     },

@@ -26,7 +26,7 @@ export type ColumnType = 'text' | 'number' | 'boolean-indicator' | 'status-chip'
 /**
  * Filter control types for the filter panel.
  */
-export type FilterType = 'tristate' | 'model-select'
+export type FilterType = 'tristate' | 'model-select' | 'number'
 
 /**
  * Filter definition for a model list.
@@ -45,6 +45,10 @@ export type FilterDef = {
     modelName?: EditorSupportedModels,
     /** Group key for organizing filters in the panel */
     group?: string,
+    /** Default value for number-type filters (used as placeholder and initial value) */
+    defaultValue?: string,
+    /** Suffix text for number-type filters (e.g., "days") — localization key */
+    suffixKey?: string,
 }
 
 /**
@@ -92,6 +96,9 @@ export type ActionDef = {
      *  When provided, overrides the default confirmation dialog for this action.
      *  Receives the confirm dialog ref and translation function for custom UI. */
     confirmationHandler?: (item: ModelItem, confirmDialog: ActionConfirmDialogInstance, t: (key: string, params?: Record<string, any>) => string) => Promise<boolean>,
+    /** Confirmation handler for toggle activation (OFF → ON).
+     *  Called before the handler when toggling a toggle action from inactive to active. */
+    activationConfirmationHandler?: (item: ModelItem, confirmDialog: ActionConfirmDialogInstance, t: (key: string, params?: Record<string, any>) => string) => Promise<boolean>,
 }
 
 /**

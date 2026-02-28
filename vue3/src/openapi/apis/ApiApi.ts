@@ -781,7 +781,7 @@ export interface ApiFdcSearchRetrieveRequest {
 
 export interface ApiFoodAipropertiesCreateRequest {
     id: number;
-    food: Omit<Food, 'shopping'|'parent'|'numchild'|'numrecipe'|'fullName'|'substituteOnhand'>;
+    food: Omit<Food, 'shopping'|'parent'|'numchild'|'numrecipe'|'fullName'|'substituteOnhand'|'inInventory'|'substituteInventory'>;
     provider?: number;
 }
 
@@ -797,7 +797,7 @@ export interface ApiFoodCascadingListRequest {
 }
 
 export interface ApiFoodCreateRequest {
-    food: Omit<Food, 'shopping'|'parent'|'numchild'|'numrecipe'|'fullName'|'substituteOnhand'>;
+    food: Omit<Food, 'shopping'|'parent'|'numchild'|'numrecipe'|'fullName'|'substituteOnhand'|'inInventory'|'substituteInventory'>;
 }
 
 export interface ApiFoodDestroyRequest {
@@ -806,7 +806,7 @@ export interface ApiFoodDestroyRequest {
 
 export interface ApiFoodFdcCreateRequest {
     id: number;
-    food: Omit<Food, 'shopping'|'parent'|'numchild'|'numrecipe'|'fullName'|'substituteOnhand'>;
+    food: Omit<Food, 'shopping'|'parent'|'numchild'|'numrecipe'|'fullName'|'substituteOnhand'|'inInventory'|'substituteInventory'>;
 }
 
 export interface ApiFoodInheritFieldRetrieveRequest {
@@ -814,11 +814,15 @@ export interface ApiFoodInheritFieldRetrieveRequest {
 }
 
 export interface ApiFoodListRequest {
+    expired?: boolean;
+    expiringSoon?: number;
     hasChildren?: boolean;
+    hasInventory?: boolean;
     hasRecipe?: boolean;
     hasSubstitute?: boolean;
     ignoreShopping?: boolean;
     inShoppingList?: boolean;
+    inventoryLocation?: number;
     limit?: string;
     onhand?: boolean;
     ordering?: string;
@@ -837,13 +841,13 @@ export interface ApiFoodListRequest {
 export interface ApiFoodMergeUpdateRequest {
     id: number;
     target: number;
-    food: Omit<Food, 'shopping'|'parent'|'numchild'|'numrecipe'|'fullName'|'substituteOnhand'>;
+    food: Omit<Food, 'shopping'|'parent'|'numchild'|'numrecipe'|'fullName'|'substituteOnhand'|'inInventory'|'substituteInventory'>;
 }
 
 export interface ApiFoodMoveUpdateRequest {
     id: number;
     parent: number;
-    food: Omit<Food, 'shopping'|'parent'|'numchild'|'numrecipe'|'fullName'|'substituteOnhand'>;
+    food: Omit<Food, 'shopping'|'parent'|'numchild'|'numrecipe'|'fullName'|'substituteOnhand'|'inInventory'|'substituteInventory'>;
 }
 
 export interface ApiFoodNullingListRequest {
@@ -855,7 +859,7 @@ export interface ApiFoodNullingListRequest {
 
 export interface ApiFoodPartialUpdateRequest {
     id: number;
-    patchedFood?: Omit<PatchedFood, 'shopping'|'parent'|'numchild'|'numrecipe'|'fullName'|'substituteOnhand'>;
+    patchedFood?: Omit<PatchedFood, 'shopping'|'parent'|'numchild'|'numrecipe'|'fullName'|'substituteOnhand'|'inInventory'|'substituteInventory'>;
 }
 
 export interface ApiFoodProtectingListRequest {
@@ -880,7 +884,7 @@ export interface ApiFoodShoppingUpdateRequest {
 
 export interface ApiFoodUpdateRequest {
     id: number;
-    food: Omit<Food, 'shopping'|'parent'|'numchild'|'numrecipe'|'fullName'|'substituteOnhand'>;
+    food: Omit<Food, 'shopping'|'parent'|'numchild'|'numrecipe'|'fullName'|'substituteOnhand'|'inInventory'|'substituteInventory'>;
 }
 
 export interface ApiGetExternalFileLinkRetrieveRequest {
@@ -5197,8 +5201,20 @@ export class ApiApi extends runtime.BaseAPI {
     async apiFoodListRaw(requestParameters: ApiFoodListRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PaginatedFoodList>> {
         const queryParameters: any = {};
 
+        if (requestParameters['expired'] != null) {
+            queryParameters['expired'] = requestParameters['expired'];
+        }
+
+        if (requestParameters['expiringSoon'] != null) {
+            queryParameters['expiring_soon'] = requestParameters['expiringSoon'];
+        }
+
         if (requestParameters['hasChildren'] != null) {
             queryParameters['has_children'] = requestParameters['hasChildren'];
+        }
+
+        if (requestParameters['hasInventory'] != null) {
+            queryParameters['has_inventory'] = requestParameters['hasInventory'];
         }
 
         if (requestParameters['hasRecipe'] != null) {
@@ -5215,6 +5231,10 @@ export class ApiApi extends runtime.BaseAPI {
 
         if (requestParameters['inShoppingList'] != null) {
             queryParameters['in_shopping_list'] = requestParameters['inShoppingList'];
+        }
+
+        if (requestParameters['inventoryLocation'] != null) {
+            queryParameters['inventory_location'] = requestParameters['inventoryLocation'];
         }
 
         if (requestParameters['limit'] != null) {
