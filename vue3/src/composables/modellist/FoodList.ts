@@ -188,44 +188,49 @@ export const FOOD_ACTION_DEFS: ActionDef[] = [
             const saved = store.deviceSettings.food_defaultInventoryLocation as InventoryLocationRef | null
             if (saved) return true // default location already set, proceed immediately
 
-            const api = new ApiApi()
-            const result = await api.apiInventoryLocationList({pageSize: 100})
-            const locations = result.results ?? []
+            try {
+                const api = new ApiApi()
+                const result = await api.apiInventoryLocationList({pageSize: 100})
+                const locations = result.results ?? []
 
-            if (locations.length === 0) {
-                await confirmDialog.open({
-                    title: t('Pantry'),
-                    message: t('NoInventoryLocations'),
-                    confirmLabel: t('OK'),
+                if (locations.length === 0) {
+                    await confirmDialog.open({
+                        title: t('Pantry'),
+                        message: t('NoInventoryLocations'),
+                        confirmLabel: t('OK'),
+                    })
+                    return false
+                }
+
+                if (locations.length === 1) {
+                    // Auto-save the only location
+                    store.deviceSettings.food_defaultInventoryLocation = {id: locations[0].id!, name: locations[0].name} as InventoryLocationRef
+                    return true
+                }
+
+                // Multiple locations — prompt user to select
+                const confirmPromise = confirmDialog.open({
+                    title: t('SelectDefaultLocation'),
+                    message: t('SelectDefaultLocationMessage'),
+                    loading: true,
+                    confirmLabel: t('Confirm'),
+                    confirmColor: 'primary',
+                    confirmIcon: 'fa-solid fa-location-dot',
                 })
+                confirmDialog.setSelectOptions(locations.map(l => ({value: l.id!, label: l.name})))
+                const confirmed = (await confirmPromise) ?? false
+                if (confirmed && confirmDialog.selectedValue.value != null) {
+                    const selected = locations.find(l => l.id === confirmDialog.selectedValue.value)
+                    if (selected) {
+                        store.deviceSettings.food_defaultInventoryLocation = {id: selected.id!, name: selected.name} as InventoryLocationRef
+                    }
+                    return true
+                }
+                return false
+            } catch (err) {
+                useMessageStore().addError(ErrorMessageType.FETCH_ERROR, err)
                 return false
             }
-
-            if (locations.length === 1) {
-                // Auto-save the only location
-                store.deviceSettings.food_defaultInventoryLocation = {id: locations[0].id!, name: locations[0].name} as InventoryLocationRef
-                return true
-            }
-
-            // Multiple locations — prompt user to select
-            const confirmPromise = confirmDialog.open({
-                title: t('SelectDefaultLocation'),
-                message: t('SelectDefaultLocationMessage'),
-                loading: true,
-                confirmLabel: t('Confirm'),
-                confirmColor: 'primary',
-                confirmIcon: 'fa-solid fa-location-dot',
-            })
-            confirmDialog.setSelectOptions(locations.map(l => ({value: l.id!, label: l.name})))
-            const confirmed = (await confirmPromise) ?? false
-            if (confirmed && confirmDialog.selectedValue.value != null) {
-                const selected = locations.find(l => l.id === confirmDialog.selectedValue.value)
-                if (selected) {
-                    store.deviceSettings.food_defaultInventoryLocation = {id: selected.id!, name: selected.name} as InventoryLocationRef
-                }
-                return true
-            }
-            return false
         },
     },
 
