@@ -9,6 +9,8 @@ import {ApiApi, type Food, type InventoryEntry, type InventoryLocation} from '@/
 import {useUserPreferenceStore} from '@/stores/UserPreferenceStore'
 import {ErrorMessageType, useMessageStore} from '@/stores/MessageStore'
 
+const api = new ApiApi()
+
 /** Lightweight reference to an inventory location, saved in device settings. */
 type InventoryLocationRef = {id: number, name: string}
 
@@ -60,7 +62,7 @@ export const FOOD_ACTION_DEFS: ActionDef[] = [
         isActive: isOnShoppingList,
         colorResolver: (item: ModelItem) => isOnShoppingList(item) ? 'success' : undefined,
         handler: async (item) => {
-            const api = new ApiApi()
+
             if (isOnShoppingList(item)) {
                 await api.apiFoodShoppingDestroy({id: item.id})
                 item.shopping = 'False'
@@ -79,7 +81,7 @@ export const FOOD_ACTION_DEFS: ActionDef[] = [
                 confirmIcon: 'fa-solid fa-cart-shopping',
             })
             try {
-                const api = new ApiApi()
+    
                 const result = await api.apiShoppingListEntryList({food: item.id, pageSize: 100})
                 const foodEntries = (result.results ?? []).filter((e: any) => !e.checked)
                 const entries: ActionConfirmEntry[] = foodEntries.map((e: any) => {
@@ -118,7 +120,7 @@ export const FOOD_ACTION_DEFS: ActionDef[] = [
             return undefined
         },
         handler: async (item) => {
-            const api = new ApiApi()
+
             try {
                 if (isInInventory(item)) {
                     // Remove: delete all inventory entries for this food
@@ -164,7 +166,7 @@ export const FOOD_ACTION_DEFS: ActionDef[] = [
                 confirmIcon: '$pantry',
             })
             try {
-                const api = new ApiApi()
+    
                 const result = await api.apiInventoryEntryList({foodId: item.id, pageSize: 100})
                 const invEntries = result.results ?? []
                 const entries: ActionConfirmEntry[] = invEntries.map((e: InventoryEntry) => {
@@ -189,7 +191,7 @@ export const FOOD_ACTION_DEFS: ActionDef[] = [
             if (saved) return true // default location already set, proceed immediately
 
             try {
-                const api = new ApiApi()
+    
                 const result = await api.apiInventoryLocationList({pageSize: 100})
                 const locations = result.results ?? []
 

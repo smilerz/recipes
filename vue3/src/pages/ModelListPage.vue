@@ -155,7 +155,6 @@
                     :loading-ids="loadingIds"
                     :toggle-expand="toggleExpand"
                     :settings-key="modelSettingsKey"
-                    :settings-defaults="currentModel?.listSettings?.defaults"
                     :label-field="currentModel?.itemLabel"
                     @update:selected-items="selectedItems = $event"
                     @update:options="loadItems"
@@ -246,7 +245,7 @@
 <script setup lang="ts">
 
 
-import {computed, h, onBeforeMount, ref, shallowRef, toRef, triggerRef, watch, type Ref} from "vue";
+import {computed, h, onBeforeMount, provide, ref, shallowRef, toRef, triggerRef, watch, type Ref} from "vue";
 import {ErrorMessageType, useMessageStore} from "@/stores/MessageStore";
 import {useI18n} from "vue-i18n";
 import {EditorSupportedModels, GenericModel, getGenericModelFromString, Model, ModelTableHeaders} from "@/types/Models";
@@ -274,7 +273,7 @@ import ActionMenu from "@/components/common/ActionMenu.vue";
 import ModelListMobileView from "@/components/model_list/ModelListMobileView.vue";
 import ModelListStatsFooter from "@/components/model_list/ModelListStatsFooter.vue";
 import {useModelListActions} from "@/composables/modellist/useModelListActions";
-import {useModelListSettings} from "@/composables/modellist/useModelListSettings";
+import {useModelListSettings, MODEL_LIST_SETTINGS_KEY} from "@/composables/modellist/useModelListSettings";
 import {useModelListTree, CHILD_PAGE_SIZE} from "@/composables/modellist/useModelListTree";
 import type {ModelItem} from "@/composables/modellist/types";
 import {getAncestorPath} from "@/composables/modellist/types";
@@ -341,9 +340,11 @@ const {filterDefs, groupedFilterDefs, activeFilterCount, filterParams, getFilter
 const {mobile} = useDisplay()
 const modelSettingsKey = computed(() => currentModel.value?.listSettings?.settingsKey ?? '')
 const modelDefaults = computed(() => currentModel.value?.listSettings?.defaults)
-const {showStats, showColumnHeaders, quickActionKeys, desktopSubtitleKeys,
+const settings = useModelListSettings(modelSettingsKey, modelDefaults)
+const {isPinned, showStats, showColumnHeaders, quickActionKeys, desktopSubtitleKeys,
     mobileSubtitleKeys, swipeEnabled, swipeLeftKeys, swipeRightKeys,
-    showMobileHeaders, treeEnabled} = useModelListSettings(modelSettingsKey, modelDefaults)
+    showMobileHeaders, treeEnabled} = settings
+provide(MODEL_LIST_SETTINGS_KEY, settings)
 const useMobileList = computed(() => mobile.value && hasEnhancedList.value && !!currentModel.value?.listSettings?.mobileList)
 const statsAvailable = computed(() => !!currentModel.value?.listSettings?.statsFooter)
 const fetchChildren = (parentId: number, page: number) =>
@@ -379,7 +380,7 @@ const items = computed(() => {
     return list.slice()
 })
 
-const anyItemLoading = computed(() => items.value.some(i => i._isLoading))
+const anyItemLoading = computed(() => loadingIds.value.size > 0)
 
 // When children are collapsed, remove them from selection
 setOnCollapse((removedIds) => {
@@ -522,8 +523,6 @@ function renderNameContent(item: ModelItem, col: ModelTableHeaders) {
 // Build dynamic cell slots for enhanced columns (programmatic — Vue 3 can't v-for on template slots)
 const columnSlots = computed(() => {
     if (!hasEnhancedList.value) return {}
-    // Access to register as reactive dependency — recompute slots when subtitle settings change
-    const _subtitleCols = desktopSubtitleColumns.value
     const slots: Record<string, (...args: any[]) => any> = {}
     for (const col of enhancedColumns.value) {
         if (effectiveTreeActive.value && col.key === 'name') {
