@@ -12,13 +12,6 @@
                 </v-list-item>
             </v-list>
 
-            <v-list v-if="details.length > 0" density="compact" class="py-0">
-                <v-list-item v-for="d in details" :key="d.label" :prepend-icon="d.icon">
-                    <v-list-item-subtitle>{{ d.label }}</v-list-item-subtitle>
-                    <v-list-item-title>{{ d.value }}</v-list-item-title>
-                </v-list-item>
-            </v-list>
-
             <v-card-actions>
                 <v-spacer />
                 <v-btn variant="text" @click="cancel">{{ $t('Cancel') }}</v-btn>
@@ -39,12 +32,6 @@
 import {ref, watch} from 'vue'
 import VClosableCardTitle from '@/components/dialogs/VClosableCardTitle.vue'
 
-export type ActionConfirmDetail = {
-    label: string,
-    value: string,
-    icon?: string,
-}
-
 export type ActionConfirmEntry = {
     text: string,
     subtext?: string,
@@ -56,7 +43,6 @@ const loading = ref(false)
 const title = ref('')
 const icon = ref('')
 const message = ref('')
-const details = ref<ActionConfirmDetail[]>([])
 const entries = ref<ActionConfirmEntry[]>([])
 const confirmLabel = ref('')
 const confirmColor = ref('primary')
@@ -68,7 +54,6 @@ function open(opts: {
     title: string,
     icon?: string,
     message?: string,
-    details?: ActionConfirmDetail[],
     entries?: ActionConfirmEntry[],
     loading?: boolean,
     confirmLabel: string,
@@ -78,7 +63,6 @@ function open(opts: {
     title.value = opts.title
     icon.value = opts.icon ?? ''
     message.value = opts.message ?? ''
-    details.value = opts.details ?? []
     entries.value = opts.entries ?? []
     loading.value = opts.loading ?? false
     confirmLabel.value = opts.confirmLabel

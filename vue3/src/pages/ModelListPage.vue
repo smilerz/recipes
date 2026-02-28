@@ -145,23 +145,16 @@
                     :items-per-page="pageSize"
                     :select-mode="selectMode"
                     :selected-items="selectedItems"
-                    :enhanced-columns="enhancedColumns"
                     :all-columns="allColumns"
                     :action-defs="actionDefs"
                     :grouped-action-defs="groupedActionDefs"
                     :get-toggle-state="getToggleState"
-                    :quick-action-keys="quickActionKeys.slice(0, 3)"
                     :tree-active="effectiveTreeActive"
                     :tree-suspended="treeActive && !effectiveTreeActive"
                     :expanded-ids="expandedIds"
                     :loading-ids="loadingIds"
                     :toggle-expand="toggleExpand"
-                    :mobile-subtitle-keys="mobileSubtitleKeys"
-                    :swipe-enabled="swipeEnabled"
-                    :swipe-left-keys="swipeLeftKeys"
-                    :swipe-right-keys="swipeRightKeys"
                     :settings-key="modelSettingsKey"
-                    :show-mobile-headers="showMobileHeaders"
                     :label-field="currentModel?.itemLabel"
                     @update:selected-items="selectedItems = $event"
                     @update:options="loadItems"
@@ -239,10 +232,10 @@
         <model-merge-dialog :model="model" :source="singleMergeSource" v-model="singleMergeDialog" activator="model"
                             @change="reloadAfterMutation()"></model-merge-dialog>
 
-        <batch-edit-food-dialog :items="selectedItems" v-model="batchEditDialog" v-if="model === 'Food'" activator="model"
+        <batch-edit-food-dialog :items="(selectedItems as any)" v-model="batchEditDialog" v-if="model === 'Food'" activator="model"
                                 @change="reloadAfterMutation(); exitSelectMode()"></batch-edit-food-dialog>
 
-        <sync-dialog v-if="syncDialogItem" :sync="syncDialogItem" v-model="syncDialogOpen" activator="model" />
+        <sync-dialog v-if="syncDialogItem" :sync="(syncDialogItem as any)" v-model="syncDialogOpen" activator="model" />
 
         <action-confirm-dialog ref="confirmDialogRef" />
 
@@ -252,7 +245,7 @@
 <script setup lang="ts">
 
 
-import {computed, h, onBeforeMount, ref, shallowRef, toRef, triggerRef, watch} from "vue";
+import {computed, h, onBeforeMount, ref, shallowRef, toRef, triggerRef, watch, type Ref} from "vue";
 import {ErrorMessageType, useMessageStore} from "@/stores/MessageStore";
 import {useI18n} from "vue-i18n";
 import {EditorSupportedModels, GenericModel, getGenericModelFromString, Model, ModelTableHeaders} from "@/types/Models";
@@ -268,7 +261,7 @@ import BatchDeleteDialog from "@/components/dialogs/BatchDeleteDialog.vue";
 import {useRouteQuery} from "@vueuse/router";
 import BatchEditFoodDialog from "@/components/dialogs/BatchEditFoodDialog.vue";
 import {useModelListColumns} from "@/composables/modellist/useModelListColumns";
-import {useModelListFilters} from "@/composables/modellist/useModelListFilters";
+import {useUrlFilters} from "@/composables/useUrlFilters";
 import ModelListCellRenderer from "@/components/model_list/ModelListCellRenderer.vue";
 import ModelListDataTable from "@/components/model_list/ModelListDataTable.vue";
 import ModelListSettingsPanel from "@/components/model_list/ModelListSettingsPanel.vue"
@@ -295,7 +288,7 @@ const title = useTitle()
 const props = withDefaults(defineProps<{
     model?: EditorSupportedModels
 }>(), {
-    model: 'food',
+    model: 'Food',
 })
 
 // table config
@@ -310,6 +303,11 @@ const query = useRouteQuery('query', "")
 const page = useRouteQuery('page', 1, {transform: Number})
 const pageSize = useRouteQuery('pageSize', useUserPreferenceStore().deviceSettings.general_tableItemsPerPage, {transform: Number})
 const ordering = useRouteQuery('ordering', '')
+
+// Clear custom ordering when a search query is entered — relevance takes priority
+watch(query, (q) => {
+    if (q) ordering.value = ''
+})
 
 const selectedItems = ref<ModelItem[]>([])
 
@@ -330,12 +328,13 @@ const rawItems = shallowRef([] as Array<any>)
 const itemCount = ref(0)
 const stats = ref<Record<string, number>>({})
 
-const genericModel = ref({} as GenericModel)
+const genericModel = ref<GenericModel>({} as GenericModel)
 
 // column system: reads model reactively, handles visibility + display modes for all models
 const currentModel = computed(() => genericModel.value?.model)
 const {visibleHeaders, enhancedColumns, allColumns, hasEnhancedList, isColumnVisible, toggleColumn, getDisplayMode, setDisplayMode} = useModelListColumns(currentModel, t)
-const {filterDefs, groupedFilterDefs, activeFilterCount, filterParams, getFilter, setFilter, clearFilter, clearAllFilters} = useModelListFilters(currentModel)
+const filterDefsFromModel = computed(() => currentModel.value?.filterDefs ?? [])
+const {filterDefs, groupedFilterDefs, activeFilterCount, filterParams, getFilter, setFilter, clearFilter, clearAllFilters} = useUrlFilters(filterDefsFromModel)
 
 // device settings + tree view
 const {mobile} = useDisplay()
@@ -346,10 +345,10 @@ const {showStats, showColumnHeaders, quickActionKeys, desktopSubtitleKeys,
 const useMobileList = computed(() => mobile.value && hasEnhancedList.value && !!currentModel.value?.listSettings?.mobileList)
 const statsAvailable = computed(() => !!currentModel.value?.listSettings?.statsFooter)
 const fetchChildren = (parentId: number, page: number) =>
-    genericModel.value.list({...filterParams.value, root: parentId, pageSize: CHILD_PAGE_SIZE, page})
+    genericModel.value.list({...filterParams.value, root: parentId, pageSize: CHILD_PAGE_SIZE, page} as any)
         .then((r: any) => ({results: r.results ?? [], hasMore: !!r.next}))
 const {treeActive, expandedIds, loadingIds, toggleExpand, loadMoreChildren,
-    buildFlatList, updateCachedChild, clearTreeState, setOnCollapse} =
+    buildFlatList, updateCachedChild, clearTreeState, setOnCollapse, renderTreeCell} =
     useModelListTree(currentModel, fetchChildren, treeEnabled)
 
 /** Tree is suspended when search, filters, or non-default sorting are active.
@@ -408,7 +407,7 @@ function handleAction(key: string, item: ModelItem) {
 }
 
 const {actionDefs, groupedActionDefs, executeAction, getToggleState} = useModelListActions(
-    currentModel, genericModel, modelNameRef, handleAction,
+    currentModel, genericModel as Ref<GenericModel>, modelNameRef, handleAction,
     (item: ModelItem, field: string) => {
         const idx = rawItems.value.findIndex(i => i.id === item.id)
         if (idx >= 0) {
@@ -434,13 +433,13 @@ async function handleActionWithConfirmation(key: string, item: ModelItem) {
     if (action.requiresConfirmation) {
         if (action.isToggle && getToggleState(action, item)) {
             // Toggle is active → user wants to deactivate → confirm
-            if (action.confirmationHandler) {
+            if (action.confirmationHandler && confirmDialogRef.value) {
                 const confirmed = await action.confirmationHandler(item, confirmDialogRef.value, t)
                 if (!confirmed) return
             }
         } else if (!action.isToggle) {
             // Non-toggle destructive action — custom handler or generic confirm
-            if (action.confirmationHandler) {
+            if (action.confirmationHandler && confirmDialogRef.value) {
                 const confirmed = await action.confirmationHandler(item, confirmDialogRef.value, t)
                 if (!confirmed) return
             } else {
@@ -520,63 +519,8 @@ const columnSlots = computed(() => {
     const slots: Record<string, (...args: any[]) => any> = {}
     for (const col of enhancedColumns.value) {
         if (effectiveTreeActive.value && col.key === 'name') {
-            slots[`item.${col.key}`] = ({item}: {item: ModelItem}) => {
-                if (item._isLoadMore) {
-                    const depth = item._depth ?? 0
-                    const indent = depth * (mobile.value ? 20 : 28)
-                    const isLoading = loadingIds.value.has(item._parentId)
-                    return h('div', {
-                        class: 'd-flex align-center',
-                        style: {paddingLeft: `${indent}px`},
-                    }, [
-                        h('button', {
-                            type: 'button',
-                            class: 'text-primary text-caption font-weight-medium',
-                            style: {cursor: 'pointer', appearance: 'none', border: 'none', background: 'none', padding: '4px 8px'},
-                            disabled: isLoading,
-                            'aria-label': t('Load_More'),
-                            onClick: (e: Event) => { e.stopPropagation(); loadMoreChildren(item._parentId) },
-                        }, isLoading
-                            ? [h('i', {class: 'fa-solid fa-spinner fa-spin', style: {fontSize: '12px', marginRight: '6px'}}), t('Load_More')]
-                            : [h('i', {class: 'fa-solid fa-ellipsis', style: {fontSize: '12px', marginRight: '6px'}}), t('Load_More')]
-                        ),
-                    ])
-                }
-
-                const depth = item._depth ?? 0
-                const indent = depth * (mobile.value ? 20 : 28)
-                const hasChildren = (item.numchild ?? 0) > 0
-                const isExpanded = expandedIds.value.has(item.id)
-                const isLoading = item._isLoading
-
-                const children: ReturnType<typeof h>[] = []
-
-                if (hasChildren) {
-                    if (isLoading) {
-                        children.push(h('span', {class: 'tree-expand-btn', style: {width: '28px', display: 'inline-flex', justifyContent: 'center', alignItems: 'center', opacity: '0.4'}},
-                            [h('i', {class: 'fa-solid fa-chevron-down', style: {fontSize: '12px'}})]
-                        ))
-                    } else {
-                        children.push(h('button', {
-                            class: ['tree-expand-btn', isExpanded ? 'tree-chevron-expanded' : ''],
-                            style: {cursor: 'pointer', width: '28px', display: 'inline-flex', justifyContent: 'center', alignItems: 'center', appearance: 'none', border: 'none', background: 'none', padding: 0},
-                            'aria-expanded': isExpanded,
-                            'aria-label': t('Toggle'),
-                            onClick: (e: Event) => { e.stopPropagation(); toggleExpand(item.id) },
-                            onKeydown: (e: KeyboardEvent) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); e.stopPropagation(); toggleExpand(item.id) } },
-                        }, [h('i', {class: 'fa-solid fa-chevron-right', style: {fontSize: '12px'}})]))
-                    }
-                } else if (depth > 0) {
-                    children.push(h('span', {style: {width: '28px', display: 'inline-block'}}))
-                }
-
-                children.push(renderNameContent(item, col))
-
-                return h('div', {
-                    class: 'd-flex align-center',
-                    style: {paddingLeft: `${indent}px`},
-                }, children)
-            }
+            slots[`item.${col.key}`] = ({item}: {item: ModelItem}) =>
+                renderTreeCell(item, renderNameContent(item, col), mobile, t)
         } else if (col.key === 'name') {
             slots[`item.${col.key}`] = ({item}: {item: ModelItem}) => renderNameContent(item, col)
         } else {
@@ -652,13 +596,19 @@ function loadItems(options: VDataTableUpdateOptions) {
         useUserPreferenceStore().deviceSettings.general_tableItemsPerPage = options.itemsPerPage
     }
 
+    // Don't send ordering when search query is active (relevance ordering takes
+    // priority) or when tree mode is active (hierarchy ordering must be preserved)
+    const effectiveOrdering = (!query.value && !effectiveTreeActive.value)
+        ? (ordering.value || undefined)
+        : undefined
+
     const listParams = {
         ...filterParams.value,
         ...(effectiveTreeActive.value ? {root: 0} : {}),
         query: query.value,
         page: options.page,
         pageSize: pageSize.value,
-        ordering: ordering.value || undefined,
+        ordering: effectiveOrdering,
     }
     genericModel.value.list(listParams).then((r: any) => {
         rawItems.value = r.results

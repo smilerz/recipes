@@ -3,6 +3,9 @@
  * When a Model provides these optional config fields, ModelListPage
  * activates enhanced rendering (configurable columns, filters, actions, settings).
  */
+import type ActionConfirmDialog from '@/components/dialogs/ActionConfirmDialog.vue'
+import type {EditorSupportedModels} from '@/types/Models'
+type ActionConfirmDialogInstance = InstanceType<typeof ActionConfirmDialog>
 
 /**
  * Base interface for items displayed in a model list.
@@ -39,7 +42,7 @@ export type FilterDef = {
     /** Icon to display next to the filter (FontAwesome class) */
     icon?: string,
     /** For model-select type: the model name to use for lookup */
-    modelName?: string,
+    modelName?: EditorSupportedModels,
     /** Group key for organizing filters in the panel */
     group?: string,
 }
@@ -88,7 +91,7 @@ export type ActionDef = {
     /** Custom confirmation handler — returns true to proceed, false to cancel.
      *  When provided, overrides the default confirmation dialog for this action.
      *  Receives the confirm dialog ref and translation function for custom UI. */
-    confirmationHandler?: (item: ModelItem, confirmDialog: any, t: (key: string, params?: Record<string, any>) => string) => Promise<boolean>,
+    confirmationHandler?: (item: ModelItem, confirmDialog: ActionConfirmDialogInstance, t: (key: string, params?: Record<string, any>) => string) => Promise<boolean>,
 }
 
 /**

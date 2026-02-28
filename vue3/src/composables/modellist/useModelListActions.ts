@@ -1,3 +1,8 @@
+/**
+ * Composable for executing row-level actions (edit, delete, toggle, merge, move)
+ * in ModelListPage. Resolves action definitions from the model config into
+ * executable handlers with confirmation dialogs, API calls, and cache updates.
+ */
 import {computed, type ComputedRef, type Ref} from 'vue'
 import {useRouter} from 'vue-router'
 import type {ActionDef, ModelItem} from './types'
