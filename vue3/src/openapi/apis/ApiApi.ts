@@ -20,6 +20,7 @@ import type {
   AiProvider,
   AutoMealPlan,
   Automation,
+  AutomationStats,
   BookmarkletImport,
   ConnectorConfig,
   CookLog,
@@ -46,6 +47,7 @@ import type {
   InventoryLog,
   InviteLink,
   Keyword,
+  KeywordStats,
   Localization,
   MealPlan,
   MealType,
@@ -164,6 +166,7 @@ import type {
   SyncLog,
   Unit,
   UnitConversion,
+  UnitStats,
   User,
   UserFile,
   UserPreference,
@@ -181,6 +184,8 @@ import {
     AutoMealPlanToJSON,
     AutomationFromJSON,
     AutomationToJSON,
+    AutomationStatsFromJSON,
+    AutomationStatsToJSON,
     BookmarkletImportFromJSON,
     BookmarkletImportToJSON,
     ConnectorConfigFromJSON,
@@ -233,6 +238,8 @@ import {
     InviteLinkToJSON,
     KeywordFromJSON,
     KeywordToJSON,
+    KeywordStatsFromJSON,
+    KeywordStatsToJSON,
     LocalizationFromJSON,
     LocalizationToJSON,
     MealPlanFromJSON,
@@ -469,6 +476,8 @@ import {
     UnitToJSON,
     UnitConversionFromJSON,
     UnitConversionToJSON,
+    UnitStatsFromJSON,
+    UnitStatsToJSON,
     UserFromJSON,
     UserToJSON,
     UserFileFromJSON,
@@ -585,9 +594,15 @@ export interface ApiAutomationDestroyRequest {
 }
 
 export interface ApiAutomationListRequest {
+    disabled?: boolean;
+    limit?: string;
+    ordering?: string;
     page?: number;
     pageSize?: number;
+    query?: string;
+    random?: string;
     type?: Array<ApiAutomationListTypeEnum>;
+    updatedAt?: string;
 }
 
 export interface ApiAutomationPartialUpdateRequest {
@@ -823,18 +838,15 @@ export interface ApiFoodListRequest {
     ignoreShopping?: boolean;
     inShoppingList?: boolean;
     inventoryLocation?: number;
-    limit?: string;
     onhand?: boolean;
     ordering?: string;
     page?: number;
     pageSize?: number;
     query?: string;
-    random?: string;
     root?: number;
     rootTree?: number;
     supermarketCategory?: number;
     tree?: number;
-    updatedAt?: string;
     usedInRecipes?: boolean;
 }
 
@@ -1157,7 +1169,10 @@ export interface ApiKeywordDestroyRequest {
 }
 
 export interface ApiKeywordListRequest {
+    hasChildren?: boolean;
+    hasRecipe?: boolean;
     limit?: string;
+    ordering?: string;
     page?: number;
     pageSize?: number;
     query?: string;
@@ -2096,7 +2111,9 @@ export interface ApiUnitDestroyRequest {
 }
 
 export interface ApiUnitListRequest {
+    hasRecipe?: boolean;
     limit?: string;
+    ordering?: string;
     page?: number;
     pageSize?: number;
     query?: string;
@@ -3234,6 +3251,18 @@ export class ApiApi extends runtime.BaseAPI {
     async apiAutomationListRaw(requestParameters: ApiAutomationListRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PaginatedAutomationList>> {
         const queryParameters: any = {};
 
+        if (requestParameters['disabled'] != null) {
+            queryParameters['disabled'] = requestParameters['disabled'];
+        }
+
+        if (requestParameters['limit'] != null) {
+            queryParameters['limit'] = requestParameters['limit'];
+        }
+
+        if (requestParameters['ordering'] != null) {
+            queryParameters['ordering'] = requestParameters['ordering'];
+        }
+
         if (requestParameters['page'] != null) {
             queryParameters['page'] = requestParameters['page'];
         }
@@ -3242,8 +3271,20 @@ export class ApiApi extends runtime.BaseAPI {
             queryParameters['page_size'] = requestParameters['pageSize'];
         }
 
+        if (requestParameters['query'] != null) {
+            queryParameters['query'] = requestParameters['query'];
+        }
+
+        if (requestParameters['random'] != null) {
+            queryParameters['random'] = requestParameters['random'];
+        }
+
         if (requestParameters['type'] != null) {
             queryParameters['type'] = requestParameters['type'];
+        }
+
+        if (requestParameters['updatedAt'] != null) {
+            queryParameters['updated_at'] = requestParameters['updatedAt'];
         }
 
         const headerParameters: runtime.HTTPHeaders = {};
@@ -3344,6 +3385,36 @@ export class ApiApi extends runtime.BaseAPI {
      */
     async apiAutomationRetrieve(requestParameters: ApiAutomationRetrieveRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Automation> {
         const response = await this.apiAutomationRetrieveRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * logs request counts to redis cache total/per user/
+     */
+    async apiAutomationStatsRetrieveRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<AutomationStats>> {
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.apiKey) {
+            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
+        }
+
+        const response = await this.request({
+            path: `/api/automation/stats/`,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => AutomationStatsFromJSON(jsonValue));
+    }
+
+    /**
+     * logs request counts to redis cache total/per user/
+     */
+    async apiAutomationStatsRetrieve(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<AutomationStats> {
+        const response = await this.apiAutomationStatsRetrieveRaw(initOverrides);
         return await response.value();
     }
 
@@ -5237,10 +5308,6 @@ export class ApiApi extends runtime.BaseAPI {
             queryParameters['inventory_location'] = requestParameters['inventoryLocation'];
         }
 
-        if (requestParameters['limit'] != null) {
-            queryParameters['limit'] = requestParameters['limit'];
-        }
-
         if (requestParameters['onhand'] != null) {
             queryParameters['onhand'] = requestParameters['onhand'];
         }
@@ -5261,10 +5328,6 @@ export class ApiApi extends runtime.BaseAPI {
             queryParameters['query'] = requestParameters['query'];
         }
 
-        if (requestParameters['random'] != null) {
-            queryParameters['random'] = requestParameters['random'];
-        }
-
         if (requestParameters['root'] != null) {
             queryParameters['root'] = requestParameters['root'];
         }
@@ -5279,10 +5342,6 @@ export class ApiApi extends runtime.BaseAPI {
 
         if (requestParameters['tree'] != null) {
             queryParameters['tree'] = requestParameters['tree'];
-        }
-
-        if (requestParameters['updatedAt'] != null) {
-            queryParameters['updated_at'] = requestParameters['updatedAt'];
         }
 
         if (requestParameters['usedInRecipes'] != null) {
@@ -8052,8 +8111,20 @@ export class ApiApi extends runtime.BaseAPI {
     async apiKeywordListRaw(requestParameters: ApiKeywordListRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PaginatedKeywordList>> {
         const queryParameters: any = {};
 
+        if (requestParameters['hasChildren'] != null) {
+            queryParameters['has_children'] = requestParameters['hasChildren'];
+        }
+
+        if (requestParameters['hasRecipe'] != null) {
+            queryParameters['has_recipe'] = requestParameters['hasRecipe'];
+        }
+
         if (requestParameters['limit'] != null) {
             queryParameters['limit'] = requestParameters['limit'];
+        }
+
+        if (requestParameters['ordering'] != null) {
+            queryParameters['ordering'] = requestParameters['ordering'];
         }
 
         if (requestParameters['page'] != null) {
@@ -8392,6 +8463,36 @@ export class ApiApi extends runtime.BaseAPI {
      */
     async apiKeywordRetrieve(requestParameters: ApiKeywordRetrieveRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Keyword> {
         const response = await this.apiKeywordRetrieveRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * logs request counts to redis cache total/per user/
+     */
+    async apiKeywordStatsRetrieveRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<KeywordStats>> {
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.apiKey) {
+            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
+        }
+
+        const response = await this.request({
+            path: `/api/keyword/stats/`,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => KeywordStatsFromJSON(jsonValue));
+    }
+
+    /**
+     * logs request counts to redis cache total/per user/
+     */
+    async apiKeywordStatsRetrieve(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<KeywordStats> {
+        const response = await this.apiKeywordStatsRetrieveRaw(initOverrides);
         return await response.value();
     }
 
@@ -15748,8 +15849,16 @@ export class ApiApi extends runtime.BaseAPI {
     async apiUnitListRaw(requestParameters: ApiUnitListRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PaginatedUnitList>> {
         const queryParameters: any = {};
 
+        if (requestParameters['hasRecipe'] != null) {
+            queryParameters['has_recipe'] = requestParameters['hasRecipe'];
+        }
+
         if (requestParameters['limit'] != null) {
             queryParameters['limit'] = requestParameters['limit'];
+        }
+
+        if (requestParameters['ordering'] != null) {
+            queryParameters['ordering'] = requestParameters['ordering'];
         }
 
         if (requestParameters['page'] != null) {
@@ -16022,6 +16131,36 @@ export class ApiApi extends runtime.BaseAPI {
      */
     async apiUnitRetrieve(requestParameters: ApiUnitRetrieveRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Unit> {
         const response = await this.apiUnitRetrieveRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * logs request counts to redis cache total/per user/
+     */
+    async apiUnitStatsRetrieveRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<UnitStats>> {
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.apiKey) {
+            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
+        }
+
+        const response = await this.request({
+            path: `/api/unit/stats/`,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => UnitStatsFromJSON(jsonValue));
+    }
+
+    /**
+     * logs request counts to redis cache total/per user/
+     */
+    async apiUnitStatsRetrieve(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<UnitStats> {
+        const response = await this.apiUnitStatsRetrieveRaw(initOverrides);
         return await response.value();
     }
 

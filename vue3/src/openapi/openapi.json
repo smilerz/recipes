@@ -601,6 +601,22 @@ paths:
       operationId: apiAutomationList
       description: logs request counts to redis cache total/per user/
       parameters:
+      - in: query
+        name: disabled
+        schema:
+          type: boolean
+        description: Filter by disabled status
+      - in: query
+        name: limit
+        schema:
+          type: string
+        description: limit number of entries to return
+      - in: query
+        name: ordering
+        schema:
+          type: string
+        description: 'Order results by field. Allowed: name, -name, type, -type, order,
+          -order.'
       - name: page
         required: false
         in: query
@@ -613,6 +629,16 @@ paths:
         description: Number of results to return per page.
         schema:
           type: integer
+      - in: query
+        name: query
+        schema:
+          type: string
+        description: lookup if query string is contained within the name, case insensitive
+      - in: query
+        name: random
+        schema:
+          type: string
+        description: randomly orders entries (only works together with limit)
       - in: query
         name: type
         schema:
@@ -632,6 +658,16 @@ paths:
             - UNIT_REPLACE
         description: Return the Automations matching the automation type.  Repeat
           for multiple.
+      - in: query
+        name: updated_at
+        schema:
+          type: string
+        description: if model has an updated_at timestamp, filter only models updated
+          at or after datetime
+        examples:
+          DateFormat:
+            value: '1972-12-05'
+            summary: Date Format
       tags:
       - api
       security:
@@ -773,6 +809,21 @@ paths:
       responses:
         '204':
           description: No response body
+  /api/automation/stats/:
+    get:
+      operationId: apiAutomationStatsRetrieve
+      description: logs request counts to redis cache total/per user/
+      tags:
+      - api
+      security:
+      - ApiKeyAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AutomationStats'
+          description: ''
   /api/bookmarklet-import/:
     get:
       operationId: apiBookmarkletImportList
@@ -1851,11 +1902,6 @@ paths:
           type: integer
         description: Filter by inventory location ID (only entries with amount > 0)
       - in: query
-        name: limit
-        schema:
-          type: string
-        description: limit number of entries to return
-      - in: query
         name: onhand
         schema:
           type: boolean
@@ -1886,11 +1932,6 @@ paths:
         description: Search foods by name (fuzzy or contains depending on user search
           preferences)
       - in: query
-        name: random
-        schema:
-          type: string
-        description: randomly orders entries (only works together with limit)
-      - in: query
         name: root
         schema:
           type: integer
@@ -1911,12 +1952,6 @@ paths:
         schema:
           type: integer
         description: Return all self and children of food with ID [int].
-      - in: query
-        name: updated_at
-        schema:
-          type: string
-        description: if model has an updated_at timestamp, filter only models updated
-          at or after datetime
       - in: query
         name: used_in_recipes
         schema:
@@ -2543,6 +2578,164 @@ paths:
               schema:
                 $ref: '#/components/schemas/Group'
           description: ''
+  /api/household/:
+    get:
+      operationId: apiHouseholdList
+      description: logs request counts to redis cache total/per user/
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      tags:
+      - api
+      security:
+      - ApiKeyAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedHouseholdList'
+          description: ''
+    post:
+      operationId: apiHouseholdCreate
+      description: logs request counts to redis cache total/per user/
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Household'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Household'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Household'
+        required: true
+      security:
+      - ApiKeyAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Household'
+          description: ''
+  /api/household/{id}/:
+    get:
+      operationId: apiHouseholdRetrieve
+      description: logs request counts to redis cache total/per user/
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this household.
+        required: true
+      tags:
+      - api
+      security:
+      - ApiKeyAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Household'
+          description: ''
+    put:
+      operationId: apiHouseholdUpdate
+      description: logs request counts to redis cache total/per user/
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this household.
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Household'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Household'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Household'
+        required: true
+      security:
+      - ApiKeyAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Household'
+          description: ''
+    patch:
+      operationId: apiHouseholdPartialUpdate
+      description: logs request counts to redis cache total/per user/
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this household.
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedHousehold'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedHousehold'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedHousehold'
+      security:
+      - ApiKeyAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Household'
+          description: ''
+    delete:
+      operationId: apiHouseholdDestroy
+      description: logs request counts to redis cache total/per user/
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this household.
+        required: true
+      tags:
+      - api
+      security:
+      - ApiKeyAuth: []
+      responses:
+        '204':
+          description: No response body
   /api/import/:
     post:
       operationId: apiImportCreate
@@ -3797,10 +3990,26 @@ paths:
       description: logs request counts to redis cache total/per user/
       parameters:
       - in: query
+        name: has_children
+        schema:
+          type: boolean
+        description: Filter by whether keyword has child keywords
+      - in: query
+        name: has_recipe
+        schema:
+          type: boolean
+        description: Filter by whether keyword is used in any recipe
+      - in: query
         name: limit
         schema:
           type: string
         description: limit number of entries to return
+      - in: query
+        name: ordering
+        schema:
+          type: string
+        description: 'Order results by field. Allowed: name, -name, numrecipe, -numrecipe,
+          numchild, -numchild.'
       - name: page
         required: false
         in: query
@@ -3817,7 +4026,8 @@ paths:
         name: query
         schema:
           type: string
-        description: lookup if query string is contained within the name, case insensitive
+        description: Search keywords by name (fuzzy or contains depending on user
+          search preferences)
       - in: query
         name: random
         schema:
@@ -3827,18 +4037,18 @@ paths:
         name: root
         schema:
           type: integer
-        description: Return first level children of {obj} with ID [int].  Integer
-          0 will return root {obj}s.
+        description: Return first level children of keyword with ID [int]. Integer
+          0 will return root keywords.
       - in: query
         name: root_tree
         schema:
           type: integer
-        description: Return all items belonging to the tree of the given {obj} id
+        description: Return all items belonging to the tree of the given keyword id
       - in: query
         name: tree
         schema:
           type: integer
-        description: Return all self and children of {obj} with ID [int].
+        description: Return all self and children of keyword with ID [int].
       - in: query
         name: updated_at
         schema:
@@ -4188,6 +4398,21 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/PaginatedGenericModelReferenceList'
+          description: ''
+  /api/keyword/stats/:
+    get:
+      operationId: apiKeywordStatsRetrieve
+      description: logs request counts to redis cache total/per user/
+      tags:
+      - api
+      security:
+      - ApiKeyAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/KeywordStats'
           description: ''
   /api/localization/:
     get:
@@ -9349,10 +9574,20 @@ paths:
       description: logs request counts to redis cache total/per user/
       parameters:
       - in: query
+        name: has_recipe
+        schema:
+          type: boolean
+        description: Filter by whether unit is used in any recipe
+      - in: query
         name: limit
         schema:
           type: string
         description: limit number of entries to return
+      - in: query
+        name: ordering
+        schema:
+          type: string
+        description: 'Order results by field. Allowed: name, -name, numrecipe, -numrecipe.'
       - name: page
         required: false
         in: query
@@ -9369,7 +9604,8 @@ paths:
         name: query
         schema:
           type: string
-        description: lookup if query string is contained within the name, case insensitive
+        description: Search units by name (fuzzy or contains depending on user search
+          preferences)
       - in: query
         name: random
         schema:
@@ -9852,6 +10088,21 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/PaginatedGenericModelReferenceList'
+          description: ''
+  /api/unit/stats/:
+    get:
+      operationId: apiUnitStatsRetrieve
+      description: logs request counts to redis cache total/per user/
+      tags:
+      - api
+      security:
+      - ApiKeyAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UnitStats'
           description: ''
   /api/user/:
     get:
@@ -10837,6 +11088,49 @@ components:
       required:
       - created_by
       - type
+    AutomationStats:
+      type: object
+      properties:
+        enabled:
+          type: integer
+        disabled:
+          type: integer
+        total:
+          type: integer
+        type_FOOD_ALIAS:
+          type: integer
+          default: 0
+        type_UNIT_ALIAS:
+          type: integer
+          default: 0
+        type_KEYWORD_ALIAS:
+          type: integer
+          default: 0
+        type_DESCRIPTION_REPLACE:
+          type: integer
+          default: 0
+        type_INSTRUCTION_REPLACE:
+          type: integer
+          default: 0
+        type_NEVER_UNIT:
+          type: integer
+          default: 0
+        type_TRANSPOSE_WORDS:
+          type: integer
+          default: 0
+        type_FOOD_REPLACE:
+          type: integer
+          default: 0
+        type_UNIT_REPLACE:
+          type: integer
+          default: 0
+        type_NAME_REPLACE:
+          type: integer
+          default: 0
+      required:
+      - disabled
+      - enabled
+      - total
     AutomationTypeEnum:
       enum:
       - FOOD_ALIAS
@@ -11568,6 +11862,28 @@ components:
           readOnly: true
       required:
       - name
+    Household:
+      type: object
+      description: Adds nested create feature
+      properties:
+        id:
+          type: integer
+          readOnly: false
+        name:
+          type: string
+          maxLength: 128
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - created_at
+      - name
+      - updated_at
     ImportLog:
       type: object
       properties:
@@ -11976,7 +12292,10 @@ components:
           maxLength: 64
         is_freezer:
           type: boolean
+        household:
+          $ref: '#/components/schemas/Household'
       required:
+      - household
       - name
     InventoryLog:
       type: object
@@ -12159,6 +12478,19 @@ components:
           readOnly: true
       required:
       - label
+    KeywordStats:
+      type: object
+      properties:
+        with_recipe:
+          type: integer
+        with_children:
+          type: integer
+        total:
+          type: integer
+      required:
+      - total
+      - with_children
+      - with_recipe
     Localization:
       type: object
       properties:
@@ -12556,6 +12888,32 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/GenericModelReference'
+        timestamp:
+          type: string
+          format: date-time
+    PaginatedHouseholdList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Household'
         timestamp:
           type: string
           format: date-time
@@ -13745,6 +14103,24 @@ components:
         substitute_inventory:
           type: boolean
           readOnly: true
+    PatchedHousehold:
+      type: object
+      description: Adds nested create feature
+      properties:
+        id:
+          type: integer
+          readOnly: false
+        name:
+          type: string
+          maxLength: 128
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
     PatchedImportLog:
       type: object
       properties:
@@ -13924,6 +14300,8 @@ components:
           maxLength: 64
         is_freezer:
           type: boolean
+        household:
+          $ref: '#/components/schemas/Household'
     PatchedInviteLink:
       type: object
       description: Adds nested create feature
@@ -15153,6 +15531,10 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Group'
+        household:
+          allOf:
+          - $ref: '#/components/schemas/Household'
+          nullable: true
         active:
           type: boolean
         internal_note:
@@ -16794,6 +17176,16 @@ components:
       - converted_amount
       - converted_unit
       - name
+    UnitStats:
+      type: object
+      properties:
+        with_recipe:
+          type: integer
+        total:
+          type: integer
+      required:
+      - total
+      - with_recipe
     User:
       type: object
       description: Adds nested create feature
@@ -17033,6 +17425,10 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Group'
+        household:
+          allOf:
+          - $ref: '#/components/schemas/Household'
+          nullable: true
         active:
           type: boolean
         internal_note:

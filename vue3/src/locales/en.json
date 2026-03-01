@@ -253,6 +253,7 @@
   "FreezerExpiryHelp": "Common shelf lives for items inside a freezer.",
   "Friday": "Friday",
   "FromBalance": "From Balance",
+  "FullName": "Full Name",
   "Fulltext": "Fulltext",
   "FulltextHelp": "Fields to full text search.  Note: 'web', 'phrase', and 'raw' search methods only function with fulltext fields.",
   "Fuzzy": "Fuzzy",
