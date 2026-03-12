@@ -2,11 +2,6 @@ name: Build Branch Test Image
 
 on:
   workflow_dispatch:
-    inputs:
-      branch:
-        description: 'Branch to build (e.g. fix/household-sharing-cleanup)'
-        required: true
-        default: 'develop'
 
 jobs:
   build:
@@ -27,8 +22,5 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           file: Dockerfile.branch-test
-          build-args: |
-            REPO=smilerz/recipes
-            BRANCH=${{ inputs.branch }}
           push: true
           tags: smilerz/recipes:branch
