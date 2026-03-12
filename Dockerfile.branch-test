@@ -1,49 +1,43 @@
-# Multi-stage build: clone a branch from GitHub, build Vue, run Tandoor
+# Dev-capable Tandoor image: shell in, switch branches, rebuild, test.
 #
-# Usage:
-#   BRANCH=fix/my-branch docker compose -f .claude/docker/docker-compose.branch-test.yml up --build
+# Builds from develop with all tools available (git, yarn, pip, vite).
+# Inside the container:
+#   git fetch && git checkout fix/my-branch
+#   cd vue3 && yarn install && yarn build && cd ..
+#   venv/bin/pip install -r requirements.txt
+#   venv/bin/python manage.py collectstatic --noinput --clear
+#   # restart container or re-run boot.sh
 
-ARG REPO=smilerz/recipes
-ARG BRANCH=develop
-
-# --- Stage 1: Build Vue frontend ---
-FROM node:20-alpine AS vue-builder
-ARG REPO
-ARG BRANCH
-
-RUN apk add --no-cache git
-RUN git clone --depth 1 --branch ${BRANCH} https://github.com/${REPO}.git /src
-WORKDIR /src/vue3
-RUN yarn install --frozen-lockfile && yarn build
-
-# --- Stage 2: Production image (mirrors upstream Dockerfile + Vue assets) ---
 FROM python:3.13-alpine3.23
 
-RUN apk add --no-cache postgresql-libs postgresql-client gettext zlib libjpeg libwebp \
-    libxml2-dev libxslt-dev openldap git libgcc libstdc++ nginx tini envsubst nodejs npm
+RUN apk add --no-cache \
+    postgresql-libs postgresql-client gettext zlib libjpeg libwebp \
+    libxml2-dev libxslt-dev openldap git libgcc libstdc++ \
+    nginx tini envsubst nodejs npm yarn bash
 
 ENV PYTHONUNBUFFERED=1 \
     DOCKER=true
 
 EXPOSE 80 8080
 
-RUN mkdir /opt/recipes
 WORKDIR /opt/recipes
 
-# Copy full source from cloned repo (includes boot.sh, manage.py, etc.)
-COPY --from=vue-builder /src ./
+# Clone full repo (not shallow — need to switch branches)
+RUN git clone https://github.com/smilerz/recipes.git . && \
+    git checkout develop
 
-# Python deps (strip dev deps, same as upstream Dockerfile)
-RUN sed -i '/# Development/,$d' requirements.txt
-RUN apk add --no-cache --virtual .build-deps gcc musl-dev postgresql-dev zlib-dev jpeg-dev \
-    libwebp-dev openssl-dev libffi-dev cargo openldap-dev python3-dev xmlsec-dev xmlsec \
-    build-base g++ curl rust && \
+# Python deps (keep build deps for pip install after branch switch)
+RUN apk add --no-cache gcc musl-dev postgresql-dev zlib-dev jpeg-dev \
+    libwebp-dev openssl-dev libffi-dev cargo openldap-dev python3-dev \
+    xmlsec-dev xmlsec build-base g++ curl rust && \
     python -m venv venv && \
     /opt/recipes/venv/bin/python -m pip install --upgrade pip && \
     venv/bin/pip install wheel==0.45.1 && \
     venv/bin/pip install setuptools_rust==1.10.2 && \
-    venv/bin/pip install -r requirements.txt --no-cache-dir && \
-    apk --purge del .build-deps
+    venv/bin/pip install -r requirements.txt --no-cache-dir
+
+# Install node deps and build Vue
+RUN cd vue3 && yarn install && yarn build
 
 # nginx setup (same as upstream Dockerfile)
 RUN rm -rf /etc/nginx/http.d && \
@@ -52,8 +46,7 @@ RUN rm -rf /etc/nginx/http.d && \
     ln -sf /dev/stdout /var/log/nginx/access.log && \
     ln -sf /dev/stderr /var/log/nginx/error.log
 
-RUN /opt/recipes/venv/bin/python version.py
-RUN find . -type d -name ".git" | xargs rm -rf
-
+RUN venv/bin/python version.py
 RUN chmod +x boot.sh
+
 ENTRYPOINT ["/sbin/tini", "--", "/opt/recipes/boot.sh"]
