@@ -1,19 +1,14 @@
 name: Dependabot Auto-merge
 
-# Enables native GitHub auto-merge on dependabot PRs. Approval is not required
-# because the branch ruleset lists this App (smilerz-merge-bot) as a
-# bypass actor for pull requests. CI still gates the merge.
+# Auto-approves dependabot PRs and enables native auto-merge. GitHub
+# merges once required status checks pass. The bot's approval satisfies
+# required_approving_review_count=1 on the ruleset; the merge-bot App
+# is also listed as a bypass actor on the ruleset as belt-and-suspenders.
 #
-# When the PR is opened (or the `automerge` label is re-applied), this workflow
-# enables auto-merge via the App token. Once required status checks pass,
-# GitHub performs the merge under the App's identity, which satisfies the
-# ruleset via bypass.
-#
-# Hardening:
-#  - user.login == 'dependabot[bot]' (PR must be authored by dependabot)
-#  - head.repo.full_name == github.repository (reject fork-originated
-#    "dependabot" PRs — the 2024–2026 "Weaponizing Dependabot" class)
-#  - head.ref starts with 'dependabot/' (belt-and-suspenders)
+# Hardening: gate on pull_request.user.login + head.ref prefix +
+# head.repo.full_name == github.repository to reject fork-originated
+# "dependabot" PRs (the 2024 BoostSecurity "Weaponizing Dependabot"
+# attack class).
 
 on:
   pull_request_target:
@@ -52,7 +47,7 @@ jobs:
 
             If you believe this is an error, please contact a repository maintainer.
 
-  enable-auto-merge:
+  auto-merge:
     if: >-
       github.event.pull_request.user.login == 'dependabot[bot]'
       && startsWith(github.event.pull_request.head.ref, 'dependabot/')
@@ -68,6 +63,15 @@ jobs:
         with:
           app-id: ${{ secrets.BOT_APP_ID }}
           private-key: ${{ secrets.BOT_PRIVATE_KEY }}
+
+      - name: Auto-approve PR
+        uses: hmarr/auto-approve-action@b40d6c9ed2fa10c9a2749eca7eb004418a705501  # v4.0.0
+        with:
+          github-token: ${{ steps.generate_token.outputs.token }}
+          review-message: |
+            🤖 **Dependabot Auto-merge**
+
+            Approved for auto-merge. GitHub will merge this PR once all required checks pass.
 
       - name: Enable auto-merge
         env:
