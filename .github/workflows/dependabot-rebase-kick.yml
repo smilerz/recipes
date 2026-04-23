@@ -21,16 +21,24 @@ jobs:
   kick-rebases:
     runs-on: ubuntu-latest
     steps:
+      # Dependabot only accepts @dependabot commands from users with push
+      # access. Default GITHUB_TOKEN is github-actions[bot] which is read-only
+      # from dependabot's perspective. Generate a bot-App token instead (same
+      # credentials as dependabot-automerge.yml).
+      - name: Generate bot token
+        id: generate_token
+        uses: actions/create-github-app-token@v2
+        with:
+          app-id: ${{ secrets.BOT_APP_ID }}
+          private-key: ${{ secrets.BOT_PRIVATE_KEY }}
+
       - name: Comment @dependabot rebase on every open dependabot PR
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ steps.generate_token.outputs.token }}
           REPO: ${{ github.repository }}
         run: |
-          # List open PRs authored by dependabot. `--author` accepts either
-          # the login or the app form; we filter by branch prefix to be
-          # resilient to either.
           gh pr list --repo "$REPO" --state open --limit 50 \
-            --json number,headRefName,author \
+            --json number,headRefName \
             --jq '.[] | select(.headRefName | startswith("dependabot/")) | .number' \
           | while read -r pr; do
               echo "Kicking rebase on PR #$pr"
