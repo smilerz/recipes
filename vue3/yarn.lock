@@ -4409,10 +4409,10 @@ vue@^3.5.13, vue@^3.5.30:
     "@vue/server-renderer" "3.5.30"
     "@vue/shared" "3.5.30"
 
-vuetify@^3.11.8:
-  version "3.11.8"
-  resolved "https://registry.yarnpkg.com/vuetify/-/vuetify-3.11.8.tgz#8d7dc3615c924a8e10e42f4652002b476d5d790e"
-  integrity sha512-4iKnntOnLFFklygZjzlVfcHrtLO8+iK4HOhiia6HP2U8v82x+ngaSCgm+epvPrGyCMfCpfuEttqD2qElrr1axw==
+vuetify@^4.0.3:
+  version "4.0.3"
+  resolved "https://registry.yarnpkg.com/vuetify/-/vuetify-4.0.3.tgz#4a2b2e60d80139e2917076bda897e7b98c8b26e3"
+  integrity sha512-RjvmvXuq0omR4h4BQGNzkzl7/CKml+Q82JUu3AvecuX43V7eSxk35GC/TsUoKMWJVgXPLwGh5dpQnH1bG1D3qg==
 
 w3c-xmlserializer@^5.0.0:
   version "5.0.0"
