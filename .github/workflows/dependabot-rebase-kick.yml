@@ -1,0 +1,39 @@
+name: Kick Dependabot Rebases on Preview Push
+
+# Dependabot PRs go stale when preview advances: branch protection requires
+# "up to date" so their already-enabled auto-merge can't fire until they're
+# rebased. This workflow kicks `@dependabot rebase` on every open dependabot
+# PR after each preview push, so the queue drains serially instead of
+# stalling indefinitely.
+#
+# Fires on the same event as preview-orchestrator but runs in parallel —
+# kick comments are cheap, no coordination needed.
+
+on:
+  push:
+    branches: [preview]
+
+permissions:
+  pull-requests: write
+  contents: read
+
+jobs:
+  kick-rebases:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Comment @dependabot rebase on every open dependabot PR
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+        run: |
+          # List open PRs authored by dependabot. `--author` accepts either
+          # the login or the app form; we filter by branch prefix to be
+          # resilient to either.
+          gh pr list --repo "$REPO" --state open --limit 50 \
+            --json number,headRefName,author \
+            --jq '.[] | select(.headRefName | startswith("dependabot/")) | .number' \
+          | while read -r pr; do
+              echo "Kicking rebase on PR #$pr"
+              gh pr comment "$pr" --repo "$REPO" --body "@dependabot rebase" \
+                || echo "  (comment failed — continuing)"
+            done
