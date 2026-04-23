@@ -1,26 +1,93 @@
-# To get started with Dependabot version updates, you'll need to specify which
-# package ecosystems to update and where the package manifests are located.
-# Please see the documentation for all configuration options:
-# https://docs.github.com/en/code-security/dependabot/dependabot-version-updates/configuration-options-for-the-dependabot.yml-file
-
 version: 2
 updates:
+  - package-ecosystem: "pip"
+    open-pull-requests-limit: 20
+    schedule:
+      interval: "daily"
+    cooldown:
+      semver-major-days: 30
+      semver-minor-days: 7
+      semver-patch-days: 3
+    directory: "/"
+    groups:
+      pip-patches:
+        exclude-patterns: ["pytest*"]
+        update-types: ["patch"]
+      pip-minors:
+        exclude-patterns: ["pytest*"]
+        update-types: ["minor"]
+      pip-pytest:
+        patterns: ["pytest*"]
+        update-types: ["minor", "patch"]
+    commit-message:
+      prefix: "chore"
+      include: "scope"
+    labels:
+      - "python"
+      - "dependencies"
+      - "automerge"
+
+  - package-ecosystem: "npm"
+    open-pull-requests-limit: 20
+    schedule:
+      interval: "monthly"
+    cooldown:
+      semver-major-days: 30
+      semver-minor-days: 7
+      semver-patch-days: 3
+    directory: "/vue3/"
+    groups:
+      npm-patches:
+        patterns: ["*"]
+        update-types: ["patch"]
+      npm-minors:
+        patterns: ["*"]
+        update-types: ["minor"]
+    commit-message:
+      prefix: "chore"
+      include: "scope"
+    labels:
+      - "javascript"
+      - "dependencies"
+
+  - package-ecosystem: "github-actions"
+    open-pull-requests-limit: 20
+    schedule:
+      interval: "weekly"
+    cooldown:
+      semver-major-days: 30
+      semver-minor-days: 7
+      semver-patch-days: 3
+    directory: "/.github/"
+    groups:
+      actions-updates:
+          patterns: ["*"]
+          update-types: ["patch", "minor"]
+    commit-message:
+      prefix: "chore"
+      include: "scope"
+    labels:
+      - "github_actions"
+      - "dependencies"
+      - "automerge"
+
+  - package-ecosystem: "docker"
+    open-pull-requests-limit: 5
+    schedule:
+      interval: "weekly"
+    cooldown:
+      semver-major-days: 30
+      semver-minor-days: 7
+      semver-patch-days: 3
+    directory: "/"
+    commit-message:
+      prefix: "chore"
+      include: "scope"
+    labels:
+      - "docker"
+      - "dependencies"
+
   - package-ecosystem: "devcontainers"
     directory: "/"
     schedule:
       interval: weekly
-
-  - package-ecosystem: "pip"
-    directory: "/"
-    schedule:
-      interval: "monthly"
-
-  - package-ecosystem: "npm"
-    directory: "/vue3/"
-    schedule:
-      interval: "monthly"
-
-  - package-ecosystem: "github-actions"
-    directory: "/"
-    schedule:
-      interval: "monthly"
