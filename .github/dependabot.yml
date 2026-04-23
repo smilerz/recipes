@@ -49,6 +49,7 @@ updates:
     labels:
       - "javascript"
       - "dependencies"
+      - "automerge"
 
   - package-ecosystem: "github-actions"
     open-pull-requests-limit: 20
@@ -86,8 +87,13 @@ updates:
     labels:
       - "docker"
       - "dependencies"
+      - "automerge"
 
   - package-ecosystem: "devcontainers"
     directory: "/"
     schedule:
       interval: weekly
+    labels:
+      - "devcontainers"
+      - "dependencies"
+      - "automerge"
