@@ -2,7 +2,9 @@ name: Dependabot Auto-merge
 
 on:
   pull_request_target:
-    types: [opened,  synchronize, reopened, ready_for_review]
+    # `labeled` lets someone manually re-enable automerge on an older
+    # dependabot PR that predates the current dependabot.yml label config.
+    types: [opened, synchronize, reopened, ready_for_review, labeled]
 
 permissions:
   contents: read
@@ -38,7 +40,11 @@ jobs:
             If you believe this is an error, please contact a repository maintainer.
 
   auto-merge:
-    if: github.actor == 'dependabot[bot]' && contains(github.event.pull_request.labels.*.name, 'automerge')
+    # Key on the branch prefix, not the label. Every PR opened by dependabot
+    # on a dependabot/* branch is eligible; we don't need a dependabot.yml
+    # label entry to be present. This is resilient to older PRs that predate
+    # the current dependabot.yml and to future accidental label drops.
+    if: github.actor == 'dependabot[bot]' && startsWith(github.event.pull_request.head.ref, 'dependabot/')
     runs-on: ubuntu-latest
     permissions:
       contents: read
