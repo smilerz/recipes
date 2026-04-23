@@ -9,6 +9,14 @@ on:
 jobs:
   CodeQL-Build:
     runs-on: ubuntu-latest
+    permissions:
+      # Required for github/codeql-action/analyze to upload SARIF results to the
+      # Code Scanning API. Without this, dependabot-triggered push events fail
+      # with "Resource not accessible by integration" during the upload step —
+      # dependabot-origin pushes get a restricted token unless explicitly granted.
+      security-events: write
+      # Used by actions/checkout; harmless elsewhere.
+      contents: read
     steps:
       - name: Checkout repository
         uses: actions/checkout@v6
