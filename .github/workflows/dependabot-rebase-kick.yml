@@ -1,47 +1,42 @@
 name: Kick Dependabot Rebases on Preview Push
 
 # Dependabot PRs go stale when preview advances: branch protection requires
-# "up to date" so their already-enabled auto-merge can't fire until they're
-# rebased. This workflow kicks `@dependabot rebase` on every open dependabot
-# PR after each preview push, so the queue drains serially instead of
-# stalling indefinitely.
+# "up to date" so their already-enabled auto-merge can't fire until the
+# branch is updated. This workflow uses GitHub's `update-branch` REST API
+# to merge base into each open dependabot PR head, which GitHub's auto-merge
+# then picks up and completes when checks pass.
 #
-# Fires on the same event as preview-orchestrator but runs in parallel —
-# kick comments are cheap, no coordination needed.
+# Previously tried commenting "@dependabot rebase" but dependabot only accepts
+# commands from users with push access (not from bot Apps or GITHUB_TOKEN).
+# The update-branch API accepts contents:write, which GITHUB_TOKEN has.
+#
+# Trade-off: update-branch creates a merge commit on the PR instead of a
+# rebase. Cosmetically less clean, but functionally equivalent, and dependabot
+# will still merge/rebase normally on its next cycle if needed.
 
 on:
   push:
     branches: [preview]
 
 permissions:
+  contents: write
   pull-requests: write
-  contents: read
 
 jobs:
   kick-rebases:
     runs-on: ubuntu-latest
     steps:
-      # Dependabot only accepts @dependabot commands from users with push
-      # access. Default GITHUB_TOKEN is github-actions[bot] which is read-only
-      # from dependabot's perspective. Generate a bot-App token instead (same
-      # credentials as dependabot-automerge.yml).
-      - name: Generate bot token
-        id: generate_token
-        uses: actions/create-github-app-token@v2
-        with:
-          app-id: ${{ secrets.BOT_APP_ID }}
-          private-key: ${{ secrets.BOT_PRIVATE_KEY }}
-
-      - name: Comment @dependabot rebase on every open dependabot PR
+      - name: Update branch on every open dependabot PR
         env:
-          GH_TOKEN: ${{ steps.generate_token.outputs.token }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           REPO: ${{ github.repository }}
         run: |
           gh pr list --repo "$REPO" --state open --limit 50 \
             --json number,headRefName \
             --jq '.[] | select(.headRefName | startswith("dependabot/")) | .number' \
           | while read -r pr; do
-              echo "Kicking rebase on PR #$pr"
-              gh pr comment "$pr" --repo "$REPO" --body "@dependabot rebase" \
-                || echo "  (comment failed — continuing)"
+              echo "Updating PR #$pr branch"
+              gh api --method PUT "/repos/$REPO/pulls/$pr/update-branch" \
+                --header "Accept: application/vnd.github+json" \
+                || echo "  (update failed — continuing)"
             done
