@@ -1,0 +1,29 @@
+name: Preview Push Workflow
+
+# On every push to preview, run CI first; only publish the docker image
+# if CI is green. Mirrors the v1 working-branch push-orchestrator behavior
+# so releases to preview stay gated on a passing test run.
+
+on:
+  push:
+    branches: [preview]
+
+permissions:
+  contents: read
+
+jobs:
+  ci:
+    permissions:
+      contents: read
+      actions: read
+    uses: ./.github/workflows/ci.yml
+    secrets: inherit
+
+  docker:
+    needs: ci
+    if: needs.ci.result == 'success'
+    permissions:
+      contents: read
+      packages: write
+    uses: ./.github/workflows/docker-build-preview.yml
+    secrets: inherit
