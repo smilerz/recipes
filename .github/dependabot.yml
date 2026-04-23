@@ -56,9 +56,7 @@ updates:
     schedule:
       interval: "weekly"
     cooldown:
-      semver-major-days: 30
-      semver-minor-days: 7
-      semver-patch-days: 3
+      default-days: 7
     directory: "/.github/"
     groups:
       actions-updates:
@@ -77,9 +75,7 @@ updates:
     schedule:
       interval: "weekly"
     cooldown:
-      semver-major-days: 30
-      semver-minor-days: 7
-      semver-patch-days: 3
+      default-days: 7
     directory: "/"
     commit-message:
       prefix: "chore"
