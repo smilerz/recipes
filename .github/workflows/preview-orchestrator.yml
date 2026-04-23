@@ -8,20 +8,13 @@ on:
   push:
     branches: [preview]
 
-permissions:
-  contents: read
-
 jobs:
   ci:
-    permissions:
-      contents: read
-      actions: read
     uses: ./.github/workflows/ci.yml
     secrets: inherit
 
   docker:
     needs: ci
-    if: needs.ci.result == 'success'
     permissions:
       contents: read
       packages: write
