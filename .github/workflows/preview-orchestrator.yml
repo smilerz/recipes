@@ -13,8 +13,12 @@ jobs:
     uses: ./.github/workflows/ci.yml
     secrets: inherit
 
+  vue-ci:
+    uses: ./.github/workflows/vue-ci.yml
+    secrets: inherit
+
   docker:
-    needs: ci
+    needs: [ci, vue-ci]
     permissions:
       contents: read
       packages: write
