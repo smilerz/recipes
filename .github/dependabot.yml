@@ -49,6 +49,14 @@ updates:
       npm-minors:
         patterns: ["*"]
         update-types: ["minor"]
+    ignore:
+      # Vuetify 4.x is incompatible with vite-plugin-vuetify 2.x (Vuetify-3
+      # companion). Revisit when vite-plugin-vuetify v3 ships. See commit
+      # e39d6e4a1 and .claude/tmp/scratchpad.md 2026-04-23.
+      - dependency-name: "vuetify"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "vite-plugin-vuetify"
+        update-types: ["version-update:semver-major"]
     commit-message:
       prefix: "chore"
       include: "scope"
