@@ -31,7 +31,12 @@ vi.mock('@/utils/cookie', () => ({
 
 import RecipeCard from '@/components/display/RecipeCard.vue'
 
-function mountRecipeCard(props: Record<string, any> = {}, deviceOverrides: Record<string, any> = {}) {
+function mountRecipeCard(
+    props: Record<string, any> = {},
+    deviceOverrides: Record<string, any> = {},
+    options: { stubRecipeImage?: boolean } = {},
+) {
+    const stubRecipeImage = options.stubRecipeImage ?? true
     const prePopulate: PiniaPlugin = ({ store }) => {
         if (store.$id === 'user_preference_store') {
             store.userSettings = makeUserPreference() as any
@@ -66,13 +71,48 @@ function mountRecipeCard(props: Record<string, any> = {}, deviceOverrides: Recor
             plugins: [pinia, i18n, vuetify, router],
             stubs: {
                 RecipeContextMenu: { template: '<div class="stub-context-menu"/>' },
-                RecipeImage: { template: '<div class="stub-recipe-image"><slot name="overlay"/></div>' },
+                ...(stubRecipeImage
+                    ? { RecipeImage: { template: '<div class="stub-recipe-image"><slot name="overlay"/></div>' } }
+                    : {}),
                 PrivateRecipeBadge: { template: '<div class="stub-private-badge"/>' },
                 KeywordsBar: { template: '<div class="stub-keywords-bar"/>' },
             },
         },
     })
 }
+
+describe('RecipeCard click-through', () => {
+    it('clicking the card image navigates to the recipe view page', async () => {
+        const recipe = makeRecipeOverview({ id: 42 })
+        const w = mountRecipeCard({ recipe })
+        const pushSpy = vi.spyOn((w.vm as any).$router, 'push')
+        // The image is wrapped by a <router-link>, which Vue Router renders as an <a>
+        await w.find('a').trigger('click')
+        expect(pushSpy).toHaveBeenCalled()
+        const firstArg = pushSpy.mock.calls[0][0] as any
+        expect(firstArg.name).toBe('RecipeViewPage')
+        expect(firstArg.params.id).toBe(42)
+    })
+
+    it('clicking the card title navigates to the recipe view page', async () => {
+        const recipe = makeRecipeOverview({ id: 42 })
+        const w = mountRecipeCard({ recipe })
+        const pushSpy = vi.spyOn((w.vm as any).$router, 'push')
+        await w.find('.cursor-pointer').trigger('click')
+        expect(pushSpy).toHaveBeenCalled()
+        const firstArg = pushSpy.mock.calls[0][0] as any
+        expect(firstArg.name).toBe('RecipeViewPage')
+        expect(firstArg.params.id).toBe(42)
+    })
+
+    it('clicking the card image navigates even with the real RecipeImage rendered', async () => {
+        const recipe = makeRecipeOverview({ id: 42, image: 'https://example.com/recipe.jpg' })
+        const w = mountRecipeCard({ recipe }, {}, { stubRecipeImage: false })
+        const pushSpy = vi.spyOn((w.vm as any).$router, 'push')
+        await w.find('a').trigger('click')
+        expect(pushSpy).toHaveBeenCalled()
+    })
+})
 
 describe('RecipeCard display settings', () => {
     describe('rating display', () => {
