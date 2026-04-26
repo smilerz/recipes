@@ -59,6 +59,7 @@ function mountDrawer() {
             Show_Author: 'Show author',
             Show_Last_Cooked: 'Show last cooked',
             Show_New_Badge: 'Show new badge',
+            Show_Cook_Time: 'Show cook time',
             Max_Keywords: 'Max keywords',
             Menu_Items: 'Menu items',
             All: 'All',
@@ -150,12 +151,16 @@ describe('RecipeViewSettingsDrawer', () => {
         expect(html).toContain('Applies to the expanded step-by-step view.')
     })
 
-    it('wraps each scoped section in its own v-expansion-panel', () => {
+    it('renders 2 panels on RecipeViewPage (Ingredient summary + Step ingredients; Card display is card-only)', () => {
         routeState.name = 'RecipeViewPage'
         const w = mountDrawer()
-        const panels = w.findAll('.v-expansion-panel')
-        // Ingredient summary + Step ingredients + Card display = 3
-        expect(panels.length).toBe(3)
+        expect(w.findAll('.v-expansion-panel').length).toBe(2)
+    })
+
+    it('renders 1 panel on a card-context route (Card display only; Ingredient/Step are recipe-only)', () => {
+        routeState.name = 'SearchPage'
+        const w = mountDrawer()
+        expect(w.findAll('.v-expansion-panel').length).toBe(1)
     })
 })
 
@@ -169,16 +174,33 @@ describe('Card Display panel', () => {
         routeState.name = 'SearchPage'
     })
 
-    it('renders Card Display panel when route is SearchPage', () => {
+    it('renders Card Display panel when route is SearchPage (card context)', () => {
         routeState.name = 'SearchPage'
         const w = mountDrawer()
         expect(w.html()).toContain('Card display')
     })
 
-    it('renders Card Display panel when route is RecipeViewPage', () => {
+    it.each(['StartPage', 'BookEntryPage', 'MealPlanPage'])(
+        'renders Card Display panel on card-context route %s',
+        (routeName) => {
+            routeState.name = routeName
+            const w = mountDrawer()
+            expect(w.html()).toContain('Card display')
+        }
+    )
+
+    it('hides Card Display panel when route is not a card context (e.g. RecipeViewPage)', () => {
+        // Card Display is for card contexts only. RecipeViewPage shows
+        // a single recipe in detail, not cards, so the panel is gated out.
         routeState.name = 'RecipeViewPage'
         const w = mountDrawer()
-        expect(w.html()).toContain('Card display')
+        expect(w.html()).not.toContain('Card display')
+    })
+
+    it('hides Card Display panel on non-card non-recipe routes (e.g. SettingsPage)', () => {
+        routeState.name = 'SettingsPage'
+        const w = mountDrawer()
+        expect(w.html()).not.toContain('Card display')
     })
 
     it('hides Ingredient summary and Step ingredients sections when route is not RecipeViewPage', () => {
@@ -195,6 +217,26 @@ describe('Card Display panel', () => {
         const html = w.html()
         expect(html).toContain('Ingredient summary')
         expect(html).toContain('Step ingredients')
+    })
+
+    it('Show Cook Time switch is rendered in Card Display panel and defaults ON', () => {
+        routeState.name = 'SearchPage'
+        const w = mountDrawer()
+        const store = (w.vm.$pinia as any)._s.get('user_preference_store')
+        // Default-true preserves the current behaviour where cook time
+        // shows unconditionally on the card.
+        expect(store.deviceSettings.card_show_cook_time).toBe(true)
+        const cookTimeSwitch = w.findAll('.v-switch').find(s => s.text().includes('Show cook time'))
+        expect(cookTimeSwitch, 'Show cook time switch should exist').toBeTruthy()
+    })
+
+    it('toggling Show Cook Time updates deviceSettings.card_show_cook_time', async () => {
+        routeState.name = 'SearchPage'
+        const w = mountDrawer()
+        const store = (w.vm.$pinia as any)._s.get('user_preference_store')
+        const cookTimeSwitch = w.findAll('.v-switch').find(s => s.text().includes('Show cook time'))
+        await cookTimeSwitch!.find('input').setValue(false)
+        expect(store.deviceSettings.card_show_cook_time).toBe(false)
     })
 
     it('toggles Show Rating updates deviceSettings.card_showRating', async () => {
