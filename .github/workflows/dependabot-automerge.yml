@@ -1,13 +1,12 @@
 name: Dependabot Auto-merge
 
-# Enables native GitHub auto-merge on dependabot PRs. Approval is not required
-# because the branch ruleset lists this App (smilerz-merge-bot) as a
-# bypass actor for pull requests. CI still gates the merge.
+# Approves dependabot PRs and enables native GitHub auto-merge.
 #
-# When the PR is opened (or the `automerge` label is re-applied), this workflow
-# enables auto-merge via the App token. Once required status checks pass,
-# GitHub performs the merge under the App's identity, which satisfies the
-# ruleset via bypass.
+# The bot App (smilerz-merge-bot) is listed as a pull-request bypass actor
+# in the branch ruleset, but GitHub's `--auto` precheck still hard-blocks
+# on REVIEW_REQUIRED — bypass only applies when the App initiates the merge
+# directly, not when it queues `--auto`. So this workflow leaves an explicit
+# approval review and then enables auto-merge.
 #
 # Hardening:
 #  - user.login == 'dependabot[bot]' (PR must be authored by dependabot)
@@ -68,6 +67,15 @@ jobs:
         with:
           app-id: ${{ secrets.BOT_APP_ID }}
           private-key: ${{ secrets.BOT_PRIVATE_KEY }}
+
+      - name: Auto-approve PR
+        uses: hmarr/auto-approve-action@b40d6c9ed2fa10c9a2749eca7eb004418a705501  # v4.0.0
+        with:
+          github-token: ${{ steps.generate_token.outputs.token }}
+          review-message: |
+            🤖 **Dependabot Auto-merge**
+
+            Approved by smilerz-merge-bot. Will merge automatically once required checks pass.
 
       - name: Enable auto-merge
         env:
