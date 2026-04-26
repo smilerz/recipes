@@ -301,6 +301,9 @@ export const useUserPreferenceStore = defineStore('user_preference_store', () =>
             card_showAuthor: false,
             card_showLastCooked: false,
             card_showNewBadge: false,
+            // Default ON — preserves the prior unconditional "cook time
+            // chip in the keyword row" behavior on cards.
+            card_show_cook_time: true,
             card_maxKeywords: 3,
             card_visibleMenuItems: ['edit', 'plan', 'shopping', 'properties', 'share', 'duplicate', 'print'],
         }

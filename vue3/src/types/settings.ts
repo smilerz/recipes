@@ -45,6 +45,7 @@ export type DeviceSettings = {
     card_showAuthor: boolean
     card_showLastCooked: boolean
     card_showNewBadge: boolean
+    card_show_cook_time: boolean
     card_maxKeywords: number
     card_visibleMenuItems: string[]
 

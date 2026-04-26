@@ -91,7 +91,7 @@
                         />
                     </v-expansion-panel-text>
                 </v-expansion-panel>
-                <v-expansion-panel>
+                <v-expansion-panel v-if="isOnCardContext">
                     <v-expansion-panel-title>{{ $t('CardDisplay') }}</v-expansion-panel-title>
                     <v-expansion-panel-text>
                         <v-switch
@@ -112,6 +112,11 @@
                         <v-switch
                             v-model="deviceSettings.card_showNewBadge"
                             :label="$t('Show_New_Badge')"
+                            hide-details density="compact"
+                        />
+                        <v-switch
+                            v-model="deviceSettings.card_show_cook_time"
+                            :label="$t('Show_Cook_Time')"
                             hide-details density="compact"
                         />
                         <v-select
@@ -154,6 +159,11 @@ const {isOpen, isPinned} = useRecipeViewSettings()
 const deviceSettings = useUserPreferenceStore().deviceSettings
 
 const isOnRecipeView = computed(() => route.name === 'RecipeViewPage')
+// Routes where RecipeCard is rendered as part of a list/grid — the only
+// places where the Card Display settings actually affect what the user
+// sees. Outside these, the panel is gated out so the drawer is contextual.
+const CARD_CONTEXT_ROUTES = new Set(['SearchPage', 'StartPage', 'BookEntryPage', 'MealPlanPage'])
+const isOnCardContext = computed(() => CARD_CONTEXT_ROUTES.has(route.name as string))
 
 const drawerTabs = computed(() => [
     {key: 'settings', label: t('DisplaySettings'), icon: 'fa-solid fa-gear'},
