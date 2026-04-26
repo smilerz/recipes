@@ -36,7 +36,7 @@ updates:
   - package-ecosystem: "npm"
     open-pull-requests-limit: 20
     schedule:
-      interval: "monthly"
+      interval: "weekly"
     cooldown:
       semver-major-days: 30
       semver-minor-days: 7
