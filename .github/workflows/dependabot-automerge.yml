@@ -81,6 +81,12 @@ jobs:
         env:
           GH_TOKEN: ${{ steps.generate_token.outputs.token }}
         run: |
-          gh pr merge --auto --rebase \
+          # Use squash, not rebase. The update-branch REST API (used to bring
+          # a stale dependabot PR up to date) creates a merge commit on top
+          # of the dependabot branch — `--rebase` then fails with
+          # "This branch can't be rebased" because the merge commit can't be
+          # linearly replayed. Squash flattens the head into a single commit
+          # on base regardless of merge commits.
+          gh pr merge --auto --squash \
             "${{ github.event.pull_request.number }}" \
             --repo "${{ github.repository }}"
