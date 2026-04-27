@@ -98,16 +98,21 @@ describe('IngredientContextMenu', () => {
     // computed read the setting via a fresh `useUserPreferenceStore()` call
     // inside the computed body, which did not register as a dependency, so
     // picking a new HighlightWhen option left the button uncolored.
-    it('activator color reacts to deviceSettings.recipe_contextMenuColor', async () => {
+    // Inline style instead of :color prop so the color survives Vuetify's
+    // CSS-utility tree-shaking. The :color prop emits class="text-success",
+    // but `vite-plugin-vuetify` only ships the `.text-success` rule when the
+    // color is statically referenced — and triggerColor is dynamic. Inline
+    // style hits the highest cascade specificity and always paints.
+    it('activator inline-style color reacts to deviceSettings.recipe_contextMenuColor', async () => {
         const onhandFood = {...INGREDIENT.food, foodOnhand: true}
         const w = mountMenu({...INGREDIENT, food: onhandFood})
         const store = (w.vm.$pinia as any)._s.get('user_preference_store')
         store.deviceSettings.recipe_contextMenuColor = 'never'
         await w.vm.$nextTick()
-        expect(w.find('.v-btn').classes().some(c => c.startsWith('text-success'))).toBe(false)
+        expect(w.find('.v-btn').attributes('style') ?? '').not.toContain('--v-theme-success')
         store.deviceSettings.recipe_contextMenuColor = 'onhand'
         await w.vm.$nextTick()
-        expect(w.find('.v-btn').classes().some(c => c.startsWith('text-success'))).toBe(true)
+        expect(w.find('.v-btn').attributes('style') ?? '').toContain('--v-theme-success')
     })
 
     // Tri-state: mode='onhand' is the only tri-state branch.
@@ -118,18 +123,20 @@ describe('IngredientContextMenu', () => {
         const store = (w.vm.$pinia as any)._s.get('user_preference_store')
         store.deviceSettings.recipe_contextMenuColor = 'onhand'
         await w.vm.$nextTick()
-        expect(w.find('.v-btn').classes().some(c => c.startsWith('text-warning'))).toBe(true)
-        expect(w.find('.v-btn').classes().some(c => c.startsWith('text-success'))).toBe(false)
+        const style = w.find('.v-btn').attributes('style') ?? ''
+        expect(style).toContain('--v-theme-warning')
+        expect(style).not.toContain('--v-theme-success')
     })
 
-    it('activator has no color when neither food nor substitute is onhand (mode=onhand)', async () => {
+    it('activator has no inline color when neither food nor substitute is onhand (mode=onhand)', async () => {
         const food = {...INGREDIENT.food, foodOnhand: false, inInventory: 'False', substituteOnhand: false}
         const w = mountMenu({...INGREDIENT, food})
         const store = (w.vm.$pinia as any)._s.get('user_preference_store')
         store.deviceSettings.recipe_contextMenuColor = 'onhand'
         await w.vm.$nextTick()
-        expect(w.find('.v-btn').classes().some(c => c.startsWith('text-success'))).toBe(false)
-        expect(w.find('.v-btn').classes().some(c => c.startsWith('text-warning'))).toBe(false)
+        const style = w.find('.v-btn').attributes('style') ?? ''
+        expect(style).not.toContain('--v-theme-success')
+        expect(style).not.toContain('--v-theme-warning')
     })
 
     // hasSubstitutes now derives from availableSubstitutes (onhand subset),
