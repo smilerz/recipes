@@ -1176,5 +1176,12 @@
   "ZoomOut": "Verkleinern",
   "add_file": "Datei hinzufügen",
   "add_image": "Bild hinzufügen",
-  "create_shopping_new": "Zur NEUEN Einkaufsliste hinzufügen"
+  "create_shopping_new": "Zur NEUEN Einkaufsliste hinzufügen",
+  "RecipeLayout": "Rezept-Layout",
+  "Show_Time_Chips": "Zeiten anzeigen",
+  "Show_Servings": "Portionen anzeigen",
+  "Show_Created_By": "Ersteller anzeigen",
+  "Show_Created_Date": "Erstellt-Datum anzeigen",
+  "Show_Updated_Date": "Aktualisiert-Datum anzeigen",
+  "Show_Imported_From": "Quelle anzeigen"
 }

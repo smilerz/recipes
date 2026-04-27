@@ -1168,5 +1168,12 @@
   "create_shopping_new": "Dodaj v NOV nakupovalni listek",
   "us_cup": "skodelica (US, volumen)",
   "HouseholdSettingsHelp": "Za skupno rabo nakupovalnih seznamov in načrtov obrokov ustvarite gospodinjstva in dodelite uporabnike, ki naj si jih delijo med seboj, istemu gospodinjstvu. ",
-  "Monthly": "Mesečno"
+  "Monthly": "Mesečno",
+  "RecipeLayout": "Postavitev recepta",
+  "Show_Time_Chips": "Prikaži čase",
+  "Show_Servings": "Prikaži porcije",
+  "Show_Created_By": "Prikaži avtorja",
+  "Show_Created_Date": "Prikaži datum ustvarjanja",
+  "Show_Updated_Date": "Prikaži datum posodobitve",
+  "Show_Imported_From": "Prikaži vir"
 }
