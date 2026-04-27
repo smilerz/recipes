@@ -8,7 +8,47 @@
         :use-sheet="mobile"
     >
         <template #settings>
-            <v-expansion-panels :model-value="[0, 1, 2]" multiple variant="accordion" class="mt-2">
+            <v-expansion-panels :model-value="[0, 1, 2, 3]" multiple variant="accordion" class="mt-2">
+                <v-expansion-panel v-if="isOnRecipeView">
+                    <v-expansion-panel-title>{{ $t('RecipeLayout') }}</v-expansion-panel-title>
+                    <v-expansion-panel-text>
+                        <v-switch
+                            v-model="deviceSettings.recipe_showAuthor"
+                            :label="$t('Show_Author')"
+                            hide-details density="compact" color="primary"
+                        />
+                        <v-switch
+                            v-model="deviceSettings.recipe_showTimeChips"
+                            :label="$t('Show_Time_Chips')"
+                            hide-details density="compact" color="primary"
+                        />
+                        <v-switch
+                            v-model="deviceSettings.recipe_showServings"
+                            :label="$t('Show_Servings')"
+                            hide-details density="compact" color="primary"
+                        />
+                        <v-switch
+                            v-model="deviceSettings.recipe_showFootCreatedBy"
+                            :label="$t('Show_Created_By')"
+                            hide-details density="compact" color="primary"
+                        />
+                        <v-switch
+                            v-model="deviceSettings.recipe_showFootCreatedDate"
+                            :label="$t('Show_Created_Date')"
+                            hide-details density="compact" color="primary"
+                        />
+                        <v-switch
+                            v-model="deviceSettings.recipe_showFootUpdatedDate"
+                            :label="$t('Show_Updated_Date')"
+                            hide-details density="compact" color="primary"
+                        />
+                        <v-switch
+                            v-model="deviceSettings.recipe_showFootImportedFrom"
+                            :label="$t('Show_Imported_From')"
+                            hide-details density="compact" color="primary"
+                        />
+                    </v-expansion-panel-text>
+                </v-expansion-panel>
                 <v-expansion-panel v-if="isOnRecipeView">
                     <v-expansion-panel-title>{{ $t('IngredientSummarySection') }}</v-expansion-panel-title>
                     <v-expansion-panel-text>

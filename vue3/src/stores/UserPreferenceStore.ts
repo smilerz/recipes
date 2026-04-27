@@ -266,6 +266,13 @@ export const useUserPreferenceStore = defineStore('user_preference_store', () =>
             recipe_stepNotesDisplay: 'bubble',
             recipe_notesTruncateLength: 30,
             recipe_contextMenuColor: 'onhand',
+            recipe_showAuthor: true,
+            recipe_showTimeChips: true,
+            recipe_showServings: true,
+            recipe_showFootCreatedBy: true,
+            recipe_showFootCreatedDate: true,
+            recipe_showFootUpdatedDate: true,
+            recipe_showFootImportedFrom: true,
 
             search_itemsPerPage: 50,
             search_viewMode: 'grid',

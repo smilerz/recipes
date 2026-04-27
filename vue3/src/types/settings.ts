@@ -30,6 +30,13 @@ export type DeviceSettings = {
     recipe_stepNotesDisplay: 'bubble' | 'inline' | 'truncate',
     recipe_notesTruncateLength: number,
     recipe_contextMenuColor: 'never' | 'onhand' | 'shopping' | 'substitute',
+    recipe_showAuthor: boolean,
+    recipe_showTimeChips: boolean,
+    recipe_showServings: boolean,
+    recipe_showFootCreatedBy: boolean,
+    recipe_showFootCreatedDate: boolean,
+    recipe_showFootUpdatedDate: boolean,
+    recipe_showFootImportedFrom: boolean,
 
     search_itemsPerPage: number,
     search_viewMode: 'table'|'grid',
