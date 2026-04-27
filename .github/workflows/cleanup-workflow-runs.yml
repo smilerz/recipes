@@ -7,6 +7,14 @@ name: Cleanup Workflow Runs
 # .claude/rules/github-actions.md.
 #
 # Manual run: workflow_dispatch with dry_run=true to audit before deleting.
+#
+# Retention semantics: each step deletes runs older than retain_days and
+# keeps the most recent keep_minimum_runs regardless of age. NO conclusion
+# filter — earlier versions filtered to "cancelled,skipped,failure" which
+# excluded success runs, letting them accumulate indefinitely (894 ci.yml
+# runs in the wild). The action's retain_days/keep_minimum_runs already
+# guarantee a sliding window; conclusion filtering on top of that is a
+# permanent leak for the remaining conclusions.
 
 on:
   schedule:
@@ -26,8 +34,7 @@ jobs:
   cleanup:
     runs-on: ubuntu-latest
     steps:
-      # CI on PRs — PRs churn fast; keep recent for blame; always drop
-      # cancelled/skipped/failure noise.
+      # CI on PRs — PRs churn fast; keep recent for blame.
       - name: Cleanup ci.yml runs
         uses: Mattraks/delete-workflow-runs@v2
         with:
@@ -36,7 +43,6 @@ jobs:
           retain_days: 30
           keep_minimum_runs: 10
           delete_workflow_pattern: ci.yml
-          delete_run_by_conclusion_pattern: "cancelled,skipped,failure"
           dry_run: ${{ inputs.dry_run || false }}
 
       # vue-ci.yml — same rationale as ci.yml; per-branch Vitest CI.
@@ -48,36 +54,22 @@ jobs:
           retain_days: 30
           keep_minimum_runs: 10
           delete_workflow_pattern: vue-ci.yml
-          delete_run_by_conclusion_pattern: "cancelled,skipped,failure"
           dry_run: ${{ inputs.dry_run || false }}
 
-      # Preview orchestrator — deployment history; keep both successes and
-      # failures long.
-      - name: Cleanup preview-orchestrator.yml runs
+      # docker-publish.yml — preview-exclusive image publish; deployment
+      # history. Renamed from docker-build-preview.yml in 0b4feb889.
+      - name: Cleanup docker-publish.yml runs
         uses: Mattraks/delete-workflow-runs@v2
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           repository: ${{ github.repository }}
           retain_days: 90
           keep_minimum_runs: 20
-          delete_workflow_pattern: preview-orchestrator.yml
-          delete_run_by_conclusion_pattern: "cancelled,skipped"
+          delete_workflow_pattern: docker-publish.yml
           dry_run: ${{ inputs.dry_run || false }}
 
-      # Docker build preview — same retention as orchestrator since it's the
-      # actual publish step.
-      - name: Cleanup docker-build-preview.yml runs
-        uses: Mattraks/delete-workflow-runs@v2
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          repository: ${{ github.repository }}
-          retain_days: 90
-          keep_minimum_runs: 20
-          delete_workflow_pattern: docker-build-preview.yml
-          delete_run_by_conclusion_pattern: "cancelled,skipped"
-          dry_run: ${{ inputs.dry_run || false }}
-
-      # CodeQL security scans — keep a long tail of green/red for trending.
+      # CodeQL security scans — keep a long tail of green/red for trending,
+      # but they shipped 1211 runs by 2026-04-27 with no caps. Bound it.
       - name: Cleanup codeql-analysis.yml runs
         uses: Mattraks/delete-workflow-runs@v2
         with:
@@ -86,11 +78,26 @@ jobs:
           retain_days: 60
           keep_minimum_runs: 30
           delete_workflow_pattern: codeql-analysis.yml
-          delete_run_by_conclusion_pattern: "cancelled,skipped"
           dry_run: ${{ inputs.dry_run || false }}
 
-      # Orphaned runs from deleted branches — always safe to purge.
-      - name: Cleanup runs from deleted branches
+      # dependabot-automerge — initially deferred ("first 2 cycles") but
+      # the workflow has been stable since 2026-04-23 (3+ weeks); 504 runs
+      # accumulated by 2026-04-27. Treat like CI churn.
+      - name: Cleanup dependabot-automerge.yml runs
+        uses: Mattraks/delete-workflow-runs@v2
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          repository: ${{ github.repository }}
+          retain_days: 30
+          keep_minimum_runs: 10
+          delete_workflow_pattern: dependabot-automerge.yml
+          dry_run: ${{ inputs.dry_run || false }}
+
+      # Orphaned runs from deleted branches/workflows — always safe to purge.
+      # The 2026-04-26 run cleared 714 orphans from the now-deleted
+      # preview-orchestrator.yml + docker-build-preview.yml; future runs
+      # should find few orphans unless we delete more workflow files.
+      - name: Cleanup runs from deleted workflows
         uses: Mattraks/delete-workflow-runs@v2
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
@@ -99,10 +106,6 @@ jobs:
           keep_minimum_runs: 0
           delete_workflow_by_state_pattern: "deleted"
           dry_run: ${{ inputs.dry_run || false }}
-
-      # dependabot-automerge excluded for the first 2 cycles (workflow is new
-      # — we want to observe it before auto-pruning). Re-enable with its own
-      # step after 2026-05-07.
 
       - name: Summary
         run: |
