@@ -1168,5 +1168,12 @@
   "delete_confimation": "Sei sicuro di voler eliminare {kw} e tutti gli elementi dipendenti?",
   "us_cup": "tazza (US, volume)",
   "HouseholdSettingsHelp": "Per condividere liste della spesa e menu, crea gruppi familiari e assegna allo stesso gruppo gli utenti che devono condividere le informazioni tra loro. ",
-  "Monthly": "Mensile"
+  "Monthly": "Mensile",
+  "RecipeLayout": "Layout ricetta",
+  "Show_Time_Chips": "Mostra tempi",
+  "Show_Servings": "Mostra porzioni",
+  "Show_Created_By": "Mostra autore",
+  "Show_Created_Date": "Mostra data di creazione",
+  "Show_Updated_Date": "Mostra data di aggiornamento",
+  "Show_Imported_From": "Mostra origine"
 }
