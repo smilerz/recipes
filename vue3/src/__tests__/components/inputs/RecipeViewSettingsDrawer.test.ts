@@ -56,6 +56,13 @@ function mountDrawer() {
             StepIngredientsScope: 'Applies to the expanded step-by-step view.',
             StartExpandedHelper: 'Show the summary open when you load a recipe.',
             CardDisplay: 'Card display',
+            RecipeLayout: 'Recipe layout',
+            Show_Time_Chips: 'Show time chips',
+            Show_Servings: 'Show servings',
+            Show_Created_By: 'Show created by',
+            Show_Created_Date: 'Show created date',
+            Show_Updated_Date: 'Show updated date',
+            Show_Imported_From: 'Show imported from',
             Show_Rating: 'Show rating',
             Show_Author: 'Show author',
             Show_Last_Cooked: 'Show last cooked',
@@ -152,16 +159,40 @@ describe('RecipeViewSettingsDrawer', () => {
         expect(html).toContain('Applies to the expanded step-by-step view.')
     })
 
-    it('renders 2 panels on RecipeViewPage (Ingredient summary + Step ingredients; Card display is card-only)', () => {
+    it('renders 3 panels on RecipeViewPage (Recipe layout + Ingredient summary + Step ingredients; Card display is card-only)', () => {
         routeState.name = 'RecipeViewPage'
         const w = mountDrawer()
-        expect(w.findAll('.v-expansion-panel').length).toBe(2)
+        expect(w.findAll('.v-expansion-panel').length).toBe(3)
     })
 
     it('renders 1 panel on a card-context route (Card display only; Ingredient/Step are recipe-only)', () => {
         routeState.name = 'SearchPage'
         const w = mountDrawer()
         expect(w.findAll('.v-expansion-panel').length).toBe(1)
+    })
+
+    it('seeds the seven Recipe Layout defaults to true on deviceSettings', () => {
+        mountDrawer()
+        const store = useUserPreferenceStore()
+        expect(store.deviceSettings.recipe_showAuthor).toBe(true)
+        expect(store.deviceSettings.recipe_showTimeChips).toBe(true)
+        expect(store.deviceSettings.recipe_showServings).toBe(true)
+        expect(store.deviceSettings.recipe_showFootCreatedBy).toBe(true)
+        expect(store.deviceSettings.recipe_showFootCreatedDate).toBe(true)
+        expect(store.deviceSettings.recipe_showFootUpdatedDate).toBe(true)
+        expect(store.deviceSettings.recipe_showFootImportedFrom).toBe(true)
+    })
+
+    it('renders the Recipe Layout panel when route is RecipeViewPage', () => {
+        routeState.name = 'RecipeViewPage'
+        const w = mountDrawer()
+        expect(w.html()).toContain('Recipe layout')
+    })
+
+    it('hides the Recipe Layout panel on card-context routes (e.g. SearchPage)', () => {
+        routeState.name = 'SearchPage'
+        const w = mountDrawer()
+        expect(w.html()).not.toContain('Recipe layout')
     })
 
     it('seeds recipe_stepShowIngredientActions default = true so the step menu is shown by default', () => {

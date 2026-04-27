@@ -37,22 +37,37 @@ describe('RecipeView', () => {
         resetApiMock()
     })
 
-    function mountRecipeView(recipe = makeRecipe({
-        id: 1,
-        name: 'Test Recipe',
-        servings: 4,
-        steps: [makeStep({ ingredients: [makeIngredient()] })],
-    })) {
+    function mountRecipeView(
+        recipe = makeRecipe({
+            id: 1,
+            name: 'Test Recipe',
+            servings: 4,
+            steps: [makeStep({ ingredients: [makeIngredient()] })],
+        }),
+        deviceOverrides: Record<string, any> = {},
+    ) {
         const prePopulate: PiniaPlugin = ({ store }) => {
             if (store.$id === 'user_preference_store') {
                 store.userSettings = makeUserPreference() as any
                 store.activeSpace = makeSpace() as any
+                if (Object.keys(deviceOverrides).length > 0) {
+                    Object.assign(store.deviceSettings, deviceOverrides)
+                }
             }
         }
         const pinia = createPinia()
         pinia.use(prePopulate)
 
-        const i18n = createI18n({ legacy: false, locale: 'en', messages: { en: { Servings: 'Servings' } }, missingWarn: false, fallbackWarn: false })
+        const i18n = createI18n({ legacy: false, locale: 'en', messages: { en: {
+            Servings: 'Servings',
+            CreatedBy: 'Created by',
+            Created: 'Created',
+            Updated: 'Updated',
+            Imported_From: 'Imported from',
+            created_by: 'created by',
+            WorkingTime: 'Working time',
+            WaitingTime: 'Waiting time',
+        } }, missingWarn: false, fallbackWarn: false })
         const vuetify = createVuetify()
         const router = createRouter({
             history: createMemoryHistory(),
@@ -132,6 +147,66 @@ describe('RecipeView', () => {
         const wrapper = mountRecipeView(recipe)
         await flushPromises()
         expect(wrapper.find('.stub-keywords').exists()).toBe(true)
+    })
+
+    describe('Recipe Layout flags', () => {
+        const sourceRecipe = () => makeRecipe({
+            name: 'Carbonara',
+            servings: 4,
+            workingTime: 30,
+            waitingTime: 60,
+            sourceUrl: 'https://example.com/carbonara',
+            steps: [makeStep({ ingredients: [makeIngredient()] })],
+        })
+
+        it('hides Working time and Waiting time chips when recipe_showTimeChips is false', async () => {
+            const wrapper = mountRecipeView(sourceRecipe(), { recipe_showTimeChips: false })
+            await flushPromises()
+            const text = wrapper.text()
+            expect(text).not.toContain('Working time')
+            expect(text).not.toContain('Waiting time')
+        })
+
+        it('hides the Servings col when recipe_showServings is false', async () => {
+            const wrapper = mountRecipeView(sourceRecipe(), { recipe_showServings: false })
+            await flushPromises()
+            expect(wrapper.text()).not.toContain('Servings')
+        })
+
+        // Vuetify components in this test file render as raw tags (no global
+        // registration), so v-card title="X" appears as an attribute rather
+        // than visible text. Asserting against the rendered HTML keeps the
+        // test deterministic regardless of Vuetify slot rendering.
+        it('hides the foot Created by card when recipe_showFootCreatedBy is false', async () => {
+            const wrapper = mountRecipeView(sourceRecipe(), {
+                recipe_showFootCreatedBy: false,
+                recipe_showFootCreatedDate: true,
+                recipe_showFootUpdatedDate: true,
+                recipe_showFootImportedFrom: true,
+            })
+            await flushPromises()
+            const html = wrapper.html()
+            expect(html).toContain('data-test="foot-card"')
+            expect(html).not.toContain('title="Created by"')
+            expect(html).toContain('title="Created"')
+        })
+
+        it('hides the foot Imported from card when recipe_showFootImportedFrom is false', async () => {
+            const wrapper = mountRecipeView(sourceRecipe(), { recipe_showFootImportedFrom: false })
+            await flushPromises()
+            expect(wrapper.html()).not.toContain('title="Imported from"')
+        })
+
+        it('hides the entire foot wrapper when all four foot flags are false', async () => {
+            const wrapper = mountRecipeView(sourceRecipe(), {
+                recipe_showFootCreatedBy: false,
+                recipe_showFootCreatedDate: false,
+                recipe_showFootUpdatedDate: false,
+                recipe_showFootImportedFrom: false,
+            })
+            await flushPromises()
+            expect(wrapper.html()).not.toContain('data-test="foot-card"')
+        })
     })
 
     describe("servingsText 'none' fallback", () => {
