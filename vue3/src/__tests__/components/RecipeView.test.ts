@@ -52,7 +52,7 @@ describe('RecipeView', () => {
         const pinia = createPinia()
         pinia.use(prePopulate)
 
-        const i18n = createI18n({ legacy: false, locale: 'en', messages: { en: {} }, missingWarn: false, fallbackWarn: false })
+        const i18n = createI18n({ legacy: false, locale: 'en', messages: { en: { Servings: 'Servings' } }, missingWarn: false, fallbackWarn: false })
         const vuetify = createVuetify()
         const router = createRouter({
             history: createMemoryHistory(),
@@ -132,5 +132,26 @@ describe('RecipeView', () => {
         const wrapper = mountRecipeView(recipe)
         await flushPromises()
         expect(wrapper.find('.stub-keywords').exists()).toBe(true)
+    })
+
+    describe("servingsText 'none' fallback", () => {
+        it.each(['none', 'None', 'NONE', '  none  '])(
+            'shows the Servings label when servingsText is %s',
+            async (value) => {
+                const recipe = makeRecipe({ servings: 4, servingsText: value })
+                const wrapper = mountRecipeView(recipe)
+                await flushPromises()
+                const text = wrapper.text()
+                expect(text).toContain('Servings')
+                expect(text).not.toMatch(/\bnone\b/i)
+            }
+        )
+
+        it('shows the servingsText verbatim when it is a real label', async () => {
+            const recipe = makeRecipe({ servings: 4, servingsText: 'Serves' })
+            const wrapper = mountRecipeView(recipe)
+            await flushPromises()
+            expect(wrapper.text()).toContain('Serves')
+        })
     })
 })

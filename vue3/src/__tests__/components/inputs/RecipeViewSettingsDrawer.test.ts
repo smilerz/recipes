@@ -28,6 +28,7 @@ vi.mock('@/openapi', async (imp) => ({...(await imp<any>()), ApiApi: class { con
 
 import RecipeViewSettingsDrawer from '@/components/inputs/RecipeViewSettingsDrawer.vue'
 import {useRecipeViewSettings} from '@/composables/useRecipeViewSettings'
+import {useUserPreferenceStore} from '@/stores/UserPreferenceStore'
 
 const capturedTabs: any[] = []
 
@@ -161,6 +162,14 @@ describe('RecipeViewSettingsDrawer', () => {
         routeState.name = 'SearchPage'
         const w = mountDrawer()
         expect(w.findAll('.v-expansion-panel').length).toBe(1)
+    })
+
+    it('seeds recipe_stepShowIngredientActions default = true so the step menu is shown by default', () => {
+        // The new flag must exist on deviceSettings so StepView.vue can read it
+        // independently of the summary's recipe_showIngredientActions.
+        mountDrawer()
+        const store = useUserPreferenceStore()
+        expect(store.deviceSettings.recipe_stepShowIngredientActions).toBe(true)
     })
 })
 
