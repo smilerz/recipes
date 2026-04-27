@@ -1166,5 +1166,12 @@
   "add_file": "Ajouter un fichier",
   "add_image": "Ajouter une image",
   "InventoryCode": "",
-  "create_shopping_new": "Ajouter à la NOUVELLE liste de courses"
+  "create_shopping_new": "Ajouter à la NOUVELLE liste de courses",
+  "RecipeLayout": "Disposition de la recette",
+  "Show_Time_Chips": "Afficher les temps",
+  "Show_Servings": "Afficher les portions",
+  "Show_Created_By": "Afficher l'auteur",
+  "Show_Created_Date": "Afficher la date de création",
+  "Show_Updated_Date": "Afficher la date de mise à jour",
+  "Show_Imported_From": "Afficher la source"
 }
