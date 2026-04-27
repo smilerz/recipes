@@ -1167,5 +1167,12 @@
   "add_image": "Afbeelding toevoegen",
   "create_shopping_new": "Voeg toe aan NIEUWE boodschappenlijst",
   "delete_confimation": "Weet je zeker dat je {kw} en zijn kinderen wil verwijderen?",
-  "us_cup": "kopje (US, eenheid)"
+  "us_cup": "kopje (US, eenheid)",
+  "RecipeLayout": "Recept lay-out",
+  "Show_Time_Chips": "Toon tijden",
+  "Show_Servings": "Toon porties",
+  "Show_Created_By": "Toon auteur",
+  "Show_Created_Date": "Toon aanmaakdatum",
+  "Show_Updated_Date": "Toon laatste update",
+  "Show_Imported_From": "Toon bron"
 }
