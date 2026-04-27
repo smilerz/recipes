@@ -1,5 +1,5 @@
 <template>
-    <v-btn density="compact" variant="plain" @click.stop="" icon :color="triggerColor" :aria-label="$t('IngredientMenu')">
+    <v-btn density="compact" variant="plain" @click.stop="" icon :style="triggerStyle" :aria-label="$t('IngredientMenu')">
         <v-icon icon="fa-solid fa-ellipsis-v"></v-icon>
         <v-menu activator="parent" :close-on-content-click="false" v-model="menuOpen">
             <v-list density="compact" min-width="220">
@@ -114,6 +114,16 @@ const loadingInventory = ref(false)
 const loadingIgnore = ref(false)
 const confirmDialogRef = ref<InstanceType<typeof ActionConfirmDialog> | null>(null)
 const inventoryDialogRef = ref<InstanceType<typeof InventoryQuickAddDialog> | null>(null)
+
+// triggerStyle returns an inline color rather than the v-btn :color prop. The
+// prop generates `class="text-<color>"`, but `vite-plugin-vuetify` only emits
+// the `.text-<color>` rule when the color is statically referenced — and our
+// triggerColor is dynamic, so the rule was being tree-shaken out and the icon
+// stayed default-colored in production. Inline style sidesteps the class.
+const triggerStyle = computed(() => {
+    const c = triggerColor.value
+    return c ? {color: `rgb(var(--v-theme-${c}))`} : undefined
+})
 
 const triggerColor = computed(() => {
     const mode = userPrefStore.deviceSettings.recipe_contextMenuColor
