@@ -55,7 +55,7 @@
 
                             <div class="cursor-pointer">
                                 <i class="fas fa-sort-numeric-up fa-fw mr-1"></i> {{ servings }} <br/>
-                                <div class="text-grey"><span v-if="recipe.servingsText">{{ recipe.servingsText }}</span><span v-else>{{ $t('Servings') }}</span></div>
+                                <div class="text-grey"><span v-if="displayServingsText">{{ displayServingsText }}</span><span v-else>{{ $t('Servings') }}</span></div>
                                 <recipe-scaling-dialog :recipe="recipe" :number="servings" @confirm="(s: number) => {servings = s}" title="Servings">
                                 </recipe-scaling-dialog>
                             </div>
@@ -115,7 +115,7 @@
                             <v-col>
                                 <div class="cursor-pointer">
                                     <i class="fas fa-sort-numeric-up fa-fw mr-1"></i> {{ servings }} <br/>
-                                    <div class="text-grey"><span v-if="recipe.servingsText">{{ recipe.servingsText }}</span><span v-else>{{ $t('Servings') }}</span></div>
+                                    <div class="text-grey"><span v-if="displayServingsText">{{ displayServingsText }}</span><span v-else>{{ $t('Servings') }}</span></div>
                                     <recipe-scaling-dialog :recipe="recipe" :number="servings" @confirm="(s: number) => {servings = s}" title="Servings">
                                     </recipe-scaling-dialog>
                                 </div>
@@ -247,6 +247,12 @@ const props = defineProps<{
 
 const servings = ref(props.servings ?? recipe.value.servings ?? 1)
 const showFullRecipeName = ref(false)
+
+const displayServingsText = computed(() => {
+    const t = recipe.value.servingsText
+    if (!t) return ''
+    return t.trim().toLowerCase() === 'none' ? '' : t
+})
 
 const galleryLightbox = ref(false)
 const galleryLightboxIndex = ref(0)

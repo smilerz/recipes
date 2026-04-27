@@ -257,6 +257,7 @@ export const useUserPreferenceStore = defineStore('user_preference_store', () =>
 
             recipe_mergeStepOverview: false,
             recipe_showIngredientActions: false,
+            recipe_stepShowIngredientActions: true,
             recipe_showCheckboxes: true,
             recipe_overviewExpanded: false,
             recipe_overviewInlineStatus: false,

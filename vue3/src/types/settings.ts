@@ -21,6 +21,7 @@ export type DeviceSettings = {
 
     recipe_mergeStepOverview: boolean,
     recipe_showIngredientActions: boolean,
+    recipe_stepShowIngredientActions: boolean,
     recipe_showCheckboxes: boolean,
     recipe_overviewExpanded: boolean,
     recipe_overviewInlineStatus: boolean,

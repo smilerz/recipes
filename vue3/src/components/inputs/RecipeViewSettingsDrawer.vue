@@ -16,13 +16,13 @@
                         <v-switch
                             v-model="deviceSettings.recipe_overviewExpanded"
                             :label="$t('StartExpanded')"
-                            hide-details density="compact"
+                            hide-details density="compact" color="primary"
                         />
                         <div class="text-caption pb-1 text-medium-emphasis">{{ $t('StartExpandedHelper') }}</div>
                         <v-switch
                             v-model="deviceSettings.recipe_showIngredientActions"
                             :label="$t('IngredientMenu')"
-                            hide-details density="compact"
+                            hide-details density="compact" color="primary"
                         />
                         <div class="text-caption pb-1 text-medium-emphasis">{{ $t('IngredientMenuHelp') }}</div>
                         <v-select
@@ -54,7 +54,7 @@
                             v-if="!mobile"
                             v-model="deviceSettings.recipe_overviewInlineStatus"
                             :label="$t('IngredientStatusIcons')"
-                            hide-details density="compact"
+                            hide-details density="compact" color="primary"
                         />
                     </v-expansion-panel-text>
                 </v-expansion-panel>
@@ -63,9 +63,15 @@
                     <v-expansion-panel-text>
                         <div class="text-caption pb-2 text-medium-emphasis">{{ $t('StepIngredientsScope') }}</div>
                         <v-switch
+                            v-model="deviceSettings.recipe_stepShowIngredientActions"
+                            :label="$t('IngredientMenu')"
+                            hide-details density="compact" color="primary"
+                        />
+                        <div class="text-caption pb-1 text-medium-emphasis">{{ $t('IngredientMenuHelp') }}</div>
+                        <v-switch
                             v-model="deviceSettings.recipe_showCheckboxes"
                             :label="$t('CheckOffIngredients')"
-                            hide-details density="compact"
+                            hide-details density="compact" color="primary"
                         />
                         <v-select
                             v-model="deviceSettings.recipe_stepNotesDisplay"
@@ -87,7 +93,7 @@
                             v-if="!mobile"
                             v-model="deviceSettings.recipe_stepInlineStatus"
                             :label="$t('IngredientStatusIcons')"
-                            hide-details density="compact"
+                            hide-details density="compact" color="primary"
                         />
                     </v-expansion-panel-text>
                 </v-expansion-panel>
@@ -97,27 +103,27 @@
                         <v-switch
                             v-model="deviceSettings.card_showRating"
                             :label="$t('Show_Rating')"
-                            hide-details density="compact"
+                            hide-details density="compact" color="primary"
                         />
                         <v-switch
                             v-model="deviceSettings.card_showAuthor"
                             :label="$t('Show_Author')"
-                            hide-details density="compact"
+                            hide-details density="compact" color="primary"
                         />
                         <v-switch
                             v-model="deviceSettings.card_showLastCooked"
                             :label="$t('Show_Last_Cooked')"
-                            hide-details density="compact"
+                            hide-details density="compact" color="primary"
                         />
                         <v-switch
                             v-model="deviceSettings.card_showNewBadge"
                             :label="$t('Show_New_Badge')"
-                            hide-details density="compact"
+                            hide-details density="compact" color="primary"
                         />
                         <v-switch
                             v-model="deviceSettings.card_show_cook_time"
                             :label="$t('Show_Cook_Time')"
-                            hide-details density="compact"
+                            hide-details density="compact" color="primary"
                         />
                         <v-select
                             v-model="deviceSettings.card_maxKeywords"
@@ -134,7 +140,7 @@
                             :label="$t(item.labelKey)"
                             :model-value="deviceSettings.card_visibleMenuItems.includes(item.key)"
                             @update:model-value="onToggleMenuItem(item.key, $event)"
-                            hide-details density="compact"
+                            hide-details density="compact" color="primary"
                         />
                     </v-expansion-panel-text>
                 </v-expansion-panel>

@@ -104,7 +104,7 @@ const props = defineProps({
     },
 })
 
-const showStepActions = computed(() => useUserPreferenceStore().deviceSettings.recipe_showIngredientActions)
+const showStepActions = computed(() => useUserPreferenceStore().deviceSettings.recipe_stepShowIngredientActions)
 
 const timerRunning = ref(false)
 const stepChecked = ref(false)
