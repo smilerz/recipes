@@ -1164,5 +1164,12 @@
   "ZoomIn": "Acercar",
   "ZoomOut": "Alejar",
   "add_file": "Añadir archivo",
-  "add_image": "Añadir imagen"
+  "add_image": "Añadir imagen",
+  "RecipeLayout": "Diseño de receta",
+  "Show_Time_Chips": "Mostrar tiempos",
+  "Show_Servings": "Mostrar raciones",
+  "Show_Created_By": "Mostrar autor",
+  "Show_Created_Date": "Mostrar fecha de creación",
+  "Show_Updated_Date": "Mostrar fecha de actualización",
+  "Show_Imported_From": "Mostrar origen"
 }
