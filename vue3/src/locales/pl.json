@@ -1169,5 +1169,12 @@
   "create_shopping_new": "Dodaj do NOWEJ listy zakupów",
   "us_cup": "filiżanka (USA, objętość)",
   "HouseholdSettingsHelp": "Aby udostępniać listy zakupów i plany posiłków, utwórz gospodarstwa domowe i przypisz do nich użytkowników, którzy mają się nimi dzielić. ",
-  "Monthly": "Miesięcznie"
+  "Monthly": "Miesięcznie",
+  "RecipeLayout": "Układ przepisu",
+  "Show_Time_Chips": "Pokaż czasy",
+  "Show_Servings": "Pokaż porcje",
+  "Show_Created_By": "Pokaż autora",
+  "Show_Created_Date": "Pokaż datę utworzenia",
+  "Show_Updated_Date": "Pokaż datę aktualizacji",
+  "Show_Imported_From": "Pokaż źródło"
 }
