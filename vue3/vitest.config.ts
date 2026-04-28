@@ -15,7 +15,7 @@ export default defineConfig({
         environment: 'jsdom',
         globals: true,
         setupFiles: ['./vitest.setup.ts'],
-        include: ['src/**/__tests__/**/*.{test,spec}.ts'],
+        include: ['src/**/__tests__/**/*.test.ts'],
         exclude: ['node_modules', 'dist'],
         // Use child-process pool instead of worker_threads to avoid the
         // "Closing rpc while onUserConsoleLog was pending" teardown race

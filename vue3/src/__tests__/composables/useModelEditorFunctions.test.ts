@@ -42,10 +42,6 @@ vi.mock('@vueuse/core', async () => {
 
 import { useModelEditorFunctions } from '@/composables/useModelEditorFunctions'
 
-/**
- * Mount a thin wrapper component that invokes the composable in a real lifecycle.
- * Returns the composable's return value for assertions.
- */
 function mountWithComposable() {
     let composableResult: ReturnType<typeof useModelEditorFunctions<Food>>
 

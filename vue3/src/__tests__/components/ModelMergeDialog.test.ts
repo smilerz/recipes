@@ -2,7 +2,6 @@ import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { flushPromises, mount } from '@vue/test-utils'
 import { createPinia, type PiniaPlugin } from 'pinia'
 import { createI18n } from 'vue-i18n'
-import { createVuetify } from 'vuetify'
 import { createRouter, createMemoryHistory } from 'vue-router'
 import { apiMock, resetApiMock } from '@/__tests__/api-mock'
 import { makeFood, makeUserPreference } from '@/__tests__/factories'
@@ -61,7 +60,6 @@ describe('ModelMergeDialog', () => {
         pinia.use(prePopulate)
 
         const i18n = createI18n({ legacy: false, locale: 'en', messages: { en: {} }, missingWarn: false, fallbackWarn: false })
-        const vuetify = createVuetify()
         const router = createRouter({
             history: createMemoryHistory(),
             routes: [{ path: '/', component: { template: '<div/>' } }],
@@ -74,7 +72,7 @@ describe('ModelMergeDialog', () => {
                 activator: 'parent',
             },
             global: {
-                plugins: [pinia, i18n, vuetify, router],
+                plugins: [pinia, i18n, router],
                 stubs: {
                     ModelSelect: { template: '<div class="stub-model-select"/>' },
                     VClosableCardTitle: { template: '<div class="stub-title"/>' },
@@ -92,7 +90,6 @@ describe('ModelMergeDialog', () => {
     it('uses GenericModel for the specified model type', async () => {
         const wrapper = mountDialog()
         await flushPromises()
-        // The component called getGenericModelFromString('Food', t) during setup
         expect(wrapper.vm).toBeDefined()
     })
 

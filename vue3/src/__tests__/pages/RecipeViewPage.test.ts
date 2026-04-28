@@ -67,12 +67,9 @@ describe('RecipeViewPage', () => {
         apiMock.apiRecipeRetrieve.mockResolvedValue(makeRecipe({ id: 3 }))
         apiMock.apiViewLogCreate.mockResolvedValue({})
 
-        // UserPreferenceStore starts unauthenticated by default
-        // The store mock's isAuthenticated is false, so viewLog won't be called
         mountRecipePage('3')
         await flushPromises()
 
-        // With default mocked store (isAuthenticated=false), viewLog should not be called
         expect(apiMock.apiViewLogCreate).not.toHaveBeenCalled()
     })
 
@@ -83,7 +80,6 @@ describe('RecipeViewPage', () => {
         const wrapper = mountRecipePage()
         await flushPromises()
 
-        // Verify recipe was loaded (print behavior depends on store state)
         expect(apiMock.apiRecipeRetrieve).toHaveBeenCalled()
     })
 })

@@ -59,7 +59,6 @@ describe('BooksPage', () => {
         const wrapper = mountPage(BooksPage)
         await flushPromises()
 
-        // No book cards rendered
         expect(wrapper.text()).not.toContain('Favorites')
     })
 })

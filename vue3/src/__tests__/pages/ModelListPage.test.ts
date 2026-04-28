@@ -68,7 +68,6 @@ describe('ModelListPage', () => {
     it('renders page content beyond back button', async () => {
         const wrapper = mountPage(ModelListPage, { props: { model: 'Food' } })
         await flushPromises()
-        // Verify the page rendered more than just the back button
         expect(wrapper.html().length).toBeGreaterThan(100)
     })
 

@@ -1,17 +1,7 @@
-/**
- * Edge case prop tests.
- *
- * Mounts components with makeMinimal*() and makeEdgeCase*() factory data
- * to catch missing null guards, empty array access, and undefined field crashes.
- *
- * If a component crashes with edge case data, the fix belongs in the component
- * (add a guard), NOT in the test (weaken the assertion).
- */
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { flushPromises, mount } from '@vue/test-utils'
 import { createPinia, type PiniaPlugin } from 'pinia'
 import { createI18n } from 'vue-i18n'
-import { createVuetify } from 'vuetify'
 import { createRouter, createMemoryHistory } from 'vue-router'
 import { apiMock, resetApiMock } from '@/__tests__/api-mock'
 import type { Component } from 'vue'
@@ -85,7 +75,6 @@ vi.mock('@/types/Models', async () => {
     }
 })
 
-// Import components
 import ShoppingLineItem from '@/components/display/ShoppingLineItem.vue'
 import RecipeCard from '@/components/display/RecipeCard.vue'
 import RecipeImage from '@/components/display/RecipeImage.vue'
@@ -108,7 +97,6 @@ function createTestApp() {
     pinia.use(prePopulate)
 
     const i18n = createI18n({ legacy: false, locale: 'en', messages: { en: {} }, missingWarn: false, fallbackWarn: false })
-    const vuetify = createVuetify()
     const router = createRouter({
         history: createMemoryHistory(),
         routes: [
@@ -118,15 +106,15 @@ function createTestApp() {
         ],
     })
 
-    return { pinia, i18n, vuetify, router }
+    return { pinia, i18n, router }
 }
 
 function edgeMount(component: Component, props: Record<string, any> = {}) {
-    const { pinia, i18n, vuetify, router } = createTestApp()
+    const { pinia, i18n, router } = createTestApp()
     return mount(component, {
         props,
         global: {
-            plugins: [pinia, i18n, vuetify, router],
+            plugins: [pinia, i18n, router],
             stubs: {
                 ShoppingLineItemDialog: { template: '<div/>' },
                 ShoppingListsBar: { template: '<div/>' },

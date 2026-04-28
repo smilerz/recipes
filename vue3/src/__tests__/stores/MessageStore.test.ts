@@ -3,15 +3,12 @@ import { setActivePinia, createPinia } from 'pinia'
 import { createI18n } from 'vue-i18n'
 import { useMessageStore, MessageType, ErrorMessageType, PreparedMessage, Message } from '@/stores/MessageStore'
 
-// MessageStore uses useI18n() which requires an i18n instance
-// Install a minimal one before each test
 const i18n = createI18n({
     legacy: false,
     locale: 'en',
     messages: { en: {} },
 })
 
-// Provide the i18n instance globally so useI18n() works outside components
 vi.mock('vue-i18n', async () => {
     const actual = await vi.importActual<typeof import('vue-i18n')>('vue-i18n')
     return {
@@ -29,7 +26,6 @@ describe('MessageStore', () => {
 
     it('starts with empty messages', () => {
         const store = useMessageStore()
-        // localStorage may carry over; deleteAll to reset
         store.deleteAllMessages()
         expect(store.messages.length).toBe(0)
     })

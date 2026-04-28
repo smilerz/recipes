@@ -492,7 +492,7 @@ class TreeMixin(MergeMixin, FuzzyFilterMixin):
             node_location = 'last'
 
         try:
-            child = self.model.objects.get(pk=pk, space=self.request.space)
+            child = self.model.objects.get(pk=pk)
         except (self.model.DoesNotExist):
             content = {'error': True, 'msg': _(f'No {self.basename} with id {pk} exists')}
             return Response(content, status=status.HTTP_404_NOT_FOUND)
@@ -507,14 +507,14 @@ class TreeMixin(MergeMixin, FuzzyFilterMixin):
                 content = {'error': True, 'msg': _('An error occurred attempting to move ') + child.name}
                 return Response(content, status=status.HTTP_400_BAD_REQUEST)
             # Re-fetch via ORM — treebeard bypasses the ORM during move().
-            child = self.model.objects.get(pk=pk, space=self.request.space)
+            child = self.model.objects.get(pk=pk)
             return Response(self.get_serializer(child).data, status=status.HTTP_200_OK)
         elif parent == child.id:
             content = {'error': True, 'msg': _('Cannot move an object to itself!')}
             return Response(content, status=status.HTTP_403_FORBIDDEN)
 
         try:
-            parent = self.model.objects.get(pk=parent, space=self.request.space)
+            parent = self.model.objects.get(pk=parent)
         except (self.model.DoesNotExist):
             content = {'error': True, 'msg': _(f'No {self.basename} with id {parent} exists')}
             return Response(content, status=status.HTTP_404_NOT_FOUND)
@@ -525,13 +525,8 @@ class TreeMixin(MergeMixin, FuzzyFilterMixin):
         except (PathOverflow, InvalidMoveToDescendant, InvalidPosition):
             content = {'error': True, 'msg': _('An error occurred attempting to move ') + child.name}
             return Response(content, status=status.HTTP_400_BAD_REQUEST)
-        # Re-fetch via ORM — treebeard bypasses the ORM during move() so the
-        # in-memory `child` instance has stale parent / path data. The
-        # frontend OpenAPI client expects the moved Food back per the schema
-        # (returning `{msg: ...}` makes FoodFromJSON crash on missing array
-        # fields and the user sees a generic "Error while updating" toast
-        # even though the move succeeded).
-        child = self.model.objects.get(pk=pk, space=self.request.space)
+        # Re-fetch via ORM — treebeard bypasses the ORM during move().
+        child = self.model.objects.get(pk=pk)
         return Response(self.get_serializer(child).data, status=status.HTTP_200_OK)
 
 

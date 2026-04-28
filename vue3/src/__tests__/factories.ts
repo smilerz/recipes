@@ -1,15 +1,3 @@
-/**
- * Test factories for OpenAPI models.
- *
- * These produce typed objects that match the generated interfaces.
- * When the OpenAPI schema is regenerated, `vue-tsc --noEmit` will
- * flag any factory whose shape no longer matches — no extra tooling needed.
- *
- * Usage:
- *   const food = makeFood({ name: 'Butter' })
- *   const recipe = makeRecipe({ steps: [makeStep()] })
- */
-
 import type {
     AccessToken,
     AiProvider,
@@ -71,8 +59,6 @@ import type {
     UserSpace,
     ViewLog,
 } from '@/openapi'
-
-// ─── Leaf models (no nested dependencies) ────────────────────────
 
 export function makeUser(overrides: Partial<User> = {}): User {
     return {
@@ -254,8 +240,6 @@ export function makeGenericModelReference(overrides: Partial<GenericModelReferen
         ...overrides,
     }
 }
-
-// ─── Models with leaf dependencies ───────────────────────────────
 
 export function makeUserFileView(overrides: Partial<UserFileView> = {}): UserFileView {
     return {

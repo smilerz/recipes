@@ -925,13 +925,13 @@ class FoodSerializer(UniqueFieldsMixin, WritableNestedModelSerializer, ExtendedR
     def get_available_substitutes(self, obj):
         """Return the subset of this food's substitutes (direct + siblings/
         children when flagged) that are currently on-hand for the caller's
-        household. Used by the ingredient context menu and inline substitute
-        icons — the UI action is only meaningful if the substitute is
-        actually usable right now.
-
+        household. 
         Returns a list of FoodSimpleSerializer-shaped dicts. Empty list for
         anonymous callers, no shared users, or no on-hand substitutes.
         """
+        view = self.context.get("view")
+        if view is not None and getattr(view, "action", None) == "list":
+            return []
         try:
             if not self.context["request"].user.is_authenticated:
                 return []

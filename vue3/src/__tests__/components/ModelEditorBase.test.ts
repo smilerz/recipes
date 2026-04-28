@@ -1,18 +1,6 @@
-/**
- * Regression coverage for ModelEditorBase.
- *
- * Upstream briefly hid the action bar on mobile for recipes expecting a
- * v-fab in ModelEditPage to replace it, but that v-fab's state binding
- * (modelEditorFunctions) was never wired up — mobile users were left
- * with no Save / Delete buttons at all. Lock the fix in by asserting the
- * action bar renders for a Recipe model.
- */
 import {describe, it, expect} from 'vitest'
 import {mount} from '@vue/test-utils'
 import {createI18n} from 'vue-i18n'
-import {createVuetify} from 'vuetify'
-import * as vuetifyComponents from 'vuetify/components'
-import * as vuetifyDirectives from 'vuetify/directives'
 import {createRouter, createMemoryHistory} from 'vue-router'
 
 import ModelEditorBase from '@/components/model_editors/ModelEditorBase.vue'
@@ -34,7 +22,6 @@ function mountBase(overrides: Partial<any> = {}) {
         messages: {en: {Save: 'Save', Delete: 'Delete', Create: 'Create', Recipe: 'Recipe', unsaved: 'unsaved', WarnPageLeave: 'unsaved', Confirm: 'Confirm', Cancel: 'Cancel'}},
         missingWarn: false, fallbackWarn: false,
     })
-    const vuetify = createVuetify({components: vuetifyComponents, directives: vuetifyDirectives})
     const router = createRouter({history: createMemoryHistory(), routes: [
         {path: '/', component: {template: '<div/>'}},
         {path: '/edit/:model/:id?', name: 'ModelDeletePage', component: {template: '<div/>'}},
@@ -51,7 +38,7 @@ function mountBase(overrides: Partial<any> = {}) {
             ...overrides,
         },
         global: {
-            plugins: [i18n, vuetify, router],
+            plugins: [i18n, router],
             stubs: {
                 'delete-confirm-dialog': {template: '<div class="stub-delete-dialog"/>'},
                 'v-closable-card-title': {template: '<div class="stub-title"/>'},

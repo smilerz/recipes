@@ -2,7 +2,6 @@ import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { flushPromises, mount } from '@vue/test-utils'
 import { createPinia, type PiniaPlugin } from 'pinia'
 import { createI18n } from 'vue-i18n'
-import { createVuetify } from 'vuetify'
 import { createRouter, createMemoryHistory } from 'vue-router'
 import { apiMock, resetApiMock } from '@/__tests__/api-mock'
 import { makeSpace, makeUserPreference } from '@/__tests__/factories'
@@ -31,7 +30,6 @@ describe('WelcomePage', () => {
     })
 
     function mountWelcome() {
-        // Pinia plugin that pre-populates UserPreferenceStore after it's created
         const prePopulatePlugin: PiniaPlugin = ({ store }) => {
             if (store.$id === 'user_preference_store') {
                 store.userSettings = makeUserPreference() as any
@@ -42,7 +40,6 @@ describe('WelcomePage', () => {
         pinia.use(prePopulatePlugin)
 
         const i18n = createI18n({ legacy: false, locale: 'en', messages: { en: {} }, missingWarn: false, fallbackWarn: false })
-        const vuetify = createVuetify()
         const router = createRouter({
             history: createMemoryHistory(),
             routes: [
@@ -55,7 +52,7 @@ describe('WelcomePage', () => {
 
         return mount(WelcomePage, {
             global: {
-                plugins: [pinia, i18n, vuetify, router],
+                plugins: [pinia, i18n, router],
                 stubs: {
                     OpenDataImportSettings: { template: '<div class="stub-open-data"/>' },
                     ModelEditDialog: { template: '<div class="stub-model-edit-dialog"/>' },

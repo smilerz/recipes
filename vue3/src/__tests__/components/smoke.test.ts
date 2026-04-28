@@ -1,12 +1,7 @@
-/**
- * Smoke tests for all components at 0% coverage.
- * Each test verifies the component mounts without throwing.
- */
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { flushPromises, mount } from '@vue/test-utils'
 import { createPinia, type PiniaPlugin } from 'pinia'
 import { createI18n } from 'vue-i18n'
-import { createVuetify } from 'vuetify'
 import { createRouter, createMemoryHistory } from 'vue-router'
 import { apiMock, resetApiMock } from '@/__tests__/api-mock'
 import {
@@ -59,7 +54,6 @@ vi.mock('@/types/Models', async () => {
     }
 })
 
-// Import all components under test
 import BtnCopy from '@/components/buttons/BtnCopy.vue'
 import PluralName from '@/components/display/PluralName.vue'
 import PrivateRecipeBadge from '@/components/display/PrivateRecipeBadge.vue'
@@ -93,7 +87,6 @@ function createTestApp() {
     pinia.use(prePopulate)
 
     const i18n = createI18n({ legacy: false, locale: 'en', messages: { en: {} }, missingWarn: false, fallbackWarn: false })
-    const vuetify = createVuetify()
     const router = createRouter({
         history: createMemoryHistory(),
         routes: [
@@ -104,15 +97,15 @@ function createTestApp() {
         ],
     })
 
-    return { pinia, i18n, vuetify, router }
+    return { pinia, i18n, router }
 }
 
 function smokeMount(component: Component, props: Record<string, any> = {}, extraStubs: Record<string, any> = {}) {
-    const { pinia, i18n, vuetify, router } = createTestApp()
+    const { pinia, i18n, router } = createTestApp()
     return mount(component, {
         props,
         global: {
-            plugins: [pinia, i18n, vuetify, router],
+            plugins: [pinia, i18n, router],
             stubs: {
                 ModelSelect: { template: '<div class="stub-model-select"/>' },
                 ModelSelectVuetify: { template: '<div class="stub-model-select-vuetify"/>' },
@@ -135,19 +128,16 @@ function smokeMount(component: Component, props: Record<string, any> = {}, extra
 describe('Component smoke tests', () => {
     beforeEach(() => {
         resetApiMock()
-        // Set base URI for useDjangoUrls
         if (!document.querySelector('base')) {
             const base = document.createElement('base')
             base.href = 'http://localhost:8000/'
             document.head.appendChild(base)
         }
-        // Provide safe defaults for common API calls
         apiMock.apiRecipeRetrieve.mockResolvedValue(makeRecipe())
         apiMock.apiRecipeList.mockResolvedValue({ results: [], count: 0 })
         apiMock.apiFoodUpdate.mockResolvedValue({})
     })
 
-    // Display components
     it('BtnCopy mounts', () => {
         const w = smokeMount(BtnCopy, { text: 'copy me' })
         expect(w.exists()).toBe(true)
@@ -205,12 +195,11 @@ describe('Component smoke tests', () => {
         expect(w.exists()).toBe(true)
     })
 
-    // Dialog components
     it('VClosableCardTitle mounts', () => {
-        const { pinia, i18n, vuetify, router } = createTestApp()
+        const { pinia, i18n, router } = createTestApp()
         const w = mount(VClosableCardTitle, {
             props: { title: 'Test Title' },
-            global: { plugins: [pinia, i18n, vuetify, router] },
+            global: { plugins: [pinia, i18n, router] },
         })
         expect(w.exists()).toBe(true)
     })

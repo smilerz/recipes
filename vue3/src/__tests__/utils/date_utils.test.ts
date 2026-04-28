@@ -53,7 +53,6 @@ describe('adjustDateRangeLength', () => {
     it('starts from today when adding days to empty range', () => {
         const today = new Date().toISOString().slice(0, 10)
         const result = adjustDateRangeLength([], 1)
-        // empty branch only pushes today, does not enter the for loop
         expect(result).toHaveLength(1)
         expect(result[0]!.toISOString().slice(0, 10)).toBe(today)
     })
@@ -73,7 +72,6 @@ describe('adjustDateRangeLength', () => {
         const dates = [new Date('2026-03-03'), new Date('2026-03-01')]
         const result = adjustDateRangeLength(dates, 1)
 
-        // Should sort first, then add after last date (03-03)
         expect(result[result.length - 1]!.toISOString().slice(0, 10)).toBe('2026-03-04')
     })
 })
