@@ -3,7 +3,6 @@ import { setActivePinia, createPinia } from 'pinia'
 import { makeUserPreference, makeServerSettings, makeSpace, makeUserSpace } from '@/__tests__/factories'
 import { apiMock, resetApiMock } from '@/__tests__/api-mock'
 
-// All vi.mock calls must be at top level (hoisted by vitest)
 vi.mock('@/openapi', () => ({
     ApiApi: class { constructor() { return apiMock } },
     ResponseError: class extends Error { response: any; constructor(r: any) { super(); this.response = r } },

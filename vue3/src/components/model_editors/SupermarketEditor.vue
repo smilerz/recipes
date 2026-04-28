@@ -134,14 +134,8 @@ const editingObjectSupermarketCategoriesRelations = ref([] as SupermarketCategor
 // variable to prevent sorting while some other operation is currently running that would conflict / would make sorting unnecessary (e.g. adding item)
 const preventSort = ref(false)
 
-// available categories as a ref (not computed) so vue-draggable-plus can mutate it during drag
 const availableCategories = ref([] as SupermarketCategoryRelation[])
 
-/**
- * Recompute available categories whenever the source data changes.
- * This replaces the old computed property with a writable ref that
- * vue-draggable-plus can bind to via v-model.
- */
 function updateAvailableCategories() {
     availableCategories.value = supermarketCategories.value
         .filter(sc => editingObjectSupermarketCategoriesRelations.value.findIndex(e => e.category.id == sc.id) == -1)
@@ -173,11 +167,6 @@ function initializeEditor(){
     })
 }
 
-/**
- * Called when an item is dragged into the selected list.
- * vue-draggable-plus already spliced the item into editingObjectSupermarketCategoriesRelations,
- * so we just need to persist it to the server.
- */
 function onCategoryAdded(evt: any) {
     const sCR = editingObjectSupermarketCategoriesRelations.value[evt.newIndex]
     if (sCR) {
@@ -185,14 +174,7 @@ function onCategoryAdded(evt: any) {
     }
 }
 
-/**
- * Called when an item is dragged out of the selected list.
- * vue-draggable-plus already removed it from editingObjectSupermarketCategoriesRelations,
- * so we just need to delete it from the server.
- */
 function onCategoryRemoved(evt: any) {
-    // The item was already removed from the array by vue-draggable-plus.
-    // We need to find it in the available list where it was moved to.
     const sCR = availableCategories.value[evt.newIndex]
     if (sCR) {
         removeCategoryRelation(sCR)
@@ -201,7 +183,6 @@ function onCategoryRemoved(evt: any) {
 
 function sortCategoryRelations(startIndex: number = 0) {
     const api = new ApiApi()
-    console.log('sort called start index: ', startIndex)
 
     if (!preventSort.value) {
         editingObjectSupermarketCategoriesRelations.value.forEach((sc, index) => {

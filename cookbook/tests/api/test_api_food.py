@@ -714,8 +714,6 @@ def test_shopping_status_checked_excluded(u1_s1, space_1):
     assert str(r['shopping']) == 'False'
 
 
-# ---------------------------- available_substitutes (E-9) ----------------------------
-
 def test_available_substitutes_empty_when_none_onhand(u1_s1, space_1):
     """When a food has substitutes but none are on-hand, the field is empty."""
     with scopes_disabled():
@@ -752,3 +750,19 @@ def test_available_substitutes_empty_without_any_substitute(u1_s1, space_1):
 
     r = json.loads(u1_s1.get(reverse(DETAIL_URL, args=[food.id])).content)
     assert r['available_substitutes'] == []
+
+
+def test_available_substitutes_empty_on_list_endpoint(u1_s1, space_1):
+    """available_substitutes is detail-only. The list endpoint returns [] for
+    every food regardless of on-hand substitutes — populating it on list would
+    issue one query per food (N+1)."""
+    user = auth.get_user(u1_s1)
+    with scopes_disabled():
+        food = FoodFactory(space=space_1)
+        onhand_sub = FoodFactory(space=space_1)
+        onhand_sub.onhand_users.add(user)
+        food.substitute.add(onhand_sub)
+
+    r = json.loads(u1_s1.get(reverse(LIST_URL)).content)
+    target = next(f for f in r['results'] if f['id'] == food.id)
+    assert target['available_substitutes'] == []

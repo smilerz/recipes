@@ -58,7 +58,6 @@ describe('StartPage', () => {
         apiMock.apiRecipeList.mockResolvedValue({ results: [{}], count: 5 })
         const wrapper = mountPage(StartPage)
         await flushPromises()
-        // totalRecipes > 0 but <= 10: only random scroller shows
         expect(wrapper.findAll('.stub-horizontal-recipe-scroller').length).toBe(1)
     })
 })

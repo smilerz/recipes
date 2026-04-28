@@ -11,13 +11,10 @@ generates vue3/src/__tests__/factories.generated.ts with:
 Run after regenerating the OpenAPI client:
   conda run -n tandoor python generate_api_client.py
   python vue3/scripts/generate-test-factories.py
-
-Or integrate into generate_api_client.py.
 """
 
 import yaml
 import sys
-import os
 from pathlib import Path
 from collections import OrderedDict
 

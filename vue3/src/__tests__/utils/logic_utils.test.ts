@@ -9,7 +9,6 @@ import {
 } from '@/utils/logic_utils'
 import type { ShoppingListEntry, Space } from '@/openapi'
 
-// Minimal factories — only the fields these functions inspect
 function makeEntry(overrides: Partial<ShoppingListEntry> = {}): ShoppingListEntry {
     return {
         delayUntil: undefined,

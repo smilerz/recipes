@@ -1,31 +1,20 @@
 name: Vue Continuous Integration
 
-# Runs Vitest unit/integration tests + a dev-server healthcheck for the vue3/
-# frontend. Lives here — the branch that introduced the Vitest infrastructure
-# — so every chain branch and every dependabot PR inherits it on rebase.
-# The preview orchestrator invokes this via workflow_call alongside ci.yml
-# before publishing the Docker image.
-
 on:
   push:
     branches-ignore: [preview]
-  pull_request:
   workflow_call:
 
 jobs:
   vue-tests:
     runs-on: ubuntu-latest
-    # Node 25 is bleeding-edge (not LTS) and currently fails on a jsdom /
-    # localStorage polyfill mismatch (`storage.getItem is not a function`).
-    # Run it for forward coverage but don't fail the workflow on it.
-    continue-on-error: ${{ matrix.experimental == true }}
+    # Node 25 currently fails on a jsdom / localStorage polyfill mismatch
+    # (`storage.getItem is not a function`). Tracked in ROADMAP under
+    # Developer Experience — when fixed, add Node 25 to required checks.
     strategy:
       fail-fast: false
       matrix:
         node-version: ["24", "25"]
-        include:
-          - node-version: "25"
-            experimental: true
     steps:
       - uses: actions/checkout@v6
 

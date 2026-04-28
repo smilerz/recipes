@@ -2,7 +2,6 @@ import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { flushPromises, mount } from '@vue/test-utils'
 import { createPinia, type PiniaPlugin } from 'pinia'
 import { createI18n } from 'vue-i18n'
-import { createVuetify } from 'vuetify'
 import { createRouter, createMemoryHistory } from 'vue-router'
 import { apiMock, resetApiMock } from '@/__tests__/api-mock'
 import { makeRecipe, makeStep, makeIngredient, makeFood, makeUnit, makeUserPreference } from '@/__tests__/factories'
@@ -28,7 +27,6 @@ import AddToShoppingDialog from '@/components/dialogs/AddToShoppingDialog.vue'
 describe('AddToShoppingDialog', () => {
     beforeEach(() => {
         resetApiMock()
-        // AddToShoppingDialog calls apiRecipeRetrieve and apiRecipeRelatedList on mount
         apiMock.apiRecipeRetrieve = vi.fn()
         apiMock.apiRecipeRelatedList = vi.fn()
         apiMock.apiShoppingListRecipeCreate = vi.fn()
@@ -45,7 +43,6 @@ describe('AddToShoppingDialog', () => {
         pinia.use(prePopulate)
 
         const i18n = createI18n({ legacy: false, locale: 'en', messages: { en: {} }, missingWarn: false, fallbackWarn: false })
-        const vuetify = createVuetify()
         const router = createRouter({
             history: createMemoryHistory(),
             routes: [{ path: '/', component: { template: '<div/>' } }],
@@ -54,7 +51,7 @@ describe('AddToShoppingDialog', () => {
         return mount(AddToShoppingDialog, {
             props: { recipe },
             global: {
-                plugins: [pinia, i18n, vuetify, router],
+                plugins: [pinia, i18n, router],
                 stubs: {
                     ModelSelect: { template: '<div class="stub-model-select"/>' },
                     VClosableCardTitle: { template: '<div class="stub-title"/>' },
@@ -110,8 +107,9 @@ describe('AddToShoppingDialog', () => {
 
         const wrapper = mountDialog()
         await flushPromises()
+        ;(wrapper.vm as any).dialog = true
+        await flushPromises()
 
-        // The dialog should have processed ingredients into dialogRecipes
-        expect(wrapper.html()).toContain('Flour')
+        expect(document.body.innerHTML).toContain('Flour')
     })
 })

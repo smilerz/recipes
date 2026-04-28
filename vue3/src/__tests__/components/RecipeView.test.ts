@@ -2,7 +2,6 @@ import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { flushPromises, mount } from '@vue/test-utils'
 import { createPinia, type PiniaPlugin } from 'pinia'
 import { createI18n } from 'vue-i18n'
-import { createVuetify } from 'vuetify'
 import { createRouter, createMemoryHistory } from 'vue-router'
 import { apiMock, resetApiMock } from '@/__tests__/api-mock'
 import { makeRecipe, makeStep, makeIngredient, makeFood, makeUnit, makeKeyword, makeUserPreference, makeSpace } from '@/__tests__/factories'
@@ -52,7 +51,6 @@ describe('RecipeView', () => {
         pinia.use(prePopulate)
 
         const i18n = createI18n({ legacy: false, locale: 'en', messages: { en: {} }, missingWarn: false, fallbackWarn: false })
-        const vuetify = createVuetify()
         const router = createRouter({
             history: createMemoryHistory(),
             routes: [
@@ -65,7 +63,7 @@ describe('RecipeView', () => {
         return mount(RecipeView, {
             props: { modelValue: recipe, servings: undefined },
             global: {
-                plugins: [pinia, i18n, vuetify, router],
+                plugins: [pinia, i18n, router],
                 stubs: {
                     StepsOverview: { template: '<div class="stub-steps-overview"/>' },
                     RecipeActivity: { template: '<div class="stub-recipe-activity"/>' },

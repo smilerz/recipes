@@ -23,7 +23,7 @@ server {
     alias ${STATIC_ROOT}/vue3/service-worker.js;
   }
 
-  # drop /metrics access logs — scraped frequently by blackbox-exporter, drowns the access log
+  # drop /metrics access logs — drowns the access log
   location = /metrics {
     proxy_set_header Host $http_host;
     proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;

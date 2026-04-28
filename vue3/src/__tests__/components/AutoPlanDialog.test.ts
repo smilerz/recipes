@@ -2,7 +2,6 @@ import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { flushPromises, mount } from '@vue/test-utils'
 import { createPinia, type PiniaPlugin } from 'pinia'
 import { createI18n } from 'vue-i18n'
-import { createVuetify } from 'vuetify'
 import { createRouter, createMemoryHistory } from 'vue-router'
 import { apiMock, resetApiMock } from '@/__tests__/api-mock'
 import { makeUserPreference } from '@/__tests__/factories'
@@ -42,7 +41,6 @@ describe('AutoPlanDialog', () => {
         pinia.use(prePopulate)
 
         const i18n = createI18n({ legacy: false, locale: 'en', messages: { en: {} }, missingWarn: false, fallbackWarn: false })
-        const vuetify = createVuetify()
         const router = createRouter({
             history: createMemoryHistory(),
             routes: [{ path: '/', component: { template: '<div/>' } }],
@@ -51,7 +49,7 @@ describe('AutoPlanDialog', () => {
         return mount(AutoPlanDialog, {
             props: { activator: 'parent' },
             global: {
-                plugins: [pinia, i18n, vuetify, router],
+                plugins: [pinia, i18n, router],
                 stubs: {
                     ModelSelect: { template: '<div class="stub-model-select"/>' },
                     VClosableCardTitle: { template: '<div class="stub-title"/>' },
@@ -70,14 +68,12 @@ describe('AutoPlanDialog', () => {
     it('initializes with default servings of 1', async () => {
         const wrapper = mountDialog()
         await flushPromises()
-        // The component initializes autoMealPlan.servings = 1
         expect(wrapper.vm).toBeDefined()
     })
 
     it('initializes date range spanning 7 days', async () => {
         const wrapper = mountDialog()
         await flushPromises()
-        // initializeRequest creates a date range from now to now+7
         expect(wrapper.vm).toBeDefined()
     })
 })

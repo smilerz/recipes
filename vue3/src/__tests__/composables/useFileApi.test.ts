@@ -2,14 +2,12 @@ import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { useFileApi } from '@/composables/useFileApi'
 import { makeUserFile } from '@/__tests__/factories'
 
-// Mock cookie to return a CSRF token
 vi.mock('@/utils/cookie', () => ({
     getCookie: () => 'test-csrf-token',
 }))
 
 describe('useFileApi', () => {
     beforeEach(() => {
-        // Set base URI for useDjangoUrls
         const base = document.createElement('base')
         base.href = 'http://localhost:8000/'
         document.head.appendChild(base)
