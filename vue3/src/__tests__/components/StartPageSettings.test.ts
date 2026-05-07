@@ -6,7 +6,8 @@ import { createVuetify } from 'vuetify'
 import { apiMock, resetApiMock } from '@/__tests__/api-mock'
 import { DEFAULT_SECTIONS } from '@/composables/useStartPageSections'
 
-vi.mock('@/openapi', () => ({
+vi.mock('@/openapi', async (importOriginal) => ({
+    ...(await importOriginal<any>()),
     ApiApi: class { constructor() { return apiMock } },
     ResponseError: class extends Error { response: any; constructor(r: any) { super(); this.response = r } },
 }))
