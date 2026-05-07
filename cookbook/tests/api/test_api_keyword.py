@@ -383,6 +383,7 @@ def test_ordering_name(u1_s1, space_1):
     desc = json.loads(u1_s1.get(f'{reverse(LIST_URL)}?ordering=-name').content)
     assert desc['results'][0]['name'] == 'zzz_ordering'
 
+
 # ==================== has_recipe filter ====================
 
 def test_filter_has_recipe_true(obj_1, obj_2, recipe_1_s1, u1_s1):
