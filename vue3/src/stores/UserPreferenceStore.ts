@@ -248,6 +248,7 @@ export const useUserPreferenceStore = defineStore('user_preference_store', () =>
             shopping_item_info_recipe: true,
             shopping_input_autocomplete: true,
             shopping_show_debug: false,
+            shopping_showFoodImages: false,
 
             mealplan_displayPeriod: 'week',
             mealplan_displayPeriodCount: 3,
@@ -271,8 +272,8 @@ export const useUserPreferenceStore = defineStore('user_preference_store', () =>
             search_viewMode: 'grid',
             search_visibleFilters: [],
             search_includeChildren: true,
-            search_inlineFilters: ['_keywordsGroup', '_foodsGroup', '_booksGroup'],
-            search_drawerFilters: ['_keywordsGroup', '_foodsGroup', '_booksGroup', 'ratingGte', 'unrated', 'servings', 'makenow', 'cookedon', 'createdon', 'totalTime', 'createdby', 'internal'],
+            // search_inlineFilters / search_drawerFilters: managed by useFilterPlacement
+            // Omitted here so the composable can distinguish "never customized" from "user set"
             search_savedSearchInline: true,
             search_savedSearchInPanel: true,
             search_showStats: true,
@@ -297,6 +298,13 @@ export const useUserPreferenceStore = defineStore('user_preference_store', () =>
             food_desktopSubtitle: [],
             food_showMobileHeaders: true,
             food_defaultInventoryLocation: null,
+
+            card_showRating: false,
+            card_showAuthor: false,
+            card_showLastCooked: false,
+            card_showNewBadge: false,
+            card_maxKeywords: 3,
+            card_visibleMenuItems: ['edit', 'plan', 'shopping', 'properties', 'share', 'duplicate', 'print'],
         }
     }
 

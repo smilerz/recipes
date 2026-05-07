@@ -21,16 +21,20 @@
 
 <script setup lang="ts">
 
-import {ref} from "vue";
+import {computed} from "vue";
 
-const emit = defineEmits(['delete'])
+const emit = defineEmits(['delete', 'update:modelValue'])
 
 const props = defineProps({
+    modelValue: {type: Boolean, default: false},
     objectName: {type: String, default: ''},
     modelName: {type: String, default: ''},
 })
 
-const dialog = ref(false)
+const dialog = computed({
+    get: () => props.modelValue,
+    set: (val: boolean) => emit('update:modelValue', val),
+})
 
 </script>
 
