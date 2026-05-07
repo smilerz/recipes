@@ -30,6 +30,7 @@ vi.mock('@/openapi', async (imp) => ({...(await imp<any>()), ApiApi: class { con
 
 import RecipeViewSettingsDrawer from '@/components/inputs/RecipeViewSettingsDrawer.vue'
 import {useRecipeViewSettings} from '@/composables/useRecipeViewSettings'
+import {useUserPreferenceStore} from '@/stores/UserPreferenceStore'
 
 function mountDrawer({mobile = false} = {}) {
     const prePopulate: PiniaPlugin = ({store}) => {
@@ -49,10 +50,18 @@ function mountDrawer({mobile = false} = {}) {
             Never: 'Never',
             IngredientDisplay: 'Ingredient display',
             CardDisplay: 'Card display',
+            RecipeLayout: 'Recipe layout',
+            Show_Time_Chips: 'Show time chips',
+            Show_Servings: 'Show servings',
+            Show_Created_By: 'Show created by',
+            Show_Created_Date: 'Show created date',
+            Show_Updated_Date: 'Show updated date',
+            Show_Imported_From: 'Show imported from',
             Show_Rating: 'Show rating',
             Show_Author: 'Show author',
             Show_Last_Cooked: 'Show last cooked',
             Show_New_Badge: 'Show new badge',
+            Show_Cook_Time: 'Show cook time',
             Max_Keywords: 'Max keywords',
             Menu_Items: 'Menu items',
             All: 'All',
@@ -119,11 +128,12 @@ describe('RecipeViewSettingsDrawer (consolidated)', () => {
         expect(isPinned.value).toBe(true)
     })
 
-    it('on the recipe view shows two panels: the consolidated Ingredient display + Card display', () => {
+    it('on the recipe view shows the Ingredient display + Recipe layout panels (Card display is card-context only)', () => {
         const w = mountDrawer()
         expect(w.findAll('.v-expansion-panel').length).toBe(2)
         expect(w.find('[data-test="ingredient-display-panel"]').exists()).toBe(true)
-        expect(w.find('[data-test="card-display-panel"]').exists()).toBe(true)
+        expect(w.find('[data-test="recipe-layout-panel"]').exists()).toBe(true)
+        expect(w.find('[data-test="card-display-panel"]').exists()).toBe(false)
     })
 
     it('summary and detail action switches write separate device-settings keys', async () => {
@@ -210,6 +220,37 @@ describe('RecipeViewSettingsDrawer (consolidated)', () => {
         expect(w.find('[data-test="preview-summary"]').exists()).toBe(false)
         expect(w.find('[data-test="preview-detail"]').exists()).toBe(false)
     })
+
+    it('renders only the Card display panel on a card-context route (Ingredient/Recipe-layout are recipe-only)', () => {
+        routeState.name = 'SearchPage'
+        const w = mountDrawer()
+        expect(w.findAll('.v-expansion-panel').length).toBe(1)
+        expect(w.find('[data-test="card-display-panel"]').exists()).toBe(true)
+    })
+
+    it('seeds the seven Recipe Layout defaults to true on deviceSettings', () => {
+        mountDrawer()
+        const store = useUserPreferenceStore()
+        expect(store.deviceSettings.recipe_showAuthor).toBe(true)
+        expect(store.deviceSettings.recipe_showTimeChips).toBe(true)
+        expect(store.deviceSettings.recipe_showServings).toBe(true)
+        expect(store.deviceSettings.recipe_showFootCreatedBy).toBe(true)
+        expect(store.deviceSettings.recipe_showFootCreatedDate).toBe(true)
+        expect(store.deviceSettings.recipe_showFootUpdatedDate).toBe(true)
+        expect(store.deviceSettings.recipe_showFootImportedFrom).toBe(true)
+    })
+
+    it('renders the Recipe Layout panel when route is RecipeViewPage', () => {
+        routeState.name = 'RecipeViewPage'
+        const w = mountDrawer()
+        expect(w.find('[data-test="recipe-layout-panel"]').exists()).toBe(true)
+    })
+
+    it('hides the Recipe Layout panel on card-context routes (e.g. SearchPage)', () => {
+        routeState.name = 'SearchPage'
+        const w = mountDrawer()
+        expect(w.find('[data-test="recipe-layout-panel"]').exists()).toBe(false)
+    })
 })
 
 describe('Card Display panel + recipe-view gating', () => {
@@ -222,16 +263,33 @@ describe('Card Display panel + recipe-view gating', () => {
         routeState.name = 'SearchPage'
     })
 
-    it('renders the Card Display panel off the recipe view (e.g. SearchPage)', () => {
+    it('renders the Card Display panel on a card-context route (e.g. SearchPage)', () => {
         routeState.name = 'SearchPage'
         const w = mountDrawer()
         expect(w.find('[data-test="card-display-panel"]').exists()).toBe(true)
     })
 
-    it('renders the Card Display panel on the recipe view too', () => {
+    it.each(['StartPage', 'BookEntryPage', 'MealPlanPage'])(
+        'renders Card Display panel on card-context route %s',
+        (routeName) => {
+            routeState.name = routeName
+            const w = mountDrawer()
+            expect(w.find('[data-test="card-display-panel"]').exists()).toBe(true)
+        }
+    )
+
+    it('hides Card Display panel when route is not a card context (e.g. RecipeViewPage)', () => {
+        // Card Display is for card contexts only. RecipeViewPage shows
+        // a single recipe in detail, not cards, so the panel is gated out.
         routeState.name = 'RecipeViewPage'
         const w = mountDrawer()
-        expect(w.find('[data-test="card-display-panel"]').exists()).toBe(true)
+        expect(w.find('[data-test="card-display-panel"]').exists()).toBe(false)
+    })
+
+    it('hides Card Display panel on non-card non-recipe routes (e.g. SettingsPage)', () => {
+        routeState.name = 'SettingsPage'
+        const w = mountDrawer()
+        expect(w.find('[data-test="card-display-panel"]').exists()).toBe(false)
     })
 
     it('hides the Ingredient display panel when not on the recipe view', () => {
@@ -244,6 +302,26 @@ describe('Card Display panel + recipe-view gating', () => {
         routeState.name = 'RecipeViewPage'
         const w = mountDrawer()
         expect(w.find('[data-test="ingredient-display-panel"]').exists()).toBe(true)
+    })
+
+    it('Show Cook Time switch is rendered in Card Display panel and defaults ON', () => {
+        routeState.name = 'SearchPage'
+        const w = mountDrawer()
+        const store = (w.vm.$pinia as any)._s.get('user_preference_store')
+        // Default-true preserves the current behaviour where cook time
+        // shows unconditionally on the card.
+        expect(store.deviceSettings.card_show_cook_time).toBe(true)
+        const cookTimeSwitch = w.findAll('.v-switch').find(s => s.text().includes('Show cook time'))
+        expect(cookTimeSwitch, 'Show cook time switch should exist').toBeTruthy()
+    })
+
+    it('toggling Show Cook Time updates deviceSettings.card_show_cook_time', async () => {
+        routeState.name = 'SearchPage'
+        const w = mountDrawer()
+        const store = (w.vm.$pinia as any)._s.get('user_preference_store')
+        const cookTimeSwitch = w.findAll('.v-switch').find(s => s.text().includes('Show cook time'))
+        await cookTimeSwitch!.find('input').setValue(false)
+        expect(store.deviceSettings.card_show_cook_time).toBe(false)
     })
 
     it('toggling Show Rating updates deviceSettings.card_showRating', async () => {
