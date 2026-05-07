@@ -40,22 +40,22 @@
                 </v-card>
             </v-card>
 
-            <v-card class="mt-1">
+            <v-card class="mt-1" v-if="deviceSettings.recipe_showTimeChips || deviceSettings.recipe_showServings">
                 <v-container>
                     <v-row class="text-center text-body-2">
-                        <v-col class="pt-1 pb-1">
+                        <v-col class="pt-1 pb-1" v-if="deviceSettings.recipe_showTimeChips">
                             <i class="fas fa-cogs fa-fw mr-1"></i> {{ recipe.workingTime }} min<br/>
                             <div class="text-grey">{{ $t('WorkingTime') }}</div>
                         </v-col>
-                        <v-col class="pt-1 pb-1">
+                        <v-col class="pt-1 pb-1" v-if="deviceSettings.recipe_showTimeChips">
                             <div><i class="fas fa-hourglass-half fa-fw mr-1"></i> {{ recipe.waitingTime }} min</div>
                             <div class="text-grey">{{ $t('WaitingTime') }}</div>
                         </v-col>
-                        <v-col class="pt-1 pb-1">
+                        <v-col class="pt-1 pb-1" v-if="deviceSettings.recipe_showServings">
 
                             <div class="cursor-pointer">
                                 <i class="fas fa-sort-numeric-up fa-fw mr-1"></i> {{ servings }} <br/>
-                                <div class="text-grey"><span v-if="recipe.servingsText">{{ recipe.servingsText }}</span><span v-else>{{ $t('Servings') }}</span></div>
+                                <div class="text-grey"><span v-if="displayServingsText">{{ displayServingsText }}</span><span v-else>{{ $t('Servings') }}</span></div>
                                 <recipe-scaling-dialog :recipe="recipe" :number="servings" @confirm="(s: number) => {servings = s}" title="Servings">
                                 </recipe-scaling-dialog>
                             </div>
@@ -88,7 +88,7 @@
                                     <recipe-context-menu :recipe="recipe" :servings="servings" context="view"></recipe-context-menu>
                                 </div>
                             </div>
-                            <p>
+                            <p v-if="deviceSettings.recipe_showAuthor">
                                 {{ $t('created_by') }} {{ recipe.createdBy.displayName }} ({{ DateTime.fromJSDate(recipe.createdAt).toLocaleString(DateTime.DATE_SHORT) }})
                             </p>
                             <p>
@@ -103,19 +103,19 @@
 
                         </v-card-text>
 
-                        <v-row class="text-center text-body-2 mb-1 flex-grow-0">
-                            <v-col>
+                        <v-row class="text-center text-body-2 mb-1 flex-grow-0" v-if="deviceSettings.recipe_showTimeChips || deviceSettings.recipe_showServings">
+                            <v-col v-if="deviceSettings.recipe_showTimeChips">
                                 <i class="fas fa-cogs fa-fw mr-1"></i> {{ recipe.workingTime }} {{ $t('min') }}<br/>
                                 <div class="text-grey">{{ $t('WorkingTime') }}</div>
                             </v-col>
-                            <v-col>
+                            <v-col v-if="deviceSettings.recipe_showTimeChips">
                                 <div><i class="fas fa-hourglass-half fa-fw mr-1"></i> {{ recipe.waitingTime }} {{ $t('min') }}</div>
                                 <div class="text-grey">{{ $t('WaitingTime') }}</div>
                             </v-col>
-                            <v-col>
+                            <v-col v-if="deviceSettings.recipe_showServings">
                                 <div class="cursor-pointer">
                                     <i class="fas fa-sort-numeric-up fa-fw mr-1"></i> {{ servings }} <br/>
-                                    <div class="text-grey"><span v-if="recipe.servingsText">{{ recipe.servingsText }}</span><span v-else>{{ $t('Servings') }}</span></div>
+                                    <div class="text-grey"><span v-if="displayServingsText">{{ displayServingsText }}</span><span v-else>{{ $t('Servings') }}</span></div>
                                     <recipe-scaling-dialog :recipe="recipe" :number="servings" @confirm="(s: number) => {servings = s}" title="Servings">
                                     </recipe-scaling-dialog>
                                 </div>
@@ -157,10 +157,10 @@
 
         <property-view v-model="recipe" :ingredientFactor="ingredientFactor"></property-view>
 
-        <v-card class="mt-2">
+        <v-card class="mt-2" v-if="anyFootVisible" data-test="foot-card">
             <v-card-text>
                 <v-row dense>
-                    <v-col cols="12" :sm="(recipe.sourceUrl) ? 3 : 4">
+                    <v-col cols="12" :sm="(recipe.sourceUrl) ? 3 : 4" v-if="deviceSettings.recipe_showFootCreatedBy">
                         <v-card
                             variant="outlined"
                             :title="$t('CreatedBy')"
@@ -169,7 +169,7 @@
                             :to="(useUserPreferenceStore().isAuthenticated) ?  {name: 'SearchPage', query: {createdby: recipe.createdBy.id!}}: undefined">
                         </v-card>
                     </v-col>
-                    <v-col cols="12" :sm="(recipe.sourceUrl) ? 3 : 4">
+                    <v-col cols="12" :sm="(recipe.sourceUrl) ? 3 : 4" v-if="deviceSettings.recipe_showFootCreatedDate">
                         <v-card
                             variant="outlined"
                             :title="$t('Created')"
@@ -178,7 +178,7 @@
                             :to="(useUserPreferenceStore().isAuthenticated) ? {name: 'SearchPage', query: {createdon: DateTime.fromJSDate(recipe.createdAt).toISODate()}} : undefined">
                         </v-card>
                     </v-col>
-                    <v-col cols="12" :sm="(recipe.sourceUrl) ? 3 : 4">
+                    <v-col cols="12" :sm="(recipe.sourceUrl) ? 3 : 4" v-if="deviceSettings.recipe_showFootUpdatedDate">
                         <v-card
                             variant="outlined"
                             :title="$t('Updated')"
@@ -187,7 +187,7 @@
                             :to="(useUserPreferenceStore().isAuthenticated) ?  {name: 'SearchPage', query: {updatedon: DateTime.fromJSDate(recipe.updatedAt).toISODate()}}: undefined">
                         </v-card>
                     </v-col>
-                    <v-col cols="12" :sm="(recipe.sourceUrl) ? 3 : 4" v-if="recipe.sourceUrl">
+                    <v-col cols="12" :sm="(recipe.sourceUrl) ? 3 : 4" v-if="recipe.sourceUrl && deviceSettings.recipe_showFootImportedFrom">
                         <v-card
                             variant="outlined"
                             :title="$t('Imported_From')"
@@ -247,6 +247,21 @@ const props = defineProps<{
 
 const servings = ref(props.servings ?? recipe.value.servings ?? 1)
 const showFullRecipeName = ref(false)
+
+const deviceSettings = useUserPreferenceStore().deviceSettings
+
+const displayServingsText = computed(() => {
+    const t = recipe.value.servingsText
+    if (!t) return ''
+    return t.trim().toLowerCase() === 'none' ? '' : t
+})
+
+const anyFootVisible = computed(() =>
+    deviceSettings.recipe_showFootCreatedBy ||
+    deviceSettings.recipe_showFootCreatedDate ||
+    deviceSettings.recipe_showFootUpdatedDate ||
+    (deviceSettings.recipe_showFootImportedFrom && !!recipe.value.sourceUrl)
+)
 
 const galleryLightbox = ref(false)
 const galleryLightboxIndex = ref(0)
