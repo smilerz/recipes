@@ -30,7 +30,7 @@ import type {
   Food,
   FoodBatchUpdate,
   FoodInheritField,
-  FoodShoppingUpdate,
+  FoodStats,
   Group,
   Household,
   ImportLog,
@@ -201,8 +201,8 @@ import {
     FoodBatchUpdateToJSON,
     FoodInheritFieldFromJSON,
     FoodInheritFieldToJSON,
-    FoodShoppingUpdateFromJSON,
-    FoodShoppingUpdateToJSON,
+    FoodStatsFromJSON,
+    FoodStatsToJSON,
     GroupFromJSON,
     GroupToJSON,
     HouseholdFromJSON,
@@ -788,7 +788,7 @@ export interface ApiFdcSearchRetrieveRequest {
 
 export interface ApiFoodAipropertiesCreateRequest {
     id: number;
-    food: Omit<Food, 'shopping'|'parent'|'numchild'|'full_name'|'substitute_onhand'|'available_substitutes'>;
+    food: Omit<Food, 'shopping'|'parent'|'numchild'|'numrecipe'|'full_name'|'substitute_onhand'|'available_substitutes'|'in_inventory'|'substitute_inventory'|'matched_filter'>;
     provider?: number;
 }
 
@@ -804,7 +804,7 @@ export interface ApiFoodCascadingListRequest {
 }
 
 export interface ApiFoodCreateRequest {
-    food: Omit<Food, 'shopping'|'parent'|'numchild'|'full_name'|'substitute_onhand'|'available_substitutes'>;
+    food: Omit<Food, 'shopping'|'parent'|'numchild'|'numrecipe'|'full_name'|'substitute_onhand'|'available_substitutes'|'in_inventory'|'substitute_inventory'|'matched_filter'>;
 }
 
 export interface ApiFoodDestroyRequest {
@@ -813,7 +813,7 @@ export interface ApiFoodDestroyRequest {
 
 export interface ApiFoodFdcCreateRequest {
     id: number;
-    food: Omit<Food, 'shopping'|'parent'|'numchild'|'full_name'|'substitute_onhand'|'available_substitutes'>;
+    food: Omit<Food, 'shopping'|'parent'|'numchild'|'numrecipe'|'full_name'|'substitute_onhand'|'available_substitutes'|'in_inventory'|'substitute_inventory'|'matched_filter'>;
 }
 
 export interface ApiFoodInheritFieldRetrieveRequest {
@@ -821,27 +821,37 @@ export interface ApiFoodInheritFieldRetrieveRequest {
 }
 
 export interface ApiFoodListRequest {
-    limit?: string;
+    expired?: boolean;
+    expiringSoon?: number;
+    hasChildren?: boolean;
+    hasInventory?: boolean;
+    hasRecipe?: boolean;
+    hasSubstitute?: boolean;
+    ignoreShopping?: boolean;
+    inShoppingList?: boolean;
+    inventoryLocation?: number;
+    onhand?: boolean;
+    ordering?: string;
     page?: number;
     pageSize?: number;
     query?: string;
-    random?: string;
     root?: number;
     rootTree?: number;
+    supermarketCategory?: number;
     tree?: number;
-    updatedAt?: string;
+    usedInRecipes?: boolean;
 }
 
 export interface ApiFoodMergeUpdateRequest {
     id: number;
     target: number;
-    food: Omit<Food, 'shopping'|'parent'|'numchild'|'full_name'|'substitute_onhand'|'available_substitutes'>;
+    food: Omit<Food, 'shopping'|'parent'|'numchild'|'numrecipe'|'full_name'|'substitute_onhand'|'available_substitutes'|'in_inventory'|'substitute_inventory'|'matched_filter'>;
 }
 
 export interface ApiFoodMoveUpdateRequest {
     id: number;
     parent: number;
-    food: Omit<Food, 'shopping'|'parent'|'numchild'|'full_name'|'substitute_onhand'|'available_substitutes'>;
+    food: Omit<Food, 'shopping'|'parent'|'numchild'|'numrecipe'|'full_name'|'substitute_onhand'|'available_substitutes'|'in_inventory'|'substitute_inventory'|'matched_filter'>;
 }
 
 export interface ApiFoodNullingListRequest {
@@ -853,7 +863,7 @@ export interface ApiFoodNullingListRequest {
 
 export interface ApiFoodPartialUpdateRequest {
     id: number;
-    patchedFood?: Omit<PatchedFood, 'shopping'|'parent'|'numchild'|'full_name'|'substitute_onhand'|'available_substitutes'>;
+    patchedFood?: Omit<PatchedFood, 'shopping'|'parent'|'numchild'|'numrecipe'|'full_name'|'substitute_onhand'|'available_substitutes'|'in_inventory'|'substitute_inventory'|'matched_filter'>;
 }
 
 export interface ApiFoodProtectingListRequest {
@@ -867,14 +877,9 @@ export interface ApiFoodRetrieveRequest {
     id: number;
 }
 
-export interface ApiFoodShoppingUpdateRequest {
-    id: number;
-    foodShoppingUpdate: FoodShoppingUpdate;
-}
-
 export interface ApiFoodUpdateRequest {
     id: number;
-    food: Omit<Food, 'shopping'|'parent'|'numchild'|'full_name'|'substitute_onhand'|'available_substitutes'>;
+    food: Omit<Food, 'shopping'|'parent'|'numchild'|'numrecipe'|'full_name'|'substitute_onhand'|'available_substitutes'|'in_inventory'|'substitute_inventory'|'matched_filter'>;
 }
 
 export interface ApiGetExternalFileLinkRetrieveRequest {
@@ -1139,7 +1144,7 @@ export interface ApiKeywordCascadingListRequest {
 }
 
 export interface ApiKeywordCreateRequest {
-    keyword: Omit<Keyword, 'label'|'parent'|'numchild'|'created_at'|'updated_at'|'full_name'>;
+    keyword: Omit<Keyword, 'label'|'parent'|'numchild'|'numrecipe'|'created_at'|'updated_at'|'full_name'>;
 }
 
 export interface ApiKeywordDestroyRequest {
@@ -1162,13 +1167,13 @@ export interface ApiKeywordListRequest {
 export interface ApiKeywordMergeUpdateRequest {
     id: number;
     target: number;
-    keyword: Omit<Keyword, 'label'|'parent'|'numchild'|'created_at'|'updated_at'|'full_name'>;
+    keyword: Omit<Keyword, 'label'|'parent'|'numchild'|'numrecipe'|'created_at'|'updated_at'|'full_name'>;
 }
 
 export interface ApiKeywordMoveUpdateRequest {
     id: number;
     parent: number;
-    keyword: Omit<Keyword, 'label'|'parent'|'numchild'|'created_at'|'updated_at'|'full_name'>;
+    keyword: Omit<Keyword, 'label'|'parent'|'numchild'|'numrecipe'|'created_at'|'updated_at'|'full_name'>;
 }
 
 export interface ApiKeywordNullingListRequest {
@@ -1180,7 +1185,7 @@ export interface ApiKeywordNullingListRequest {
 
 export interface ApiKeywordPartialUpdateRequest {
     id: number;
-    patchedKeyword?: Omit<PatchedKeyword, 'label'|'parent'|'numchild'|'created_at'|'updated_at'|'full_name'>;
+    patchedKeyword?: Omit<PatchedKeyword, 'label'|'parent'|'numchild'|'numrecipe'|'created_at'|'updated_at'|'full_name'>;
 }
 
 export interface ApiKeywordProtectingListRequest {
@@ -1196,7 +1201,7 @@ export interface ApiKeywordRetrieveRequest {
 
 export interface ApiKeywordUpdateRequest {
     id: number;
-    keyword: Omit<Keyword, 'label'|'parent'|'numchild'|'created_at'|'updated_at'|'full_name'>;
+    keyword: Omit<Keyword, 'label'|'parent'|'numchild'|'numrecipe'|'created_at'|'updated_at'|'full_name'>;
 }
 
 export interface ApiMealPlanCreateRequest {
@@ -1648,6 +1653,7 @@ export interface ApiShoppingListEntryDestroyRequest {
 }
 
 export interface ApiShoppingListEntryListRequest {
+    food?: number;
     mealplan?: number;
     page?: number;
     pageSize?: number;
@@ -1758,7 +1764,7 @@ export interface ApiSpaceUpdateRequest {
 }
 
 export interface ApiStepCreateRequest {
-    step: Omit<Step, 'instructions_markdown'|'step_recipe_data'|'numrecipe'>;
+    step: Omit<Step, 'instructions_markdown'|'step_recipe_data'>;
 }
 
 export interface ApiStepDestroyRequest {
@@ -1774,7 +1780,7 @@ export interface ApiStepListRequest {
 
 export interface ApiStepPartialUpdateRequest {
     id: number;
-    patchedStep?: Omit<PatchedStep, 'instructions_markdown'|'step_recipe_data'|'numrecipe'>;
+    patchedStep?: Omit<PatchedStep, 'instructions_markdown'|'step_recipe_data'>;
 }
 
 export interface ApiStepRetrieveRequest {
@@ -1783,7 +1789,7 @@ export interface ApiStepRetrieveRequest {
 
 export interface ApiStepUpdateRequest {
     id: number;
-    step: Omit<Step, 'instructions_markdown'|'step_recipe_data'|'numrecipe'>;
+    step: Omit<Step, 'instructions_markdown'|'step_recipe_data'>;
 }
 
 export interface ApiStorageCascadingListRequest {
@@ -2078,7 +2084,7 @@ export interface ApiUnitConversionUpdateRequest {
 }
 
 export interface ApiUnitCreateRequest {
-    unit: Unit;
+    unit: Omit<Unit, 'numrecipe'>;
 }
 
 export interface ApiUnitDestroyRequest {
@@ -2098,7 +2104,7 @@ export interface ApiUnitListRequest {
 export interface ApiUnitMergeUpdateRequest {
     id: number;
     target: number;
-    unit: Unit;
+    unit: Omit<Unit, 'numrecipe'>;
 }
 
 export interface ApiUnitNullingListRequest {
@@ -2110,7 +2116,7 @@ export interface ApiUnitNullingListRequest {
 
 export interface ApiUnitPartialUpdateRequest {
     id: number;
-    patchedUnit?: PatchedUnit;
+    patchedUnit?: Omit<PatchedUnit, 'numrecipe'>;
 }
 
 export interface ApiUnitProtectingListRequest {
@@ -2126,7 +2132,7 @@ export interface ApiUnitRetrieveRequest {
 
 export interface ApiUnitUpdateRequest {
     id: number;
-    unit: Unit;
+    unit: Omit<Unit, 'numrecipe'>;
 }
 
 export interface ApiUserFileCascadingListRequest {
@@ -5226,8 +5232,48 @@ export class ApiApi extends runtime.BaseAPI {
     async apiFoodListRaw(requestParameters: ApiFoodListRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PaginatedFoodList>> {
         const queryParameters: any = {};
 
-        if (requestParameters['limit'] != null) {
-            queryParameters['limit'] = requestParameters['limit'];
+        if (requestParameters['expired'] != null) {
+            queryParameters['expired'] = requestParameters['expired'];
+        }
+
+        if (requestParameters['expiringSoon'] != null) {
+            queryParameters['expiring_soon'] = requestParameters['expiringSoon'];
+        }
+
+        if (requestParameters['hasChildren'] != null) {
+            queryParameters['has_children'] = requestParameters['hasChildren'];
+        }
+
+        if (requestParameters['hasInventory'] != null) {
+            queryParameters['has_inventory'] = requestParameters['hasInventory'];
+        }
+
+        if (requestParameters['hasRecipe'] != null) {
+            queryParameters['has_recipe'] = requestParameters['hasRecipe'];
+        }
+
+        if (requestParameters['hasSubstitute'] != null) {
+            queryParameters['has_substitute'] = requestParameters['hasSubstitute'];
+        }
+
+        if (requestParameters['ignoreShopping'] != null) {
+            queryParameters['ignore_shopping'] = requestParameters['ignoreShopping'];
+        }
+
+        if (requestParameters['inShoppingList'] != null) {
+            queryParameters['in_shopping_list'] = requestParameters['inShoppingList'];
+        }
+
+        if (requestParameters['inventoryLocation'] != null) {
+            queryParameters['inventory_location'] = requestParameters['inventoryLocation'];
+        }
+
+        if (requestParameters['onhand'] != null) {
+            queryParameters['onhand'] = requestParameters['onhand'];
+        }
+
+        if (requestParameters['ordering'] != null) {
+            queryParameters['ordering'] = requestParameters['ordering'];
         }
 
         if (requestParameters['page'] != null) {
@@ -5242,10 +5288,6 @@ export class ApiApi extends runtime.BaseAPI {
             queryParameters['query'] = requestParameters['query'];
         }
 
-        if (requestParameters['random'] != null) {
-            queryParameters['random'] = requestParameters['random'];
-        }
-
         if (requestParameters['root'] != null) {
             queryParameters['root'] = requestParameters['root'];
         }
@@ -5254,12 +5296,16 @@ export class ApiApi extends runtime.BaseAPI {
             queryParameters['root_tree'] = requestParameters['rootTree'];
         }
 
+        if (requestParameters['supermarketCategory'] != null) {
+            queryParameters['supermarket_category'] = requestParameters['supermarketCategory'];
+        }
+
         if (requestParameters['tree'] != null) {
             queryParameters['tree'] = requestParameters['tree'];
         }
 
-        if (requestParameters['updatedAt'] != null) {
-            queryParameters['updated_at'] = requestParameters['updatedAt'];
+        if (requestParameters['usedInRecipes'] != null) {
+            queryParameters['used_in_recipes'] = requestParameters['usedInRecipes'];
         }
 
         const headerParameters: runtime.HTTPHeaders = {};
@@ -5572,47 +5618,30 @@ export class ApiApi extends runtime.BaseAPI {
     /**
      * logs request counts to redis cache total/per user/
      */
-    async apiFoodShoppingUpdateRaw(requestParameters: ApiFoodShoppingUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<FoodShoppingUpdate>> {
-        if (requestParameters['id'] == null) {
-            throw new runtime.RequiredError(
-                'id',
-                'Required parameter "id" was null or undefined when calling apiFoodShoppingUpdate().'
-            );
-        }
-
-        if (requestParameters['foodShoppingUpdate'] == null) {
-            throw new runtime.RequiredError(
-                'foodShoppingUpdate',
-                'Required parameter "foodShoppingUpdate" was null or undefined when calling apiFoodShoppingUpdate().'
-            );
-        }
-
+    async apiFoodStatsRetrieveRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<FoodStats>> {
         const queryParameters: any = {};
 
         const headerParameters: runtime.HTTPHeaders = {};
-
-        headerParameters['Content-Type'] = 'application/json';
 
         if (this.configuration && this.configuration.apiKey) {
             headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
         }
 
         const response = await this.request({
-            path: `/api/food/{id}/shopping/`.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id']))),
-            method: 'PUT',
+            path: `/api/food/stats/`,
+            method: 'GET',
             headers: headerParameters,
             query: queryParameters,
-            body: FoodShoppingUpdateToJSON(requestParameters['foodShoppingUpdate']),
         }, initOverrides);
 
-        return new runtime.JSONApiResponse(response, (jsonValue) => FoodShoppingUpdateFromJSON(jsonValue));
+        return new runtime.JSONApiResponse(response, (jsonValue) => FoodStatsFromJSON(jsonValue));
     }
 
     /**
      * logs request counts to redis cache total/per user/
      */
-    async apiFoodShoppingUpdate(requestParameters: ApiFoodShoppingUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<FoodShoppingUpdate> {
-        const response = await this.apiFoodShoppingUpdateRaw(requestParameters, initOverrides);
+    async apiFoodStatsRetrieve(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<FoodStats> {
+        const response = await this.apiFoodStatsRetrieveRaw(initOverrides);
         return await response.value();
     }
 
@@ -12076,6 +12105,10 @@ export class ApiApi extends runtime.BaseAPI {
      */
     async apiShoppingListEntryListRaw(requestParameters: ApiShoppingListEntryListRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PaginatedShoppingListEntryList>> {
         const queryParameters: any = {};
+
+        if (requestParameters['food'] != null) {
+            queryParameters['food'] = requestParameters['food'];
+        }
 
         if (requestParameters['mealplan'] != null) {
             queryParameters['mealplan'] = requestParameters['mealplan'];
