@@ -138,7 +138,6 @@ class SearchParams:
         def _str_or_none(val):
             return str(val) if val is not None else None
 
-        # Normalize rating fields — may arrive as int from JSONField or str from HTTP
         def _str_or_none(val):
             return str(val) if val is not None else None
 

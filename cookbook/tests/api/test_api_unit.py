@@ -260,6 +260,7 @@ def test_ordering_name(u1_s1, space_1):
     desc = json.loads(u1_s1.get(f'{reverse(LIST_URL)}?ordering=-name').content)
     assert desc['results'][0]['name'] == 'zzz_ordering'
 
+
 # ==================== has_recipe filter ====================
 
 @pytest.fixture()
