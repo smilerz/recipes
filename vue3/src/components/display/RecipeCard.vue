@@ -41,7 +41,7 @@
                         {{ $t('External') }}
                     </v-chip>
                     <v-chip class="mb-1 me-1" size="x-small" prepend-icon="far fa-clock" label variant="outlined"
-                            v-if="recipe.workingTime != undefined && recipe.workingTime > 0">
+                            v-if="deviceSettings.card_show_cook_time && recipe.workingTime != undefined && recipe.workingTime > 0">
                         {{ recipe.workingTime! + recipe.waitingTime! }}
                     </v-chip>
                 </template>
