@@ -124,7 +124,7 @@
 
         <v-progress-linear v-if="loading" indeterminate color="primary" class="mt-2" />
 
-        <v-row v-if="recipes.length > 0 && useUserPreferenceStore().deviceSettings.search_viewMode == 'table'">
+        <v-row v-if="recipes.length > 0 && viewMode === 'table'">
             <v-col>
                 <v-card>
                     <v-data-table-server
@@ -143,7 +143,9 @@
                         :show-select="selectMode"
                     >
                         <template #item.image="{item}">
-                            <v-avatar :image="item.image" size="x-large" class="mt-1 mb-1" v-if="item.image" />
+                            <v-avatar size="x-large" class="mt-1 mb-1" v-if="item.image">
+                                <div class="crop-avatar" :style="cropPreviewStyle(item.image, item.imageCropData, true)" />
+                            </v-avatar>
                             <v-avatar color="primary" variant="tonal" size="x-large" class="mt-1 mb-1" v-else>
                                 <random-icon />
                             </v-avatar>
@@ -159,7 +161,7 @@
             </v-col>
         </v-row>
 
-        <template v-if="recipes.length > 0 && useUserPreferenceStore().deviceSettings.search_viewMode == 'grid'">
+        <template v-if="recipes.length > 0 && viewMode === 'grid'">
             <v-row>
                 <v-col cols="6" md="4" v-for="r in recipes" :key="r.id" class="pa-0">
                     <div class="position-relative">
@@ -239,7 +241,7 @@
             :tabs="drawerTabs"
         >
             <template #filters>
-                <div v-if="!savedSearchInline" class="px-4 py-2">
+                <div v-if="savedSearchInPanel" class="px-4 py-2">
                     <model-select model="CustomFilter" v-model="selectedCustomFilter" density="compact" />
                     <div class="d-flex ga-1 mt-1">
                         <v-btn variant="text" size="small" prepend-icon="fa-solid fa-upload"
@@ -289,9 +291,17 @@
 
                 <div class="d-flex align-center px-4 py-1 ga-1">
                     <span class="text-body-2 flex-grow-1">{{ $t('SavedSearch') }}</span>
-                    <v-btn-toggle density="compact" mandatory :model-value="savedSearchInline ? 'page' : 'panel'" @update:model-value="savedSearchInline = $event === 'page'">
-                        <v-btn value="page" size="x-small">{{ $t('Page') }}</v-btn>
-                        <v-btn value="panel" size="x-small">{{ $t('Panel') }}</v-btn>
+                    <v-btn-toggle density="compact" multiple>
+                        <v-btn
+                            size="x-small"
+                            :active="savedSearchInline"
+                            @click="savedSearchInline = !savedSearchInline"
+                        >{{ $t('Page') }}</v-btn>
+                        <v-btn
+                            size="x-small"
+                            :active="savedSearchInPanel"
+                            @click="savedSearchInPanel = !savedSearchInPanel"
+                        >{{ $t('Panel') }}</v-btn>
                     </v-btn-toggle>
                 </div>
                 <v-divider class="my-2" />
@@ -315,6 +325,7 @@
                         </div>
                     </CollapsibleSection>
                 </template>
+
             </template>
 
             <template #footer="{ activeTab }">
@@ -404,6 +415,7 @@ import KeywordsBar from '@/components/display/KeywordsBar.vue'
 import VClosableCardTitle from '@/components/dialogs/VClosableCardTitle.vue'
 import RecipeCard from '@/components/display/RecipeCard.vue'
 import RandomIcon from '@/components/display/RandomIcon.vue'
+import {cropPreviewStyle} from '@/utils/image_crop'
 import type {EditorSupportedTypes} from '@/types/Models'
 import type {VDataTableUpdateOptions} from '@/vuetify'
 
@@ -422,8 +434,21 @@ const pageSize = useRouteQuery('pageSize', useUserPreferenceStore().deviceSettin
 
 // ─── Settings (device-persisted) ──────────────────────────────────────
 const settings = useModelListSettings(computed(() => 'search'))
-const {isInlineSelected, toggleInline, isDrawerSelected, toggleDrawer, configurableFiltersByGroup: makeConfigurable} = useFilterPlacement()
+const viewMode = computed(() => useUserPreferenceStore().deviceSettings.search_viewMode)
+
+const DEFAULT_INLINE = ['_keywordsGroup', '_foodsGroup', '_booksGroup']
+const DEFAULT_DRAWER = ['_keywordsGroup', '_foodsGroup', '_booksGroup', '_unitsGroup',
+    'ratingGte', 'ratingLte', 'unrated', 'servings', 'timescooked', 'hasPhoto', 'hasKeywords', 'makenow',
+    'workingTime', 'waitingTime', 'totalTime', 'cookedon', 'createdon', 'updatedon', 'viewedon',
+    'createdby', 'internal']
+
+const {isInlineSelected, toggleInline, isDrawerSelected, toggleDrawer,
+    filteredDrawerDefs, filteredInlineDefs, configurableFiltersByGroup: makeConfigurable} =
+    useFilterPlacement('search', DEFAULT_INLINE, DEFAULT_DRAWER)
+
 const configurableFiltersByGroup = makeConfigurable(groupedFilterDefs)
+const drawerFilterDefs = filteredDrawerDefs(groupedFilterDefs)
+const inlineGroups = filteredInlineDefs(groupedFilterDefs)
 
 const drawerTabs = computed(() => [
     {key: 'filters', label: t('Filters'), icon: 'fa-solid fa-filter'},
@@ -435,42 +460,9 @@ const savedSearchInline = computed({
     get: () => useUserPreferenceStore().deviceSettings.search_savedSearchInline ?? true,
     set: (val: boolean) => { useUserPreferenceStore().deviceSettings.search_savedSearchInline = val },
 })
-
-// ─── Drawer filter visibility (search-specific) ────────────────────────
-const DEFAULT_DRAWER = ['_keywordsGroup', '_foodsGroup', '_booksGroup', 'ratingGte', 'unrated', 'servings', 'makenow', 'cookedon', 'createdon', 'totalTime', 'createdby', 'internal']
-
-const drawerFilterDefs = computed(() => {
-    const raw = useUserPreferenceStore().deviceSettings.search_drawerFilters
-    if (!raw || raw.length === 0) return groupedFilterDefs.value
-    const storedKeys = new Set(raw)
-    // Merge any new default keys so newly-added filters appear for existing users
-    for (const key of DEFAULT_DRAWER) {
-        storedKeys.add(key)
-    }
-    const filtered = new Map<string, FilterDef[]>()
-    for (const [group, defs] of groupedFilterDefs.value) {
-        const visible = defs.filter(d => !d.hidden && (!group || storedKeys.has(d.key)))
-        if (visible.length > 0) filtered.set(group, visible)
-    }
-    return filtered
-})
-
-// ─── Inline filter visibility (per-filter granularity) ──────────────────
-const DEFAULT_INLINE = ['_keywordsGroup', '_foodsGroup', '_booksGroup']
-
-const inlineFilterKeys = computed(() => {
-    const raw = useUserPreferenceStore().deviceSettings.search_inlineFilters
-    return raw && raw.length > 0 ? raw : DEFAULT_INLINE
-})
-const inlineGroups = computed(() => {
-    const keys = new Set(inlineFilterKeys.value)
-    const result: [string, FilterDef[]][] = []
-    for (const [group, defs] of groupedFilterDefs.value) {
-        if (!group) continue
-        const visible = defs.filter(d => keys.has(d.key))
-        if (visible.length > 0) result.push([group, visible])
-    }
-    return result
+const savedSearchInPanel = computed({
+    get: () => useUserPreferenceStore().deviceSettings.search_savedSearchInPanel ?? true,
+    set: (val: boolean) => { useUserPreferenceStore().deviceSettings.search_savedSearchInPanel = val },
 })
 
 // ─── Local UI state ─────────────────────────────────────────────────────
@@ -757,3 +749,12 @@ onMounted(() => {
     loadStats()
 })
 </script>
+
+<style scoped>
+.crop-avatar {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    overflow: hidden;
+}
+</style>
