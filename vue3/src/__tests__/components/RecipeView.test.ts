@@ -181,7 +181,11 @@ describe('RecipeView', () => {
             await flushPromises()
             const html = wrapper.html()
             expect(html).toContain('data-test="foot-card"')
+            // CreatedBy card hidden — its prepend-icon is fa-solid fa-user.
             expect(html).not.toContain('fa-solid fa-user')
+            // CreatedDate, UpdatedDate, ImportedFrom cards visible — count inner foot v-cards.
+            const innerCards = wrapper.findAll('[data-test="foot-card"] .v-card')
+            expect(innerCards).toHaveLength(3)
         })
 
         it('hides the foot Imported from card when recipe_showFootImportedFrom is false', async () => {
