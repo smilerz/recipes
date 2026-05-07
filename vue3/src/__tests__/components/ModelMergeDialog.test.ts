@@ -71,6 +71,7 @@ describe('ModelMergeDialog', () => {
                 model: 'Food',
                 source,
                 activator: 'parent',
+                modelValue: false,
             },
             global: {
                 plugins: [pinia, i18n, router],
@@ -90,8 +91,9 @@ describe('ModelMergeDialog', () => {
 
     it('uses GenericModel for the specified model type', async () => {
         const wrapper = mountDialog()
+        await wrapper.setProps({modelValue: true})
         await flushPromises()
-        expect(wrapper.vm).toBeDefined()
+        expect(document.body.innerHTML).toContain('Butter')
     })
 
     it('accepts source items as props', async () => {
@@ -100,7 +102,10 @@ describe('ModelMergeDialog', () => {
             makeFood({ id: 2, name: 'Margarine' }),
         ]
         const wrapper = mountDialog(sources)
+        await wrapper.setProps({modelValue: true})
         await flushPromises()
-        expect(wrapper.vm).toBeDefined()
+        const text = document.body.innerHTML
+        expect(text).toContain('Butter')
+        expect(text).toContain('Margarine')
     })
 })
