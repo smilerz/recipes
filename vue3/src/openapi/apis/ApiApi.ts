@@ -147,6 +147,7 @@ import type {
   RecipeImport,
   RecipeShoppingUpdate,
   RecipeSimple,
+  RecipeStats,
   SearchFields,
   SearchPreference,
   ServerSettings,
@@ -439,6 +440,8 @@ import {
     RecipeShoppingUpdateToJSON,
     RecipeSimpleFromJSON,
     RecipeSimpleToJSON,
+    RecipeStatsFromJSON,
+    RecipeStatsToJSON,
     SearchFieldsFromJSON,
     SearchFieldsToJSON,
     SearchPreferenceFromJSON,
@@ -1174,6 +1177,8 @@ export interface ApiKeywordDestroyRequest {
 }
 
 export interface ApiKeywordListRequest {
+    hasChildren?: boolean;
+    hasRecipe?: boolean;
     limit?: string;
     ordering?: string;
     page?: number;
@@ -2115,6 +2120,7 @@ export interface ApiUnitDestroyRequest {
 }
 
 export interface ApiUnitListRequest {
+    hasRecipe?: boolean;
     limit?: string;
     ordering?: string;
     page?: number;
@@ -8640,6 +8646,14 @@ export class ApiApi extends runtime.BaseAPI {
     async apiKeywordListRaw(requestParameters: ApiKeywordListRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PaginatedKeywordList>> {
         const queryParameters: any = {};
 
+        if (requestParameters['hasChildren'] != null) {
+            queryParameters['has_children'] = requestParameters['hasChildren'];
+        }
+
+        if (requestParameters['hasRecipe'] != null) {
+            queryParameters['has_recipe'] = requestParameters['hasRecipe'];
+        }
+
         if (requestParameters['limit'] != null) {
             queryParameters['limit'] = requestParameters['limit'];
         }
@@ -12523,6 +12537,36 @@ export class ApiApi extends runtime.BaseAPI {
      */
     async apiRecipeShoppingUpdate(requestParameters: ApiRecipeShoppingUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<RecipeShoppingUpdate> {
         const response = await this.apiRecipeShoppingUpdateRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Aggregate counts over the user-visible recipe set (space scoped, private-visibility enforced). Used by the SearchPage stats footer.
+     */
+    async apiRecipeStatsRetrieveRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<RecipeStats>> {
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.apiKey) {
+            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
+        }
+
+        const response = await this.request({
+            path: `/api/recipe/stats/`,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => RecipeStatsFromJSON(jsonValue));
+    }
+
+    /**
+     * Aggregate counts over the user-visible recipe set (space scoped, private-visibility enforced). Used by the SearchPage stats footer.
+     */
+    async apiRecipeStatsRetrieve(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<RecipeStats> {
+        const response = await this.apiRecipeStatsRetrieveRaw(initOverrides);
         return await response.value();
     }
 
@@ -17042,6 +17086,10 @@ export class ApiApi extends runtime.BaseAPI {
      */
     async apiUnitListRaw(requestParameters: ApiUnitListRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PaginatedUnitList>> {
         const queryParameters: any = {};
+
+        if (requestParameters['hasRecipe'] != null) {
+            queryParameters['has_recipe'] = requestParameters['hasRecipe'];
+        }
 
         if (requestParameters['limit'] != null) {
             queryParameters['limit'] = requestParameters['limit'];
