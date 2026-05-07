@@ -69,12 +69,12 @@ describe('AutoPlanDialog', () => {
     it('initializes with default servings of 1', async () => {
         const wrapper = mountDialog()
         await flushPromises()
-        expect(wrapper.vm).toBeDefined()
+        expect((wrapper.vm as any).autoMealPlan.servings).toBe(1)
     })
 
     it('initializes date range spanning 7 days', async () => {
         const wrapper = mountDialog()
         await flushPromises()
-        expect(wrapper.vm).toBeDefined()
+        expect((wrapper.vm as any).dateRangeValue).toHaveLength(7)
     })
 })
