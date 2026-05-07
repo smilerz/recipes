@@ -144,6 +144,35 @@ describe('RecipeCard display settings', () => {
         })
     })
 
+    describe('cook time chip', () => {
+        // The cook time chip (workingTime + waitingTime) shows in the
+        // keyword chip row; gated by card_show_cook_time which defaults ON
+        // to preserve current behavior (Q3a).
+
+        it('shows cook time chip when card_show_cook_time is true and workingTime > 0', () => {
+            const recipe = makeRecipeOverview({ workingTime: 15, waitingTime: 5 })
+            const w = mountRecipeCard({ recipe }, { card_show_cook_time: true })
+            // Cook time chip uses prepend-icon "far fa-clock"
+            const html = w.html()
+            expect(html).toContain('fa-clock')
+            expect(w.text()).toContain('20')
+        })
+
+        it('hides cook time chip when card_show_cook_time is false', () => {
+            const recipe = makeRecipeOverview({ workingTime: 15, waitingTime: 5 })
+            const w = mountRecipeCard({ recipe }, { card_show_cook_time: false })
+            // Should not render the cook-time chip even with workingTime > 0
+            const html = w.html()
+            expect(html).not.toContain('fa-clock')
+        })
+
+        it('hides cook time chip when workingTime is 0 even with setting on', () => {
+            const recipe = makeRecipeOverview({ workingTime: 0, waitingTime: 0 })
+            const w = mountRecipeCard({ recipe }, { card_show_cook_time: true })
+            expect(w.html()).not.toContain('fa-clock')
+        })
+    })
+
     describe('photo refresh after context-menu edit', () => {
         // Regression: editing a photo via the recipe context menu refreshes
         // the dialog but didn't propagate the new recipe back to the card,

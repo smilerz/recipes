@@ -60,8 +60,8 @@
                              prepend-icon="fa-solid fa-trash-can" class="text-error" @click="deleteDialog = true">
                     {{ $t('Delete') }}
                 </v-list-item>
-                <v-divider v-if="isOnRecipeView" />
-                <v-list-item v-if="isOnRecipeView" prepend-icon="fa-solid fa-gear" @click="recipeSettingsOpen = true">
+                <v-divider />
+                <v-list-item prepend-icon="fa-solid fa-gear" @click="recipeSettingsOpen = true">
                     {{ $t('DisplaySettings') }}
                 </v-list-item>
             </v-list>
