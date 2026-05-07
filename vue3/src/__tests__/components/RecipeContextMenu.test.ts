@@ -51,6 +51,7 @@ function mountMenu(deviceOverrides: Record<string, any> = {}, props: Record<stri
             Add_to_Book: 'Add to Book', Log_Cooking: 'Log Cooking', Edit_Photo: 'Edit Photo',
             Property_Editor: 'Property Editor', Share: 'Share', Export: 'Export',
             Duplicate: 'Duplicate', Print: 'Print', Delete: 'Delete', Copy: 'Copy',
+            DisplaySettings: 'Display Settings',
         }},
         missingWarn: false, fallbackWarn: false,
     })
@@ -133,6 +134,23 @@ describe('RecipeContextMenu', () => {
             expect(text).toContain('Edit Photo')
             expect(text).toContain('Export')
             expect(text).toContain('Delete')
+        })
+    })
+
+    describe('display settings entry', () => {
+        it('renders Display Settings on a card route (e.g. SearchPage)', async () => {
+            // Default props.context = 'card'; default route is the StartPage stub from
+            // mountMenu() above, which is a card-context route, not RecipeViewPage.
+            const w = mountMenu()
+            expect(w.text()).toContain('Display Settings')
+        })
+
+        it('renders Display Settings when on RecipeViewPage', async () => {
+            const w = mountMenu({}, { context: 'view' })
+            const r = w.vm.$.appContext.config.globalProperties.$router
+            await r.push({ name: 'RecipeViewPage', params: { id: '1' } })
+            await w.vm.$nextTick()
+            expect(w.text()).toContain('Display Settings')
         })
     })
 

@@ -8,7 +8,47 @@
         :use-sheet="mobile"
     >
         <template #settings>
-            <v-expansion-panels :model-value="[0, 1, 2]" multiple variant="accordion" class="mt-2">
+            <v-expansion-panels :model-value="[0, 1, 2, 3]" multiple variant="accordion" class="mt-2">
+                <v-expansion-panel v-if="isOnRecipeView">
+                    <v-expansion-panel-title>{{ $t('RecipeLayout') }}</v-expansion-panel-title>
+                    <v-expansion-panel-text>
+                        <v-switch
+                            v-model="deviceSettings.recipe_showAuthor"
+                            :label="$t('Show_Author')"
+                            hide-details density="compact" color="primary"
+                        />
+                        <v-switch
+                            v-model="deviceSettings.recipe_showTimeChips"
+                            :label="$t('Show_Time_Chips')"
+                            hide-details density="compact" color="primary"
+                        />
+                        <v-switch
+                            v-model="deviceSettings.recipe_showServings"
+                            :label="$t('Show_Servings')"
+                            hide-details density="compact" color="primary"
+                        />
+                        <v-switch
+                            v-model="deviceSettings.recipe_showFootCreatedBy"
+                            :label="$t('Show_Created_By')"
+                            hide-details density="compact" color="primary"
+                        />
+                        <v-switch
+                            v-model="deviceSettings.recipe_showFootCreatedDate"
+                            :label="$t('Show_Created_Date')"
+                            hide-details density="compact" color="primary"
+                        />
+                        <v-switch
+                            v-model="deviceSettings.recipe_showFootUpdatedDate"
+                            :label="$t('Show_Updated_Date')"
+                            hide-details density="compact" color="primary"
+                        />
+                        <v-switch
+                            v-model="deviceSettings.recipe_showFootImportedFrom"
+                            :label="$t('Show_Imported_From')"
+                            hide-details density="compact" color="primary"
+                        />
+                    </v-expansion-panel-text>
+                </v-expansion-panel>
                 <v-expansion-panel v-if="isOnRecipeView">
                     <v-expansion-panel-title>{{ $t('IngredientSummarySection') }}</v-expansion-panel-title>
                     <v-expansion-panel-text>
@@ -16,13 +56,13 @@
                         <v-switch
                             v-model="deviceSettings.recipe_overviewExpanded"
                             :label="$t('StartExpanded')"
-                            hide-details density="compact"
+                            hide-details density="compact" color="primary"
                         />
                         <div class="text-caption pb-1 text-medium-emphasis">{{ $t('StartExpandedHelper') }}</div>
                         <v-switch
                             v-model="deviceSettings.recipe_showIngredientActions"
                             :label="$t('IngredientMenu')"
-                            hide-details density="compact"
+                            hide-details density="compact" color="primary"
                         />
                         <div class="text-caption pb-1 text-medium-emphasis">{{ $t('IngredientMenuHelp') }}</div>
                         <v-select
@@ -54,7 +94,7 @@
                             v-if="!mobile"
                             v-model="deviceSettings.recipe_overviewInlineStatus"
                             :label="$t('IngredientStatusIcons')"
-                            hide-details density="compact"
+                            hide-details density="compact" color="primary"
                         />
                     </v-expansion-panel-text>
                 </v-expansion-panel>
@@ -63,9 +103,15 @@
                     <v-expansion-panel-text>
                         <div class="text-caption pb-2 text-medium-emphasis">{{ $t('StepIngredientsScope') }}</div>
                         <v-switch
+                            v-model="deviceSettings.recipe_stepShowIngredientActions"
+                            :label="$t('IngredientMenu')"
+                            hide-details density="compact" color="primary"
+                        />
+                        <div class="text-caption pb-1 text-medium-emphasis">{{ $t('IngredientMenuHelp') }}</div>
+                        <v-switch
                             v-model="deviceSettings.recipe_showCheckboxes"
                             :label="$t('CheckOffIngredients')"
-                            hide-details density="compact"
+                            hide-details density="compact" color="primary"
                         />
                         <v-select
                             v-model="deviceSettings.recipe_stepNotesDisplay"
@@ -87,32 +133,37 @@
                             v-if="!mobile"
                             v-model="deviceSettings.recipe_stepInlineStatus"
                             :label="$t('IngredientStatusIcons')"
-                            hide-details density="compact"
+                            hide-details density="compact" color="primary"
                         />
                     </v-expansion-panel-text>
                 </v-expansion-panel>
-                <v-expansion-panel>
+                <v-expansion-panel v-if="isOnCardContext">
                     <v-expansion-panel-title>{{ $t('CardDisplay') }}</v-expansion-panel-title>
                     <v-expansion-panel-text>
                         <v-switch
                             v-model="deviceSettings.card_showRating"
                             :label="$t('Show_Rating')"
-                            hide-details density="compact"
+                            hide-details density="compact" color="primary"
                         />
                         <v-switch
                             v-model="deviceSettings.card_showAuthor"
                             :label="$t('Show_Author')"
-                            hide-details density="compact"
+                            hide-details density="compact" color="primary"
                         />
                         <v-switch
                             v-model="deviceSettings.card_showLastCooked"
                             :label="$t('Show_Last_Cooked')"
-                            hide-details density="compact"
+                            hide-details density="compact" color="primary"
                         />
                         <v-switch
                             v-model="deviceSettings.card_showNewBadge"
                             :label="$t('Show_New_Badge')"
-                            hide-details density="compact"
+                            hide-details density="compact" color="primary"
+                        />
+                        <v-switch
+                            v-model="deviceSettings.card_show_cook_time"
+                            :label="$t('Show_Cook_Time')"
+                            hide-details density="compact" color="primary"
                         />
                         <v-select
                             v-model="deviceSettings.card_maxKeywords"
@@ -129,7 +180,7 @@
                             :label="$t(item.labelKey)"
                             :model-value="deviceSettings.card_visibleMenuItems.includes(item.key)"
                             @update:model-value="onToggleMenuItem(item.key, $event)"
-                            hide-details density="compact"
+                            hide-details density="compact" color="primary"
                         />
                     </v-expansion-panel-text>
                 </v-expansion-panel>
@@ -154,6 +205,11 @@ const {isOpen, isPinned} = useRecipeViewSettings()
 const deviceSettings = useUserPreferenceStore().deviceSettings
 
 const isOnRecipeView = computed(() => route.name === 'RecipeViewPage')
+// Routes where RecipeCard is rendered as part of a list/grid — the only
+// places where the Card Display settings actually affect what the user
+// sees. Outside these, the panel is gated out so the drawer is contextual.
+const CARD_CONTEXT_ROUTES = new Set(['SearchPage', 'StartPage', 'BookEntryPage', 'MealPlanPage'])
+const isOnCardContext = computed(() => CARD_CONTEXT_ROUTES.has(route.name as string))
 
 const drawerTabs = computed(() => [
     {key: 'settings', label: t('DisplaySettings'), icon: 'fa-solid fa-gear'},
