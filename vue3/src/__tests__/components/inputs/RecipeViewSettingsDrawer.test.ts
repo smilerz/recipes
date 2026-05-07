@@ -1,12 +1,10 @@
 /**
- * Tests for the consolidated RecipeViewSettingsDrawer (Phase 3).
+ * Tests for the RecipeViewSettingsDrawer.
  *
- * The drawer presents ONE "Ingredient display" panel with Summary/Detail
- * columns + a live preview. These tests lock in that each Summary/Detail
- * control writes the correct per-context device-settings key, that the
- * separate-panel layout is gone, and that inline-status is exposed for both
- * contexts (no longer desktop-only). Binding is asserted via data-test hooks
- * so the tests survive visual layout changes.
+ * The drawer presents a consolidated "Ingredient display" panel (Summary/Detail
+ * columns + a mobile live preview), gated to the recipe view, plus a "Card
+ * display" panel shown wherever recipe cards appear. Binding is asserted via
+ * data-test hooks so the tests survive visual layout changes.
  */
 import {describe, it, expect, beforeEach, vi} from 'vitest'
 import {mount} from '@vue/test-utils'
@@ -21,7 +19,11 @@ import {ref} from 'vue'
 import {apiMock, resetApiMock} from '@/__tests__/api-mock'
 import {makeUserPreference} from '@/__tests__/factories'
 
-vi.mock('vue-router', async (imp) => ({...(await imp<any>()), useRoute: () => ({query: {}})}))
+const routeState = vi.hoisted(() => ({name: 'RecipeViewPage' as string | null}))
+vi.mock('vue-router', async (imp) => ({
+    ...(await imp<any>()),
+    useRoute: () => ({query: {}, get name() { return routeState.name }}),
+}))
 vi.mock('@vueuse/core', async (imp) => ({...(await imp<any>()), useStorage: (_k: string, d: any) => ref(d)}))
 vi.mock('@vueuse/router', () => ({useRouteQuery: (_k: string, d: any) => ref(d)}))
 vi.mock('@/openapi', async (imp) => ({...(await imp<any>()), ApiApi: class { constructor() { return apiMock } }}))
@@ -37,7 +39,38 @@ function mountDrawer({mobile = false} = {}) {
     }
     const pinia = createPinia()
     pinia.use(prePopulate)
-    const i18n = createI18n({legacy: false, locale: 'en', messages: {en: {}}, missingWarn: false, fallbackWarn: false})
+    const i18n = createI18n({
+        legacy: false, locale: 'en',
+        messages: {en: {
+            IngredientMenu: 'Ingredient menu',
+            HighlightWhen: 'Highlight when',
+            OnHand: 'On hand',
+            InShoppingList: 'In shopping list',
+            Never: 'Never',
+            IngredientDisplay: 'Ingredient display',
+            CardDisplay: 'Card display',
+            Show_Rating: 'Show rating',
+            Show_Author: 'Show author',
+            Show_Last_Cooked: 'Show last cooked',
+            Show_New_Badge: 'Show new badge',
+            Max_Keywords: 'Max keywords',
+            Menu_Items: 'Menu items',
+            All: 'All',
+            Edit: 'Edit',
+            Add_to_Plan: 'Add to plan',
+            Add_to_Shopping: 'Add to shopping',
+            Add_to_Book: 'Add to book',
+            Log_Cooking: 'Log cooking',
+            Edit_Photo: 'Edit photo',
+            Property_Editor: 'Property editor',
+            Share: 'Share',
+            Export: 'Export',
+            Duplicate: 'Duplicate',
+            Print: 'Print',
+            Delete: 'Delete',
+        }},
+        missingWarn: false, fallbackWarn: false,
+    })
     const vuetify = createVuetify({
         components: vuetifyComponents, directives: vuetifyDirectives,
         display: {mobileBreakpoint: mobile ? 9999 : 0}, // 9999 → always mobile, 0 → always desktop
@@ -67,6 +100,7 @@ describe('RecipeViewSettingsDrawer (consolidated)', () => {
     beforeEach(() => {
         setActivePinia(createPinia())
         resetApiMock()
+        routeState.name = 'RecipeViewPage'
         const {isOpen, isPinned} = useRecipeViewSettings()
         isOpen.value = false
         isPinned.value = false
@@ -85,10 +119,11 @@ describe('RecipeViewSettingsDrawer (consolidated)', () => {
         expect(isPinned.value).toBe(true)
     })
 
-    it('renders the settings directly, not inside a collapsible panel', () => {
+    it('on the recipe view shows two panels: the consolidated Ingredient display + Card display', () => {
         const w = mountDrawer()
-        expect(w.findAll('.v-expansion-panel').length).toBe(0)
+        expect(w.findAll('.v-expansion-panel').length).toBe(2)
         expect(w.find('[data-test="ingredient-display-panel"]').exists()).toBe(true)
+        expect(w.find('[data-test="card-display-panel"]').exists()).toBe(true)
     })
 
     it('summary and detail action switches write separate device-settings keys', async () => {
@@ -174,5 +209,83 @@ describe('RecipeViewSettingsDrawer (consolidated)', () => {
         const w = mountDrawer({mobile: false})
         expect(w.find('[data-test="preview-summary"]').exists()).toBe(false)
         expect(w.find('[data-test="preview-detail"]').exists()).toBe(false)
+    })
+})
+
+describe('Card Display panel + recipe-view gating', () => {
+    beforeEach(() => {
+        setActivePinia(createPinia())
+        resetApiMock()
+        const {isOpen, isPinned} = useRecipeViewSettings()
+        isOpen.value = false
+        isPinned.value = false
+        routeState.name = 'SearchPage'
+    })
+
+    it('renders the Card Display panel off the recipe view (e.g. SearchPage)', () => {
+        routeState.name = 'SearchPage'
+        const w = mountDrawer()
+        expect(w.find('[data-test="card-display-panel"]').exists()).toBe(true)
+    })
+
+    it('renders the Card Display panel on the recipe view too', () => {
+        routeState.name = 'RecipeViewPage'
+        const w = mountDrawer()
+        expect(w.find('[data-test="card-display-panel"]').exists()).toBe(true)
+    })
+
+    it('hides the Ingredient display panel when not on the recipe view', () => {
+        routeState.name = 'SearchPage'
+        const w = mountDrawer()
+        expect(w.find('[data-test="ingredient-display-panel"]').exists()).toBe(false)
+    })
+
+    it('shows the Ingredient display panel on the recipe view', () => {
+        routeState.name = 'RecipeViewPage'
+        const w = mountDrawer()
+        expect(w.find('[data-test="ingredient-display-panel"]').exists()).toBe(true)
+    })
+
+    it('toggling Show Rating updates deviceSettings.card_showRating', async () => {
+        routeState.name = 'SearchPage'
+        const w = mountDrawer()
+        const store = (w.vm.$pinia as any)._s.get('user_preference_store')
+        const showRating = w.findAll('.v-switch').find(s => s.text().includes('Show rating'))
+        expect(showRating, 'Show rating switch should exist').toBeTruthy()
+        await showRating!.find('input').setValue(true)
+        expect(store.deviceSettings.card_showRating).toBe(true)
+    })
+
+    it('checking a menu item adds it to card_visibleMenuItems', async () => {
+        routeState.name = 'SearchPage'
+        const w = mountDrawer()
+        const store = (w.vm.$pinia as any)._s.get('user_preference_store')
+        expect(store.deviceSettings.card_visibleMenuItems).not.toContain('book')
+        const bookCheckbox = w.findAll('.v-checkbox').find(c => c.text().includes('Add to book'))
+        expect(bookCheckbox, 'Add to book checkbox should exist').toBeTruthy()
+        await bookCheckbox!.find('input[type="checkbox"]').setValue(true)
+        expect(store.deviceSettings.card_visibleMenuItems).toContain('book')
+    })
+
+    it('unchecking a default-on menu item removes it from card_visibleMenuItems', async () => {
+        routeState.name = 'SearchPage'
+        const w = mountDrawer()
+        const store = (w.vm.$pinia as any)._s.get('user_preference_store')
+        expect(store.deviceSettings.card_visibleMenuItems).toContain('edit')
+        const editCheckbox = w.findAll('.v-checkbox').find(c => c.text().includes('Edit') && !c.text().includes('Photo'))
+        expect(editCheckbox, 'Edit checkbox should exist').toBeTruthy()
+        await editCheckbox!.find('input[type="checkbox"]').setValue(false)
+        expect(store.deviceSettings.card_visibleMenuItems).not.toContain('edit')
+    })
+
+    it('the max-keywords select is present and bound to card_maxKeywords', async () => {
+        routeState.name = 'SearchPage'
+        const w = mountDrawer()
+        const store = (w.vm.$pinia as any)._s.get('user_preference_store')
+        const select = w.findAll('.v-select').find(s => s.text().includes('Max keywords'))
+        expect(select, 'Max keywords select should exist').toBeTruthy()
+        store.deviceSettings.card_maxKeywords = 5
+        await w.vm.$nextTick()
+        expect(store.deviceSettings.card_maxKeywords).toBe(5)
     })
 })
