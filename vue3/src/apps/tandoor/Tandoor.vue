@@ -11,6 +11,7 @@
                 <v-img src="../../assets/brand_logo.svg" width="140px" class="ms-2"
                        v-if="useUserPreferenceStore().userSettings.navShowLogo && !useUserPreferenceStore().activeSpace.navLogo"></v-img>
                 <v-img :src="useUserPreferenceStore().activeSpace.navLogo.preview" width="140px" class="ms-2"
+                       :position="cropPosition(useUserPreferenceStore().activeSpace.navLogo?.cropData)"
                        v-if="useUserPreferenceStore().userSettings.navShowLogo && useUserPreferenceStore().activeSpace.navLogo != undefined"></v-img>
             </router-link>
 
@@ -27,13 +28,18 @@
                 </v-menu>
             </v-btn>
 
-            <v-avatar color="primary" class="me-2 cursor-pointer d-print-none">{{ useUserPreferenceStore().userSettings.user.displayName.charAt(0) }}
+            <v-avatar color="primary" class="me-2 cursor-pointer d-print-none">
+                <v-img v-if="useUserPreferenceStore().userSettings.image?.preview" :src="useUserPreferenceStore().userSettings.image.preview" :position="cropPosition(useUserPreferenceStore().userSettings.image?.cropData)" />
+                <span v-else>{{ useUserPreferenceStore().userSettings.user.displayName.charAt(0).toUpperCase() }}</span>
                 <v-menu activator="parent">
 
                     <v-list density="compact">
                         <menu-user-info></menu-user-info>
                         <v-divider></v-divider>
 
+                        <v-list-item prepend-icon="fa-solid fa-gear" @click="recipeSettingsOpen = true">
+                            {{ $t('DisplaySettings') }}
+                        </v-list-item>
                         <template v-for="(item, idx) in useNavigation().getUserNavigation()" :key="`user-nav-${idx}`">
                             <v-divider v-if="item.component === VDivider"></v-divider>
                             <component v-else :is="item.component" :prepend-icon="item.prependIcon" :title="item.title" :to="item.to" :href="item.href" @click="item.onClick"></component>
@@ -133,8 +139,9 @@ import {toVuetifyLocale} from "@/vuetify"
 import VSnackbarQueued from "@/components/display/VSnackbarQueued.vue";
 import {useUserPreferenceStore} from "@/stores/UserPreferenceStore";
 import NavigationDrawerContextMenu from "@/components/display/NavigationDrawerContextMenu.vue";
-import {nextTick, onMounted, ref, watch} from "vue";
+import {nextTick, onMounted, ref} from "vue";
 import {isSpaceAboveLimit} from "@/utils/logic_utils";
+import {cropPosition} from "@/utils/image_crop";
 import {useTitle} from "@vueuse/core";
 import HelpDialog from "@/components/dialogs/HelpDialog.vue";
 import {useNavigation} from "@/composables/useNavigation.ts";
@@ -150,10 +157,6 @@ const title = useTitle()
 const router = useRouter()
 const route = useRoute()
 const {isOpen: recipeSettingsOpen} = useRecipeViewSettings()
-
-watch(() => route.name, (name) => {
-    if (name !== 'RecipeViewPage') recipeSettingsOpen.value = false
-})
 
 onMounted(() => {
     useUserPreferenceStore().init().then(() => {
