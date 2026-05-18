@@ -194,6 +194,29 @@ describe('RecipeView', () => {
             expect(wrapper.html()).not.toContain('title="Imported from"')
         })
 
+        it('renders sourceUrl anchor with overflow-wrap to prevent viewport overflow', async () => {
+            // Long URLs (e.g. https://cocktailswithsuderman.substack.com/p/a-rye-for-all-reasons)
+            // extended 200–400px past the viewport edge at all breakpoints when rendered as plain
+            // inline text. The anchor must carry overflow-wrap so it breaks within its column.
+            const wrapper = mountRecipeView(
+                makeRecipe({
+                    sourceUrl: 'https://cocktailswithsuderman.substack.com/p/a-rye-for-all-reasons',
+                    steps: [],
+                }),
+                { recipe_showFootImportedFrom: true },
+            )
+            await flushPromises()
+            const html = wrapper.html()
+            // The anchor must exist
+            expect(html).toContain('cocktailswithsuderman')
+            // It must carry overflow-wrap:anywhere (or break-all) so long URLs wrap
+            const anchor = wrapper.find('a[href*="cocktailswithsuderman"]')
+            expect(anchor.exists(), 'sourceUrl anchor not found').toBe(true)
+            const style = anchor.attributes('style') ?? ''
+            const hasWrap = style.includes('overflow-wrap') || style.includes('word-break')
+            expect(hasWrap, 'sourceUrl anchor must have overflow-wrap or word-break style to prevent viewport overflow').toBe(true)
+        })
+
         it('hides the entire foot wrapper when all four foot flags are false', async () => {
             const wrapper = mountRecipeView(sourceRecipe(), {
                 recipe_showFootCreatedBy: false,
