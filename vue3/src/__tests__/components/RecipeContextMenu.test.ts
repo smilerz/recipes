@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { defineComponent } from 'vue'
 import { mount } from '@vue/test-utils'
 import { createPinia, type PiniaPlugin } from 'pinia'
 import { createI18n } from 'vue-i18n'
@@ -75,7 +76,12 @@ function mountMenu(deviceOverrides: Record<string, any> = {}, props: Record<stri
                 'v-menu': { template: '<div class="stub-v-menu"><slot /></div>' },
                 ModelEditDialog: { template: '<div class="stub-model-edit-dialog"/>' },
                 RecipeShareDialog: { template: '<div class="stub-share-dialog"/>' },
-                AddToShoppingDialog: { template: '<div class="stub-add-shopping"/>' },
+                AddToShoppingDialog: defineComponent({
+                    name: 'AddToShoppingDialog',
+                    props: { recipe: Object, mealPlan: Object, open: Boolean },
+                    emits: ['update:open'],
+                    template: '<div class="stub-add-shopping" :data-open="open"/>',
+                }),
                 AddToBookDialog: { template: '<div class="stub-add-book-dialog"/>' },
                 LogCookingDialog: { template: '<div class="stub-log-cooking-dialog"/>' },
                 DeleteConfirmDialog: { template: '<div class="stub-delete-confirm"/>' },
@@ -174,5 +180,28 @@ describe('RecipeContextMenu', () => {
             expect(text).toContain('Log Cooking')
             expect(text).toContain('Edit Photo')
         })
+    })
+})
+
+describe('shopping dialog isolation (E-shopping)', () => {
+    it('clicking Add to Shopping sets open=true on AddToShoppingDialog — not activator="parent"', async () => {
+        const w = mountMenu({}, { context: 'card' })
+
+        // Dialog stub must be mounted (always in DOM, controlled by prop)
+        const stubs = w.findAllComponents({ name: 'AddToShoppingDialog' })
+        expect(stubs.length, 'AddToShoppingDialog must be mounted').toBeGreaterThan(0)
+
+        // Before click: open should be false/undefined
+        expect(stubs[0].props('open'), 'dialog should not be open before click').toBeFalsy()
+
+        // Click the "Add to Shopping" list item
+        const items = w.findAll('.v-list-item, li')
+        const shoppingItem = items.find(el => el.text().includes('Add to Shopping'))
+        expect(shoppingItem, 'Add to Shopping list item must exist').toBeDefined()
+        await shoppingItem!.trigger('click')
+        await w.vm.$nextTick()
+
+        // After click, open prop should be true
+        expect(stubs[0].props('open'), 'AddToShoppingDialog should receive open=true after click').toBe(true)
     })
 })
