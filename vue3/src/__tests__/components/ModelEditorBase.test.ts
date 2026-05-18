@@ -54,11 +54,27 @@ describe('ModelEditorBase action bar (E-11)', () => {
         expect(btns).toHaveLength(1)
     })
 
-    it('emits save-and-close when the Save and Close button is clicked', async () => {
+    it('emits save (not saveAndClose) when Save and Close is clicked', async () => {
         const w = mountBase()
         const btn = w.findAll('.v-btn').find(b => b.text().includes('Save and Close'))
         expect(btn).toBeDefined()
         await btn!.trigger('click')
+        expect(w.emitted('save')).toBeTruthy()
+        expect(w.emitted('saveAndClose')).toBeFalsy()
+    })
+
+    it('emits save first then saveAndClose after loading clears', async () => {
+        const w = mountBase({ loading: false })
+        const btn = w.findAll('.v-btn').find(b => b.text().includes('Save and Close'))
+        await btn!.trigger('click')
+
+        expect(w.emitted('save')).toBeTruthy()
+        expect(w.emitted('saveAndClose')).toBeFalsy()
+
+        await w.setProps({ loading: true })
+        await w.setProps({ loading: false })
+        await w.vm.$nextTick()
+
         expect(w.emitted('saveAndClose')).toBeTruthy()
     })
 
