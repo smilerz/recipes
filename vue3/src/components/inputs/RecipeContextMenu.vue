@@ -12,9 +12,8 @@
                     {{ $t('Add_to_Plan') }}
                 </v-list-item>
                 <v-list-item v-if="isVisible('shopping')"
-                             prepend-icon="$shopping" link>
+                             prepend-icon="$shopping" link @click="shoppingDialog = true">
                     {{ $t('Add_to_Shopping') }}
-                    <add-to-shopping-dialog :recipe="props.recipe"></add-to-shopping-dialog>
                 </v-list-item>
                 <v-list-item v-if="isVisible('book')"
                              prepend-icon="fa-solid fa-book-bookmark" @click="addToBookDialog = true">
@@ -71,6 +70,7 @@
     <model-edit-dialog model="MealPlan" :itemDefaults="{recipe: recipe, servings: recipe.servings}" :close-after-create="false" :close-after-save="false"
                        v-model="mealPlanDialog"></model-edit-dialog>
 
+    <add-to-shopping-dialog v-if="isVisible('shopping')" :recipe="props.recipe" :open="shoppingDialog" @update:open="shoppingDialog = $event"></add-to-shopping-dialog>
     <add-to-book-dialog v-if="addToBookDialog" :recipe="props.recipe" v-model="addToBookDialog"></add-to-book-dialog>
     <log-cooking-dialog v-if="logCookingDialog" :recipe="props.recipe" v-model="logCookingDialog"></log-cooking-dialog>
     <delete-confirm-dialog v-if="deleteDialog" :object-name="props.recipe.name" model-name="Recipe"
@@ -127,6 +127,7 @@ const emit = defineEmits<{
 }>()
 
 const mealPlanDialog = ref(false)
+const shoppingDialog = ref(false)
 const addToBookDialog = ref(false)
 const logCookingDialog = ref(false)
 const deleteDialog = ref(false)

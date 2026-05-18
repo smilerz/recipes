@@ -1,5 +1,5 @@
 <template>
-    <v-dialog activator="parent" max-width="600px" v-model="dialog">
+    <v-dialog :activator="open === undefined ? 'parent' : undefined" max-width="600px" v-model="dialog">
         <v-card :loading="loading">
             <v-closable-card-title :title="$t('Add_Servings_to_Shopping', {servings: servings})" v-model="dialog"></v-closable-card-title>
             <v-card-text>
@@ -39,7 +39,7 @@
 
 <script setup lang="ts">
 
-import {computed, onMounted, PropType, ref} from "vue";
+import {computed, onMounted, PropType, ref, watch} from "vue";
 import VClosableCardTitle from "@/components/dialogs/VClosableCardTitle.vue";
 import {ApiApi, MealPlan, Recipe, RecipeFlat, RecipeOverview, ShoppingList, type ShoppingListEntryBulkCreate, ShoppingListRecipe} from "@/openapi";
 import {ErrorMessageType, PreparedMessage, useMessageStore} from "@/stores/MessageStore";
@@ -49,14 +49,19 @@ import {useUserPreferenceStore} from "@/stores/UserPreferenceStore";
 import {ingredientToUnitString, ingredientToFoodString} from "@/utils/model_utils.ts";
 import ModelSelect from "@/components/inputs/ModelSelect.vue";
 
-const emit = defineEmits(['created'])
+const emit = defineEmits(['created', 'update:open'])
 
 const props = defineProps({
     recipe: {type: Object as PropType<Recipe | RecipeFlat | RecipeOverview>, required: true},
     mealPlan: {type: Object as PropType<MealPlan>, required: false},
+    open: {type: Boolean, default: undefined},
 })
 
 const dialog = ref(false)
+
+// When controlled externally via :open prop, sync the internal dialog state
+watch(() => props.open, (val) => { if (val !== undefined) dialog.value = val }, { immediate: true })
+watch(dialog, (val) => { if (props.open !== undefined) emit('update:open', val) })
 const loading = ref(false)
 const panel = ref(0)
 
