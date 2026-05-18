@@ -24,7 +24,7 @@
 
             <v-btn color="save" prepend-icon="$create" @click="emit('save')" v-if="!isUpdate && !modelClass.model.disableCreate" :loading="loading">{{ $t('Create') }}</v-btn>
             <v-btn color="save" prepend-icon="$save" @click="emit('save')" v-if="isUpdate && !modelClass.model.disableUpdate" :loading="loading"> {{ $t('Save') }}</v-btn>
-            <v-btn color="info" prepend-icon="fa-solid fa-check" @click="emit('saveAndClose')" v-if="isUpdate && !modelClass.model.disableUpdate" :loading="loading"> {{ $t('SaveAndClose') }}</v-btn>
+            <v-btn color="info" prepend-icon="fa-solid fa-check" @click="handleSaveAndClose" v-if="isUpdate && !modelClass.model.disableUpdate" :loading="loading"> {{ $t('SaveAndClose') }}</v-btn>
         </v-card-actions>
     </v-card>
 
@@ -50,7 +50,7 @@ import DeleteConfirmDialog from "@/components/dialogs/DeleteConfirmDialog.vue";
 import {EditorSupportedTypes, GenericModel} from "@/types/Models";
 import VClosableCardTitle from "@/components/dialogs/VClosableCardTitle.vue";
 import {onBeforeRouteLeave, RouteLocationNormalized} from "vue-router";
-import {onBeforeUnmount, onMounted, PropType, ref} from "vue";
+import {onBeforeUnmount, onMounted, PropType, ref, watch} from "vue";
 import {useDisplay} from "vuetify";
 
 const {mobile} = useDisplay()
@@ -66,6 +66,20 @@ const props = defineProps({
     isUpdate: {type: Boolean, default: false},
     isChanged: {type: Boolean, default: false},
 })
+
+const pendingSaveAndClose = ref(false)
+
+watch(() => props.loading, (isLoading) => {
+    if (!isLoading && pendingSaveAndClose.value) {
+        pendingSaveAndClose.value = false
+        emit('saveAndClose')
+    }
+})
+
+function handleSaveAndClose() {
+    pendingSaveAndClose.value = true
+    emit('save')
+}
 
 const leaveConfirmDialog = ref(false)
 const leaveGoTo = ref<RouteLocationNormalized | null>(null)
