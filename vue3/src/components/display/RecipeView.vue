@@ -193,7 +193,7 @@
                             :title="$t('Imported_From')"
                             prepend-icon="$import">
                             <template #subtitle>
-                                <a :href="recipe.sourceUrl" target="_blank">{{ recipe.sourceUrl }}</a>
+                                <a :href="recipe.sourceUrl" target="_blank" style="overflow-wrap: anywhere;">{{ recipe.sourceUrl }}</a>
                             </template>
                         </v-card>
                     </v-col>
