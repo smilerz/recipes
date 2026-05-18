@@ -2072,6 +2072,15 @@ class RecipePagination(PageNumberPagination):
     OpenApiParameter(name='timescooked_gte', description=_('Filter recipes cooked X times or more.'), type=int),
     OpenApiParameter(name='timescooked_lte', description=_('Filter recipes cooked X times or less.'), type=int),
 
+    OpenApiParameter(name='working_time_gte', description=_('Filter recipes with working time >= value (minutes).'), type=int),
+    OpenApiParameter(name='working_time_lte', description=_('Filter recipes with working time <= value (minutes).'), type=int),
+    OpenApiParameter(name='waiting_time_gte', description=_('Filter recipes with waiting time >= value (minutes).'), type=int),
+    OpenApiParameter(name='waiting_time_lte', description=_('Filter recipes with waiting time <= value (minutes).'), type=int),
+    OpenApiParameter(name='total_time_gte', description=_('Filter recipes with total time (working + waiting) >= value (minutes).'), type=int),
+    OpenApiParameter(name='total_time_lte', description=_('Filter recipes with total time (working + waiting) <= value (minutes).'), type=int),
+    OpenApiParameter(name='servings_gte', description=_('Filter recipes with servings >= value.'), type=int),
+    OpenApiParameter(name='servings_lte', description=_('Filter recipes with servings <= value.'), type=int),
+
     OpenApiParameter(name='createdon', description=_('Filter recipes created on the given date.'), type=OpenApiTypes.DATE, ),
     OpenApiParameter(name='createdon_gte', description=_('Filter recipes created on the given date or after.'), type=OpenApiTypes.DATE, ),
     OpenApiParameter(name='createdon_lte', description=_('Filter recipes created on the given date or before.'), type=OpenApiTypes.DATE, ),
