@@ -33,7 +33,7 @@ from cookbook.helper.unit_conversion_helper import UnitConversionHelper
 from cookbook.models import (Automation, BookmarkletImport, Comment, CookLog, CustomFilter,
                              ExportLog, Food, FoodInheritField, ImportLog, Ingredient, InviteLink,
                              Keyword, MealPlan, MealType, NutritionInformation, Property,
-                             PropertyType, Recipe, RecipeBook, RecipeBookEntry, RecipeImport,
+                             PropertyType, Recipe, RecipeBook, RecipeBookEntry, RecipeImage, RecipeImport,
                              ShareLink, ShoppingListEntry, ShoppingListRecipe, Space,
                              Step, Storage, Supermarket, SupermarketCategory,
                              SupermarketCategoryRelation, Sync, SyncLog, Unit, UnitConversion,
@@ -1298,23 +1298,42 @@ class RecipeSerializer(RecipeBaseSerializer):
         return super().create(validated_data)
 
 
-class RecipeImageSerializer(WritableNestedModelSerializer):
-    image = serializers.ImageField(required=False, allow_null=True)
-    image_url = serializers.CharField(max_length=4096, required=False, allow_null=True)
+class RecipeImageSerializer(serializers.ModelSerializer):
+    """Serializer for the RecipeImage model (multi-image gallery)."""
+    crop_data = serializers.JSONField(required=False, allow_null=True)
+
+    def check_crop_data(self, validated_data):
+        if 'crop_data' not in validated_data or validated_data['crop_data'] is None:
+            return
+        value = validated_data['crop_data']
+        if not isinstance(value, dict):
+            raise ValidationError(_('crop_data must be a JSON object.'))
+        allowed = {'x', 'y', 'width', 'height', 'rotate', 'fit'}
+        unknown = set(value.keys()) - allowed
+        if unknown:
+            raise ValidationError(_('Unknown crop_data fields: %(fields)s') % {'fields': ', '.join(sorted(unknown))})
+        for field in ('x', 'y', 'width', 'height'):
+            if field in value:
+                v = value[field]
+                if not isinstance(v, (int, float)) or v < 0 or v > 100:
+                    raise ValidationError(_('crop_data %(field)s must be a number between 0 and 100.') % {'field': field})
+        if 'rotate' in value and value['rotate'] not in (0, 90, 180, 270):
+            raise ValidationError(_('crop_data rotate must be 0, 90, 180, or 270.'))
 
     def create(self, validated_data):
-        if 'image' in validated_data and not is_file_type_allowed(validated_data['image'].name, image_only=True):
-            return None
+        self.check_crop_data(validated_data)
+        validated_data['created_by'] = self.context['request'].user
+        validated_data['space'] = self.context['request'].space
         return super().create(validated_data)
 
     def update(self, instance, validated_data):
-        if 'image' in validated_data and not is_file_type_allowed(validated_data['image'].name, image_only=True):
-            return None
+        self.check_crop_data(validated_data)
         return super().update(instance, validated_data)
 
     class Meta:
-        model = Recipe
-        fields = ['image', 'image_url', ]
+        model = RecipeImage
+        fields = ('id', 'recipe', 'file', 'crop_data', 'order', 'is_primary', 'created_by', 'created_at')
+        read_only_fields = ('id', 'created_by', 'created_at')
 
 
 class RecipeBatchUpdateSerializer(serializers.Serializer):

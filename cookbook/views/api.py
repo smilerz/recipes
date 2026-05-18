@@ -26,6 +26,7 @@ from django.contrib.postgres.search import TrigramSimilarity
 from django.core.cache import caches
 from django.core.exceptions import FieldError, ValidationError
 from django.core.files import File
+from django.core.files.base import ContentFile
 from django.db import DEFAULT_DB_ALIAS
 from django.db.models import Case, Count, Exists, OuterRef, ProtectedError, Q, Subquery, Value, When, QuerySet
 from django.db.models import Prefetch
@@ -55,7 +56,7 @@ from rest_framework.authtoken.views import ObtainAuthToken
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.exceptions import APIException, PermissionDenied
 from rest_framework.pagination import PageNumberPagination
-from rest_framework.parsers import MultiPartParser
+from rest_framework.parsers import JSONParser, MultiPartParser
 from rest_framework.renderers import JSONRenderer, TemplateHTMLRenderer, BaseRenderer
 
 from rest_framework.response import Response
@@ -89,7 +90,8 @@ from cookbook.models import (
     Automation, BookmarkletImport, ConnectorConfig, CookLog, CustomFilter, ExportLog, Food, FoodInheritField, FoodProperty, ImportLog, Ingredient, InviteLink, Keyword, MealPlan,
     MealType, Property, PropertyType, Recipe, RecipeBook, RecipeBookEntry, ShareLink, ShoppingListEntry, ShoppingListRecipe, Space, Step, Storage, Supermarket,
     SupermarketCategory, SupermarketCategoryRelation, Sync, SyncLog, Unit, UnitConversion, UserFile, UserPreference, UserSpace, ViewLog, RecipeImport, SearchPreference,
-    SearchFields, AiLog, AiProvider, ShoppingList, InventoryLocation, InventoryEntry, InventoryLog, Household
+    SearchFields, AiLog, AiProvider, ShoppingList, InventoryLocation, InventoryEntry, InventoryLog, Household,
+    RecipeImage
 )
 from cookbook.provider.dropbox import Dropbox
 from cookbook.provider.local import Local
@@ -2203,52 +2205,6 @@ class RecipeViewSet(LoggingMixin, viewsets.ModelViewSet, DeleteRelationMixing):
         agg['makenow_ready'] = makenow_ready
         return Response({k: (v or 0) for k, v in agg.items()})
 
-    @decorators.action(detail=True, methods=['PUT'], serializer_class=RecipeImageSerializer,
-                       parser_classes=[MultiPartParser])
-    def image(self, request, pk):
-        obj = self.get_object()
-
-        if obj.get_space() != request.space:
-            raise PermissionDenied(detail='You do not have the required permission to perform this action', code=403)
-
-        serializer = self.serializer_class(obj, data=request.data, partial=True)
-
-        if serializer.is_valid():
-            serializer.save()
-            image = None
-            filetype = ".jpeg"  # fall-back to .jpeg, even if wrong, at least users will know it's an image and most image viewers can open it correctly anyways
-
-            if 'image' in serializer.validated_data:
-                image = obj.image
-                filetype = mimetypes.guess_extension(serializer.validated_data['image'].content_type) or filetype
-            elif 'image_url' in serializer.validated_data:
-                try:
-                    url = serializer.validated_data['image_url']
-                    response = safe_request('GET', url, headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:86.0) Gecko/20100101 Firefox/86.0"})
-                    image = File(io.BytesIO(response.content))
-                    filetype = mimetypes.guess_extension(response.headers['content-type']) or filetype
-                except UnidentifiedImageError as e:
-                    print(e)
-                    pass
-                except MissingSchema as e:
-                    print(e)
-                    pass
-                except Exception as e:
-                    print(e)
-                    pass
-
-            if image is not None:
-                img = handle_image(request, image, filetype)
-                obj.image.save(f'{uuid.uuid4()}_{obj.pk}{filetype}', img)
-                obj.save()
-                return Response(serializer.data)
-            else:
-                obj.image = None
-                obj.save()
-                return Response(serializer.data)
-
-        return Response(serializer.errors, 400)
-
     # TODO: refactor API to use post/put/delete or leave as put and change VUE to use list_recipe after creating
     # DRF only allows one action in a decorator action without overriding get_operation_id_base()
     @decorators.action(detail=True, methods=['PUT'], serializer_class=RecipeShoppingUpdateSerializer, )
@@ -2827,6 +2783,76 @@ class UserFileViewSet(LoggingMixin, StandardFilterModelViewSet, DeleteRelationMi
     def get_queryset(self):
         self.queryset = self.queryset.filter(space=self.request.space).all()
         return super().get_queryset()
+
+
+class RecipeImageViewSet(LoggingMixin, viewsets.ModelViewSet):
+    queryset = RecipeImage.objects
+    serializer_class = RecipeImageSerializer
+    permission_classes = [CustomIsUser & CustomTokenHasReadWriteScope]
+    pagination_class = DefaultPagination
+    parser_classes = [MultiPartParser, JSONParser]
+
+    def get_queryset(self):
+        self.queryset = self.queryset.filter(space=self.request.space)
+        recipe_id = self.request.query_params.get('recipe', None)
+        if recipe_id:
+            self.queryset = self.queryset.filter(recipe_id=recipe_id)
+        return self.queryset.all()
+
+    def perform_update(self, serializer):
+        instance = serializer.save()
+        if instance.is_primary:
+            RecipeImage.objects.filter(recipe=instance.recipe, is_primary=True).exclude(pk=instance.pk).update(is_primary=False)
+
+    def perform_create(self, serializer):
+        instance = serializer.save(created_by=self.request.user, space=self.request.space)
+        if instance.is_primary:
+            RecipeImage.objects.filter(recipe=instance.recipe, is_primary=True).exclude(pk=instance.pk).update(is_primary=False)
+
+    def perform_destroy(self, instance):
+        recipe = instance.recipe
+        was_primary = instance.is_primary
+        instance.delete()
+        if was_primary:
+            next_image = RecipeImage.objects.filter(recipe=recipe).order_by('order').first()
+            if next_image:
+                next_image.is_primary = True
+                next_image.save(update_fields=['is_primary'])
+
+    @decorators.action(detail=False, methods=['POST'], parser_classes=[JSONParser])
+    def from_url(self, request):
+        recipe_id = request.data.get('recipe')
+        image_url = request.data.get('image_url')
+        if not recipe_id or not image_url:
+            return Response({'error': 'recipe and image_url are required'}, status=400)
+        try:
+            recipe = Recipe.objects.get(pk=recipe_id)
+        except Recipe.DoesNotExist:
+            return Response({'error': 'Recipe not found'}, status=404)
+        try:
+            response = safe_request('GET', image_url, headers={
+                "User-Agent": request.META.get('HTTP_USER_AGENT', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:86.0) Gecko/20100101 Firefox/86.0')})
+            if not response.ok:
+                return Response({'error': f'Image server returned {response.status_code}'}, status=400)
+            filetype = mimetypes.guess_extension(response.headers.get('content-type', '')) or '.jpeg'
+            image = File(io.BytesIO(response.content))
+            img = handle_image(request, image, filetype)
+            if img is None:
+                return Response({'error': 'Unable to decode image from URL.'}, status=400)
+            img_bytes = img.getvalue() if hasattr(img, 'getvalue') else img.read()
+            filename = f'{uuid.uuid4()}_{recipe.id}{filetype}'
+            recipe_image = RecipeImage.objects.create(
+                recipe=recipe,
+                file=ContentFile(img_bytes, name=filename),
+                is_primary=not RecipeImage.objects.filter(recipe=recipe, is_primary=True).exists(),
+                order=RecipeImage.objects.filter(recipe=recipe).count(),
+                created_by=request.user,
+                space=recipe.space,
+            )
+            return Response(RecipeImageSerializer(recipe_image, context={'request': request}).data, status=201)
+        except Exception as e:
+            print(e)
+            return Response({'error': 'Unable to import image from URL.'}, status=400)
 
 
 class AutomationViewSet(LoggingMixin, StandardFilterModelViewSet):
