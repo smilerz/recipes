@@ -318,3 +318,47 @@ def test_recipe_stats_permission(arg, request):
     """Stats is a read action — anonymous blocked, authenticated allowed."""
     c = request.getfixturevalue(arg[0])
     assert c.get(reverse(STATS_URL)).status_code == arg[1]
+
+
+# ── Range filter characterization tests (regression coverage) ──────────────
+
+def _count(client, **params):
+    qs = '&'.join(f'{k}={v}' for k, v in params.items())
+    return json.loads(client.get(f'{reverse(LIST_URL)}?{qs}').content)['count']
+
+
+def test_filter_working_time_gte(u1_s1, space_1):
+    with scopes_disabled():
+        RecipeFactory.create(space=space_1, working_time=30)
+        RecipeFactory.create(space=space_1, working_time=90)
+        RecipeFactory.create(space=space_1, working_time=120)
+    assert _count(u1_s1, working_time_gte=60) == 2
+    assert _count(u1_s1, working_time_lte=60) == 1
+
+
+def test_filter_total_time_gte(u1_s1, space_1):
+    with scopes_disabled():
+        RecipeFactory.create(space=space_1, working_time=10, waiting_time=20)
+        RecipeFactory.create(space=space_1, working_time=60, waiting_time=60)
+        RecipeFactory.create(space=space_1, working_time=100, waiting_time=50)
+    assert _count(u1_s1, total_time_gte=100) == 2
+    assert _count(u1_s1, total_time_lte=50) == 1
+
+
+def test_filter_servings_range(u1_s1, space_1):
+    with scopes_disabled():
+        RecipeFactory.create(space=space_1, servings=2)
+        RecipeFactory.create(space=space_1, servings=4)
+        RecipeFactory.create(space=space_1, servings=8)
+    assert _count(u1_s1, servings_gte=4) == 2
+    assert _count(u1_s1, servings_lte=4) == 2
+    assert _count(u1_s1, servings_gte=4, servings_lte=4) == 1
+
+
+def test_filter_sort_direction(u1_s1, space_1):
+    with scopes_disabled():
+        RecipeFactory.create(space=space_1, name='Apple Pie')
+        RecipeFactory.create(space=space_1, name='Zucchini Soup')
+    asc = json.loads(u1_s1.get(f'{reverse(LIST_URL)}?sort_order=name&page_size=1').content)['results'][0]['name']
+    desc = json.loads(u1_s1.get(f'{reverse(LIST_URL)}?sort_order=-name&page_size=1').content)['results'][0]['name']
+    assert asc < desc, f'Expected asc first name < desc first name, got {asc!r} vs {desc!r}'
