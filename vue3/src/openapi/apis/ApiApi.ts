@@ -1602,6 +1602,8 @@ export interface ApiRecipeListRequest {
     foodsAndNot?: Array<number>;
     foodsOr?: Array<number>;
     foodsOrNot?: Array<number>;
+    hasKeywords?: boolean;
+    hasPhoto?: boolean;
     includeChildren?: boolean;
     internal?: boolean;
     keywords?: Array<number>;
@@ -11667,6 +11669,14 @@ export class ApiApi extends runtime.BaseAPI {
 
         if (requestParameters['foodsOrNot'] != null) {
             queryParameters['foods_or_not'] = requestParameters['foodsOrNot'];
+        }
+
+        if (requestParameters['hasKeywords'] != null) {
+            queryParameters['has_keywords'] = requestParameters['hasKeywords'];
+        }
+
+        if (requestParameters['hasPhoto'] != null) {
+            queryParameters['has_photo'] = requestParameters['hasPhoto'];
         }
 
         if (requestParameters['includeChildren'] != null) {

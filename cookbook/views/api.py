@@ -2097,6 +2097,8 @@ class RecipePagination(PageNumberPagination):
     OpenApiParameter(name='new', description=_('Returns new results first in search results. [''true''/''<b>false</b>'']'), type=bool),
     OpenApiParameter(name='num_recent', description=_('Returns the given number of recently viewed recipes before search results (if given)'), type=int),
     OpenApiParameter(name='filter', description=_('ID of a custom filter. Returns all recipes matched by that filter.'), type=int),
+    OpenApiParameter(name='has_photo', description=_('Filter recipes that have a photo. [''true''/''false'']'), type=bool),
+    OpenApiParameter(name='has_keywords', description=_('Filter recipes that have keywords. [''true''/''false'']'), type=bool),
     OpenApiParameter(name='makenow', description=_('Filter recipes that can be made with OnHand food. [''true''/''<b>false</b>'']'), type=bool),
     OpenApiParameter(name='include_children', description=_('Include child keywords and foods in search results. [''<b>true</b>''/''false'']'), type=bool),
 ]))
