@@ -90,8 +90,6 @@ const stepLightboxIndex = ref(0)
 
 const emit = defineEmits(['scale'])
 
-const emit = defineEmits(['scale'])
-
 const step = defineModel<Step>({required: true})
 
 const props = defineProps({
