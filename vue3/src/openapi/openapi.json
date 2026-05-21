@@ -5476,6 +5476,16 @@ paths:
         description: Food IDs, repeat for multiple. Exclude recipes with any of the
           foods.
       - in: query
+        name: has_keywords
+        schema:
+          type: boolean
+        description: Filter recipes that have keywords. [true/false]
+      - in: query
+        name: has_photo
+        schema:
+          type: boolean
+        description: Filter recipes that have a photo. [true/false]
+      - in: query
         name: include_children
         schema:
           type: boolean
