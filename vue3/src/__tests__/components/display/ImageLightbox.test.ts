@@ -4,7 +4,7 @@
  * Tests navigation (prev/next wraparound), currentSrc resolution from
  * images[] or legacy src, and Escape/Arrow key handling.
  */
-import {describe, it, expect, vi, beforeEach} from 'vitest'
+import {describe, it, expect, vi, beforeEach, afterEach} from 'vitest'
 import {mount, flushPromises} from '@vue/test-utils'
 import {createI18n} from 'vue-i18n'
 import {createVuetify} from 'vuetify'
@@ -25,6 +25,14 @@ function mountLightbox(props: {modelValue?: boolean, images?: string[], startInd
 }
 
 describe('ImageLightbox', () => {
+    beforeEach(() => {
+        vi.useFakeTimers()
+    })
+
+    afterEach(() => {
+        vi.useRealTimers()
+    })
+
     it('renders without error with no props (default images=[])', () => {
         const w = mountLightbox({modelValue: false})
         expect(w.exists()).toBe(true)
