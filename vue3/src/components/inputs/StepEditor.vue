@@ -287,8 +287,8 @@ function parseAndInsertIngredients() {
     ingredientParserLoading.value = true
 
     api.apiIngredientParserPostCreate({ingredientParserRequest: {ingredients: ingredientList}}).then(r => {
-        // clear out empty ingredients when pasting stuff (in part to remove initial ingredient)
-        step.value.ingredients = step.value.ingredients.filter(i => i.food != null || i.note != null || i.amount != 0)
+        // clear empty non-header ingredients before pasting; preserve headline rows (isHeader=true) even when empty
+        step.value.ingredients = step.value.ingredients.filter(i => i.isHeader || i.food != null || i.note != null || i.amount != 0)
 
         step.value.ingredients = step.value.ingredients.concat(r.ingredients)
 
