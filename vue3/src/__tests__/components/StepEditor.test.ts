@@ -12,13 +12,17 @@ import * as vuetifyDirectives from 'vuetify/directives'
 import {apiMock, resetApiMock} from '@/__tests__/api-mock'
 import {makeIngredient, makeStep, makeRecipe, makeUserPreference, makeSpace, makeFood, makeUnit} from '@/__tests__/factories'
 
-vi.mock('@/openapi', () => ({
-    ApiApi: class {constructor() { return apiMock }},
-    ResponseError: class extends Error {
-        response: any
-        constructor(r: any) { super(); this.response = r }
-    },
-}))
+vi.mock('@/openapi', async (importOriginal) => {
+    const actual = await importOriginal<typeof import('@/openapi')>()
+    return {
+        ...actual,
+        ApiApi: class {constructor() { return apiMock }},
+        ResponseError: class extends Error {
+            response: any
+            constructor(r: any) { super(); this.response = r }
+        },
+    }
+})
 
 vi.mock('@vueuse/core', async () => {
     const {ref} = await import('vue')
