@@ -585,9 +585,14 @@ export interface ApiAutomationDestroyRequest {
 }
 
 export interface ApiAutomationListRequest {
+    limit?: string;
+    ordering?: string;
     page?: number;
     pageSize?: number;
+    query?: string;
+    random?: string;
     type?: Array<ApiAutomationListTypeEnum>;
+    updatedAt?: string;
 }
 
 export interface ApiAutomationPartialUpdateRequest {
@@ -688,6 +693,7 @@ export interface ApiCookLogDestroyRequest {
 }
 
 export interface ApiCookLogListRequest {
+    ordering?: string;
     page?: number;
     pageSize?: number;
     recipe?: number;
@@ -717,6 +723,7 @@ export interface ApiCustomFilterDestroyRequest {
 
 export interface ApiCustomFilterListRequest {
     limit?: string;
+    ordering?: string;
     page?: number;
     pageSize?: number;
     query?: string;
@@ -1141,6 +1148,7 @@ export interface ApiKeywordDestroyRequest {
 
 export interface ApiKeywordListRequest {
     limit?: string;
+    ordering?: string;
     page?: number;
     pageSize?: number;
     query?: string;
@@ -2079,6 +2087,7 @@ export interface ApiUnitDestroyRequest {
 
 export interface ApiUnitListRequest {
     limit?: string;
+    ordering?: string;
     page?: number;
     pageSize?: number;
     query?: string;
@@ -2144,6 +2153,7 @@ export interface ApiUserFileDestroyRequest {
 
 export interface ApiUserFileListRequest {
     limit?: string;
+    ordering?: string;
     page?: number;
     pageSize?: number;
     query?: string;
@@ -2252,6 +2262,7 @@ export interface ApiViewLogDestroyRequest {
 }
 
 export interface ApiViewLogListRequest {
+    ordering?: string;
     page?: number;
     pageSize?: number;
 }
@@ -3220,6 +3231,14 @@ export class ApiApi extends runtime.BaseAPI {
     async apiAutomationListRaw(requestParameters: ApiAutomationListRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PaginatedAutomationList>> {
         const queryParameters: any = {};
 
+        if (requestParameters['limit'] != null) {
+            queryParameters['limit'] = requestParameters['limit'];
+        }
+
+        if (requestParameters['ordering'] != null) {
+            queryParameters['ordering'] = requestParameters['ordering'];
+        }
+
         if (requestParameters['page'] != null) {
             queryParameters['page'] = requestParameters['page'];
         }
@@ -3228,8 +3247,20 @@ export class ApiApi extends runtime.BaseAPI {
             queryParameters['page_size'] = requestParameters['pageSize'];
         }
 
+        if (requestParameters['query'] != null) {
+            queryParameters['query'] = requestParameters['query'];
+        }
+
+        if (requestParameters['random'] != null) {
+            queryParameters['random'] = requestParameters['random'];
+        }
+
         if (requestParameters['type'] != null) {
             queryParameters['type'] = requestParameters['type'];
+        }
+
+        if (requestParameters['updatedAt'] != null) {
+            queryParameters['updated_at'] = requestParameters['updatedAt'];
         }
 
         const headerParameters: runtime.HTTPHeaders = {};
@@ -4085,6 +4116,10 @@ export class ApiApi extends runtime.BaseAPI {
     async apiCookLogListRaw(requestParameters: ApiCookLogListRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PaginatedCookLogList>> {
         const queryParameters: any = {};
 
+        if (requestParameters['ordering'] != null) {
+            queryParameters['ordering'] = requestParameters['ordering'];
+        }
+
         if (requestParameters['page'] != null) {
             queryParameters['page'] = requestParameters['page'];
         }
@@ -4329,6 +4364,10 @@ export class ApiApi extends runtime.BaseAPI {
 
         if (requestParameters['limit'] != null) {
             queryParameters['limit'] = requestParameters['limit'];
+        }
+
+        if (requestParameters['ordering'] != null) {
+            queryParameters['ordering'] = requestParameters['ordering'];
         }
 
         if (requestParameters['page'] != null) {
@@ -7929,6 +7968,10 @@ export class ApiApi extends runtime.BaseAPI {
 
         if (requestParameters['limit'] != null) {
             queryParameters['limit'] = requestParameters['limit'];
+        }
+
+        if (requestParameters['ordering'] != null) {
+            queryParameters['ordering'] = requestParameters['ordering'];
         }
 
         if (requestParameters['page'] != null) {
@@ -15623,6 +15666,10 @@ export class ApiApi extends runtime.BaseAPI {
             queryParameters['limit'] = requestParameters['limit'];
         }
 
+        if (requestParameters['ordering'] != null) {
+            queryParameters['ordering'] = requestParameters['ordering'];
+        }
+
         if (requestParameters['page'] != null) {
             queryParameters['page'] = requestParameters['page'];
         }
@@ -16155,6 +16202,10 @@ export class ApiApi extends runtime.BaseAPI {
 
         if (requestParameters['limit'] != null) {
             queryParameters['limit'] = requestParameters['limit'];
+        }
+
+        if (requestParameters['ordering'] != null) {
+            queryParameters['ordering'] = requestParameters['ordering'];
         }
 
         if (requestParameters['page'] != null) {
@@ -17117,6 +17168,10 @@ export class ApiApi extends runtime.BaseAPI {
      */
     async apiViewLogListRaw(requestParameters: ApiViewLogListRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PaginatedViewLogList>> {
         const queryParameters: any = {};
+
+        if (requestParameters['ordering'] != null) {
+            queryParameters['ordering'] = requestParameters['ordering'];
+        }
 
         if (requestParameters['page'] != null) {
             queryParameters['page'] = requestParameters['page'];

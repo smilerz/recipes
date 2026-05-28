@@ -1028,6 +1028,13 @@ class SupermarketCategoryRelationViewSet(LoggingMixin, StandardFilterModelViewSe
         return super().get_queryset()
 
 
+@extend_schema_view(list=extend_schema(parameters=[
+    OpenApiParameter(
+        name='ordering',
+        type=str,
+        description='Order results by field. Allowed: name, -name, numrecipe, -numrecipe, numchild, -numchild. Ignored when query is active.'
+    ),
+]))
 class KeywordViewSet(LoggingMixin, TreeMixin, DeleteRelationMixing):
     queryset = Keyword.objects
     model = Keyword
@@ -1035,13 +1042,54 @@ class KeywordViewSet(LoggingMixin, TreeMixin, DeleteRelationMixing):
     permission_classes = [(CustomIsGuest & IsReadOnlyDRF | CustomIsUser) & CustomTokenHasReadWriteScope]
     pagination_class = DefaultPagination
 
+    def _apply_ordering(self, qs):
+        ordering_param = self.request.query_params.get('ordering', None)
+        if not ordering_param:
+            return qs
+        lower_fields = {'name': Lower('name').asc(), '-name': Lower('name').desc()}
+        field_map = {'numrecipe': 'recipe_count', '-numrecipe': '-recipe_count'}
+        allowed = lower_fields.keys() | field_map.keys() | {'numchild', '-numchild'}
+        if ordering_param in allowed:
+            if ordering_param in lower_fields:
+                qs = qs.order_by(lower_fields[ordering_param])
+            else:
+                qs = qs.order_by(field_map.get(ordering_param, ordering_param))
+        return qs
 
+    def get_queryset(self):
+        return self._apply_ordering(super().get_queryset())
+
+
+@extend_schema_view(list=extend_schema(parameters=[
+    OpenApiParameter(
+        name='ordering',
+        type=str,
+        description='Order results by field. Allowed: name, -name, numrecipe, -numrecipe. Ignored when query is active.'
+    ),
+]))
 class UnitViewSet(LoggingMixin, MergeMixin, FuzzyFilterMixin, DeleteRelationMixing):
     queryset = Unit.objects
     model = Unit
     serializer_class = UnitSerializer
     permission_classes = [CustomIsUser & CustomTokenHasReadWriteScope]
     pagination_class = DefaultPagination
+
+    def _apply_ordering(self, qs):
+        ordering_param = self.request.query_params.get('ordering', None)
+        if not ordering_param:
+            return qs
+        lower_fields = {'name': Lower('name').asc(), '-name': Lower('name').desc()}
+        field_map = {'numrecipe': 'recipe_count', '-numrecipe': '-recipe_count'}
+        allowed = lower_fields.keys() | field_map.keys()
+        if ordering_param in allowed:
+            if ordering_param in lower_fields:
+                qs = qs.order_by(lower_fields[ordering_param])
+            else:
+                qs = qs.order_by(field_map.get(ordering_param, ordering_param))
+        return qs
+
+    def get_queryset(self):
+        return self._apply_ordering(super().get_queryset())
 
 
 class FoodInheritFieldViewSet(LoggingMixin, viewsets.ReadOnlyModelViewSet):
@@ -2371,29 +2419,75 @@ class ShoppingListEntryViewSet(LoggingMixin, viewsets.ModelViewSet):
             return Response(serializer.errors, 400)
 
 
+@extend_schema_view(list=extend_schema(parameters=[
+    OpenApiParameter(
+        name='ordering',
+        type=str,
+        description='Order results by field. Allowed: created_at, -created_at, recipe__name, -recipe__name. Ignored when query is active.'
+    ),
+]))
 class ViewLogViewSet(LoggingMixin, viewsets.ModelViewSet):
     queryset = ViewLog.objects
     serializer_class = ViewLogSerializer
     permission_classes = [CustomIsOwner & CustomTokenHasReadWriteScope]
     pagination_class = DefaultPagination
 
+    def _apply_ordering(self, qs):
+        ordering_param = self.request.query_params.get('ordering', None)
+        if not ordering_param:
+            return qs
+        lower_fields = {
+            'recipe__name': Lower('recipe__name').asc(),
+            '-recipe__name': Lower('recipe__name').desc(),
+        }
+        allowed = lower_fields.keys() | {'created_at', '-created_at'}
+        if ordering_param in allowed:
+            if ordering_param in lower_fields:
+                qs = qs.order_by(lower_fields[ordering_param])
+            else:
+                qs = qs.order_by(ordering_param)
+        return qs
+
     def get_queryset(self):
         # working backwards from the test - this is supposed to be limited to user view logs only??
-        return self.queryset.filter(created_by=self.request.user).filter(space=self.request.space)
+        qs = self.queryset.filter(created_by=self.request.user).filter(space=self.request.space)
+        return self._apply_ordering(qs)
 
 
-@extend_schema_view(list=extend_schema(
-    parameters=[OpenApiParameter(name='recipe', description='Filter for entries with the given recipe', type=int), ]))
+@extend_schema_view(list=extend_schema(parameters=[
+    OpenApiParameter(name='recipe', description='Filter for entries with the given recipe', type=int),
+    OpenApiParameter(
+        name='ordering',
+        type=str,
+        description='Order results by field. Allowed: created_at, -created_at, rating, -rating, recipe__name, -recipe__name. Ignored when query is active.'
+    ),
+]))
 class CookLogViewSet(LoggingMixin, viewsets.ModelViewSet):
     queryset = CookLog.objects
     serializer_class = CookLogSerializer
     permission_classes = [CustomIsUser & CustomTokenHasReadWriteScope]
     pagination_class = DefaultPagination
 
+    def _apply_ordering(self, qs):
+        ordering_param = self.request.query_params.get('ordering', None)
+        if not ordering_param:
+            return qs
+        lower_fields = {
+            'recipe__name': Lower('recipe__name').asc(),
+            '-recipe__name': Lower('recipe__name').desc(),
+        }
+        allowed = lower_fields.keys() | {'created_at', '-created_at', 'rating', '-rating'}
+        if ordering_param in allowed:
+            if ordering_param in lower_fields:
+                qs = qs.order_by(lower_fields[ordering_param])
+            else:
+                qs = qs.order_by(ordering_param)
+        return qs
+
     def get_queryset(self):
         if self.request.query_params.get('recipe', None):
             self.queryset = self.queryset.filter(recipe=self.request.query_params.get('recipe'))
-        return self.queryset.filter(space=self.request.space)
+        return self._apply_ordering(self.queryset.filter(space=self.request.space))
 
 
 class ImportLogViewSet(LoggingMixin, viewsets.ModelViewSet):
@@ -2432,6 +2526,13 @@ class BookmarkletImportViewSet(LoggingMixin, viewsets.ModelViewSet):
         return self.queryset.filter(space=self.request.space, created_by=self.request.user).all()
 
 
+@extend_schema_view(list=extend_schema(parameters=[
+    OpenApiParameter(
+        name='ordering',
+        type=str,
+        description='Order results by field. Allowed: name, -name, file_size_kb, -file_size_kb, created_at, -created_at. Ignored when query is active.'
+    ),
+]))
 class UserFileViewSet(LoggingMixin, StandardFilterModelViewSet, DeleteRelationMixing):
     queryset = UserFile.objects
     serializer_class = UserFileSerializer
@@ -2439,34 +2540,62 @@ class UserFileViewSet(LoggingMixin, StandardFilterModelViewSet, DeleteRelationMi
     pagination_class = DefaultPagination
     parser_classes = [MultiPartParser]
 
+    def _apply_ordering(self, qs):
+        ordering_param = self.request.query_params.get('ordering', None)
+        if not ordering_param:
+            return qs
+        lower_fields = {'name': Lower('name').asc(), '-name': Lower('name').desc()}
+        allowed = lower_fields.keys() | {'file_size_kb', '-file_size_kb', 'created_at', '-created_at'}
+        if ordering_param in allowed:
+            if ordering_param in lower_fields:
+                qs = qs.order_by(lower_fields[ordering_param])
+            else:
+                qs = qs.order_by(ordering_param)
+        return qs
+
     def get_queryset(self):
         self.queryset = self.queryset.filter(space=self.request.space).all()
-        return super().get_queryset()
+        return self._apply_ordering(super().get_queryset())
 
 
+@extend_schema_view(list=extend_schema(parameters=[
+    OpenApiParameter(
+        name='type',
+        description=_('Return the Automations matching the automation type.  Repeat for multiple.'),
+        type=str,
+        many=True,
+        enum=[a[0] for a in Automation.automation_types]
+    ),
+    OpenApiParameter(
+        name='ordering',
+        type=str,
+        description='Order results by field. Allowed: name, -name, type, -type, order, -order. Ignored when query is active.'
+    ),
+]))
 class AutomationViewSet(LoggingMixin, StandardFilterModelViewSet):
     queryset = Automation.objects
     serializer_class = AutomationSerializer
     permission_classes = [CustomIsUser & CustomTokenHasReadWriteScope]
     pagination_class = DefaultPagination
 
-    @extend_schema(
-        parameters=[OpenApiParameter(
-            name='type',
-            description=_('Return the Automations matching the automation type.  Repeat for multiple.'),
-            type=str,
-            many=True,
-            enum=[a[0] for a in Automation.automation_types])
-        ]
-    )
-    def list(self, request, *args, **kwargs):
-        return super().list(request, *args, **kwargs)
+    def _apply_ordering(self, qs):
+        ordering_param = self.request.query_params.get('ordering', None)
+        if not ordering_param:
+            return qs
+        lower_fields = {'name': Lower('name').asc(), '-name': Lower('name').desc()}
+        allowed = lower_fields.keys() | {'type', '-type', 'order', '-order'}
+        if ordering_param in allowed:
+            if ordering_param in lower_fields:
+                qs = qs.order_by(lower_fields[ordering_param])
+            else:
+                qs = qs.order_by(ordering_param)
+        return qs
 
     def get_queryset(self):
         automation_type = self.request.query_params.getlist('type', [])
         if automation_type:
             self.queryset = self.queryset.filter(type__in=automation_type)
-        return self.queryset.filter(space=self.request.space).all()
+        return self._apply_ordering(self.queryset.filter(space=self.request.space).all())
 
 
 @extend_schema_view(list=extend_schema(parameters=[
@@ -2495,20 +2624,38 @@ class InviteLinkViewSet(LoggingMixin, StandardFilterModelViewSet):
             return None
 
 
-@extend_schema_view(list=extend_schema(
-    parameters=[OpenApiParameter(
+@extend_schema_view(list=extend_schema(parameters=[
+    OpenApiParameter(
         name='type',
         description=_('Return the CustomFilters matching the model type.  Repeat for multiple.'),
         type=str,
         many=True,
-        enum=[m[0] for m in CustomFilter.MODELS])
-    ]
-))
+        enum=[m[0] for m in CustomFilter.MODELS]
+    ),
+    OpenApiParameter(
+        name='ordering',
+        type=str,
+        description='Order results by field. Allowed: name, -name, type, -type, created_at, -created_at. Ignored when query is active.'
+    ),
+]))
 class CustomFilterViewSet(LoggingMixin, StandardFilterModelViewSet):
     queryset = CustomFilter.objects
     serializer_class = CustomFilterSerializer
     permission_classes = [CustomIsOwner & CustomTokenHasReadWriteScope]
     pagination_class = DefaultPagination
+
+    def _apply_ordering(self, qs):
+        ordering_param = self.request.query_params.get('ordering', None)
+        if not ordering_param:
+            return qs
+        lower_fields = {'name': Lower('name').asc(), '-name': Lower('name').desc()}
+        allowed = lower_fields.keys() | {'type', '-type', 'created_at', '-created_at'}
+        if ordering_param in allowed:
+            if ordering_param in lower_fields:
+                qs = qs.order_by(lower_fields[ordering_param])
+            else:
+                qs = qs.order_by(ordering_param)
+        return qs
 
     def get_queryset(self):
         # TODO add tests for filter
@@ -2517,7 +2664,7 @@ class CustomFilterViewSet(LoggingMixin, StandardFilterModelViewSet):
             self.queryset = self.queryset.filter(type__in=filter_type)
         self.queryset = self.queryset.filter(Q(created_by=self.request.user) | Q(shared=self.request.user)).filter(
             space=self.request.space).distinct()
-        return super().get_queryset()
+        return self._apply_ordering(super().get_queryset())
 
 
 class AccessTokenViewSet(LoggingMixin, viewsets.ModelViewSet):

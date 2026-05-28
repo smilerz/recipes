@@ -601,6 +601,17 @@ paths:
       operationId: apiAutomationList
       description: logs request counts to redis cache total/per user/
       parameters:
+      - in: query
+        name: limit
+        schema:
+          type: string
+        description: limit number of entries to return
+      - in: query
+        name: ordering
+        schema:
+          type: string
+        description: 'Order results by field. Allowed: name, -name, type, -type, order,
+          -order. Ignored when query is active.'
       - name: page
         required: false
         in: query
@@ -613,6 +624,16 @@ paths:
         description: Number of results to return per page.
         schema:
           type: integer
+      - in: query
+        name: query
+        schema:
+          type: string
+        description: lookup if query string is contained within the name, case insensitive
+      - in: query
+        name: random
+        schema:
+          type: string
+        description: randomly orders entries (only works together with limit)
       - in: query
         name: type
         schema:
@@ -632,6 +653,16 @@ paths:
             - UNIT_REPLACE
         description: Return the Automations matching the automation type.  Repeat
           for multiple.
+      - in: query
+        name: updated_at
+        schema:
+          type: string
+        description: if model has an updated_at timestamp, filter only models updated
+          at or after datetime
+        examples:
+          DateFormat:
+            value: '1972-12-05'
+            summary: Date Format
       tags:
       - api
       security:
@@ -1217,6 +1248,12 @@ paths:
       operationId: apiCookLogList
       description: logs request counts to redis cache total/per user/
       parameters:
+      - in: query
+        name: ordering
+        schema:
+          type: string
+        description: 'Order results by field. Allowed: created_at, -created_at, rating,
+          -rating, recipe__name, -recipe__name. Ignored when query is active.'
       - name: page
         required: false
         in: query
@@ -1385,6 +1422,12 @@ paths:
         schema:
           type: string
         description: limit number of entries to return
+      - in: query
+        name: ordering
+        schema:
+          type: string
+        description: 'Order results by field. Allowed: name, -name, type, -type, created_at,
+          -created_at. Ignored when query is active.'
       - name: page
         required: false
         in: query
@@ -3859,6 +3902,12 @@ paths:
         schema:
           type: string
         description: limit number of entries to return
+      - in: query
+        name: ordering
+        schema:
+          type: string
+        description: 'Order results by field. Allowed: name, -name, numrecipe, -numrecipe,
+          numchild, -numchild. Ignored when query is active.'
       - name: page
         required: false
         in: query
@@ -9404,6 +9453,12 @@ paths:
         schema:
           type: string
         description: limit number of entries to return
+      - in: query
+        name: ordering
+        schema:
+          type: string
+        description: 'Order results by field. Allowed: name, -name, numrecipe, -numrecipe.
+          Ignored when query is active.'
       - name: page
         required: false
         in: query
@@ -9939,6 +9994,12 @@ paths:
         schema:
           type: string
         description: limit number of entries to return
+      - in: query
+        name: ordering
+        schema:
+          type: string
+        description: 'Order results by field. Allowed: name, -name, file_size_kb,
+          -file_size_kb, created_at, -created_at. Ignored when query is active.'
       - name: page
         required: false
         in: query
@@ -10531,6 +10592,12 @@ paths:
       operationId: apiViewLogList
       description: logs request counts to redis cache total/per user/
       parameters:
+      - in: query
+        name: ordering
+        schema:
+          type: string
+        description: 'Order results by field. Allowed: created_at, -created_at, recipe__name,
+          -recipe__name. Ignored when query is active.'
       - name: page
         required: false
         in: query
