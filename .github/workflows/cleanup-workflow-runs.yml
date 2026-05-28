@@ -68,15 +68,29 @@ jobs:
           delete_workflow_pattern: docker-publish.yml
           dry_run: ${{ inputs.dry_run || false }}
 
-      # CodeQL security scans — keep a long tail of green/red for trending,
-      # but they shipped 1211 runs by 2026-04-27 with no caps. Bound it.
+      # build-docker.yml — fork-specific Docker build on PRs/pushes; runs
+      # frequently (same cadence as ci.yml). Was missing from cleanup,
+      # accumulated 632 runs by 2026-05-28.
+      - name: Cleanup build-docker.yml runs
+        uses: Mattraks/delete-workflow-runs@v2
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          repository: ${{ github.repository }}
+          retain_days: 30
+          keep_minimum_runs: 10
+          delete_workflow_pattern: build-docker.yml
+          dry_run: ${{ inputs.dry_run || false }}
+
+      # CodeQL security scans — fires on every push, not just weekly, so
+      # retain_days: 60 kept 900+ runs (only 13 deleted per cycle). Tightened
+      # to 14 days; recent scans are what matter for security trending.
       - name: Cleanup codeql-analysis.yml runs
         uses: Mattraks/delete-workflow-runs@v2
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           repository: ${{ github.repository }}
-          retain_days: 60
-          keep_minimum_runs: 30
+          retain_days: 14
+          keep_minimum_runs: 10
           delete_workflow_pattern: codeql-analysis.yml
           dry_run: ${{ inputs.dry_run || false }}
 
@@ -91,6 +105,29 @@ jobs:
           retain_days: 30
           keep_minimum_runs: 10
           delete_workflow_pattern: dependabot-automerge.yml
+          dry_run: ${{ inputs.dry_run || false }}
+
+      # GitHub dynamic workflows — these have no yml files in the repo; the
+      # action matches them by path substring. Both fire on every push/PR and
+      # accumulated 1779 + 659 runs by 2026-05-28 with no cleanup at all.
+      - name: Cleanup auto-submission runs
+        uses: Mattraks/delete-workflow-runs@v2
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          repository: ${{ github.repository }}
+          retain_days: 14
+          keep_minimum_runs: 5
+          delete_workflow_pattern: auto-submission
+          dry_run: ${{ inputs.dry_run || false }}
+
+      - name: Cleanup dependabot-updates runs
+        uses: Mattraks/delete-workflow-runs@v2
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          repository: ${{ github.repository }}
+          retain_days: 14
+          keep_minimum_runs: 5
+          delete_workflow_pattern: dependabot-updates
           dry_run: ${{ inputs.dry_run || false }}
 
       # Orphaned runs from deleted branches/workflows — always safe to purge.
