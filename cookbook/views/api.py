@@ -2557,6 +2557,15 @@ class UserFileViewSet(LoggingMixin, StandardFilterModelViewSet, DeleteRelationMi
         self.queryset = self.queryset.filter(space=self.request.space).all()
         return self._apply_ordering(super().get_queryset())
 
+    def destroy(self, request, *args, **kwargs):
+        # a UserFile referenced by a protected FK (e.g. Step.file) cannot be
+        # deleted; return a clean 4xx instead of an unhandled ProtectedError 500
+        try:
+            return super().destroy(request, *args, **kwargs)
+        except ProtectedError as e:
+            content = {'error': True, 'msg': e.args[0]}
+            return Response(content, status=status.HTTP_403_FORBIDDEN)
+
 
 @extend_schema_view(list=extend_schema(parameters=[
     OpenApiParameter(
