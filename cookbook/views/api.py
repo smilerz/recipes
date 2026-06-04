@@ -738,7 +738,8 @@ class UserSpaceViewSet(LoggingMixin, viewsets.ModelViewSet):
     def destroy(self, request, *args, **kwargs):
         userspace = UserSpace.objects.get(pk=kwargs['pk'])
         if userspace.space.created_by == userspace.user:
-            raise APIException('Cannot delete Space owner permission.')
+            # business-rule rejection, not a server error -> 403, not 500
+            raise PermissionDenied('Cannot delete Space owner permission.')
         return super().destroy(request, *args, **kwargs)
 
     def get_queryset(self):
