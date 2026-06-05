@@ -64,6 +64,7 @@ describe('ModelDeletePage', () => {
     beforeEach(() => {
         resetApiMock()
         mockGenericModel.model.disableDelete = false
+        mockGenericModel.model.isAdvancedDelete = true
         mockRetrieve.mockReset().mockResolvedValue(makeFood({ id: 1, name: 'Butter' }))
         mockDestroy.mockReset().mockResolvedValue(undefined)
         mockGetDeleteProtecting.mockReset().mockResolvedValue({ results: [], count: 0 })
@@ -117,5 +118,17 @@ describe('ModelDeletePage', () => {
         const btn = wrapper.find('[data-test="model-delete-button"]')
         expect(btn.exists()).toBe(true)
         expect(btn.classes()).toContain('v-btn--disabled')
+    })
+
+    it('does not load delete-relationships for non-advanced-delete models', async () => {
+        // Space/User/Group/FoodInheritField have no apiXProtectingList endpoints;
+        // calling them throws "this.api[...] is not a function" on mount.
+        mockGenericModel.model.isAdvancedDelete = false
+        mountPage(ModelDeletePage, { props: { model: 'Space', id: '1' } })
+        await flushPromises()
+
+        expect(mockGetDeleteProtecting).not.toHaveBeenCalled()
+        expect(mockGetDeleteCascading).not.toHaveBeenCalled()
+        expect(mockGetDeleteNulling).not.toHaveBeenCalled()
     })
 })
