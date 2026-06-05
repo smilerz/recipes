@@ -82,4 +82,16 @@ describe('RecipeViewPage', () => {
 
         expect(apiMock.apiRecipeRetrieve).toHaveBeenCalled()
     })
+
+    it('shows a not-found state instead of an endless skeleton when the recipe 404s', async () => {
+        apiMock.apiRecipeRetrieve.mockRejectedValue({ response: { status: 404 } })
+
+        const wrapper = mountRecipePage('999999')
+        await flushPromises()
+
+        // the not-found block is shown, and the recipe-view (which renders the
+        // perpetual skeleton) is not
+        expect(wrapper.find('[data-test="recipe-not-found"]').exists()).toBe(true)
+        expect(wrapper.find('.stub-recipe-view').exists()).toBe(false)
+    })
 })
