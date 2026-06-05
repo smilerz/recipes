@@ -14,7 +14,8 @@ import {
     SupermarketCategory, Sync, SyncLog,
     Unit,
     UnitConversion, User, UserFile,
-    UserSpace, ViewLog, Household
+    UserSpace, ViewLog, Household,
+    type PaginatedGenericModelReferenceList
 } from "@/openapi";
 import {VDataTable} from "vuetify/components";
 import {getNestedProperty} from "@/utils/utils";
@@ -1222,7 +1223,7 @@ export class GenericModel {
      * @return promise of request
      */
     getDeleteProtecting(deleteRelationRequestParameter: DeleteRelationRequestParameter) {
-        return this.api[`api${this.model.name}ProtectingList`](deleteRelationRequestParameter)
+        return this.deleteRelation('Protecting', deleteRelationRequestParameter)
     };
 
     /**
@@ -1231,7 +1232,7 @@ export class GenericModel {
      * @return promise of request
      */
     getDeleteCascading(deleteRelationRequestParameter: DeleteRelationRequestParameter) {
-        return this.api[`api${this.model.name}CascadingList`](deleteRelationRequestParameter)
+        return this.deleteRelation('Cascading', deleteRelationRequestParameter)
     };
 
     /**
@@ -1240,7 +1241,27 @@ export class GenericModel {
      * @return promise of request
      */
     getDeleteNulling(deleteRelationRequestParameter: DeleteRelationRequestParameter) {
-        return this.api[`api${this.model.name}NullingList`](deleteRelationRequestParameter)
+        return this.deleteRelation('Nulling', deleteRelationRequestParameter)
+    };
+
+    /**
+     * dispatch a delete-relationship list endpoint (Protecting/Cascading/Nulling).
+     * These endpoints only exist on the generated client for models whose viewset
+     * has DeleteRelationMixing; for the rest the method is absent. Guard on the
+     * real client (the source of truth) rather than the hand-maintained
+     * isAdvancedDelete flag: degrade to an empty result instead of throwing, but
+     * shout in DEV if the flag claims the endpoint should exist (stale client).
+     */
+    private deleteRelation(suffix: 'Protecting' | 'Cascading' | 'Nulling', deleteRelationRequestParameter: DeleteRelationRequestParameter): Promise<PaginatedGenericModelReferenceList> {
+        const name = `api${this.model.name}${suffix}List`
+        if (typeof (this.api as any)[name] !== 'function') {
+            if (this.model.isAdvancedDelete && import.meta.env.DEV) {
+                console.error(`[GenericModel] expected ${name} on the generated API client but it is missing — stale OpenAPI client?`)
+            }
+            return Promise.resolve({count: 0, results: []})
+        }
+        // index inline to preserve `this` binding on the generated method
+        return (this.api as any)[name](deleteRelationRequestParameter)
     };
 
     /**

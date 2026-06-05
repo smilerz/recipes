@@ -292,6 +292,9 @@ function deleteObject() {
  * @param cache if reload should occur using cached data or not
  */
 function reloadAll(cache: boolean = true) {
+    // only advanced-delete models expose apiXProtectingList/CascadingList/NullingList;
+    // calling them for others (Space, User, Group, ...) throws on mount
+    if (!genericModel.value.model.isAdvancedDelete) return
     loadProtected({page: 1, itemsPerPage: pageSize.value}, cache)
     loadCascading({page: 1, itemsPerPage: pageSize.value}, cache)
     loadNulling({page: 1, itemsPerPage: pageSize.value}, cache)
