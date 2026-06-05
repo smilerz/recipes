@@ -181,7 +181,7 @@
                         {{ $t('delete_confirmation', {source: `${$t(genericModel.model.localizationKey)} ${genericModel.getLabel(editingObj)}`}) }}
                     </v-card-text>
                     <v-card-actions>
-                        <v-btn color="delete" prepend-icon="$delete" :disabled="protectingObjectsCount > 0" @click="deleteObject()" :loading="deleteLoading">{{
+                        <v-btn color="delete" prepend-icon="$delete" data-test="model-delete-button" :disabled="protectingObjectsCount > 0 || genericModel.model.disableDelete" @click="deleteObject()" :loading="deleteLoading">{{
                                 $t('Delete')
                             }}
                         </v-btn>
