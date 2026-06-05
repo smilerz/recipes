@@ -63,6 +63,7 @@ import ModelDeletePage from '@/pages/ModelDeletePage.vue'
 describe('ModelDeletePage', () => {
     beforeEach(() => {
         resetApiMock()
+        mockGenericModel.model.disableDelete = false
         mockRetrieve.mockReset().mockResolvedValue(makeFood({ id: 1, name: 'Butter' }))
         mockDestroy.mockReset().mockResolvedValue(undefined)
         mockGetDeleteProtecting.mockReset().mockResolvedValue({ results: [], count: 0 })
@@ -106,5 +107,15 @@ describe('ModelDeletePage', () => {
         const wrapper = mountPage(ModelDeletePage, { props: { model: 'Food', id: '1' } })
         await flushPromises()
         expect(wrapper.text()).toContain('Merge')
+    })
+
+    it('disables the delete button for models with disableDelete', async () => {
+        mockGenericModel.model.disableDelete = true
+        const wrapper = mountPage(ModelDeletePage, { props: { model: 'Space', id: '1' } })
+        await flushPromises()
+
+        const btn = wrapper.find('[data-test="model-delete-button"]')
+        expect(btn.exists()).toBe(true)
+        expect(btn.classes()).toContain('v-btn--disabled')
     })
 })
