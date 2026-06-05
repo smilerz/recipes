@@ -18,7 +18,7 @@
                 </v-text-field>
             </v-col>
         </v-row>
-        <v-row dense>
+        <v-row density="compact">
             <v-col>
                 <v-expansion-panels v-model="panel">
                     <v-expansion-panel value="search">

@@ -221,7 +221,7 @@
                                     </v-col>
                                     <v-col cols="12" md="6">
                                         <h2 class="text-h5">{{ $t('Available') }}</h2>
-                                        <v-row dense>
+                                        <v-row density="compact">
                                             <v-col cols="4" v-for="i in importResponse.images">
                                                 <v-img max-height="10vh" cover aspect-ratio="1" :src="i" @click="importResponse.recipe.imageUrl = i"></v-img>
                                             </v-col>
@@ -539,7 +539,7 @@
                 </v-stepper>
             </v-col>
         </v-row>
-        <v-row dense>
+        <v-row density="compact">
             <v-col class="text-center">
                 <v-btn size="small" prepend-icon="fa-solid fa-arrow-rotate-left" variant="tonal" color="warning" @click="resetImporter()">{{ $t('Reset') }}</v-btn>
             </v-col>

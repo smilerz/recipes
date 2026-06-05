@@ -62,7 +62,7 @@
         </template>
         <!-- Desktop horizontal layout -->
         <template v-else>
-            <v-row dense>
+            <v-row density="compact">
                 <v-col cols="8">
                     <recipe-image
                         :rounded="true"
@@ -150,7 +150,7 @@
 
         <v-card class="mt-2">
             <v-card-text>
-                <v-row dense>
+                <v-row density="compact">
                     <v-col cols="12" :sm="(recipe.sourceUrl) ? 3 : 4">
                         <v-card
                             variant="outlined"

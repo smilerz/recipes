@@ -15,14 +15,14 @@
                 </v-card>
             </v-col>
         </v-row>
-        <v-row v-if="editingObj" dense>
+        <v-row v-if="editingObj" density="compact">
             <v-col>
                 <v-card>
                     <v-card-title class="text-h4">{{ $t('Delete') }} {{ $t(genericModel.model.localizationKey) }}: {{ genericModel.getLabel(editingObj) }}</v-card-title>
                 </v-card>
             </v-col>
         </v-row>
-        <v-row dense v-if="protectingObjectsCount > 0 || cascadingObjectsCount > 0 || nullingObjectsCount > 0">
+        <v-row density="compact" v-if="protectingObjectsCount > 0 || cascadingObjectsCount > 0 || nullingObjectsCount > 0">
             <v-col>
                 <v-card>
                     <v-tabs v-model="tab" grow>
@@ -155,7 +155,7 @@
 
             </v-col>
         </v-row>
-        <v-row v-if="genericModel.model.isMerge" dense>
+        <v-row v-if="genericModel.model.isMerge" density="compact">
             <v-col>
                 <v-card class="border-warning border-sm border-opacity-100">
                     <v-card-title>{{ $t('Merge') }}</v-card-title>
@@ -173,7 +173,7 @@
                 </v-card>
             </v-col>
         </v-row>
-        <v-row dense>
+        <v-row density="compact">
             <v-col>
                 <v-card class="border-error border-sm border-opacity-100">
                     <v-card-title>{{ $t('Delete') }}</v-card-title>

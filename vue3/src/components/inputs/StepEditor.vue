@@ -55,12 +55,12 @@
                 </v-col>
             </v-row>
 
-            <v-row class="mt-2" dense>
+            <v-row class="mt-2" density="compact">
                 <v-col cols="12">
                     <v-label>{{ $t('Ingredients') }}</v-label>
                     <div v-if="!mobile">
                         <vue-draggable v-model="step.ingredients" handle=".drag-handle" :on-sort="sortIngredients" :empty-insert-threshold="25" group="ingredients">
-                            <div v-for="(ingredient, index) in step.ingredients" :key="ingredient.id" dense>
+                            <div v-for="(ingredient, index) in step.ingredients" :key="ingredient.id">
                                 <div class="pa-0 ma-0 text-center text-disabled" v-if="ingredient.originalText">
                                     <v-icon icon="$import" size="x-small"></v-icon>
                                     {{ ingredient.originalText }}
