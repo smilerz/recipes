@@ -8,13 +8,22 @@ name: Cleanup Workflow Runs
 #
 # Manual run: workflow_dispatch with dry_run=true to audit before deleting.
 #
-# Retention semantics: each step deletes runs older than retain_days and
-# keeps the most recent keep_minimum_runs regardless of age. NO conclusion
-# filter — earlier versions filtered to "cancelled,skipped,failure" which
-# excluded success runs, letting them accumulate indefinitely (894 ci.yml
-# runs in the wild). The action's retain_days/keep_minimum_runs already
-# guarantee a sliding window; conclusion filtering on top of that is a
-# permanent leak for the remaining conclusions.
+# Retention semantics: the per-workflow steps deletes runs older than
+# retain_days and keep the most recent keep_minimum_runs regardless of age.
+# NO conclusion filter on those steps — earlier versions filtered to
+# "cancelled,skipped,failure" which excluded success runs, letting them
+# accumulate indefinitely (894 ci.yml runs in the wild). The action's
+# retain_days/keep_minimum_runs already guarantee a sliding window for the
+# success/failure history we want to keep.
+#
+# Skipped runs are the exception: they are pure noise on this fork. Upstream
+# jobs gated `if: github.repository_owner == 'TandoorRecipes'` (build-docker
+# everywhere; ci/codeql on chain branches) skip on every push, manufacturing
+# a skipped run that never did any work. Age-based retention can't clear them
+# — with keep_minimum_runs=10 the action protects the 10 most-recent of the
+# over-age subset, so old skipped runs survive indefinitely. The dedicated
+# "Cleanup ALL skipped runs" step below deletes every skipped run across every
+# workflow regardless of age (retain_days=0, keep_minimum_runs=0).
 
 on:
   schedule:
@@ -142,6 +151,21 @@ jobs:
           retain_days: 0
           keep_minimum_runs: 0
           delete_workflow_by_state_pattern: "deleted"
+          dry_run: ${{ inputs.dry_run || false }}
+
+      # ALL skipped runs, every workflow, any age. delete_workflow_pattern is
+      # omitted so the action spans every workflow; retain_days/keep_minimum=0
+      # so nothing is protected; the conclusion filter limits deletion to
+      # skipped runs only — success/failure history is untouched here and
+      # still governed by the per-workflow retention steps above.
+      - name: Cleanup ALL skipped runs (any workflow, any age)
+        uses: Mattraks/delete-workflow-runs@v2
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          repository: ${{ github.repository }}
+          retain_days: 0
+          keep_minimum_runs: 0
+          delete_run_by_conclusion_pattern: skipped
           dry_run: ${{ inputs.dry_run || false }}
 
       - name: Summary
