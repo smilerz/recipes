@@ -59,6 +59,7 @@ vi.mock('@vueuse/router', async () => {
 })
 
 import ModelDeletePage from '@/pages/ModelDeletePage.vue'
+import { ResponseError } from '@/openapi'
 
 describe('ModelDeletePage', () => {
     beforeEach(() => {
@@ -130,5 +131,15 @@ describe('ModelDeletePage', () => {
         expect(mockGetDeleteProtecting).not.toHaveBeenCalled()
         expect(mockGetDeleteCascading).not.toHaveBeenCalled()
         expect(mockGetDeleteNulling).not.toHaveBeenCalled()
+    })
+
+    it('shows a not-found state (no delete form) when the object does not exist (404)', async () => {
+        mockRetrieve.mockReset().mockRejectedValue(new ResponseError({ status: 404 }))
+        const wrapper = mountPage(ModelDeletePage, { props: { model: 'Food', id: '999999' } })
+        await flushPromises()
+
+        expect(wrapper.find('[data-test="model-not-found"]').exists()).toBe(true)
+        // the delete scaffold must NOT render for a phantom object
+        expect(wrapper.find('[data-test="model-delete-button"]').exists()).toBe(false)
     })
 })
