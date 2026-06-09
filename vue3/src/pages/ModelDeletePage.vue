@@ -1,6 +1,7 @@
 <template>
 
     <v-container>
+        <template v-if="!loadError">
         <v-row>
             <v-col>
                 <v-card>
@@ -190,6 +191,15 @@
                 </v-card>
             </v-col>
         </v-row>
+        </template>
+        <v-row v-else density="compact">
+            <v-col>
+                <v-card data-test="model-not-found" variant="flat" class="mt-md-4 text-center pa-8">
+                    <div class="text-h6 mb-4">{{ loadError === 'notfound' ? $t('NotFound') : $t('err_fetching_resource') }}</div>
+                    <v-btn :to="{name: 'ModelListPage', params: {model}}" color="primary" variant="tonal">{{ $t('Back') }}</v-btn>
+                </v-card>
+            </v-col>
+        </v-row>
     </v-container>
 
 </template>
@@ -229,6 +239,7 @@ const genericModel = ref({} as GenericModel)
 const editingObj = ref({} as EditorSupportedModels)
 const tab = ref('protecting')
 const deleteLoading = ref(false)
+const loadError = ref<null | 'notfound' | 'error'>(null)
 
 const pageSize = ref(useUserPreferenceStore().deviceSettings.general_tableItemsPerPage)
 
@@ -269,7 +280,14 @@ function loadObject() {
         editingObj.value = obj
         title.value = t('DeleteSomething', {item: `${t(genericModel.value.model.localizationKey)} ${genericModel.value.getLabel(editingObj.value)}`})
     }).catch(err => {
-        useMessageStore().addError(ErrorMessageType.FETCH_ERROR, err)
+        // a missing object must render a clean not-found state, not the delete
+        // form for a phantom object (delete-page analog of RecipeViewPage)
+        if (err.response?.status == 404) {
+            loadError.value = 'notfound'
+        } else {
+            loadError.value = 'error'
+            useMessageStore().addError(ErrorMessageType.FETCH_ERROR, err)
+        }
     })
 }
 

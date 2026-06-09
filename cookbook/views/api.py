@@ -724,6 +724,15 @@ class HouseholdViewSet(LoggingMixin, viewsets.ModelViewSet):
     def get_queryset(self):
         return self.queryset.filter(space=self.request.space)
 
+    def destroy(self, request, *args, **kwargs):
+        # a Household referenced by a protected FK (InventoryLocation/UserSpace.household)
+        # cannot be deleted; return a clean 4xx instead of an unhandled ProtectedError 500
+        try:
+            return super().destroy(request, *args, **kwargs)
+        except ProtectedError as e:
+            content = {'error': True, 'msg': e.args[0]}
+            return Response(content, status=status.HTTP_403_FORBIDDEN)
+
 
 @extend_schema_view(list=extend_schema(parameters=[
     OpenApiParameter(name='internal_note', description='text field to store information about the invite link', type=str),
@@ -846,7 +855,6 @@ class AiLogViewSet(LoggingMixin, viewsets.ModelViewSet):
 
 
 class StorageViewSet(LoggingMixin, viewsets.ModelViewSet, DeleteRelationMixing):
-    # TODO handle delete protect error and adjust test
     queryset = Storage.objects
     serializer_class = StorageSerializer
     permission_classes = [CustomIsAdmin & CustomTokenHasReadWriteScope]
@@ -854,6 +862,15 @@ class StorageViewSet(LoggingMixin, viewsets.ModelViewSet, DeleteRelationMixing):
 
     def get_queryset(self):
         return self.queryset.filter(space=self.request.space)
+
+    def destroy(self, request, *args, **kwargs):
+        # a Storage referenced by a protected FK (Sync/Recipe/RecipeImport.storage)
+        # cannot be deleted; return a clean 4xx instead of an unhandled ProtectedError 500
+        try:
+            return super().destroy(request, *args, **kwargs)
+        except ProtectedError as e:
+            content = {'error': True, 'msg': e.args[0]}
+            return Response(content, status=status.HTTP_403_FORBIDDEN)
 
 
 class InventoryLocationViewSet(LoggingMixin, viewsets.ModelViewSet, DeleteRelationMixing):
