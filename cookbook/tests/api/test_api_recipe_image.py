@@ -23,6 +23,25 @@ def img_1(space_1, u1_s1, recipe_1_s1):
     )
 
 
+def test_recipe_image_from_primary_recipeimage(u1_s1, space_1, recipe_1_s1):
+    """RecipeSerializer exposes image + image_crop_data from the primary
+    RecipeImage, not the legacy Recipe.image column (pattern-014 clean cut)."""
+    user = auth.get_user(u1_s1)
+    crop = {'x': 10, 'y': 20, 'width': 50, 'height': 50}
+    with scopes_disabled():
+        recipe_1_s1.image = ''   # legacy column empty; only the gallery has an image
+        recipe_1_s1.save()
+        RecipeImage.objects.create(
+            recipe=recipe_1_s1, file='recipes/primary.jpg', is_primary=True,
+            order=0, crop_data=crop, created_by=user, space=space_1,
+        )
+    r = u1_s1.get(reverse('api:recipe-detail', args=[recipe_1_s1.id]))
+    assert r.status_code == 200
+    body = json.loads(r.content)
+    assert 'primary.jpg' in (body['image'] or '')
+    assert body['image_crop_data'] == crop
+
+
 @pytest.mark.parametrize("arg", [
     ['a_u', 403],
     ['g1_s1', 403],
