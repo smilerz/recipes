@@ -73,7 +73,7 @@ from cookbook.helper import recipe_url_import as helper
 from cookbook.helper.HelperFunctions import str2bool, safe_request
 from cookbook.helper.ai_helper import can_perform_ai_request, AiCallbackHandler
 from cookbook.helper.batch_edit_helper import add_to_relation, remove_from_relation, remove_all_from_relation, set_relation
-from cookbook.helper.image_processing import handle_image
+from cookbook.helper.image_processing import handle_image, set_primary_recipe_image
 from cookbook.helper.ingredient_parser import IngredientParser
 from cookbook.helper.open_data_importer import OpenDataImporter
 from cookbook.helper.permission_helper import (CustomIsAdmin, CustomIsOwner, CustomIsOwnerReadOnly, CustomIsShared,
@@ -247,21 +247,27 @@ class ExtendedRecipeMixin():
             queryset = queryset.annotate(recipe_count=Coalesce(Subquery(recipe_count), 0))
 
             if extended:
-                # recipe_image is only annotated when extended=true (expensive)
-                images = serializer.images
+                # recipe_image is only annotated when extended=true (expensive).
+                # pattern-014: source the image from the primary RecipeImage.file
+                # (deterministic order by order,pk) instead of the legacy
+                # Recipe.image column, which is being retired. The inner
+                # RecipeImage subquery picks the primary image of the recipe
+                # matched by the outer OuterRef.
+                primary_image = RecipeImage.objects.filter(
+                    recipe=OuterRef('pk'),
+                ).exclude(file__isnull=True).exclude(file__exact='').order_by('order', 'pk').values('file')[:1]
                 image_subquery = Recipe.objects.filter(**{
                     recipe_filter: OuterRef('id')
-                }, space=space).exclude(image__isnull=True).exclude(image__exact='').order_by("?").values('image')[:1]
+                }, space=space).annotate(primary_image=Subquery(primary_image)).exclude(
+                    primary_image__isnull=True).order_by('pk').values('primary_image')[:1]
                 if tree:
                     image_children_subquery = Recipe.objects.filter(**{
                         f"{recipe_filter}__path__startswith": OuterRef('path')
-                    }, space=space).exclude(image__isnull=True).exclude(image__exact='').order_by("?").values('image')[:1]
+                    }, space=space).annotate(primary_image=Subquery(primary_image)).exclude(
+                        primary_image__isnull=True).order_by('pk').values('primary_image')[:1]
                 else:
                     image_children_subquery = None
-                if images:
-                    queryset = queryset.annotate(recipe_image=Coalesce(*images, image_subquery, image_children_subquery))
-                else:
-                    queryset = queryset.annotate(recipe_image=Coalesce(image_subquery, image_children_subquery))
+                queryset = queryset.annotate(recipe_image=Coalesce(image_subquery, image_children_subquery))
         return queryset
 
 
@@ -2179,6 +2185,7 @@ class RecipeViewSet(LoggingMixin, viewsets.ModelViewSet, DeleteRelationMixing):
                                                                'steps__ingredients__unit__unit_conversion_converted_relation__food',
                                                                'steps__ingredients__unit__unit_conversion_converted_relation__space',
                                                                'cooklog_set',
+                                                               'images',
                                                                ).select_related('nutrition')
 
             return super().get_queryset()
@@ -2192,7 +2199,7 @@ class RecipeViewSet(LoggingMixin, viewsets.ModelViewSet, DeleteRelationMixing):
             self.request.user
         ).with_last_cooked(
             self.request.user, self.request.space
-        ).prefetch_related('keywords', 'cooklog_set')
+        ).prefetch_related('keywords', 'cooklog_set', 'images')
         return self.queryset
 
     def list(self, request, *args, **kwargs):
@@ -2306,9 +2313,9 @@ class RecipeViewSet(LoggingMixin, viewsets.ModelViewSet, DeleteRelationMixing):
     def flat(self, request):
         # TODO limit fields retrieved but .values() kills image
         qs = Recipe.objects.filter(space=request.space).filter(Q(private=False) | (
-                Q(private=True) & (Q(created_by=self.request.user) | Q(shared=self.request.user)))).all()
+                Q(private=True) & (Q(created_by=self.request.user) | Q(shared=self.request.user)))).prefetch_related('images').all()
 
-        return Response(self.serializer_class(qs, many=True).data)
+        return Response(self.serializer_class(qs, many=True, context=self.get_serializer_context()).data)
 
     @decorators.action(detail=False, methods=['PUT'], serializer_class=RecipeBatchUpdateSerializer)
     def batch_update(self, request):
@@ -3187,11 +3194,11 @@ class RecipeUrlImportView(APIView):
                             filetype = pathlib.Path(recipe_json['image'].split('?')[0]).suffix
                         else:
                             filetype = pathlib.Path(recipe_json["image"]).suffix
-                        recipe.image = File(handle_image(request,
-                                                         File(io.BytesIO(safe_request('GET', recipe_json['image']).content), name='image'),
-                                                         filetype=filetype),
-                                            name=f'{uuid.uuid4()}_{recipe.pk}.{filetype}')
-                        recipe.save()
+                        image = File(handle_image(request,
+                                                  File(io.BytesIO(safe_request('GET', recipe_json['image']).content), name='image'),
+                                                  filetype=filetype),
+                                     name=f'{uuid.uuid4()}_{recipe.pk}.{filetype}')
+                        set_primary_recipe_image(recipe, image, request=request)
                         response['recipe_id'] = recipe.pk
                         return Response(RecipeFromSourceResponseSerializer(context={'request': request}).to_representation(response), status=status.HTTP_200_OK)
                 else:

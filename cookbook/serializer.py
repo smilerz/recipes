@@ -25,7 +25,7 @@ from rest_framework.exceptions import NotFound, ValidationError
 from rest_framework.fields import IntegerField
 
 from cookbook.helper.ai_helper import get_monthly_token_usage
-from cookbook.helper.image_processing import is_file_type_allowed
+from cookbook.helper.image_processing import get_primary_recipe_image, is_file_type_allowed
 from cookbook.helper.permission_helper import above_space_limit, create_space_for_user, get_household_user_ids
 from cookbook.helper.property_helper import FoodPropertyHelper
 from cookbook.helper.shopping_helper import RecipeShoppingEditor
@@ -68,6 +68,31 @@ class WritableNestedModelSerializer(WNMS):
                     data[f] = [x for x in data[f] if not isinstance(x, int)] \
                               + list(self.fields[f].child.Meta.model.objects.filter(id__in=pk_data).values(*required_fields))
         return super().to_internal_value(data)
+
+
+class PrimaryRecipeImageMixin(serializers.Serializer):
+    """Expose the derived ``image`` URL + ``image_crop_data`` of a recipe's
+    primary RecipeImage (pattern-014: the legacy ``Recipe.image`` column is no
+    longer read)."""
+    image = serializers.SerializerMethodField('get_primary_image')
+    image_crop_data = serializers.SerializerMethodField('get_primary_image_crop_data')
+
+    @extend_schema_field(serializers.CharField(allow_null=True))
+    def get_primary_image(self, obj):
+        primary = get_primary_recipe_image(obj)
+        if not primary or not primary.file:
+            return None
+        request = self.context.get('request')
+        if request is not None:
+            return request.build_absolute_uri(primary.file.url)
+        return primary.file.url
+
+    @extend_schema_field(serializers.JSONField(allow_null=True))
+    def get_primary_image_crop_data(self, obj):
+        primary = get_primary_recipe_image(obj)
+        if not primary:
+            return None
+        return primary.crop_data
 
 
 class RecipeCountMixin(serializers.ModelSerializer):
@@ -846,7 +871,7 @@ class RecipeSimpleSerializer(WritableNestedModelSerializer):
         fields = ('id', 'name', 'url')
 
 
-class RecipeFlatSerializer(WritableNestedModelSerializer):
+class RecipeFlatSerializer(PrimaryRecipeImageMixin, WritableNestedModelSerializer):
 
     def create(self, validated_data):
         # don't allow writing to Recipe via this API
@@ -858,8 +883,8 @@ class RecipeFlatSerializer(WritableNestedModelSerializer):
 
     class Meta:
         model = Recipe
-        fields = ('id', 'name', 'image')
-        read_only_fields = ('id', 'name', 'image')
+        fields = ('id', 'name', 'image', 'image_crop_data')
+        read_only_fields = ('id', 'name', 'image', 'image_crop_data')
 
 
 class FoodSimpleSerializer(serializers.ModelSerializer):
@@ -1224,7 +1249,7 @@ class CommentSerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'created_at', 'created_by', 'updated_at', ]
 
 
-class RecipeOverviewSerializer(RecipeBaseSerializer):
+class RecipeOverviewSerializer(PrimaryRecipeImageMixin, RecipeBaseSerializer):
     keywords = KeywordLabelSerializer(many=True, read_only=True)
     new = serializers.SerializerMethodField('is_recipe_new', read_only=True)
     rating = CustomDecimalField(required=False, allow_null=True, read_only=True)
@@ -1240,7 +1265,7 @@ class RecipeOverviewSerializer(RecipeBaseSerializer):
     class Meta:
         model = Recipe
         fields = (
-            'id', 'name', 'description', 'image', 'keywords', 'working_time',
+            'id', 'name', 'description', 'image', 'image_crop_data', 'keywords', 'working_time',
             'waiting_time', 'created_by', 'created_at', 'updated_at',
             'internal', 'private', 'servings', 'servings_text', 'rating', 'last_cooked', 'new'
         )
@@ -1254,7 +1279,7 @@ class RecipeOverviewSerializer(RecipeBaseSerializer):
                             'internal', 'servings', 'servings_text', 'diameter', 'diameter_text', 'rating', 'last_cooked', 'new', 'recent']
 
 
-class RecipeSerializer(RecipeBaseSerializer):
+class RecipeSerializer(PrimaryRecipeImageMixin, RecipeBaseSerializer):
     nutrition = NutritionInformationSerializer(allow_null=True, required=False)
     properties = PropertySerializer(many=True, required=False)
     steps = StepSerializer(many=True)
@@ -1280,7 +1305,7 @@ class RecipeSerializer(RecipeBaseSerializer):
     class Meta:
         model = Recipe
         fields = (
-            'id', 'name', 'description', 'image', 'keywords', 'steps', 'working_time', 'waiting_time', 'created_by', 'created_at', 'updated_at', 'source_url',
+            'id', 'name', 'description', 'image', 'image_crop_data', 'keywords', 'steps', 'working_time', 'waiting_time', 'created_by', 'created_at', 'updated_at', 'source_url',
             'internal', 'show_ingredient_overview', 'nutrition', 'properties', 'food_properties', 'servings', 'file_path', 'servings_text', 'diameter', 'diameter_text', 'rating',
             'last_cooked', 'private', 'shared'
         )
