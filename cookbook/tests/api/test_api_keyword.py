@@ -82,6 +82,24 @@ def test_list_permission(arg, request):
     assert c.get(reverse(LIST_URL)).status_code == arg[1]
 
 
+def test_list_extended_tree_does_not_500(obj_1, recipe_1_s1, u1_s1, space_1):
+    """pattern-014: extended=true on the keyword (tree) endpoint exercises the
+    image_children_subquery branch. It previously 500'd on a dead
+    `serializer.images` attr + the legacy Recipe.image column. Lock 200 and
+    that the annotation now reads a primary RecipeImage.file."""
+    from django.contrib import auth
+
+    from cookbook.models import Recipe, RecipeImage
+    with scopes_disabled():
+        recipe = Recipe.objects.filter(keywords=obj_1, space=space_1).first()
+        RecipeImage.objects.create(
+            recipe=recipe, file='recipes/kw.jpg', is_primary=True, order=0,
+            created_by=auth.get_user(u1_s1), space=space_1,
+        )
+    r = u1_s1.get(f'{reverse(LIST_URL)}?extended=1')
+    assert r.status_code == 200
+
+
 def test_list_space(obj_1, obj_2, u1_s1, u1_s2, space_2):
     assert json.loads(u1_s1.get(reverse(LIST_URL)).content)['count'] == 2
     assert json.loads(u1_s2.get(reverse(LIST_URL)).content)['count'] == 0

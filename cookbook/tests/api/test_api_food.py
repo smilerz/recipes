@@ -97,6 +97,17 @@ def test_list_permission(arg, request):
     assert c.get(reverse(LIST_URL)).status_code == arg[1]
 
 
+def test_list_extended_does_not_500(obj_1, obj_2, u1_s1):
+    """pattern-014: the extended=true annotation path used to reference the
+    legacy Recipe.image column via a dead `serializer.images` attribute. Lock
+    that extended=true returns 200 (not a 500) so the column drop can't
+    resurrect a dangling reference."""
+    r = u1_s1.get(f'{reverse(LIST_URL)}?extended=1')
+    assert r.status_code == 200
+    body = json.loads(r.content)
+    assert body['count'] == 2
+
+
 def test_list_space(obj_1, obj_2, u1_s1, u1_s2, space_2):
     assert json.loads(u1_s1.get(reverse(LIST_URL)).content)['count'] == 2
     assert json.loads(u1_s2.get(reverse(LIST_URL)).content)['count'] == 0
