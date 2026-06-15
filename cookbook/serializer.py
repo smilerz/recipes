@@ -1279,50 +1279,6 @@ class RecipeOverviewSerializer(PrimaryRecipeImageMixin, RecipeBaseSerializer):
                             'internal', 'servings', 'servings_text', 'diameter', 'diameter_text', 'rating', 'last_cooked', 'new', 'recent']
 
 
-class RecipeSerializer(PrimaryRecipeImageMixin, RecipeBaseSerializer):
-    nutrition = NutritionInformationSerializer(allow_null=True, required=False)
-    properties = PropertySerializer(many=True, required=False)
-    steps = StepSerializer(many=True)
-    keywords = KeywordSerializer(many=True, required=False)
-    shared = UserSerializer(many=True, required=False)
-    rating = CustomDecimalField(required=False, allow_null=True, read_only=True)
-    last_cooked = serializers.DateTimeField(source='lastcooked', required=False, allow_null=True, read_only=True)
-    food_properties = serializers.SerializerMethodField('get_food_properties')
-    created_by = UserSerializer(read_only=True)
-
-    @extend_schema_field(serializers.JSONField)
-    def get_food_properties(self, obj):
-        # Skip expensive computation on CREATE - UI doesn't display it after create
-        # User navigates to view page which triggers GET with full data
-        # Fixes issue #4356 - N+1 queries causing gunicorn worker timeout
-        view = self.context.get('view')
-        if view and getattr(view, 'action', None) == 'create':
-            return {}
-
-        fph = FoodPropertyHelper(obj.space)  # initialize with object space since recipes might be viewed anonymously
-        return fph.calculate_recipe_properties(obj)
-
-    class Meta:
-        model = Recipe
-        fields = (
-            'id', 'name', 'description', 'image', 'image_crop_data', 'keywords', 'steps', 'working_time', 'waiting_time', 'created_by', 'created_at', 'updated_at', 'source_url',
-            'internal', 'show_ingredient_overview', 'nutrition', 'properties', 'food_properties', 'servings', 'file_path', 'servings_text', 'diameter', 'diameter_text', 'rating',
-            'last_cooked', 'private', 'shared'
-        )
-        read_only_fields = ['image', 'created_by', 'created_at', 'food_properties']
-
-    def validate(self, data):
-        above_limit, msg = above_space_limit(self.context['request'].space)
-        if above_limit:
-            raise serializers.ValidationError(msg)
-        return super().validate(data)
-
-    def create(self, validated_data):
-        validated_data['created_by'] = self.context['request'].user
-        validated_data['space'] = self.context['request'].space
-        return super().create(validated_data)
-
-
 class RecipeImageSerializer(serializers.ModelSerializer):
     """Serializer for the RecipeImage model (multi-image gallery)."""
     crop_data = serializers.JSONField(required=False, allow_null=True)
@@ -1359,6 +1315,51 @@ class RecipeImageSerializer(serializers.ModelSerializer):
         model = RecipeImage
         fields = ('id', 'recipe', 'file', 'crop_data', 'order', 'is_primary', 'created_by', 'created_at')
         read_only_fields = ('id', 'created_by', 'created_at')
+
+
+class RecipeSerializer(PrimaryRecipeImageMixin, RecipeBaseSerializer):
+    nutrition = NutritionInformationSerializer(allow_null=True, required=False)
+    properties = PropertySerializer(many=True, required=False)
+    images = RecipeImageSerializer(many=True, read_only=True)
+    steps = StepSerializer(many=True)
+    keywords = KeywordSerializer(many=True, required=False)
+    shared = UserSerializer(many=True, required=False)
+    rating = CustomDecimalField(required=False, allow_null=True, read_only=True)
+    last_cooked = serializers.DateTimeField(source='lastcooked', required=False, allow_null=True, read_only=True)
+    food_properties = serializers.SerializerMethodField('get_food_properties')
+    created_by = UserSerializer(read_only=True)
+
+    @extend_schema_field(serializers.JSONField)
+    def get_food_properties(self, obj):
+        # Skip expensive computation on CREATE - UI doesn't display it after create
+        # User navigates to view page which triggers GET with full data
+        # Fixes issue #4356 - N+1 queries causing gunicorn worker timeout
+        view = self.context.get('view')
+        if view and getattr(view, 'action', None) == 'create':
+            return {}
+
+        fph = FoodPropertyHelper(obj.space)  # initialize with object space since recipes might be viewed anonymously
+        return fph.calculate_recipe_properties(obj)
+
+    class Meta:
+        model = Recipe
+        fields = (
+            'id', 'name', 'description', 'image', 'image_crop_data', 'images', 'keywords', 'steps', 'working_time', 'waiting_time', 'created_by', 'created_at', 'updated_at', 'source_url',
+            'internal', 'show_ingredient_overview', 'nutrition', 'properties', 'food_properties', 'servings', 'file_path', 'servings_text', 'diameter', 'diameter_text', 'rating',
+            'last_cooked', 'private', 'shared'
+        )
+        read_only_fields = ['image', 'images', 'created_by', 'created_at', 'food_properties']
+
+    def validate(self, data):
+        above_limit, msg = above_space_limit(self.context['request'].space)
+        if above_limit:
+            raise serializers.ValidationError(msg)
+        return super().validate(data)
+
+    def create(self, validated_data):
+        validated_data['created_by'] = self.context['request'].user
+        validated_data['space'] = self.context['request'].space
+        return super().create(validated_data)
 
 
 class RecipeBatchUpdateSerializer(serializers.Serializer):
