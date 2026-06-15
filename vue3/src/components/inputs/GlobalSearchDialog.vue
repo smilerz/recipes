@@ -98,13 +98,13 @@ const searchResults = computed(() => {
 
     if (searchQuery.value != '' && searchQuery.value != null) {
         flatRecipes.value.filter(fr => fr.name.toLowerCase().includes(searchQuery.value.toLowerCase())).slice(0, 10).forEach(r => {
-            searchResults.push({name: r.name, image: r.image, imageCropData: (r as any).imageCropData, recipeId: r.id, type: "recipe"} as SearchResult)
+            searchResults.push({name: r.name, image: r.image, imageCropData: r.imageCropData, recipeId: r.id, type: "recipe"} as SearchResult)
         })
 
         if (searchResults.length < 3) {
             asyncSearchResults.value.slice(0, 5).forEach(r => {
                 if (searchResults.findIndex(x => x.recipeId == r.id) == -1) {
-                    searchResults.push({name: r.name, image: r.image, imageCropData: (r as any).imageCropData, recipeId: r.id, type: "recipe"})
+                    searchResults.push({name: r.name, image: r.image, imageCropData: r.imageCropData, recipeId: r.id, type: "recipe"})
                 }
             })
         }
@@ -122,7 +122,7 @@ const searchResults = computed(() => {
         searchResults.push({name: t('AllRecipes'), icon: 'fas fa-search', type: "link_advanced_search"} as SearchResult)
 
         flatRecipes.value.slice(0, 5).forEach(r => {
-            searchResults.push({name: r.name, image: r.image, imageCropData: (r as any).imageCropData, recipeId: r.id} as SearchResult)
+            searchResults.push({name: r.name, image: r.image, imageCropData: r.imageCropData, recipeId: r.id} as SearchResult)
         })
     }
 

@@ -32,7 +32,7 @@
                                 <v-list-item v-for="p in mealPlanGridItem.plan_entries" :key="p.id" @click="clickMealPlan(p)" link>
                                     <template #prepend>
                                         <v-avatar v-if="p.recipe?.image">
-                                            <div class="crop-avatar" :style="cropPreviewStyle(p.recipe.image, (p.recipe as any).imageCropData, true)" />
+                                            <div class="crop-avatar" :style="cropPreviewStyle(p.recipe.image, p.recipe.imageCropData, true)" />
                                         </v-avatar>
                                         <v-avatar image="../../assets/recipe_no_image.svg" v-else></v-avatar>
                                     </template>

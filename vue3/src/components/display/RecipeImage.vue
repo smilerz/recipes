@@ -52,6 +52,6 @@ const image = computed(() => props.recipe?.image ?? '')
 
 const placeholderImage = recipeDefaultImage
 
-const cropData = computed(() => (props.recipe as any)?.imageCropData ?? null)
+const cropData = computed(() => props.recipe?.imageCropData ?? null)
 
 </script>
