@@ -14,13 +14,11 @@
 
             <!-- mobile layout -->
             <v-card class="rounded-0">
-                <div v-if="heroImageSrc" class="position-relative">
-                    <crop-image class="cursor-pointer" role="button"
-                                :src="heroImageSrc"
-                                :crop-data="primaryImage?.cropData"
-                                width="100%" height="25vh"
-                                :aria-label="$t('Recipe_Image')"
-                                @click="openGalleryLightbox(0)" />
+                <div class="position-relative">
+                    <recipe-image :recipe="recipe" width="100%" height="25vh" disable-lightbox
+                                  :class="{'cursor-pointer': recipe.image}"
+                                  :aria-label="$t('Recipe_Image')"
+                                  @click="recipe.image && openGalleryLightbox(0)" />
                     <recipe-image-strip :images="recipe.images ?? []" @open-lightbox="openGalleryLightbox" class="hero-strip" />
                 </div>
 
@@ -68,16 +66,13 @@
         <template v-else>
             <v-row density="compact">
                 <v-col cols="8">
-                    <div v-if="heroImageSrc" class="position-relative">
-                        <crop-image class="rounded cursor-pointer" role="button"
-                                    :src="heroImageSrc"
-                                    :crop-data="primaryImage?.cropData"
-                                    width="100%" height="40vh"
-                                    :aria-label="$t('Recipe_Image')"
-                                    @click="openGalleryLightbox(0)" />
+                    <div class="position-relative">
+                        <recipe-image :recipe="recipe" width="100%" height="40vh" :rounded="true" disable-lightbox
+                                      :class="{'cursor-pointer': recipe.image}"
+                                      :aria-label="$t('Recipe_Image')"
+                                      @click="recipe.image && openGalleryLightbox(0)" />
                         <recipe-image-strip :images="recipe.images ?? []" @open-lightbox="openGalleryLightbox" class="hero-strip" />
                     </div>
-                    <recipe-image :recipe="recipe" height="40vh" :rounded="true" v-else />
                 </v-col>
                 <v-col cols="4">
                     <v-card class="h-100 d-flex flex-column">
@@ -220,7 +215,6 @@ import RecipeContextMenu from "@/components/inputs/RecipeContextMenu.vue";
 import KeywordsComponent from "@/components/display/KeywordsBar.vue";
 import RecipeImage from "@/components/display/RecipeImage.vue";
 import RecipeImageStrip from "@/components/display/RecipeImageStrip.vue";
-import CropImage from "@/components/display/CropImage.vue";
 import ImageLightbox from "@/components/display/ImageLightbox.vue";
 import ExternalRecipeViewer from "@/components/display/ExternalRecipeViewer.vue";
 import {useWakeLock} from "@vueuse/core";
@@ -269,18 +263,6 @@ const galleryLightboxIndex = ref(0)
 const galleryImageUrls = computed(() =>
     (recipe.value.images ?? []).map(img => typeof img.file === 'string' ? img.file : '').filter(Boolean)
 )
-
-const primaryImage = computed(() => {
-    return (recipe.value.images ?? []).find(img => img.isPrimary) ?? (recipe.value.images ?? [])[0] ?? null
-})
-
-const heroImageSrc = computed(() => {
-    const primary = primaryImage.value
-    if (primary && typeof primary.file === 'string') return primary.file
-    if (galleryImageUrls.value.length > 0) return galleryImageUrls.value[0]
-    return undefined
-})
-
 
 function openGalleryLightbox(index: number) {
     galleryLightboxIndex.value = index
