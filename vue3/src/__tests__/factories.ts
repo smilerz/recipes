@@ -417,6 +417,7 @@ export function makeRecipe(overrides: Partial<Recipe> = {}): Recipe {
         rating: null,
         lastCooked: null,
         shared: [],
+        images: [],
         ...overrides,
     }
 }

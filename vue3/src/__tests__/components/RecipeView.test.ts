@@ -1,6 +1,17 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
+import { ref } from 'vue'
 import { flushPromises, mount } from '@vue/test-utils'
 import { createPinia, type PiniaPlugin } from 'pinia'
+
+// useDisplay().mobile is read directly by RecipeView to pick the mobile vs desktop
+// hero layout. Mock it with a ref we can flip per test; default desktop so the
+// pre-existing tests are unaffected. (Vuetify components still use the plugin's
+// own display, so only RecipeView's branch selection is driven by this.)
+const mobileRef = ref(false)
+vi.mock('vuetify', async (importOriginal) => {
+    const orig = await importOriginal<any>()
+    return { ...orig, useDisplay: () => ({ mobile: mobileRef }) }
+})
 import { createI18n } from 'vue-i18n'
 import { createRouter, createMemoryHistory } from 'vue-router'
 import { apiMock, resetApiMock } from '@/__tests__/api-mock'
@@ -226,6 +237,35 @@ describe('RecipeView', () => {
             })
             await flushPromises()
             expect(wrapper.html()).not.toContain('data-test="foot-card"')
+        })
+    })
+
+    describe('hero image', () => {
+        beforeEach(() => { mobileRef.value = false })
+
+        const withImage = () => makeRecipe({
+            image: 'http://example.test/media/recipes/img.jpg',
+            images: [{ id: 1, recipe: 1, file: 'http://example.test/media/recipes/img.jpg', cropData: null, order: 0, isPrimary: true } as any],
+        })
+
+        it('renders the RecipeImage hero on mobile when the recipe has no image (regression: mobile previously rendered nothing)', async () => {
+            mobileRef.value = true
+            const wrapper = mountRecipeView(makeRecipe({ image: null, images: [] }))
+            await flushPromises()
+            expect(wrapper.find('.stub-recipe-image').exists()).toBe(true)
+        })
+
+        it('renders the RecipeImage hero on mobile when the recipe has a gallery image (single hero path, not the bespoke crop-image)', async () => {
+            mobileRef.value = true
+            const wrapper = mountRecipeView(withImage())
+            await flushPromises()
+            expect(wrapper.find('.stub-recipe-image').exists()).toBe(true)
+        })
+
+        it('renders the RecipeImage hero on desktop (placeholder path for an image-less recipe)', async () => {
+            const wrapper = mountRecipeView(makeRecipe({ image: null, images: [] }))
+            await flushPromises()
+            expect(wrapper.find('.stub-recipe-image').exists()).toBe(true)
         })
     })
 

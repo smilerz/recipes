@@ -106,6 +106,35 @@ def test_primary_flag_preferred_over_order(u1_s1, space_1, recipe_1_s1):
     assert 'primary.jpg' in (body['image'] or '')
 
 
+def test_recipe_detail_exposes_images_gallery(u1_s1, space_1, recipe_1_s1):
+    """RecipeSerializer exposes the full RecipeImage gallery as `images`, each entry
+    carrying file, crop_data, is_primary and order (pattern-014 gallery)."""
+    user = auth.get_user(u1_s1)
+    crop = {'x': 10, 'y': 20, 'width': 50, 'height': 50}
+    with scopes_disabled():
+        RecipeImage.objects.create(
+            recipe=recipe_1_s1, file='recipes/primary.jpg', is_primary=True,
+            order=0, crop_data=crop, created_by=user, space=space_1,
+        )
+        RecipeImage.objects.create(
+            recipe=recipe_1_s1, file='recipes/secondary.jpg', is_primary=False,
+            order=1, created_by=user, space=space_1,
+        )
+    body = json.loads(u1_s1.get(reverse('api:recipe-detail', args=[recipe_1_s1.id])).content)
+    assert 'images' in body
+    assert len(body['images']) == 2
+    primary = next(i for i in body['images'] if i['is_primary'])
+    assert 'primary.jpg' in primary['file']
+    assert primary['crop_data'] == crop
+    assert {i['is_primary'] for i in body['images']} == {True, False}
+
+
+def test_recipe_detail_images_empty_when_none(u1_s1, recipe_1_s1):
+    """A recipe with no RecipeImage returns an empty `images` list (not null/missing)."""
+    body = json.loads(u1_s1.get(reverse('api:recipe-detail', args=[recipe_1_s1.id])).content)
+    assert body['images'] == []
+
+
 @pytest.mark.parametrize("arg", [
     ['a_u', 403],
     ['g1_s1', 403],
