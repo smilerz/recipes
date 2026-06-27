@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
+import { DateTime } from 'luxon'
 import { flushPromises } from '@vue/test-utils'
 import { apiMock, resetApiMock } from '@/__tests__/api-mock'
 import { makeFood, makeGenericModelReference } from '@/__tests__/factories'
@@ -141,5 +142,33 @@ describe('ModelDeletePage', () => {
         expect(wrapper.find('[data-test="model-not-found"]').exists()).toBe(true)
         // the delete scaffold must NOT render for a phantom object
         expect(wrapper.find('[data-test="model-delete-button"]').exists()).toBe(false)
+    })
+
+    // delete-no-name: name-less models (e.g. an unnamed ShoppingList) produced a dangling
+    // colon ("Delete Shopping List: "). Fall back to "#id · created date" so the object is
+    // always identifiable.
+    it('falls back to "#id · created date" when the object has no human label', async () => {
+        const created = new Date('2026-06-01T12:00:00Z')
+        mockRetrieve.mockReset().mockResolvedValue({ id: 5, createdAt: created })
+        const wrapper = mountPage(ModelDeletePage, { props: { model: 'ShoppingList', id: '5' } })
+        await flushPromises()
+
+        const expectedDate = DateTime.fromJSDate(created).toLocaleString(DateTime.DATE_MED)
+        expect(wrapper.text()).toContain(`#5 · ${expectedDate}`)
+    })
+
+    it('falls back to just "#id" when there is no label and no created date', async () => {
+        mockRetrieve.mockReset().mockResolvedValue({ id: 7 })
+        const wrapper = mountPage(ModelDeletePage, { props: { model: 'ShoppingList', id: '7' } })
+        await flushPromises()
+
+        expect(wrapper.text()).toContain('#7')
+    })
+
+    it('still shows the human label when present (no fallback)', async () => {
+        const wrapper = mountPage(ModelDeletePage, { props: { model: 'Food', id: '1' } })
+        await flushPromises()
+        expect(wrapper.text()).toContain('Butter')
+        expect(wrapper.text()).not.toContain('#1')
     })
 })
