@@ -19,7 +19,7 @@
         <v-row v-if="editingObj" density="compact">
             <v-col>
                 <v-card>
-                    <v-card-title class="text-h4">{{ $t('Delete') }} {{ $t(genericModel.model.localizationKey) }}: {{ genericModel.getLabel(editingObj) }}</v-card-title>
+                    <v-card-title class="text-h4">{{ $t('Delete') }} {{ $t(genericModel.model.localizationKey) }}{{ deleteLabel ? ': ' + deleteLabel : '' }}</v-card-title>
                 </v-card>
             </v-col>
         </v-row>
@@ -179,7 +179,7 @@
                 <v-card class="border-error border-sm border-opacity-100">
                     <v-card-title>{{ $t('Delete') }}</v-card-title>
                     <v-card-text>
-                        {{ $t('delete_confirmation', {source: `${$t(genericModel.model.localizationKey)} ${genericModel.getLabel(editingObj)}`}) }}
+                        {{ $t('delete_confirmation', {source: `${$t(genericModel.model.localizationKey)} ${deleteLabel}`}) }}
                     </v-card-text>
                     <v-card-actions>
                         <v-btn color="delete" prepend-icon="$delete" data-test="model-delete-button" :disabled="protectingObjectsCount > 0 || genericModel.model.disableDelete" @click="deleteObject()" :loading="deleteLoading">{{
@@ -206,7 +206,8 @@
 
 <script setup lang="ts">
 
-import {onBeforeMount, onMounted, PropType, ref} from "vue";
+import {computed, onBeforeMount, onMounted, PropType, ref} from "vue";
+import {DateTime} from "luxon";
 import {EditorSupportedModels, GenericModel, getGenericModelFromString} from "@/types/Models.ts";
 import {useTitle} from "@vueuse/core";
 import {useI18n} from "vue-i18n";
@@ -237,6 +238,23 @@ const tableHeaders = [
 
 const genericModel = ref({} as GenericModel)
 const editingObj = ref({} as EditorSupportedModels)
+
+/**
+ * human label for the object being deleted; falls back to "#id · created date"
+ * (or just "#id") for name-less models so the confirmation is never a dangling colon
+ */
+function resolveLabel(obj: any): string {
+    const label = (genericModel.value?.getLabel?.(obj) ?? '').trim()
+    if (label) return label
+    if (!obj?.id) return ''
+    const created = obj.createdAt
+        ? DateTime.fromJSDate(new Date(obj.createdAt)).toLocaleString(DateTime.DATE_MED)
+        : ''
+    return created ? `#${obj.id} · ${created}` : `#${obj.id}`
+}
+
+const deleteLabel = computed(() => resolveLabel(editingObj.value))
+
 const tab = ref('protecting')
 const deleteLoading = ref(false)
 const loadError = ref<null | 'notfound' | 'error'>(null)
@@ -278,7 +296,7 @@ onMounted(() => {
 function loadObject() {
     genericModel.value.retrieve(Number(props.id)).then(obj => {
         editingObj.value = obj
-        title.value = t('DeleteSomething', {item: `${t(genericModel.value.model.localizationKey)} ${genericModel.value.getLabel(editingObj.value)}`})
+        title.value = t('DeleteSomething', {item: `${t(genericModel.value.model.localizationKey)} ${resolveLabel(editingObj.value)}`})
     }).catch(err => {
         // a missing object must render a clean not-found state, not the delete
         // form for a phantom object (delete-page analog of RecipeViewPage)
