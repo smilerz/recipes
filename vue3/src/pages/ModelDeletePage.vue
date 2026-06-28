@@ -65,6 +65,11 @@
                                     <template #item.model="{item}">
                                         {{ $t(item.model) }}
                                     </template>
+                                    <template #item.name="{item}">
+                                        <div data-test="relation-name" class="relation-name cursor-pointer"
+                                             :class="{ 'relation-name--expanded': isRelationNameExpanded(item) }"
+                                             @click="toggleRelationName(item)">{{ item.name }}</div>
+                                    </template>
                                     <template #item.actions="{item}">
                                         <v-btn icon="$delete" variant="plain" size="small" target="_blank"
                                                v-if="getGenericModelFromString(item.model, $t) && getGenericModelFromString(item.model, $t).model.isAdvancedDelete"
@@ -99,6 +104,11 @@
                                     <template #item.model="{item}">
                                         {{ $t(item.model) }}
                                     </template>
+                                    <template #item.name="{item}">
+                                        <div data-test="relation-name" class="relation-name cursor-pointer"
+                                             :class="{ 'relation-name--expanded': isRelationNameExpanded(item) }"
+                                             @click="toggleRelationName(item)">{{ item.name }}</div>
+                                    </template>
                                     <template #item.actions="{item}">
                                         <v-btn icon="$delete" variant="plain" size="small" target="_blank"
                                                v-if="getGenericModelFromString(item.model, $t) && getGenericModelFromString(item.model, $t).model.isAdvancedDelete"
@@ -132,6 +142,11 @@
                                 >
                                     <template #item.model="{item}">
                                         {{ $t(item.model) }}
+                                    </template>
+                                    <template #item.name="{item}">
+                                        <div data-test="relation-name" class="relation-name cursor-pointer"
+                                             :class="{ 'relation-name--expanded': isRelationNameExpanded(item) }"
+                                             @click="toggleRelationName(item)">{{ item.name }}</div>
                                     </template>
                                     <template #item.actions="{item}">
                                         <v-btn icon="$delete" variant="plain" size="small" target="_blank"
@@ -229,11 +244,12 @@ const props = defineProps({
     id: {type: String, required: true},
 })
 
+// Compact for narrow screens: the related object's ID is low-value here, and the Name
+// column is click-to-expand (see relation-name slot), so the table fits a phone width.
 const tableHeaders = [
-    {title: 'ID', key: 'id',},
-    {title: t('Model'), key: 'model',},
-    {title: t('Name'), key: 'name',},
-    {title: t('Actions'), key: 'actions', align: 'end'},
+    {title: t('Model'), key: 'model', nowrap: true},
+    {title: t('Name'), key: 'name'},
+    {title: t('Actions'), key: 'actions', align: 'end', nowrap: true},
 ] as VDataTableHeaders[]
 
 const genericModel = ref({} as GenericModel)
@@ -254,6 +270,21 @@ function resolveLabel(obj: any): string {
 }
 
 const deleteLabel = computed(() => resolveLabel(editingObj.value))
+
+// per-row expand state for the (truncated) relation Name column
+const expandedRelationNames = ref(new Set<string>())
+function relationKey(item: any): string {
+    return `${item?.model}-${item?.id}`
+}
+function isRelationNameExpanded(item: any): boolean {
+    return expandedRelationNames.value.has(relationKey(item))
+}
+function toggleRelationName(item: any) {
+    const key = relationKey(item)
+    const next = new Set(expandedRelationNames.value)
+    next.has(key) ? next.delete(key) : next.add(key)
+    expandedRelationNames.value = next
+}
 
 const tab = ref('protecting')
 const deleteLoading = ref(false)
@@ -410,5 +441,20 @@ function deleteRelated(model: EditorSupportedModels, id: number) {
 </script>
 
 <style scoped>
+/* Relation Name column: full text on wide screens; on a phone, truncate to keep the
+   table (incl. the Actions column) on screen, with click-to-expand to the full wrapped text. */
+@media (max-width: 600px) {
+    .relation-name {
+        max-width: 90px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
 
+    .relation-name.relation-name--expanded {
+        white-space: normal;
+        overflow: visible;
+        word-break: break-word;
+    }
+}
 </style>
