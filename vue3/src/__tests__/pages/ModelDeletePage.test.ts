@@ -171,4 +171,23 @@ describe('ModelDeletePage', () => {
         expect(wrapper.text()).toContain('Butter')
         expect(wrapper.text()).not.toContain('#1')
     })
+
+    // delete-relations-table-mobile-overflow: a related object's Name is truncated so the
+    // compact table fits a phone; clicking the name expands it to the full wrapped text.
+    it('truncates a relation name and expands it (wraps) on click', async () => {
+        mockGetDeleteProtecting.mockReset().mockResolvedValue({
+            results: [{ id: 9, model: 'MealPlan', name: 'A very long related object name that overflows' }],
+            count: 1,
+        })
+        const wrapper = mountPage(ModelDeletePage, { props: { model: 'Food', id: '1' } })
+        await flushPromises()
+
+        const nameCell = wrapper.find('[data-test="relation-name"]')
+        expect(nameCell.exists()).toBe(true)
+        expect(nameCell.classes()).not.toContain('relation-name--expanded')
+
+        await nameCell.trigger('click')
+        await flushPromises()
+        expect(nameCell.classes()).toContain('relation-name--expanded')
+    })
 })
