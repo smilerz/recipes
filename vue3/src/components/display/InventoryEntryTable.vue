@@ -106,6 +106,12 @@ function loadItems(options: VDataTableUpdateOptions) {
     page.value = options.page
     pageSize.value = options.itemsPerPage
 
+    // Pass pagination to the server — without these the API returns every row and
+    // v-data-table-server (server mode) renders them all while the footer shows a
+    // page range, so the items-per-page control appears to do nothing (R09-3).
+    parameters.page = options.page
+    parameters.pageSize = options.itemsPerPage
+
     api.apiInventoryEntryList(parameters).then((r: any) => {
         items.value = r.results
         itemCount.value = r.count
