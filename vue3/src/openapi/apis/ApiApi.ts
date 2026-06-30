@@ -73,6 +73,7 @@ import type {
   PaginatedPropertyTypeList,
   PaginatedRecipeBookEntryList,
   PaginatedRecipeBookList,
+  PaginatedRecipeImageList,
   PaginatedRecipeImportList,
   PaginatedRecipeOverviewList,
   PaginatedShoppingListEntryList,
@@ -289,6 +290,8 @@ import {
     PaginatedRecipeBookEntryListToJSON,
     PaginatedRecipeBookListFromJSON,
     PaginatedRecipeBookListToJSON,
+    PaginatedRecipeImageListFromJSON,
+    PaginatedRecipeImageListToJSON,
     PaginatedRecipeImportListFromJSON,
     PaginatedRecipeImportListToJSON,
     PaginatedRecipeOverviewListFromJSON,
@@ -1494,10 +1497,56 @@ export interface ApiRecipeFromSourceCreateRequest {
     recipeFromSource?: RecipeFromSource;
 }
 
+export interface ApiRecipeImageCreateRequest {
+    recipe: number;
+    file: string;
+    createdBy: number;
+    createdAt: Date;
+    id?: number;
+    cropData?: any;
+    order?: number;
+    isPrimary?: boolean;
+}
+
+export interface ApiRecipeImageDestroyRequest {
+    id: number;
+}
+
+export interface ApiRecipeImageFromUrlCreateRequest {
+    recipeImage: Omit<RecipeImage, 'created_by'|'created_at'>;
+}
+
+export interface ApiRecipeImageListRequest {
+    page?: number;
+    pageSize?: number;
+}
+
+export interface ApiRecipeImagePartialUpdateRequest {
+    id: number;
+    id2?: number;
+    recipe?: number;
+    file?: string;
+    cropData?: any;
+    order?: number;
+    isPrimary?: boolean;
+    createdBy?: number;
+    createdAt?: Date;
+}
+
+export interface ApiRecipeImageRetrieveRequest {
+    id: number;
+}
+
 export interface ApiRecipeImageUpdateRequest {
     id: number;
-    image?: string;
-    imageUrl?: string;
+    recipe: number;
+    file: string;
+    createdBy: number;
+    createdAt: Date;
+    id2?: number;
+    cropData?: any;
+    order?: number;
+    isPrimary?: boolean;
 }
 
 export interface ApiRecipeImportCreateRequest {
@@ -1554,6 +1603,8 @@ export interface ApiRecipeListRequest {
     foodsAndNot?: Array<number>;
     foodsOr?: Array<number>;
     foodsOrNot?: Array<number>;
+    hasKeywords?: boolean;
+    hasPhoto?: boolean;
     includeChildren?: boolean;
     internal?: boolean;
     keywords?: Array<number>;
@@ -1571,16 +1622,24 @@ export interface ApiRecipeListRequest {
     rating?: number;
     ratingGte?: number;
     ratingLte?: number;
+    servingsGte?: number;
+    servingsLte?: number;
     sortOrder?: string;
     timescooked?: number;
     timescookedGte?: number;
     timescookedLte?: number;
+    totalTimeGte?: number;
+    totalTimeLte?: number;
     units?: number;
     updatedon?: Date;
     updatedonGte?: Date;
     updatedonLte?: Date;
     viewedonGte?: Date;
     viewedonLte?: Date;
+    waitingTimeGte?: number;
+    waitingTimeLte?: number;
+    workingTimeGte?: number;
+    workingTimeLte?: number;
 }
 
 export interface ApiRecipeNullingListRequest {
@@ -10767,11 +10826,32 @@ export class ApiApi extends runtime.BaseAPI {
     /**
      * logs request counts to redis cache total/per user/
      */
-    async apiRecipeImageUpdateRaw(requestParameters: ApiRecipeImageUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<RecipeImage>> {
-        if (requestParameters['id'] == null) {
+    async apiRecipeImageCreateRaw(requestParameters: ApiRecipeImageCreateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<RecipeImage>> {
+        if (requestParameters['recipe'] == null) {
             throw new runtime.RequiredError(
-                'id',
-                'Required parameter "id" was null or undefined when calling apiRecipeImageUpdate().'
+                'recipe',
+                'Required parameter "recipe" was null or undefined when calling apiRecipeImageCreate().'
+            );
+        }
+
+        if (requestParameters['file'] == null) {
+            throw new runtime.RequiredError(
+                'file',
+                'Required parameter "file" was null or undefined when calling apiRecipeImageCreate().'
+            );
+        }
+
+        if (requestParameters['createdBy'] == null) {
+            throw new runtime.RequiredError(
+                'createdBy',
+                'Required parameter "createdBy" was null or undefined when calling apiRecipeImageCreate().'
+            );
+        }
+
+        if (requestParameters['createdAt'] == null) {
+            throw new runtime.RequiredError(
+                'createdAt',
+                'Required parameter "createdAt" was null or undefined when calling apiRecipeImageCreate().'
             );
         }
 
@@ -10785,6 +10865,7 @@ export class ApiApi extends runtime.BaseAPI {
 
         const consumes: runtime.Consume[] = [
             { contentType: 'multipart/form-data' },
+            { contentType: 'application/json' },
         ];
         // @ts-ignore: canConsumeForm may be unused
         const canConsumeForm = runtime.canConsumeForm(consumes);
@@ -10797,16 +10878,389 @@ export class ApiApi extends runtime.BaseAPI {
             formParams = new URLSearchParams();
         }
 
-        if (requestParameters['image'] != null) {
-            formParams.append('image', requestParameters['image'] as any);
+        if (requestParameters['id'] != null) {
+            formParams.append('id', requestParameters['id'] as any);
         }
 
-        if (requestParameters['imageUrl'] != null) {
-            formParams.append('image_url', requestParameters['imageUrl'] as any);
+        if (requestParameters['recipe'] != null) {
+            formParams.append('recipe', requestParameters['recipe'] as any);
+        }
+
+        if (requestParameters['file'] != null) {
+            formParams.append('file', requestParameters['file'] as any);
+        }
+
+        if (requestParameters['cropData'] != null) {
+            formParams.append('crop_data', new Blob([JSON.stringify(anyToJSON(requestParameters['cropData']))], { type: "application/json", }));
+                    }
+
+        if (requestParameters['order'] != null) {
+            formParams.append('order', requestParameters['order'] as any);
+        }
+
+        if (requestParameters['isPrimary'] != null) {
+            formParams.append('is_primary', requestParameters['isPrimary'] as any);
+        }
+
+        if (requestParameters['createdBy'] != null) {
+            formParams.append('created_by', requestParameters['createdBy'] as any);
+        }
+
+        if (requestParameters['createdAt'] != null) {
+            formParams.append('created_at', requestParameters['createdAt'] as any);
         }
 
         const response = await this.request({
-            path: `/api/recipe/{id}/image/`.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id']))),
+            path: `/api/recipe-image/`,
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: formParams,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => RecipeImageFromJSON(jsonValue));
+    }
+
+    /**
+     * logs request counts to redis cache total/per user/
+     */
+    async apiRecipeImageCreate(requestParameters: ApiRecipeImageCreateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<RecipeImage> {
+        const response = await this.apiRecipeImageCreateRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * logs request counts to redis cache total/per user/
+     */
+    async apiRecipeImageDestroyRaw(requestParameters: ApiRecipeImageDestroyRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
+        if (requestParameters['id'] == null) {
+            throw new runtime.RequiredError(
+                'id',
+                'Required parameter "id" was null or undefined when calling apiRecipeImageDestroy().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.apiKey) {
+            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
+        }
+
+        const response = await this.request({
+            path: `/api/recipe-image/{id}/`.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id']))),
+            method: 'DELETE',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.VoidApiResponse(response);
+    }
+
+    /**
+     * logs request counts to redis cache total/per user/
+     */
+    async apiRecipeImageDestroy(requestParameters: ApiRecipeImageDestroyRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
+        await this.apiRecipeImageDestroyRaw(requestParameters, initOverrides);
+    }
+
+    /**
+     * logs request counts to redis cache total/per user/
+     */
+    async apiRecipeImageFromUrlCreateRaw(requestParameters: ApiRecipeImageFromUrlCreateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<RecipeImage>> {
+        if (requestParameters['recipeImage'] == null) {
+            throw new runtime.RequiredError(
+                'recipeImage',
+                'Required parameter "recipeImage" was null or undefined when calling apiRecipeImageFromUrlCreate().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        if (this.configuration && this.configuration.apiKey) {
+            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
+        }
+
+        const response = await this.request({
+            path: `/api/recipe-image/from_url/`,
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: RecipeImageToJSON(requestParameters['recipeImage']),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => RecipeImageFromJSON(jsonValue));
+    }
+
+    /**
+     * logs request counts to redis cache total/per user/
+     */
+    async apiRecipeImageFromUrlCreate(requestParameters: ApiRecipeImageFromUrlCreateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<RecipeImage> {
+        const response = await this.apiRecipeImageFromUrlCreateRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * logs request counts to redis cache total/per user/
+     */
+    async apiRecipeImageListRaw(requestParameters: ApiRecipeImageListRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PaginatedRecipeImageList>> {
+        const queryParameters: any = {};
+
+        if (requestParameters['page'] != null) {
+            queryParameters['page'] = requestParameters['page'];
+        }
+
+        if (requestParameters['pageSize'] != null) {
+            queryParameters['page_size'] = requestParameters['pageSize'];
+        }
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.apiKey) {
+            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
+        }
+
+        const response = await this.request({
+            path: `/api/recipe-image/`,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => PaginatedRecipeImageListFromJSON(jsonValue));
+    }
+
+    /**
+     * logs request counts to redis cache total/per user/
+     */
+    async apiRecipeImageList(requestParameters: ApiRecipeImageListRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PaginatedRecipeImageList> {
+        const response = await this.apiRecipeImageListRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * logs request counts to redis cache total/per user/
+     */
+    async apiRecipeImagePartialUpdateRaw(requestParameters: ApiRecipeImagePartialUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<RecipeImage>> {
+        if (requestParameters['id'] == null) {
+            throw new runtime.RequiredError(
+                'id',
+                'Required parameter "id" was null or undefined when calling apiRecipeImagePartialUpdate().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.apiKey) {
+            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
+        }
+
+        const consumes: runtime.Consume[] = [
+            { contentType: 'multipart/form-data' },
+            { contentType: 'application/json' },
+        ];
+        // @ts-ignore: canConsumeForm may be unused
+        const canConsumeForm = runtime.canConsumeForm(consumes);
+
+        let formParams: { append(param: string, value: any): any };
+        let useForm = false;
+        if (useForm) {
+            formParams = new FormData();
+        } else {
+            formParams = new URLSearchParams();
+        }
+
+        if (requestParameters['id2'] != null) {
+            formParams.append('id', requestParameters['id2'] as any);
+        }
+
+        if (requestParameters['recipe'] != null) {
+            formParams.append('recipe', requestParameters['recipe'] as any);
+        }
+
+        if (requestParameters['file'] != null) {
+            formParams.append('file', requestParameters['file'] as any);
+        }
+
+        if (requestParameters['cropData'] != null) {
+            formParams.append('crop_data', new Blob([JSON.stringify(anyToJSON(requestParameters['cropData']))], { type: "application/json", }));
+                    }
+
+        if (requestParameters['order'] != null) {
+            formParams.append('order', requestParameters['order'] as any);
+        }
+
+        if (requestParameters['isPrimary'] != null) {
+            formParams.append('is_primary', requestParameters['isPrimary'] as any);
+        }
+
+        if (requestParameters['createdBy'] != null) {
+            formParams.append('created_by', requestParameters['createdBy'] as any);
+        }
+
+        if (requestParameters['createdAt'] != null) {
+            formParams.append('created_at', requestParameters['createdAt'] as any);
+        }
+
+        const response = await this.request({
+            path: `/api/recipe-image/{id}/`.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id']))),
+            method: 'PATCH',
+            headers: headerParameters,
+            query: queryParameters,
+            body: formParams,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => RecipeImageFromJSON(jsonValue));
+    }
+
+    /**
+     * logs request counts to redis cache total/per user/
+     */
+    async apiRecipeImagePartialUpdate(requestParameters: ApiRecipeImagePartialUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<RecipeImage> {
+        const response = await this.apiRecipeImagePartialUpdateRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * logs request counts to redis cache total/per user/
+     */
+    async apiRecipeImageRetrieveRaw(requestParameters: ApiRecipeImageRetrieveRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<RecipeImage>> {
+        if (requestParameters['id'] == null) {
+            throw new runtime.RequiredError(
+                'id',
+                'Required parameter "id" was null or undefined when calling apiRecipeImageRetrieve().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.apiKey) {
+            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
+        }
+
+        const response = await this.request({
+            path: `/api/recipe-image/{id}/`.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id']))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => RecipeImageFromJSON(jsonValue));
+    }
+
+    /**
+     * logs request counts to redis cache total/per user/
+     */
+    async apiRecipeImageRetrieve(requestParameters: ApiRecipeImageRetrieveRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<RecipeImage> {
+        const response = await this.apiRecipeImageRetrieveRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * logs request counts to redis cache total/per user/
+     */
+    async apiRecipeImageUpdateRaw(requestParameters: ApiRecipeImageUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<RecipeImage>> {
+        if (requestParameters['id'] == null) {
+            throw new runtime.RequiredError(
+                'id',
+                'Required parameter "id" was null or undefined when calling apiRecipeImageUpdate().'
+            );
+        }
+
+        if (requestParameters['recipe'] == null) {
+            throw new runtime.RequiredError(
+                'recipe',
+                'Required parameter "recipe" was null or undefined when calling apiRecipeImageUpdate().'
+            );
+        }
+
+        if (requestParameters['file'] == null) {
+            throw new runtime.RequiredError(
+                'file',
+                'Required parameter "file" was null or undefined when calling apiRecipeImageUpdate().'
+            );
+        }
+
+        if (requestParameters['createdBy'] == null) {
+            throw new runtime.RequiredError(
+                'createdBy',
+                'Required parameter "createdBy" was null or undefined when calling apiRecipeImageUpdate().'
+            );
+        }
+
+        if (requestParameters['createdAt'] == null) {
+            throw new runtime.RequiredError(
+                'createdAt',
+                'Required parameter "createdAt" was null or undefined when calling apiRecipeImageUpdate().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.apiKey) {
+            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
+        }
+
+        const consumes: runtime.Consume[] = [
+            { contentType: 'multipart/form-data' },
+            { contentType: 'application/json' },
+        ];
+        // @ts-ignore: canConsumeForm may be unused
+        const canConsumeForm = runtime.canConsumeForm(consumes);
+
+        let formParams: { append(param: string, value: any): any };
+        let useForm = false;
+        if (useForm) {
+            formParams = new FormData();
+        } else {
+            formParams = new URLSearchParams();
+        }
+
+        if (requestParameters['id2'] != null) {
+            formParams.append('id', requestParameters['id2'] as any);
+        }
+
+        if (requestParameters['recipe'] != null) {
+            formParams.append('recipe', requestParameters['recipe'] as any);
+        }
+
+        if (requestParameters['file'] != null) {
+            formParams.append('file', requestParameters['file'] as any);
+        }
+
+        if (requestParameters['cropData'] != null) {
+            formParams.append('crop_data', new Blob([JSON.stringify(anyToJSON(requestParameters['cropData']))], { type: "application/json", }));
+                    }
+
+        if (requestParameters['order'] != null) {
+            formParams.append('order', requestParameters['order'] as any);
+        }
+
+        if (requestParameters['isPrimary'] != null) {
+            formParams.append('is_primary', requestParameters['isPrimary'] as any);
+        }
+
+        if (requestParameters['createdBy'] != null) {
+            formParams.append('created_by', requestParameters['createdBy'] as any);
+        }
+
+        if (requestParameters['createdAt'] != null) {
+            formParams.append('created_at', requestParameters['createdAt'] as any);
+        }
+
+        const response = await this.request({
+            path: `/api/recipe-image/{id}/`.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id']))),
             method: 'PUT',
             headers: headerParameters,
             query: queryParameters,
@@ -11223,6 +11677,14 @@ export class ApiApi extends runtime.BaseAPI {
             queryParameters['foods_or_not'] = requestParameters['foodsOrNot'];
         }
 
+        if (requestParameters['hasKeywords'] != null) {
+            queryParameters['has_keywords'] = requestParameters['hasKeywords'];
+        }
+
+        if (requestParameters['hasPhoto'] != null) {
+            queryParameters['has_photo'] = requestParameters['hasPhoto'];
+        }
+
         if (requestParameters['includeChildren'] != null) {
             queryParameters['include_children'] = requestParameters['includeChildren'];
         }
@@ -11291,6 +11753,14 @@ export class ApiApi extends runtime.BaseAPI {
             queryParameters['rating_lte'] = requestParameters['ratingLte'];
         }
 
+        if (requestParameters['servingsGte'] != null) {
+            queryParameters['servings_gte'] = requestParameters['servingsGte'];
+        }
+
+        if (requestParameters['servingsLte'] != null) {
+            queryParameters['servings_lte'] = requestParameters['servingsLte'];
+        }
+
         if (requestParameters['sortOrder'] != null) {
             queryParameters['sort_order'] = requestParameters['sortOrder'];
         }
@@ -11305,6 +11775,14 @@ export class ApiApi extends runtime.BaseAPI {
 
         if (requestParameters['timescookedLte'] != null) {
             queryParameters['timescooked_lte'] = requestParameters['timescookedLte'];
+        }
+
+        if (requestParameters['totalTimeGte'] != null) {
+            queryParameters['total_time_gte'] = requestParameters['totalTimeGte'];
+        }
+
+        if (requestParameters['totalTimeLte'] != null) {
+            queryParameters['total_time_lte'] = requestParameters['totalTimeLte'];
         }
 
         if (requestParameters['units'] != null) {
@@ -11329,6 +11807,22 @@ export class ApiApi extends runtime.BaseAPI {
 
         if (requestParameters['viewedonLte'] != null) {
             queryParameters['viewedon_lte'] = (requestParameters['viewedonLte'] as any).toISOString().substring(0,10);
+        }
+
+        if (requestParameters['waitingTimeGte'] != null) {
+            queryParameters['waiting_time_gte'] = requestParameters['waitingTimeGte'];
+        }
+
+        if (requestParameters['waitingTimeLte'] != null) {
+            queryParameters['waiting_time_lte'] = requestParameters['waitingTimeLte'];
+        }
+
+        if (requestParameters['workingTimeGte'] != null) {
+            queryParameters['working_time_gte'] = requestParameters['workingTimeGte'];
+        }
+
+        if (requestParameters['workingTimeLte'] != null) {
+            queryParameters['working_time_lte'] = requestParameters['workingTimeLte'];
         }
 
         const headerParameters: runtime.HTTPHeaders = {};
