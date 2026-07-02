@@ -163,7 +163,14 @@ function loadRecipes() {
             break
         case 'new':
             requestParameters._new = 'true'
-            queryParams.value = {sortOrder: '-created_at', createdonGte: DateTime.now().minus({days: 14}).toISODate()}
+            requestParameters.sortOrder = '-created_at'
+            // "More" must surface the SAME set as this section (#4646): the
+            // section shows the backend `_new` flag = created within 7 days, so
+            // the link filters on the same 7-day window. Emit `createdon_gte`
+            // (snake_case) + `ordering` — the keys SearchPage's useUrlFilters
+            // hydrates; the previous `createdonGte`/`sortOrder` were silently
+            // dropped, so "More" returned the entire catalog.
+            queryParams.value = {ordering: '-created_at', createdon_gte: DateTime.now().minus({days: 7}).toISODate()}
             break
         case 'rating': {
             const minRating = props.filterId ?? 4
