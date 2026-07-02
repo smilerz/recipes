@@ -57,11 +57,11 @@ frappe-client==0.1.0.dev0
 regex==2026.5.9
 
 # Development
-pytest== 9.0.3
-pytest-django==4.11.1
+pytest== 9.1.1
+pytest-django==4.12.0
 pytest-cov===6.2.1
 pytest-factoryboy==2.8.1
-pytest-html==4.1.1
+pytest-html==4.2.0
 pytest-asyncio==1.4.0
 pytest-xdist==3.8.0
 autopep8==2.3.2
