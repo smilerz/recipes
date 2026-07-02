@@ -276,6 +276,7 @@ export const useUserPreferenceStore = defineStore('user_preference_store', () =>
             search_savedSearchInline: true,
             search_savedSearchInPanel: true,
             search_showStats: true,
+            search_filterPlacementHelpDismissed: false,
 
             start_showMealPlan: true,
 
