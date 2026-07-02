@@ -32,7 +32,7 @@ Jinja2==3.1.6
 django-allauth[mfa,socialaccount]==65.18.0
 recipe-scrapers==15.11.0
 django-scopes==2.0.0
-django-treebeard==4.7.1
+django-treebeard==5.2.1
 django-cors-headers==4.9.0
 django-storages==1.14.6
 boto3==1.43.36
