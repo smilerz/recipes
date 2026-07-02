@@ -100,7 +100,6 @@
                 clearable
                 hover
                 size="small"
-                density="compact"
                 color="primary"
                 :aria-label="$t('minimum_rating')"
             />
