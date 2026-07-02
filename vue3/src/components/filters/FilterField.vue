@@ -78,28 +78,29 @@
     </div>
     <div v-else-if="def.type === 'rating-unrated'" :class="[wrapClass, 'd-flex align-center ga-2']">
         <v-icon v-if="def.icon" size="small" :icon="def.icon" class="text-medium-emphasis" />
-        <!-- "None → ★★★★★" as one continuum: the None toggle and the star scale
-             live in a single bordered segment so their mutual exclusivity reads
-             as one axis. None = rating IS NULL (never rated); a star = minimum
-             rating floor (see toggleUnrated / onSelectStar). -->
+        <!-- "Unrated → ★★★★★" as one continuum: the Unrated toggle and the star
+             scale live in a single bordered segment so their mutual exclusivity
+             reads as one axis. Unrated = rating IS NULL (never rated); a star =
+             minimum rating floor (see toggleUnrated / onSelectStar). Small stars
+             keep it on one line inside narrow inline cards / drawers. -->
         <div class="rating-scale d-flex align-center">
             <v-btn
                 class="unrated-toggle text-none"
                 :variant="isUnrated ? 'flat' : 'text'"
                 :color="isUnrated ? 'primary' : undefined"
-                size="small" density="comfortable"
+                size="small" density="compact"
                 :aria-label="$t('Unrated')"
                 :aria-pressed="isUnrated"
                 @click="toggleUnrated"
-            >{{ $t('None') }}</v-btn>
-            <v-divider vertical class="mx-1" />
+            >{{ $t('Unrated') }}</v-btn>
             <v-rating
                 :model-value="unratedRatingValue"
                 @update:model-value="onSelectStar"
                 half-increments
                 clearable
                 hover
-                density="comfortable"
+                size="small"
+                density="compact"
                 color="primary"
                 :aria-label="$t('minimum_rating')"
             />
