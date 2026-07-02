@@ -288,7 +288,7 @@
 
                 <div class="d-flex align-center px-4 py-1 ga-1">
                     <span class="text-body-2 flex-grow-1">{{ $t('View') }}</span>
-                    <v-btn-toggle density="compact" mandatory
+                    <v-btn-toggle density="compact" mandatory color="primary"
                         :model-value="useUserPreferenceStore().deviceSettings.search_viewMode"
                         @update:model-value="useUserPreferenceStore().deviceSettings.search_viewMode = $event">
                         <v-btn value="table" size="x-small">{{ $t('Table') }}</v-btn>
@@ -298,18 +298,22 @@
 
                 <div class="d-flex align-center px-4 py-1 ga-1">
                     <span class="text-body-2 flex-grow-1">{{ $t('SavedSearch') }}</span>
-                    <v-btn-toggle density="compact" mandatory :model-value="savedSearchInline ? 'page' : 'panel'" @update:model-value="savedSearchInline = $event === 'page'">
+                    <v-btn-toggle density="compact" mandatory color="primary" :model-value="savedSearchInline ? 'page' : 'panel'" @update:model-value="savedSearchInline = $event === 'page'">
                         <v-btn value="page" size="x-small">{{ $t('Page') }}</v-btn>
                         <v-btn value="panel" size="x-small">{{ $t('Panel') }}</v-btn>
                     </v-btn-toggle>
                 </div>
                 <v-divider class="my-2" />
 
+                <div class="px-4 pt-1 pb-2">
+                    <div class="text-caption text-medium-emphasis">{{ $t('FilterPlacementHelp') }}</div>
+                </div>
+
                 <template v-for="[group, defs] in configurableFiltersByGroup" :key="group">
                     <CollapsibleSection :label="$t(group)">
                         <div v-for="def in defs" :key="def.key" class="d-flex align-center px-4 py-1 ga-1">
                             <span class="text-body-2 flex-grow-1">{{ $t(def.labelKey) }}</span>
-                            <v-btn-toggle density="compact" multiple>
+                            <v-btn-toggle density="compact" multiple color="primary" variant="outlined">
                                 <v-btn
                                     size="x-small"
                                     :active="isInlineSelected(def.key)"
