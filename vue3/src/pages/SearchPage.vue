@@ -305,15 +305,20 @@
                 </div>
                 <v-divider class="my-2" />
 
-                <div class="px-4 pt-1 pb-2">
-                    <div class="text-caption text-medium-emphasis">{{ $t('FilterPlacementHelp') }}</div>
+                <div class="d-flex align-center px-4 pt-1">
+                    <span class="text-body-2 font-weight-medium flex-grow-1">{{ $t('FilterPlacement') }}</span>
+                    <v-btn v-if="filterPlacementHelpDismissed" icon="fa-solid fa-circle-info" variant="text"
+                           size="x-small" :aria-label="$t('Help')" @click="filterPlacementHelpDismissed = false" />
                 </div>
+                <v-alert v-if="!filterPlacementHelpDismissed" type="info" variant="tonal" density="compact" closable
+                         class="mx-4 mt-1 mb-2" :text="$t('FilterPlacementHelp')"
+                         @click:close="filterPlacementHelpDismissed = true" />
 
                 <template v-for="[group, defs] in configurableFiltersByGroup" :key="group">
                     <CollapsibleSection :label="$t(group)">
                         <div v-for="def in defs" :key="def.key" class="d-flex align-center px-4 py-1 ga-1">
                             <span class="text-body-2 flex-grow-1">{{ $t(def.labelKey) }}</span>
-                            <v-btn-toggle density="compact" multiple color="primary" variant="outlined">
+                            <v-btn-toggle density="compact" multiple color="primary">
                                 <v-btn
                                     size="x-small"
                                     :active="isInlineSelected(def.key)"
@@ -447,6 +452,14 @@ const drawerTabs = computed(() => [
 const savedSearchInline = computed({
     get: () => useUserPreferenceStore().deviceSettings.search_savedSearchInline ?? true,
     set: (val: boolean) => { useUserPreferenceStore().deviceSettings.search_savedSearchInline = val },
+})
+
+// Dismissable filter-placement hint, persisted per-device (mirrors the other
+// search_* device settings). Dismissing hides the info alert; a small info
+// icon in the section header reopens it so the dismiss is never a dead end.
+const filterPlacementHelpDismissed = computed({
+    get: () => useUserPreferenceStore().deviceSettings.search_filterPlacementHelpDismissed ?? false,
+    set: (val: boolean) => { useUserPreferenceStore().deviceSettings.search_filterPlacementHelpDismissed = val },
 })
 
 // ─── Drawer filter visibility (search-specific) ────────────────────────
