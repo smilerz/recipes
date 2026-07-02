@@ -23,7 +23,7 @@
                     <ModelSelect :model="modelName" :placeholder="selectPlaceholder" :model-value="row1Values" @update:model-value="v => onUpdate(row1Key, v)"
                         :object="false" mode="tags" density="compact" :can-clear="true" :search-on-load="false" :append-to-body="true" :hide-details="true" />
                 </div>
-                <v-btn-toggle :model-value="includeMode" @update:model-value="toggleIncludeMode" mandatory density="compact" class="flex-shrink-0" @click.stop>
+                <v-btn-toggle :model-value="includeMode" @update:model-value="toggleIncludeMode" mandatory density="compact" color="primary" class="flex-shrink-0" @click.stop>
                     <v-btn value="any" size="x-small">{{ $t('any') }}</v-btn>
                     <v-btn value="all" size="x-small">{{ $t('all') }}</v-btn>
                 </v-btn-toggle>
@@ -34,7 +34,7 @@
                     <ModelSelect :model="modelName" :placeholder="selectPlaceholder" :model-value="row2Values" @update:model-value="v => onUpdate(row2Key, v)"
                         :object="false" mode="tags" density="compact" :can-clear="true" :search-on-load="false" :append-to-body="true" :hide-details="true" />
                 </div>
-                <v-btn-toggle :model-value="excludeMode" @update:model-value="toggleExcludeMode" mandatory density="compact" class="flex-shrink-0" @click.stop>
+                <v-btn-toggle :model-value="excludeMode" @update:model-value="toggleExcludeMode" mandatory density="compact" color="primary" class="flex-shrink-0" @click.stop>
                     <v-btn value="any" size="x-small">{{ $t('any') }}</v-btn>
                     <v-btn value="all" size="x-small">{{ $t('all') }}</v-btn>
                 </v-btn-toggle>
@@ -46,7 +46,7 @@
                         <ModelSelect :model="modelName" :placeholder="selectPlaceholder" :model-value="row3Values" @update:model-value="v => onUpdate(row3Key, v)"
                             :object="false" mode="tags" density="compact" :can-clear="true" :search-on-load="false" :append-to-body="true" :hide-details="true" />
                     </div>
-                    <v-btn-toggle :model-value="row3ModeLabel" @update:model-value="toggleIncludeMode" mandatory density="compact" class="flex-shrink-0" @click.stop>
+                    <v-btn-toggle :model-value="row3ModeLabel" @update:model-value="toggleIncludeMode" mandatory density="compact" color="primary" class="flex-shrink-0" @click.stop>
                         <v-btn value="any" size="x-small">{{ $t('any') }}</v-btn>
                         <v-btn value="all" size="x-small">{{ $t('all') }}</v-btn>
                     </v-btn-toggle>
@@ -57,7 +57,7 @@
                         <ModelSelect :model="modelName" :placeholder="selectPlaceholder" :model-value="row4Values" @update:model-value="v => onUpdate(row4Key, v)"
                             :object="false" mode="tags" density="compact" :can-clear="true" :search-on-load="false" :append-to-body="true" :hide-details="true" />
                     </div>
-                    <v-btn-toggle :model-value="row4ModeLabel" @update:model-value="toggleExcludeMode" mandatory density="compact" class="flex-shrink-0" @click.stop>
+                    <v-btn-toggle :model-value="row4ModeLabel" @update:model-value="toggleExcludeMode" mandatory density="compact" color="primary" class="flex-shrink-0" @click.stop>
                         <v-btn value="any" size="x-small">{{ $t('any') }}</v-btn>
                         <v-btn value="all" size="x-small">{{ $t('all') }}</v-btn>
                     </v-btn-toggle>
@@ -73,7 +73,7 @@
                     <ModelSelect :model="modelName" :placeholder="selectPlaceholder" :model-value="row1Values" @update:model-value="v => onUpdate(row1Key, v)"
                         :object="false" mode="tags" density="compact" :can-clear="true" :search-on-load="false" :append-to-body="true" :hide-details="true" />
                 </div>
-                <v-btn-toggle v-if="showToggles" :model-value="includeMode" @update:model-value="toggleIncludeMode" mandatory density="compact" class="flex-shrink-0" @click.stop>
+                <v-btn-toggle v-if="showToggles" :model-value="includeMode" @update:model-value="toggleIncludeMode" mandatory density="compact" color="primary" class="flex-shrink-0" @click.stop>
                     <v-btn value="any" size="x-small">{{ $t('any') }}</v-btn>
                     <v-btn value="all" size="x-small">{{ $t('all') }}</v-btn>
                 </v-btn-toggle>
@@ -84,7 +84,7 @@
                     <ModelSelect :model="modelName" :placeholder="selectPlaceholder" :model-value="row2Values" @update:model-value="v => onUpdate(row2Key, v)"
                         :object="false" mode="tags" density="compact" :can-clear="true" :search-on-load="false" :append-to-body="true" :hide-details="true" />
                 </div>
-                <v-btn-toggle v-if="showToggles" :model-value="excludeMode" @update:model-value="toggleExcludeMode" mandatory density="compact" class="flex-shrink-0" @click.stop>
+                <v-btn-toggle v-if="showToggles" :model-value="excludeMode" @update:model-value="toggleExcludeMode" mandatory density="compact" color="primary" class="flex-shrink-0" @click.stop>
                     <v-btn value="any" size="x-small">{{ $t('any') }}</v-btn>
                     <v-btn value="all" size="x-small">{{ $t('all') }}</v-btn>
                 </v-btn-toggle>
@@ -95,7 +95,7 @@
                     <ModelSelect :model="modelName" :placeholder="selectPlaceholder" :model-value="row3Values" @update:model-value="v => onUpdate(row3Key, v)"
                         :object="false" mode="tags" density="compact" :can-clear="true" :search-on-load="false" :append-to-body="true" :hide-details="true" />
                 </div>
-                <v-btn-toggle v-if="showToggles" :model-value="row3ModeLabel" @update:model-value="toggleIncludeMode" mandatory density="compact" class="flex-shrink-0" @click.stop>
+                <v-btn-toggle v-if="showToggles" :model-value="row3ModeLabel" @update:model-value="toggleIncludeMode" mandatory density="compact" color="primary" class="flex-shrink-0" @click.stop>
                     <v-btn value="any" size="x-small">{{ $t('any') }}</v-btn>
                     <v-btn value="all" size="x-small">{{ $t('all') }}</v-btn>
                 </v-btn-toggle>
@@ -106,7 +106,7 @@
                     <ModelSelect :model="modelName" :placeholder="selectPlaceholder" :model-value="row4Values" @update:model-value="v => onUpdate(row4Key, v)"
                         :object="false" mode="tags" density="compact" :can-clear="true" :search-on-load="false" :append-to-body="true" :hide-details="true" />
                 </div>
-                <v-btn-toggle v-if="showToggles" :model-value="row4ModeLabel" @update:model-value="toggleExcludeMode" mandatory density="compact" class="flex-shrink-0" @click.stop>
+                <v-btn-toggle v-if="showToggles" :model-value="row4ModeLabel" @update:model-value="toggleExcludeMode" mandatory density="compact" color="primary" class="flex-shrink-0" @click.stop>
                     <v-btn value="any" size="x-small">{{ $t('any') }}</v-btn>
                     <v-btn value="all" size="x-small">{{ $t('all') }}</v-btn>
                 </v-btn-toggle>
