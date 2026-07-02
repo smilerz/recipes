@@ -84,12 +84,12 @@
              minimum rating floor (see toggleUnrated / onSelectStar). Small stars
              keep it on one line inside narrow inline cards / drawers. -->
         <div class="rating-scale d-flex align-center">
-            <!-- Empty star = the "unrated / no rating" end of the scale; narrow
-                 enough to keep the whole control on one line. aria-label carries
-                 the meaning for screen readers. -->
+            <!-- fa-ban (the app's "none/exclude" glyph) = "no rating / never
+                 rated". A non-star icon + the divider keep it from reading as a
+                 6th star; aria-label carries the meaning for screen readers. -->
             <v-btn
                 class="unrated-toggle"
-                icon="fa-regular fa-star"
+                icon="fa-solid fa-ban"
                 :variant="isUnrated ? 'flat' : 'text'"
                 :color="isUnrated ? 'primary' : undefined"
                 size="small" density="compact"
@@ -97,6 +97,7 @@
                 :aria-pressed="isUnrated"
                 @click="toggleUnrated"
             />
+            <v-divider vertical class="mx-1" />
             <v-rating
                 :model-value="unratedRatingValue"
                 @update:model-value="onSelectStar"
