@@ -60,8 +60,8 @@ describe('FilterField — rating-unrated (unified rating + unrated control)', ()
     it('when unrated is active the star value reads 0 and the toggle is highlighted', () => {
         const {wrapper} = mountField(RATING_DEF, {unrated: '1'})
         expect(wrapper.findComponent(VRating).props('modelValue')).toBe(0)
-        // active toggle carries the warning color class
-        expect(wrapper.find('.unrated-toggle').classes().join(' ')).toContain('warning')
+        // active toggle carries the primary color class (matches the panel's other active toggles)
+        expect(wrapper.find('.unrated-toggle').classes().join(' ')).toContain('primary')
     })
 
     it('clicking the 0/unrated toggle while already unrated clears unrated (toggles off)', async () => {

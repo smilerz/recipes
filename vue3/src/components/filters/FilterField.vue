@@ -78,31 +78,37 @@
     </div>
     <div v-else-if="def.type === 'rating-unrated'" :class="[wrapClass, 'd-flex align-center ga-2']">
         <v-icon v-if="def.icon" size="small" :icon="def.icon" class="text-medium-emphasis" />
-        <!-- "0 / Unrated" position: folds the standalone unrated toggle into the
-             rating control. Selecting it sets unrated and clears any star value;
-             selecting a star clears unrated (the two are mutually exclusive). -->
-        <v-btn
-            class="unrated-toggle"
-            :variant="isUnrated ? 'flat' : 'tonal'"
-            :color="isUnrated ? 'warning' : undefined"
-            size="small" density="comfortable" min-width="0"
-            @click="toggleUnrated"
-        >
-            0
-            <v-tooltip activator="parent" location="top">{{ $t('Unrated') }}</v-tooltip>
-        </v-btn>
-        <v-rating
-            :model-value="unratedRatingValue"
-            @update:model-value="onSelectStar"
-            half-increments
-            clearable
-            hover
-            density="comfortable"
-        />
+        <!-- "None → ★★★★★" as one continuum: the None toggle and the star scale
+             live in a single bordered segment so their mutual exclusivity reads
+             as one axis. None = rating IS NULL (never rated); a star = minimum
+             rating floor (see toggleUnrated / onSelectStar). -->
+        <div class="rating-scale d-flex align-center">
+            <v-btn
+                class="unrated-toggle text-none"
+                :variant="isUnrated ? 'flat' : 'text'"
+                :color="isUnrated ? 'primary' : undefined"
+                size="small" density="comfortable"
+                :aria-label="$t('Unrated')"
+                :aria-pressed="isUnrated"
+                @click="toggleUnrated"
+            >{{ $t('None') }}</v-btn>
+            <v-divider vertical class="mx-1" />
+            <v-rating
+                :model-value="unratedRatingValue"
+                @update:model-value="onSelectStar"
+                half-increments
+                clearable
+                hover
+                density="comfortable"
+                color="primary"
+                :aria-label="$t('minimum_rating')"
+            />
+        </div>
         <v-btn
             v-if="hasRatingFilter"
             class="rating-clear"
             icon="$close" variant="plain" size="x-small" density="compact"
+            :aria-label="$t('Clear')"
             @click="clearRatingAndUnrated"
         />
     </div>
@@ -222,3 +228,13 @@ function clearRatingAndUnrated() {
     if (props.def.unratedKey) props.clearFilter(props.def.unratedKey)
 }
 </script>
+
+<style scoped>
+/* Group the None toggle and the star scale into one segment so they read as a
+   single "None → stars" axis rather than two unrelated widgets. */
+.rating-scale {
+    border: thin solid rgba(var(--v-border-color), var(--v-border-opacity));
+    border-radius: 4px;
+    padding: 0 2px;
+}
+</style>
