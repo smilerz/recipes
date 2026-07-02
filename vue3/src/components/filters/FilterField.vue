@@ -84,15 +84,19 @@
              minimum rating floor (see toggleUnrated / onSelectStar). Small stars
              keep it on one line inside narrow inline cards / drawers. -->
         <div class="rating-scale d-flex align-center">
+            <!-- Empty star = the "unrated / no rating" end of the scale; narrow
+                 enough to keep the whole control on one line. aria-label carries
+                 the meaning for screen readers. -->
             <v-btn
-                class="unrated-toggle text-none"
+                class="unrated-toggle"
+                icon="fa-regular fa-star"
                 :variant="isUnrated ? 'flat' : 'text'"
                 :color="isUnrated ? 'primary' : undefined"
                 size="small" density="compact"
                 :aria-label="$t('Unrated')"
                 :aria-pressed="isUnrated"
                 @click="toggleUnrated"
-            >{{ $t('Unrated') }}</v-btn>
+            />
             <v-rating
                 :model-value="unratedRatingValue"
                 @update:model-value="onSelectStar"
