@@ -44,6 +44,7 @@ import SearchPage from '@/pages/SearchPage.vue'
 
 const HEAVY_STUBS: Record<string, any> = {
     RecipeContextMenu: {render() { return h('div', {class: 'stub-recipe-context-menu'}) }},
+    ClosableHelpAlert: {props: ['title', 'text'], render() { return h('div', {class: 'stub-help-alert'}) }},
     RecipeCard: {props: ['recipe'], render() { return h('div', {class: 'stub-recipe-card'}) }},
     KeywordsBar: {props: ['keywords'], render() { return h('div', {class: 'stub-keywords-bar'}) }},
     RandomIcon: {render() { return h('div', {class: 'stub-random-icon'}) }},

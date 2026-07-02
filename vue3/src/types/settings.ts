@@ -35,7 +35,6 @@ export type DeviceSettings = {
     search_viewMode: 'table'|'grid',
     search_visibleFilters: String[],
     search_showStats: boolean,
-    search_filterPlacementHelpDismissed: boolean,
 
     start_showMealPlan: boolean,
 
