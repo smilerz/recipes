@@ -19,12 +19,6 @@ updates:
       pip-pytest:
         patterns: ["pytest*"]
         update-types: ["minor", "patch"]
-    ignore:
-      # litellm 1.83.1+ tightens its transitive pin to python-dotenv==1.0.1,
-      # which conflicts with our pinned python-dotenv==1.2.2. Skip the 1.83.x
-      # patch tail and wait for the next minor (1.84+) to re-evaluate.
-      - dependency-name: "litellm"
-        versions: [">=1.83.1, <1.84"]
     commit-message:
       prefix: "chore"
       include: "scope"
