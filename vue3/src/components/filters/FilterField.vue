@@ -83,12 +83,14 @@
              reads as one axis. Unrated = rating IS NULL (never rated); a star =
              minimum rating floor (see toggleUnrated / onSelectStar). Small stars
              keep it on one line inside narrow inline cards / drawers. -->
-        <div class="rating-scale d-flex align-center">
+        <div class="d-flex align-center">
             <!-- fa-ban (the app's "none/exclude" glyph) = "no rating / never
                  rated". A non-star icon + the divider keep it from reading as a
-                 6th star; aria-label carries the meaning for screen readers. -->
+                 6th star; aria-label carries the meaning for screen readers.
+                 Muted when inactive (matches the faint star outlines), primary
+                 when selected. -->
             <v-btn
-                class="unrated-toggle"
+                :class="['unrated-toggle', {'text-medium-emphasis': !isUnrated}]"
                 icon="fa-solid fa-ban"
                 :variant="isUnrated ? 'flat' : 'text'"
                 :color="isUnrated ? 'primary' : undefined"
@@ -233,13 +235,3 @@ function clearRatingAndUnrated() {
     if (props.def.unratedKey) props.clearFilter(props.def.unratedKey)
 }
 </script>
-
-<style scoped>
-/* Group the None toggle and the star scale into one segment so they read as a
-   single "None → stars" axis rather than two unrelated widgets. */
-.rating-scale {
-    border: thin solid rgba(var(--v-border-color), var(--v-border-opacity));
-    border-radius: 4px;
-    padding: 0 2px;
-}
-</style>
