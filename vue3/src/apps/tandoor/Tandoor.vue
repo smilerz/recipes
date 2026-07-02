@@ -27,7 +27,9 @@
                 </v-menu>
             </v-btn>
 
-            <v-avatar color="primary" class="me-2 cursor-pointer d-print-none">{{ useUserPreferenceStore().userSettings.user.displayName.charAt(0) }}
+            <v-avatar color="primary" class="me-2 cursor-pointer d-print-none">
+                <v-img v-if="useUserPreferenceStore().userSettings.image?.preview" :src="useUserPreferenceStore().userSettings.image.preview" />
+                <span v-else>{{ useUserPreferenceStore().userSettings.user.displayName.charAt(0) }}</span>
                 <v-menu activator="parent">
 
                     <v-list density="compact">
