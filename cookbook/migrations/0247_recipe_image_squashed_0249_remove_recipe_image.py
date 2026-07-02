@@ -6,12 +6,24 @@ from django.db import migrations, models
 
 
 def copy_recipe_image_to_model(apps, schema_editor):
+    """Copy each recipe's legacy ``image`` into a primary RecipeImage.
+
+    ``file=recipe.image`` is a path-pointer, so no bytes move. Skips recipes
+    that already have a RecipeImage, so this is safe to apply on an instance
+    that added gallery images before upgrading. (This is the corrected,
+    per-recipe copy — the original 0247 bailed out entirely the moment any
+    RecipeImage existed, which is why a separate 0248 backfill was needed.)
+    """
     Recipe = apps.get_model('cookbook', 'Recipe')
     RecipeImage = apps.get_model('cookbook', 'RecipeImage')
-    if RecipeImage.objects.exists():
-        return
+
+    recipes_with_images = set(
+        RecipeImage.objects.values_list('recipe_id', flat=True).distinct()
+    )
     batch = []
     for recipe in Recipe.objects.exclude(image__isnull=True).exclude(image__exact='').iterator(chunk_size=1000):
+        if recipe.id in recipes_with_images:
+            continue
         creator_id = recipe.created_by_id or recipe.space.created_by_id
         batch.append(RecipeImage(
             recipe=recipe,
@@ -36,6 +48,16 @@ def copy_recipe_image_back(apps, schema_editor):
 
 
 class Migration(migrations.Migration):
+
+    # Consolidates the RecipeImage introduction (create + data copy + drop the
+    # legacy Recipe.image column) into one migration. `replaces` means an
+    # instance that already applied 0247/0248/0249 recognises this as
+    # equivalent and skips it, while fresh installs run just this one.
+    replaces = [
+        ('cookbook', '0247_recipe_image'),
+        ('cookbook', '0248_backfill_recipe_image_corrective'),
+        ('cookbook', '0249_remove_recipe_image'),
+    ]
 
     dependencies = [
         ('cookbook', '0246_migrate_customfilter_v1_to_v2'),
@@ -62,4 +84,8 @@ class Migration(migrations.Migration):
             bases=(django_prometheus.models.ExportModelOperationsMixin('recipe_image'), models.Model, cookbook.models.PermissionModelMixin),
         ),
         migrations.RunPython(copy_recipe_image_to_model, copy_recipe_image_back),
+        migrations.RemoveField(
+            model_name='recipe',
+            name='image',
+        ),
     ]
