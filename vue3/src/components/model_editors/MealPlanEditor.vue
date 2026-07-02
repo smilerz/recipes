@@ -118,7 +118,7 @@ import {DateTime} from "luxon";
 import {adjustDateRangeLength, shiftDateRange} from "@/utils/date_utils";
 import ModelSelect from "@/components/inputs/ModelSelect.vue";
 import RecipeCard from "@/components/display/RecipeCard.vue";
-import {VDateInput} from "vuetify/labs/VDateInput";
+import {VDateInput} from "vuetify/components";
 import {useUserPreferenceStore} from "@/stores/UserPreferenceStore";
 import {ErrorMessageType, MessageType, useMessageStore} from "@/stores/MessageStore";
 import ShoppingLineItem from "@/components/display/ShoppingLineItem.vue";

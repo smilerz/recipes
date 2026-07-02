@@ -578,7 +578,7 @@ import ModelSelect from "@/components/inputs/ModelSelect.vue";
 import {useDisplay} from "vuetify";
 import {useUrlSearchParams} from "@vueuse/core";
 import {INTEGRATIONS} from "@/utils/integration_utils";
-import {VFileUpload} from 'vuetify/labs/VFileUpload'
+import {VFileUpload} from 'vuetify/components'
 import ImportLogViewer from "@/components/display/ImportLogViewer.vue";
 import {DateTime} from "luxon";
 import {useDjangoUrls} from "@/composables/useDjangoUrls";

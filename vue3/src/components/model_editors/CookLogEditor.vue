@@ -41,7 +41,7 @@ import {onMounted, PropType, watch} from "vue";
 import {CookLog} from "@/openapi";
 import ModelEditorBase from "@/components/model_editors/ModelEditorBase.vue";
 import {useModelEditorFunctions} from "@/composables/useModelEditorFunctions";
-import {VDateInput} from 'vuetify/labs/VDateInput' //TODO remove once component is out of labs
+import {VDateInput} from 'vuetify/components'
 
 const props = defineProps({
     item: {type: {} as PropType<CookLog>, required: false, default: null},

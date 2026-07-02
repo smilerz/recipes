@@ -73,7 +73,7 @@ import {onMounted, PropType, ref, watch} from "vue";
 import {ApiApi, CookLog, Recipe} from "@/openapi";
 import {DateTime} from "luxon";
 import {ErrorMessageType, useMessageStore} from "@/stores/MessageStore";
-import {VDateInput} from 'vuetify/labs/VDateInput'
+import {VDateInput} from 'vuetify/components'
 import {useUserPreferenceStore} from "@/stores/UserPreferenceStore.ts";
 import ModelEditDialog from "@/components/dialogs/ModelEditDialog.vue";
 
