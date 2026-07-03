@@ -1467,8 +1467,12 @@ class FoodViewSet(LoggingMixin, TreeMixin, DeleteRelationMixing):
 
         if unit is not None:
             unit = Unit.objects.filter(pk=unit, space=request.space).first()
-            if unit and unit is None:
-                raise APIException({'error': 'Unit not found in current space'}, code=status.HTTP_400_BAD_REQUEST)
+            if unit is None:
+                return Response({'error': 'Unit not found in current space'}, status=status.HTTP_400_BAD_REQUEST)
+
+        ShoppingListEntry.objects.create(food=obj, amount=amount, unit=unit, space=request.space,
+                                         created_by=request.user)
+        return Response(content, status=status.HTTP_204_NO_CONTENT)
 
     @decorators.action(detail=True, methods=['GET'], serializer_class=FoodSimpleSerializer)
     def substitutes(self, request, pk):
