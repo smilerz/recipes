@@ -8,6 +8,7 @@ models/AiProvider.ts
 models/AuthToken.ts
 models/AutoMealPlan.ts
 models/Automation.ts
+models/AutomationStats.ts
 models/AutomationTypeEnum.ts
 models/BookingTypeEnum.ts
 models/BookmarkletImport.ts
@@ -48,6 +49,7 @@ models/InviteLink.ts
 models/Keyword.ts
 models/KeywordLabel.ts
 models/KeywordModeEnum.ts
+models/KeywordStats.ts
 models/Localization.ts
 models/MealPlan.ts
 models/MealType.ts
@@ -182,6 +184,7 @@ models/SyncLog.ts
 models/ThemeEnum.ts
 models/Unit.ts
 models/UnitConversion.ts
+models/UnitStats.ts
 models/User.ts
 models/UserFile.ts
 models/UserFileView.ts
