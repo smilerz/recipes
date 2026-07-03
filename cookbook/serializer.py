@@ -1337,6 +1337,23 @@ class FoodStatsSerializer(serializers.Serializer):
     total = serializers.IntegerField()
 
 
+class UnitStatsSerializer(serializers.Serializer):
+    with_recipe = serializers.IntegerField()
+    total = serializers.IntegerField()
+
+
+class KeywordStatsSerializer(serializers.Serializer):
+    with_recipe = serializers.IntegerField()
+    with_children = serializers.IntegerField()
+    total = serializers.IntegerField()
+
+
+class AutomationStatsSerializer(serializers.Serializer):
+    enabled = serializers.IntegerField()
+    disabled = serializers.IntegerField()
+    total = serializers.IntegerField()
+
+
 class FoodBatchUpdateSerializer(serializers.Serializer):
     foods = serializers.ListField(child=serializers.IntegerField())
 
