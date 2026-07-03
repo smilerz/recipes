@@ -56,4 +56,25 @@ describe('manageInventory', () => {
         const result = await manageInventory({id: 42, name: 'Flour'}, mockDialog as any, (k: string) => k)
         expect(result).toBe(false)
     })
+
+    it('ICM-02: forwards the food name so manage-mode create sends a non-blank food.name', async () => {
+        apiMock.apiInventoryLocationList.mockResolvedValue({results: LOCATIONS})
+        const mockDialog = {openManage: vi.fn().mockResolvedValue({hasEntries: true})}
+        const {manageInventory} = useInventoryActions()
+        await manageInventory({id: 42, name: 'Flour'}, mockDialog as any, (k: string) => k)
+        expect(mockDialog.openManage).toHaveBeenCalledWith(
+            expect.objectContaining({foodName: 'Flour'})
+        )
+    })
+
+    it('ICM-02: forwards location household so manage-mode create sends inventory_location.household', async () => {
+        apiMock.apiInventoryLocationList.mockResolvedValue({results: LOCATIONS})
+        const mockDialog = {openManage: vi.fn().mockResolvedValue({hasEntries: true})}
+        const {manageInventory} = useInventoryActions()
+        await manageInventory({id: 42, name: 'Flour'}, mockDialog as any, (k: string) => k)
+        const arg = mockDialog.openManage.mock.calls[0][0]
+        expect(arg.locations[0]).toEqual(
+            expect.objectContaining({value: 1, household: {id: 1, name: 'Home'}})
+        )
+    })
 })
