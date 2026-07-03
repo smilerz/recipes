@@ -653,5 +653,6 @@
     "warning_duplicate_filter": "Figyelem! A technikai megkötések miatt több azonos kombinációjú szűrő (és/vagy nem) használata nem várt eredményt adhat.",
     "warning_feature_beta": "Ez a funkció jelenleg BETA (tesztelési) állapotban van. Ha mégis ezt a funkciót használja, számítson hibákra és esetlegesen alapvető változásokra a jövőben (esetleg a funkcióval kapcsolatos adatok elvesztésére).",
     "warning_space_delete": "Törölheti a terét, beleértve az összes receptet, bevásárlólistát, menütervet és bármi mást, amit létrehozott. Ezt nem lehet visszafordítani! Biztos benne, hogy ezt szeretné tenni ?",
-    "AIImportSubtitle": "Receptképek importálása AI segítségével."
+    "AIImportSubtitle": "Receptképek importálása AI segítségével.",
+    "WorkingTime": "Előkészítés ideje"
 }
