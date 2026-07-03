@@ -44,19 +44,9 @@ export const AUTOMATION_SORT_OPTIONS: SortDef[] = [
     {key: 'order', labelKey: 'Order'},
 ]
 
-/** Per-type stat entries — keys match the camelCase property names from the generated TS client
- *  (e.g., type_FOOD_ALIAS → typeFOODALIAS). */
-const TYPE_STAT_DEFS: StatDef[] = AUTOMATION_TYPE_OPTIONS.map(o => ({
-    key: `type${o.value.replace(/_/g, '')}`,
-    labelKey: o.labelKey,
-    icon: 'fa-solid fa-robot',
-    color: 'info',
-}))
-
 export const AUTOMATION_STAT_DEFS: StatDef[] = [
     {key: 'enabled', labelKey: 'Enabled', icon: 'fa-solid fa-toggle-on', color: 'success'},
     {key: 'disabled', labelKey: 'Disabled', icon: 'fa-solid fa-toggle-off', color: 'error'},
-    ...TYPE_STAT_DEFS,
 ]
 
 export const AUTOMATION_LIST_SETTINGS: ListSettings = {
