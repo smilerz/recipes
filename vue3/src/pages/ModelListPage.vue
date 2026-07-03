@@ -280,7 +280,7 @@
         <inventory-quick-add-dialog ref="inventoryQuickAddRef" />
 
         <batch-edit-user-space-dialog :items="selectedItems" v-model="batchEditDialog" v-if="model == 'UserSpace'" activator="model"
-                                @change="loadItems({page: page, itemsPerPage: pageSize, search: debouncedQuery})"></batch-edit-user-space-dialog>
+                                @change="loadItems({page: page, itemsPerPage: pageSize})"></batch-edit-user-space-dialog>
 
     </v-container>
 </template>
@@ -303,7 +303,6 @@ import {useTitle} from "@vueuse/core";
 import BatchDeleteDialog from "@/components/dialogs/BatchDeleteDialog.vue";
 import {useRouteQuery} from "@vueuse/router";
 import BatchEditFoodDialog from "@/components/dialogs/BatchEditFoodDialog.vue";
-import {useDebouncedSearch} from "@/composables/useDebouncedSearch";
 import BatchEditUserSpaceDialog from "@/components/dialogs/BatchEditUserSpaceDialog.vue";
 import {useModelListColumns} from "@/composables/modellist/useModelListColumns";
 import {useUrlFilters} from "@/composables/useUrlFilters";
@@ -511,12 +510,6 @@ async function handleActionWithConfirmation(key: string, item: ModelItem) {
                 // confirmationHandler did the removal — propagate state and skip executeAction
                 if (action.toggleField) propagateToggle(item, action.toggleField)
                 return
-            }
-        } else if (action.isToggle && !getToggleState(action, item)) {
-            // Toggle is inactive → user wants to activate → activation confirm
-            if (action.activationConfirmationHandler && confirmDialogRef.value) {
-                const confirmed = await action.activationConfirmationHandler(item, confirmDialogRef.value, t)
-                if (!confirmed) return
             }
         } else if (action.isToggle && !getToggleState(action, item)) {
             // Toggle is inactive → user wants to activate → activation confirm
