@@ -319,6 +319,7 @@ export const useUserPreferenceStore = defineStore('user_preference_store', () =>
         updateUserSettings,
         switchSpace,
         resetDeviceSettings,
+        loadUserSpaces,
         updateTheme,
     }
 })
