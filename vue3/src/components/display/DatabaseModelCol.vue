@@ -1,7 +1,8 @@
 <template>
     <v-col cols="12" md="6" lg="4">
         <v-card :prepend-icon="genericModel.model.icon" :title="$t(genericModel.model.localizationKey)" :subtitle="$t(genericModel.model.localizationKeyDescription)"
-                :to="{name: 'ModelListPage', params: {model: genericModel.model.name}}"
+                :to="disabled ? undefined : {name: 'ModelListPage', params: {model: genericModel.model.name}}"
+                :disabled="disabled"
                 append-icon="fa-solid fa-arrow-right">
         </v-card>
     </v-col>
@@ -19,6 +20,10 @@ const props = defineProps({
     model: {
         type: String as PropType<EditorSupportedModels>,
         default: 'food'
+    },
+    disabled: {
+        type: Boolean,
+        default: false
     },
 })
 
