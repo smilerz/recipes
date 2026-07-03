@@ -26,7 +26,8 @@ export type InventoryQuickAddDialogInstance = {
     openManage: (opts: {
         title: string,
         foodId: number,
-        locations: {value: number, label: string}[],
+        foodName: string,
+        locations: {value: number, label: string, household?: {id: number, name: string}}[],
         defaultLocationId?: number | null,
         amount?: number,
         unit?: Unit | null,
@@ -270,7 +271,8 @@ export function useInventoryActions() {
         const result = await dialog.openManage({
             title: `${t('Pantry')}: ${food.name}`,
             foodId: food.id,
-            locations: locations.map(l => ({value: l.id, label: l.name})),
+            foodName: food.name,
+            locations: locations.map(l => ({value: l.id, label: l.name, household: l.household})),
             defaultLocationId: saved?.id ?? null,
             amount: defaults?.amount ?? 1,
             unit: defaults?.unit ?? null,
