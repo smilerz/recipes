@@ -42,7 +42,7 @@
                 v-for="section in localSections"
                 :key="section._key"
                 variant="outlined"
-                class="d-flex align-center ga-2 pa-3 mb-1"
+                class="d-flex align-start ga-2 pa-3 mb-1 section-row"
             >
                 <v-icon
                     class="drag-handle flex-shrink-0"
