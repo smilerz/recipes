@@ -41,6 +41,29 @@ register(SupermarketCategoryFactory, 'cat_1', space=LazyFixture('space_1'))
 register(SupermarketCategoryFactory, 'cat_2', space=LazyFixture('space_1'))
 
 
+def test_food_list_schema_declares_filter_params():
+    """The /api/food/ list operation MUST declare its filter query params in the
+    OpenAPI schema. drf-spectacular only emits params it knows about, and the
+    generated TS client forwards only declared params — so an undeclared filter
+    is silently dropped (the client sends just page/page_size) and never reaches
+    the backend. Guards against the food-filters feature being non-functional
+    server-side."""
+    from drf_spectacular.generators import SchemaGenerator
+
+    schema = SchemaGenerator().get_schema(request=None, public=True)
+    params = schema['paths']['/api/food/']['get'].get('parameters', [])
+    names = {p['name'] for p in params}
+
+    expected = {
+        'query', 'ordering', 'root', 'tree', 'tree_search', 'onhand',
+        'has_substitute', 'in_shopping_list', 'has_children', 'has_recipe',
+        'used_in_recipes', 'ignore_shopping', 'supermarket_category',
+        'has_inventory', 'inventory_location', 'expired', 'expiring_soon',
+    }
+    missing = expected - names
+    assert not missing, f'/api/food/ list is missing OpenAPI query params: {sorted(missing)}'
+
+
 @pytest.fixture
 def false():
     return False

@@ -1141,6 +1141,25 @@ class FoodInheritFieldViewSet(LoggingMixin, viewsets.ReadOnlyModelViewSet):
         return super().get_queryset()
 
 
+@extend_schema_view(list=extend_schema(parameters=[
+    OpenApiParameter(name='query', description='Search foods whose name contains this string (case insensitive).', type=str),
+    OpenApiParameter(name='ordering', description='Order results by field. Allowed: name, -name, numrecipe, -numrecipe, numchild, -numchild, created_at, -created_at, supermarket_category__name, -supermarket_category__name.', type=str),
+    OpenApiParameter(name='root', description='Return only children of the food with this id (tree navigation).', type=int),
+    OpenApiParameter(name='tree', description='Return the food with this id and all of its descendants (tree navigation).', type=int),
+    OpenApiParameter(name='tree_search', description='When true and a filter is active, expand the result to include ancestors of matches for tree context.', type=bool),
+    OpenApiParameter(name='onhand', description='Filter foods currently on hand for the user/household.', type=bool),
+    OpenApiParameter(name='has_substitute', description='Filter foods that have (true) / do not have (false) substitutes.', type=bool),
+    OpenApiParameter(name='in_shopping_list', description='Filter foods that are (true) / are not (false) on the shopping list.', type=bool),
+    OpenApiParameter(name='has_children', description='Filter foods that have (true) / do not have (false) child foods.', type=bool),
+    OpenApiParameter(name='has_recipe', description='Filter foods that are (true) / are not (false) linked to a recipe.', type=bool),
+    OpenApiParameter(name='used_in_recipes', description='Filter foods that are (true) / are not (false) used in any recipe.', type=bool),
+    OpenApiParameter(name='ignore_shopping', description='Filter foods with ignore_shopping set to this value.', type=bool),
+    OpenApiParameter(name='supermarket_category', description='Filter foods by supermarket category id.', type=int),
+    OpenApiParameter(name='has_inventory', description='Filter foods that have (true) / do not have (false) inventory on hand.', type=bool),
+    OpenApiParameter(name='inventory_location', description='Filter foods with on-hand inventory at this inventory location id.', type=int),
+    OpenApiParameter(name='expired', description='Filter foods that have (true) / do not have (false) expired inventory.', type=bool),
+    OpenApiParameter(name='expiring_soon', description='Filter foods with inventory expiring within this many days.', type=int),
+]))
 class FoodViewSet(LoggingMixin, TreeMixin, DeleteRelationMixing):
     queryset = Food.objects
     model = Food
