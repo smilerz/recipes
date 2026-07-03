@@ -106,7 +106,7 @@ export type InventoryQuickAddResult = {
     unit: Unit | null
 }
 
-type LocationItem = {value: number, label: string}
+type LocationItem = {value: number, label: string, household?: {id: number, name: string}}
 
 const dialog = ref(false)
 const title = ref('')
@@ -121,6 +121,7 @@ let resolvePromise: ((result: InventoryQuickAddResult | null) => void) | null = 
 // Manage mode state
 const isManageMode = ref(false)
 const manageFoodId = ref<number | null>(null)
+const manageFoodName = ref('')
 const existingEntries = ref<InventoryEntry[]>([])
 const loadingEntries = ref(false)
 const addingEntry = ref(false)
@@ -179,6 +180,7 @@ function cancel() {
 async function openManage(opts: {
     title: string,
     foodId: number,
+    foodName: string,
     locations: LocationItem[],
     defaultLocationId?: number | null,
     amount?: number,
@@ -191,6 +193,7 @@ async function openManage(opts: {
     selectedUnit.value = opts.unit ?? null
     isManageMode.value = true
     manageFoodId.value = opts.foodId
+    manageFoodName.value = opts.foodName
     existingEntries.value = []
     dialog.value = true
 
@@ -220,6 +223,7 @@ function closeManage() {
     manageResolve = null
     isManageMode.value = false
     manageFoodId.value = null
+    manageFoodName.value = ''
 }
 
 async function handleDeleteEntry(entryId: number) {
@@ -241,8 +245,10 @@ async function handleManageAdd() {
         const locationItem = locationItems.value.find(l => l.value === selectedLocationId.value)
         const entry = await new ApiApi().apiInventoryEntryCreate({
             inventoryEntry: {
-                food: {id: manageFoodId.value, name: ''} as any,
-                inventoryLocation: {id: selectedLocationId.value, name: locationItem?.label ?? ''} as any,
+                // household + non-blank name are required by the backend nested
+                // serializers (InventoryLocationSerializer / FoodSerializer).
+                food: {id: manageFoodId.value, name: manageFoodName.value} as any,
+                inventoryLocation: {id: selectedLocationId.value, name: locationItem?.label ?? '', household: locationItem?.household} as any,
                 unit: (selectedUnit.value ?? null) as any,
                 amount: amount.value,
             },
