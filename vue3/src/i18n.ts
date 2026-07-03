@@ -5,7 +5,7 @@ import type {
 
 import {createI18n} from "vue-i18n";
 import en from "@/locales/en.json";
-import {TANDOOR_PLUGINS} from "@/types/Plugins.ts";
+import {TANDOOR_PLUGINS} from "@/plugin_registry.ts";
 import {qualified as qualifiedLocales, coverage as localeCoverage, minCoverage as LOCALE_MIN_COVERAGE} from 'virtual:locale-coverage'
 import {Settings} from "luxon";
 

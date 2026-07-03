@@ -95,6 +95,17 @@ vue3/node_modules
 cookbook/tests/other/docs/reports/tests/tests.html
 cookbook/tests/other/docs/reports/tests/pytest.xml
 vue3/src/plugins
+
+# vue-tsc --build emit (safety net; the type-check gate uses --build --noEmit)
+vue3/*.tsbuildinfo
+vue3/vite.config.js
+vue3/vite.config.d.ts
+vue3/vitest.config.js
+vue3/vitest.config.d.ts
+vue3/playwright.config.js
+vue3/playwright.config.d.ts
+vue3/src/types/Plugins.js
+vue3/src/types/Plugins.d.ts
 docs/reference/
 .idea/vcs.xml
 .idea/db-forest-config.xml

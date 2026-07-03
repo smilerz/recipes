@@ -12,7 +12,8 @@ import {createRulesPlugin} from 'vuetify/labs/rules'
 
 import {setupI18n} from "@/i18n";
 import MealPlanPage from "@/pages/MealPlanPage.vue";
-import {TANDOOR_PLUGINS, TandoorPlugin} from "@/types/Plugins.ts";
+import {TANDOOR_PLUGINS} from "@/plugin_registry.ts";
+import type {TandoorPlugin} from "@/types/Plugins.ts";
 import {canRouteToModel, ModelRouteOperation} from "@/types/Models.ts";
 
 let routes = [

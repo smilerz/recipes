@@ -128,7 +128,7 @@
 
 import DatabaseModelCol from "@/components/display/DatabaseModelCol.vue";
 import DatabaseLinkCol from "@/components/display/DatabaseLinkCol.vue";
-import {TANDOOR_PLUGINS} from "@/types/Plugins.ts";
+import {TANDOOR_PLUGINS} from "@/plugin_registry.ts";
 import {useUserPreferenceStore} from "@/stores/UserPreferenceStore.ts";
 </script>
 
