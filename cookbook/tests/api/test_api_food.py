@@ -1699,3 +1699,27 @@ def test_tree_search_excludes_unrelated_siblings(u1_s1, space_1):
     assert leaf_b.id not in ids  # unrelated leaf
     assert branch_b.id not in ids  # unrelated ancestor branch
 
+
+
+# --- C2: FoodViewSet.shopping add path (regression: create+return were dropped
+#     when the substitutes action was added, so the non-delete PUT fell off the
+#     end returning None -> 500). ---
+
+def test_shopping_action_adds_food_to_list(u1_s1, space_1):
+    with scopes_disabled():
+        food = FoodFactory(space=space_1)
+    r = u1_s1.put(reverse('api:food-shopping', args=[food.id]),
+                  {'amount': 2}, content_type='application/json')
+    assert r.status_code == 204
+    with scopes_disabled():
+        entries = ShoppingListEntry.objects.filter(food=food, space=space_1)
+        assert entries.count() == 1
+        assert entries.first().amount == 2
+
+
+def test_shopping_action_unit_not_found_returns_400(u1_s1, space_1):
+    with scopes_disabled():
+        food = FoodFactory(space=space_1)
+    r = u1_s1.put(reverse('api:food-shopping', args=[food.id]),
+                  {'amount': 1, 'unit': 999999}, content_type='application/json')
+    assert r.status_code == 400
