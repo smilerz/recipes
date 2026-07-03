@@ -4,7 +4,7 @@ from django.conf import settings
 from django.contrib.auth.models import User
 from django.contrib.postgres.search import SearchVector
 from django.core.cache import caches
-from django.db.models.signals import post_delete, post_save, pre_save
+from django.db.models.signals import m2m_changed, post_delete, post_save, pre_save
 from django.dispatch import receiver
 from django.utils import translation
 from django_scopes import scopes_disabled
@@ -179,3 +179,18 @@ def invalidate_household_cache_on_delete(sender, instance=None, **kwargs):
         # The deleted UserSpace is gone from the DB, so the fan-out missed it.
         caches['default'].delete(f'household_user_ids_{instance.space_id}_{instance.household_id}_user_{instance.user_id}')
     caches['default'].delete(f'household_user_ids_{instance.space_id}_user_{instance.user_id}')
+
+
+@receiver(m2m_changed, sender=UserPreference.shopping_share.through)
+def invalidate_household_cache_on_shopping_share(sender, instance=None, action=None, **kwargs):
+    """A user's shopping_share is mixed into their cached household_user_ids
+    (get_household_user_ids), but it was only invalidated on UserSpace changes — a
+    plain shopping_share add/remove left the cache stale for up to the TTL. Clear the
+    owner's per-user cache entries (across all their spaces) on any share change."""
+    if action not in ('post_add', 'post_remove', 'post_clear') or not isinstance(instance, UserPreference):
+        return
+    user_id = instance.user_id
+    for us in UserSpace.objects.filter(user_id=user_id):
+        if us.household_id:
+            caches['default'].delete(f'household_user_ids_{us.space_id}_{us.household_id}_user_{user_id}')
+        caches['default'].delete(f'household_user_ids_{us.space_id}_user_{user_id}')

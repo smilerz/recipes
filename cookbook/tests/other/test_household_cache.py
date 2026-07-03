@@ -171,3 +171,31 @@ class TestHouseholdCacheInvalidation:
             # Per-user fallback key should not have stale data
             result = get_household_user_ids(us1)
             assert result == [user1.id]
+
+    @pytest.mark.django_db
+    def test_shopping_share_change_invalidates_cache(self, cache_backend):
+        """A user's shopping_share is mixed into their cached household_user_ids,
+        so changing it must invalidate that user's cache (previously it only
+        invalidated on UserSpace changes, leaving stale reads for up to the TTL)."""
+        from cookbook.models import UserPreference
+        with scopes_disabled():
+            space = SpaceFactory()
+            household = HouseholdFactory(space=space)
+            user1 = UserFactory(space=space)
+            user2 = UserFactory(space=space)
+            us1 = _make_userspace(user1, space, household)
+
+            # Prime the cache
+            get_household_user_ids(us1)
+            assert caches[cache_backend].get(self._cache_key_household(space.id, household.id, user1.id)) is not None
+
+            # user1 shares with user2 (an m2m change on shopping_share)
+            pref1, _ = UserPreference.objects.get_or_create(user=user1)
+            pref1.shopping_share.add(user2)
+
+            # user1's cache must be invalidated
+            assert caches[cache_backend].get(self._cache_key_household(space.id, household.id, user1.id)) is None
+
+            # Fresh call includes user2 via the shopping_share bridge
+            result = get_household_user_ids(us1)
+            assert user2.id in result
