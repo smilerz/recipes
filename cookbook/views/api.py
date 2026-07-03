@@ -102,7 +102,8 @@ from cookbook.serializer import (AccessTokenSerializer, AutomationSerializer, Au
                                  BookmarkletImportListSerializer, BookmarkletImportSerializer,
                                  CookLogSerializer, CustomFilterSerializer,
                                  ExportLogSerializer, FoodInheritFieldSerializer, FoodSerializer,
-                                 FoodSimpleSerializer, FoodStatsSerializer, GroupSerializer,
+                                 FoodSimpleSerializer, FoodStatsSerializer, UnitStatsSerializer,
+                                 KeywordStatsSerializer, AutomationStatsSerializer, GroupSerializer,
                                  ImportLogSerializer, IngredientSerializer, IngredientSimpleSerializer,
                                  InviteLinkSerializer, KeywordSerializer, MealPlanSerializer, MealTypeSerializer,
                                  PropertySerializer, PropertyTypeSerializer,
@@ -1078,6 +1079,15 @@ class KeywordViewSet(LoggingMixin, TreeMixin, DeleteRelationMixing):
     def get_queryset(self):
         return self._apply_ordering(super().get_queryset())
 
+    @decorators.action(detail=False, pagination_class=None, methods=['GET'], serializer_class=KeywordStatsSerializer, url_path='stats', url_name='stats')
+    def stats(self, request):
+        agg = Keyword.objects.filter(space=request.space).aggregate(
+            with_recipe=Count('pk', filter=Q(recipe__isnull=False), distinct=True),
+            with_children=Count('pk', filter=Q(numchild__gt=0)),
+            total=Count('pk'),
+        )
+        return Response({k: v or 0 for k, v in agg.items()})
+
 
 @extend_schema_view(list=extend_schema(parameters=[
     OpenApiParameter(
@@ -1109,6 +1119,14 @@ class UnitViewSet(LoggingMixin, MergeMixin, FuzzyFilterMixin, DeleteRelationMixi
 
     def get_queryset(self):
         return self._apply_ordering(super().get_queryset())
+
+    @decorators.action(detail=False, pagination_class=None, methods=['GET'], serializer_class=UnitStatsSerializer, url_path='stats', url_name='stats')
+    def stats(self, request):
+        agg = Unit.objects.filter(space=request.space).aggregate(
+            with_recipe=Count('pk', filter=Q(ingredient__isnull=False), distinct=True),
+            total=Count('pk'),
+        )
+        return Response({k: v or 0 for k, v in agg.items()})
 
 
 class FoodInheritFieldViewSet(LoggingMixin, viewsets.ReadOnlyModelViewSet):
@@ -2937,6 +2955,15 @@ class AutomationViewSet(LoggingMixin, StandardFilterModelViewSet):
         if automation_type:
             self.queryset = self.queryset.filter(type__in=automation_type)
         return self._apply_ordering(self.queryset.filter(space=self.request.space).all())
+
+    @decorators.action(detail=False, pagination_class=None, methods=['GET'], serializer_class=AutomationStatsSerializer, url_path='stats', url_name='stats')
+    def stats(self, request):
+        agg = Automation.objects.filter(space=request.space).aggregate(
+            enabled=Count('pk', filter=Q(disabled=False)),
+            disabled=Count('pk', filter=Q(disabled=True)),
+            total=Count('pk'),
+        )
+        return Response({k: v or 0 for k, v in agg.items()})
 
 
 @extend_schema_view(list=extend_schema(parameters=[
