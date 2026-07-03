@@ -20,6 +20,7 @@ import type {
   AiProvider,
   AutoMealPlan,
   Automation,
+  AutomationStats,
   BookmarkletImport,
   ConnectorConfig,
   CookLog,
@@ -46,6 +47,7 @@ import type {
   InventoryLog,
   InviteLink,
   Keyword,
+  KeywordStats,
   Localization,
   MealPlan,
   MealType,
@@ -164,6 +166,7 @@ import type {
   SyncLog,
   Unit,
   UnitConversion,
+  UnitStats,
   User,
   UserFile,
   UserPreference,
@@ -182,6 +185,8 @@ import {
     AutoMealPlanToJSON,
     AutomationFromJSON,
     AutomationToJSON,
+    AutomationStatsFromJSON,
+    AutomationStatsToJSON,
     BookmarkletImportFromJSON,
     BookmarkletImportToJSON,
     ConnectorConfigFromJSON,
@@ -234,6 +239,8 @@ import {
     InviteLinkToJSON,
     KeywordFromJSON,
     KeywordToJSON,
+    KeywordStatsFromJSON,
+    KeywordStatsToJSON,
     LocalizationFromJSON,
     LocalizationToJSON,
     MealPlanFromJSON,
@@ -470,6 +477,8 @@ import {
     UnitToJSON,
     UnitConversionFromJSON,
     UnitConversionToJSON,
+    UnitStatsFromJSON,
+    UnitStatsToJSON,
     UserFromJSON,
     UserToJSON,
     UserFileFromJSON,
@@ -3453,6 +3462,39 @@ export class ApiApi extends runtime.BaseAPI {
      */
     async apiAutomationRetrieve(requestParameters: ApiAutomationRetrieveRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Automation> {
         const response = await this.apiAutomationRetrieveRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * logs request counts to redis cache total/per user/
+     */
+    async apiAutomationStatsRetrieveRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<AutomationStats>> {
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.apiKey) {
+            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
+        }
+
+
+        let urlPath = `/api/automation/stats/`;
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => AutomationStatsFromJSON(jsonValue));
+    }
+
+    /**
+     * logs request counts to redis cache total/per user/
+     */
+    async apiAutomationStatsRetrieve(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<AutomationStats> {
+        const response = await this.apiAutomationStatsRetrieveRaw(initOverrides);
         return await response.value();
     }
 
@@ -8884,6 +8926,39 @@ export class ApiApi extends runtime.BaseAPI {
      */
     async apiKeywordRetrieve(requestParameters: ApiKeywordRetrieveRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Keyword> {
         const response = await this.apiKeywordRetrieveRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * logs request counts to redis cache total/per user/
+     */
+    async apiKeywordStatsRetrieveRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<KeywordStats>> {
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.apiKey) {
+            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
+        }
+
+
+        let urlPath = `/api/keyword/stats/`;
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => KeywordStatsFromJSON(jsonValue));
+    }
+
+    /**
+     * logs request counts to redis cache total/per user/
+     */
+    async apiKeywordStatsRetrieve(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<KeywordStats> {
+        const response = await this.apiKeywordStatsRetrieveRaw(initOverrides);
         return await response.value();
     }
 
@@ -17175,6 +17250,39 @@ export class ApiApi extends runtime.BaseAPI {
      */
     async apiUnitRetrieve(requestParameters: ApiUnitRetrieveRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Unit> {
         const response = await this.apiUnitRetrieveRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * logs request counts to redis cache total/per user/
+     */
+    async apiUnitStatsRetrieveRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<UnitStats>> {
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.apiKey) {
+            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
+        }
+
+
+        let urlPath = `/api/unit/stats/`;
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => UnitStatsFromJSON(jsonValue));
+    }
+
+    /**
+     * logs request counts to redis cache total/per user/
+     */
+    async apiUnitStatsRetrieve(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<UnitStats> {
+        const response = await this.apiUnitStatsRetrieveRaw(initOverrides);
         return await response.value();
     }
 
