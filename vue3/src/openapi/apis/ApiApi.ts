@@ -834,8 +834,25 @@ export interface ApiFoodInheritFieldRetrieveRequest {
 }
 
 export interface ApiFoodListRequest {
+    expired?: boolean;
+    expiringSoon?: number;
+    hasChildren?: boolean;
+    hasInventory?: boolean;
+    hasRecipe?: boolean;
+    hasSubstitute?: boolean;
+    ignoreShopping?: boolean;
+    inShoppingList?: boolean;
+    inventoryLocation?: number;
+    onhand?: boolean;
+    ordering?: string;
     page?: number;
     pageSize?: number;
+    query?: string;
+    root?: number;
+    supermarketCategory?: number;
+    tree?: number;
+    treeSearch?: boolean;
+    usedInRecipes?: boolean;
 }
 
 export interface ApiFoodMergeUpdateRequest {
@@ -5529,12 +5546,80 @@ export class ApiApi extends runtime.BaseAPI {
     async apiFoodListRaw(requestParameters: ApiFoodListRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PaginatedFoodList>> {
         const queryParameters: any = {};
 
+        if (requestParameters['expired'] != null) {
+            queryParameters['expired'] = requestParameters['expired'];
+        }
+
+        if (requestParameters['expiringSoon'] != null) {
+            queryParameters['expiring_soon'] = requestParameters['expiringSoon'];
+        }
+
+        if (requestParameters['hasChildren'] != null) {
+            queryParameters['has_children'] = requestParameters['hasChildren'];
+        }
+
+        if (requestParameters['hasInventory'] != null) {
+            queryParameters['has_inventory'] = requestParameters['hasInventory'];
+        }
+
+        if (requestParameters['hasRecipe'] != null) {
+            queryParameters['has_recipe'] = requestParameters['hasRecipe'];
+        }
+
+        if (requestParameters['hasSubstitute'] != null) {
+            queryParameters['has_substitute'] = requestParameters['hasSubstitute'];
+        }
+
+        if (requestParameters['ignoreShopping'] != null) {
+            queryParameters['ignore_shopping'] = requestParameters['ignoreShopping'];
+        }
+
+        if (requestParameters['inShoppingList'] != null) {
+            queryParameters['in_shopping_list'] = requestParameters['inShoppingList'];
+        }
+
+        if (requestParameters['inventoryLocation'] != null) {
+            queryParameters['inventory_location'] = requestParameters['inventoryLocation'];
+        }
+
+        if (requestParameters['onhand'] != null) {
+            queryParameters['onhand'] = requestParameters['onhand'];
+        }
+
+        if (requestParameters['ordering'] != null) {
+            queryParameters['ordering'] = requestParameters['ordering'];
+        }
+
         if (requestParameters['page'] != null) {
             queryParameters['page'] = requestParameters['page'];
         }
 
         if (requestParameters['pageSize'] != null) {
             queryParameters['page_size'] = requestParameters['pageSize'];
+        }
+
+        if (requestParameters['query'] != null) {
+            queryParameters['query'] = requestParameters['query'];
+        }
+
+        if (requestParameters['root'] != null) {
+            queryParameters['root'] = requestParameters['root'];
+        }
+
+        if (requestParameters['supermarketCategory'] != null) {
+            queryParameters['supermarket_category'] = requestParameters['supermarketCategory'];
+        }
+
+        if (requestParameters['tree'] != null) {
+            queryParameters['tree'] = requestParameters['tree'];
+        }
+
+        if (requestParameters['treeSearch'] != null) {
+            queryParameters['tree_search'] = requestParameters['treeSearch'];
+        }
+
+        if (requestParameters['usedInRecipes'] != null) {
+            queryParameters['used_in_recipes'] = requestParameters['usedInRecipes'];
         }
 
         const headerParameters: runtime.HTTPHeaders = {};
