@@ -26,6 +26,21 @@ def test_ordering_name(u1_s1, space_1):
     assert desc['results'][0]['name'] == 'zzz_file'
 
 
+def test_ordering_file_size_kb(u1_s1, space_1):
+    """Characterization: file_size_kb ordering (plain-field path, no Lower())."""
+    user = auth.get_user(u1_s1)
+    small = UserFile.objects.create(name='char_small', file=SimpleUploadedFile('s.txt', b'x' * 1000), created_by=user, space=space_1)
+    large = UserFile.objects.create(name='char_large', file=SimpleUploadedFile('l.txt', b'x' * 9000), created_by=user, space=space_1)
+
+    asc = json.loads(u1_s1.get(f'{reverse(LIST_URL)}?ordering=file_size_kb').content)
+    ids_asc = [r['id'] for r in asc['results']]
+    assert ids_asc.index(small.id) < ids_asc.index(large.id)
+
+    desc = json.loads(u1_s1.get(f'{reverse(LIST_URL)}?ordering=-file_size_kb').content)
+    ids_desc = [r['id'] for r in desc['results']]
+    assert ids_desc.index(large.id) < ids_desc.index(small.id)
+
+
 def test_delete_userfile_referenced_by_step_is_blocked(u1_s1, space_1):
     """A user file attached to a recipe step is PROTECTed: deleting it must
     return a clean 4xx (403), not a 500, and the file must survive."""
