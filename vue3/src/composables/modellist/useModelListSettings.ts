@@ -16,7 +16,7 @@ export function useModelListSettings(settingsKey: ComputedRef<string>, modelDefa
         return computed({
             get: () => {
                 if (!settingsKey.value) return defaultVal
-                return deviceSettings[`${settingsKey.value}_${suffix}`] ?? defaultVal
+                return (deviceSettings[`${settingsKey.value}_${suffix}`] ?? defaultVal) as T
             },
             set: (val: T) => {
                 if (!settingsKey.value) return
