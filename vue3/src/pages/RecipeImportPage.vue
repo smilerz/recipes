@@ -602,9 +602,15 @@ function importFromUrlList() {
             if (sourceResponse.recipe) {
                 api.apiRecipeCreate({recipe: sourceResponse.recipe}).then(recipe => {
                     urlListImportedRecipes.value.push(recipe)
-                    updateRecipeImage(recipe.id!, null, sourceResponse.recipe?.imageUrl).then(imageResponse => {
-                        setTimeout(importFromUrlList, 500)
-                    })
+                    // Attach the scraped image if there is one, then continue the
+                    // batch regardless of whether the image import succeeded.
+                    const next = () => setTimeout(importFromUrlList, 500)
+                    const imageUrl = sourceResponse.recipe?.imageUrl
+                    if (imageUrl) {
+                        createRecipeImageFromUrl(recipe.id!, imageUrl).then(next).catch(next)
+                    } else {
+                        next()
+                    }
                 }).catch(err => {
                     setTimeout(importFromUrlList, 500)
                 }).finally(() => {
@@ -632,7 +638,7 @@ const params = useUrlSearchParams('history', {})
 const {mobile} = useDisplay()
 const router = useRouter()
 const {t} = useI18n()
-const {updateRecipeImage, doAiImport, doAppImport, fileApiLoading} = useFileApi()
+const {createRecipeImageFromUrl, doAiImport, doAppImport, fileApiLoading} = useFileApi()
 const {getFullUrl} = useDjangoUrls()
 
 const bookmarkletContent = computed(() => {
@@ -810,13 +816,21 @@ function createRecipeFromImport() {
         importResponse.value.recipe.keywords = importResponse.value.recipe.keywords.filter(k => k.importKeyword)
 
         api.apiRecipeCreate({recipe: importResponse.value.recipe}).then(recipe => {
-            updateRecipeImage(recipe.id!, null, importResponse.value.recipe?.imageUrl).then(r => {
+            const navigate = () => {
                 if (editAfterImport.value) {
                     router.push({name: 'ModelEditPage', params: {id: recipe.id, model: 'recipe'}})
                 } else {
                     router.push({name: 'RecipeViewPage', params: {id: recipe.id}})
                 }
-            })
+            }
+            // Attach the scraped image if present, then navigate whether or not
+            // the image import succeeded.
+            const imageUrl = importResponse.value.recipe?.imageUrl
+            if (imageUrl) {
+                createRecipeImageFromUrl(recipe.id!, imageUrl).then(navigate).catch(navigate)
+            } else {
+                navigate()
+            }
         }).catch(err => {
             useMessageStore().addError(ErrorMessageType.CREATE_ERROR, err)
         }).finally(() => {
@@ -964,6 +978,9 @@ function loadOrCreateBookmarkletToken() {
 function resetImporter() {
     location.reload()
 }
+
+// Exposed for testing the post-import image-attach flow.
+defineExpose({createRecipeFromImport, importFromUrlList, importResponse, editAfterImport})
 
 </script>
 

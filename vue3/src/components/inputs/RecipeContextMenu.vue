@@ -100,7 +100,6 @@ import RecipeImageEditor from "@/components/inputs/RecipeImageEditor.vue";
 import VClosableCardTitle from "@/components/dialogs/VClosableCardTitle.vue";
 import {ErrorMessageType, PreparedMessage, useMessageStore} from "@/stores/MessageStore.ts";
 import {useRouter, useRoute} from "vue-router";
-import {useFileApi} from "@/composables/useFileApi.ts";
 import {useI18n} from "vue-i18n";
 import {useUserPreferenceStore} from "@/stores/UserPreferenceStore";
 import {useRecipeViewSettings} from '@/composables/useRecipeViewSettings'
@@ -109,7 +108,6 @@ const router = useRouter()
 const route = useRoute()
 const {t} = useI18n()
 const {isOpen: recipeSettingsOpen} = useRecipeViewSettings()
-const {updateRecipeImage} = useFileApi()
 const deviceSettings = useUserPreferenceStore().deviceSettings
 
 const isOnRecipeView = computed(() => route.name === 'RecipeViewPage')
