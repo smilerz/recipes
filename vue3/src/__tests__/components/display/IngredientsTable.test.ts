@@ -45,7 +45,7 @@ function makeIngredient(overrides: any = {}): any {
     }
 }
 
-function mountTable(ingredients: any[], context: 'overview' | 'step' = 'overview') {
+function mountTable(ingredients: any[], context: 'overview' | 'step' = 'overview', showActions = false) {
     const prePopulate: PiniaPlugin = ({store}) => {
         if (store.$id === 'user_preference_store') {
             store.userSettings = makeUserPreference() as any
@@ -63,11 +63,11 @@ function mountTable(ingredients: any[], context: 'overview' | 'step' = 'overview
     })
     const router = createRouter({history: createMemoryHistory(), routes: [{path: '/', component: {template: '<div/>'}}]})
     return mount(IngredientsTable, {
-        props: {modelValue: ingredients, ingredientFactor: 1, showCheckbox: false, showActions: false, context},
+        props: {modelValue: ingredients, ingredientFactor: 1, showCheckbox: false, showActions, context},
         global: {
             plugins: [pinia, i18n, vuetify, router],
             stubs: {
-                IngredientContextMenu: {template: '<div class="stub-ctxmenu"/>'},
+                IngredientContextMenu: {name: 'IngredientContextMenu', template: '<div class="stub-ctxmenu"/>', emits: ['scale', 'update:foodStatus']},
             },
         },
     })
@@ -77,6 +77,19 @@ describe('IngredientsTable inline onhand / substitute', () => {
     beforeEach(() => {
         setActivePinia(createPinia())
         resetApiMock()
+    })
+
+    it("applies IngredientContextMenu's update:foodStatus to the ingredient food (live chip)", async () => {
+        const ing = makeIngredient({food: {foodOnhand: false, availableSubstitutes: [], substituteOnhand: false}})
+        const w = mountTable([ing], 'step', true)
+        expect(w.html()).not.toContain('fa-clipboard-check')
+
+        // Menu reports a status change; IngredientsTable (the model owner) applies it.
+        const menu = w.findComponent({name: 'IngredientContextMenu'})
+        menu.vm.$emit('update:foodStatus', {foodOnhand: true})
+        await w.vm.$nextTick()
+
+        expect(w.html()).toContain('fa-clipboard-check')  // on-hand chip now shows reactively
     })
 
     it('renders green onhand icon and no substitute names when food is onhand', () => {
