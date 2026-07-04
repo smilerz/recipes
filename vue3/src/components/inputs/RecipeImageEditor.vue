@@ -67,10 +67,7 @@
 import {ref} from "vue"
 import {VueDraggable} from "vue-draggable-plus"
 import type {RecipeImage as RecipeImageType} from "@/openapi"
-import {RecipeImageFromJSON} from "@/openapi"
 import {useFileApi} from "@/composables/useFileApi"
-import {useDjangoUrls} from "@/composables/useDjangoUrls"
-import {getCookie} from "@/utils/cookie"
 import {cropPosition, cropPreviewStyle} from "@/utils/image_crop"
 import {ErrorMessageType, PreparedMessage, useMessageStore} from "@/stores/MessageStore"
 import ImageEditor from "@/components/inputs/ImageEditor.vue"
@@ -81,8 +78,7 @@ const props = defineProps<{
 
 const localImages = defineModel<RecipeImageType[]>('images', {default: () => []})
 
-const {createRecipeImage, updateRecipeImageCropData, deleteRecipeImage} = useFileApi()
-const {getDjangoUrl} = useDjangoUrls()
+const {createRecipeImage, updateRecipeImageCropData, deleteRecipeImage, patchRecipeImage} = useFileApi()
 
 const uploading = ref(false)
 const showUpload = ref(false)
@@ -154,21 +150,14 @@ async function setPrimary(idx: number) {
     const img = localImages.value[idx]
     if (!img.id) return
     try {
-        const r = await fetch(getDjangoUrl(`api/recipe-image/${img.id}/`), {
-            method: 'PATCH',
-            headers: {'X-CSRFToken': getCookie('csrftoken'), 'Content-Type': 'application/json'},
-            body: JSON.stringify({is_primary: true}),
+        const updated = await patchRecipeImage(img.id, {is_primary: true})
+        localImages.value.forEach((im, i) => {
+            if (i === idx) {
+                Object.assign(im, updated)
+            } else {
+                im.isPrimary = false
+            }
         })
-        if (r.ok) {
-            const updated = RecipeImageFromJSON(await r.json())
-            localImages.value.forEach((im, i) => {
-                if (i === idx) {
-                    Object.assign(im, updated)
-                } else {
-                    im.isPrimary = false
-                }
-            })
-        }
     } catch (err: any) {
         useMessageStore().addError(ErrorMessageType.UPDATE_ERROR, err)
     }
@@ -206,16 +195,15 @@ function onReorder() {
     localImages.value.forEach((img, idx) => {
         img.order = idx
         if (img.id) {
-            fetch(getDjangoUrl(`api/recipe-image/${img.id}/`), {
-                method: 'PATCH',
-                headers: {'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken')},
-                body: JSON.stringify({order: idx}),
-            }).catch((err: any) => {
+            patchRecipeImage(img.id, {order: idx}).catch((err: any) => {
                 useMessageStore().addError(ErrorMessageType.UPDATE_ERROR, err)
             })
         }
     })
 }
+
+// Exposed for testing the primary/reorder API calls.
+defineExpose({setPrimary, onReorder})
 </script>
 
 <style scoped>
