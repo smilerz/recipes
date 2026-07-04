@@ -2970,7 +2970,13 @@ class RecipeImageViewSet(LoggingMixin, viewsets.ModelViewSet):
     parser_classes = [MultiPartParser, JSONParser]
 
     def get_queryset(self):
-        self.queryset = self.queryset.filter(space=self.request.space)
+        # Images inherit their recipe's visibility: a private recipe's images
+        # are only visible to the owner or users it is shared with (mirrors
+        # StepViewSet / IngredientViewSet). .distinct() because the shared M2M
+        # join can duplicate rows.
+        self.queryset = self.queryset.filter(space=self.request.space).filter(
+            Q(recipe__private=False) | (Q(recipe__private=True) & (Q(recipe__created_by=self.request.user) | Q(recipe__shared=self.request.user)))
+        ).distinct()
         recipe_id = self.request.query_params.get('recipe', None)
         if recipe_id:
             self.queryset = self.queryset.filter(recipe_id=recipe_id)
@@ -3003,7 +3009,11 @@ class RecipeImageViewSet(LoggingMixin, viewsets.ModelViewSet):
         if not recipe_id or not image_url:
             return Response({'error': 'recipe and image_url are required'}, status=400)
         try:
-            recipe = Recipe.objects.get(pk=recipe_id)
+            # Enforce recipe visibility: a user must not attach an image to a
+            # private recipe they neither own nor have shared with them.
+            recipe = Recipe.objects.filter(space=request.space).filter(
+                Q(private=False) | (Q(private=True) & (Q(created_by=request.user) | Q(shared=request.user)))
+            ).distinct().get(pk=recipe_id)
         except Recipe.DoesNotExist:
             return Response({'error': 'Recipe not found'}, status=404)
         try:
