@@ -311,18 +311,28 @@
                     <CollapsibleSection :label="$t(group)">
                         <div v-for="def in defs" :key="def.key" class="d-flex align-center px-4 py-1 ga-1">
                             <span class="text-body-2 flex-grow-1">{{ $t(def.labelKey) }}</span>
-                            <v-btn-toggle density="compact" multiple color="primary">
+                            <!-- Page and Panel are independent placements (a filter can be
+                                 on both, either, or neither), so use two standalone toggle
+                                 buttons rather than a v-btn-toggle group — the group would
+                                 swallow each button's active state without a group model. -->
+                            <div class="d-flex ga-1">
                                 <v-btn
-                                    size="x-small"
-                                    :active="isInlineSelected(def.key)"
+                                    :data-test="'placement-page-' + def.key"
+                                    size="x-small" density="compact"
+                                    :variant="isInlineSelected(def.key) ? 'flat' : 'outlined'"
+                                    :color="isInlineSelected(def.key) ? 'primary' : undefined"
+                                    :aria-pressed="isInlineSelected(def.key)"
                                     @click="toggleInline(def.key)"
                                 >{{ $t('Page') }}</v-btn>
                                 <v-btn
-                                    size="x-small"
-                                    :active="isDrawerSelected(def.key)"
+                                    :data-test="'placement-panel-' + def.key"
+                                    size="x-small" density="compact"
+                                    :variant="isDrawerSelected(def.key) ? 'flat' : 'outlined'"
+                                    :color="isDrawerSelected(def.key) ? 'primary' : undefined"
+                                    :aria-pressed="isDrawerSelected(def.key)"
                                     @click="toggleDrawer(def.key)"
                                 >{{ $t('Panel') }}</v-btn>
-                            </v-btn-toggle>
+                            </div>
                         </div>
                     </CollapsibleSection>
                 </template>
