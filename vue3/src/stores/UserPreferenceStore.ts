@@ -272,7 +272,7 @@ export const useUserPreferenceStore = defineStore('user_preference_store', () =>
             search_visibleFilters: [],
             search_includeChildren: true,
             search_inlineFilters: ['_keywordsGroup', '_foodsGroup', '_booksGroup'],
-            search_drawerFilters: ['_keywordsGroup', '_foodsGroup', '_booksGroup', 'ratingGte', 'unrated', 'servings', 'makenow', 'cookedon', 'createdon', 'totalTime', 'createdby', 'internal'],
+            search_drawerFilters: ['_keywordsGroup', '_foodsGroup', '_booksGroup', 'ratingGte', 'unrated', 'servings', 'timescooked', 'makenow', 'cookedon', 'createdon', 'totalTime', 'createdby', 'internal'],
             search_savedSearchInline: true,
             search_savedSearchInPanel: true,
             search_showStats: true,

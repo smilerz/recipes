@@ -461,37 +461,27 @@ const savedSearchInline = computed({
 })
 
 // ─── Drawer filter visibility (search-specific) ────────────────────────
-const DEFAULT_DRAWER = ['_keywordsGroup', '_foodsGroup', '_booksGroup', 'ratingGte', 'unrated', 'servings', 'timescooked', 'makenow', 'cookedon', 'createdon', 'totalTime', 'createdby', 'internal']
-
+// Drawer filters are driven by useFilterPlacement (isDrawerSelected) so what
+// renders always matches the Panel toggles — including an explicitly emptied
+// list. Ungrouped filters (no group) are not placement-configurable and always
+// show.
 const drawerFilterDefs = computed(() => {
-    const raw = useUserPreferenceStore().deviceSettings.search_drawerFilters
-    if (!raw || raw.length === 0) return groupedFilterDefs.value
-    const storedKeys = new Set(raw)
-    // Merge any new default keys so newly-added filters appear for existing users
-    for (const key of DEFAULT_DRAWER) {
-        storedKeys.add(key)
-    }
     const filtered = new Map<string, FilterDef[]>()
     for (const [group, defs] of groupedFilterDefs.value) {
-        const visible = defs.filter(d => !d.hidden && (!group || storedKeys.has(d.key)))
+        const visible = defs.filter(d => !d.hidden && (!group || isDrawerSelected(d.key)))
         if (visible.length > 0) filtered.set(group, visible)
     }
     return filtered
 })
 
 // ─── Inline filter visibility (per-filter granularity) ──────────────────
-const DEFAULT_INLINE = ['_keywordsGroup', '_foodsGroup', '_booksGroup']
-
-const inlineFilterKeys = computed(() => {
-    const raw = useUserPreferenceStore().deviceSettings.search_inlineFilters
-    return raw && raw.length > 0 ? raw : DEFAULT_INLINE
-})
+// Driven by useFilterPlacement (isInlineSelected) so what renders on the page
+// matches the Page toggles, including an explicitly emptied list.
 const inlineGroups = computed(() => {
-    const keys = new Set(inlineFilterKeys.value)
     const result: [string, FilterDef[]][] = []
     for (const [group, defs] of groupedFilterDefs.value) {
         if (!group) continue
-        const visible = defs.filter(d => keys.has(d.key))
+        const visible = defs.filter(d => isInlineSelected(d.key))
         if (visible.length > 0) result.push([group, visible])
     }
     return result
@@ -555,7 +545,7 @@ function openSettingsPanel(tab: 'settings' | 'filters') {
 }
 
 // Exposed for component tests — script setup doesn't auto-expose bindings.
-defineExpose({openSettingsPanel, settingsActiveTab, settingsPanelOpen, onTableUpdate, filterParams, pageSize, applyStatFilter})
+defineExpose({openSettingsPanel, settingsActiveTab, settingsPanelOpen, onTableUpdate, filterParams, pageSize, applyStatFilter, inlineGroups, drawerFilterDefs})
 
 function resetAll() {
     query.value = ''
