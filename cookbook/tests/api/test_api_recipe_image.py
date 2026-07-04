@@ -203,3 +203,50 @@ def test_cross_space_access_rejected(u1_s2, img_1):
     assert r.status_code == 404
 
 
+def _make_private(recipe):
+    with scopes_disabled():
+        recipe.private = True
+        recipe.save()
+
+
+def test_private_recipe_images_hidden_from_other_space_member(u1_s1, u2_s1, img_1, recipe_1_s1):
+    # A different member of the SAME space who is neither owner nor shared must
+    # not see the images of a private recipe.
+    _make_private(recipe_1_s1)
+
+    listed = json.loads(u2_s1.get(reverse(LIST_URL), {'recipe': recipe_1_s1.id}).content)
+    assert img_1.id not in [i['id'] for i in listed['results']]
+
+    assert u2_s1.get(reverse(DETAIL_URL, args=[img_1.id])).status_code == 404
+
+
+def test_owner_still_sees_own_private_recipe_images(u1_s1, img_1, recipe_1_s1):
+    # Positive control: the owner keeps access after the recipe goes private.
+    _make_private(recipe_1_s1)
+
+    listed = json.loads(u1_s1.get(reverse(LIST_URL), {'recipe': recipe_1_s1.id}).content)
+    assert img_1.id in [i['id'] for i in listed['results']]
+    assert u1_s1.get(reverse(DETAIL_URL, args=[img_1.id])).status_code == 200
+
+
+def test_shared_user_sees_private_recipe_images(u1_s1, u2_s1, img_1, recipe_1_s1):
+    # A user the recipe is explicitly shared with keeps access.
+    with scopes_disabled():
+        recipe_1_s1.private = True
+        recipe_1_s1.shared.add(auth.get_user(u2_s1))
+        recipe_1_s1.save()
+
+    assert u2_s1.get(reverse(DETAIL_URL, args=[img_1.id])).status_code == 200
+
+
+def test_from_url_forbidden_on_inaccessible_private_recipe(u2_s1, img_1, recipe_1_s1):
+    # from_url must not let a non-owner attach an image to a private recipe.
+    _make_private(recipe_1_s1)
+    r = u2_s1.post(
+        reverse('api:recipeimage-from-url'),
+        {'recipe': recipe_1_s1.id, 'image_url': 'http://example.com/x.jpg'},
+        content_type='application/json',
+    )
+    assert r.status_code == 404
+
+
