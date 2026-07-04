@@ -692,6 +692,7 @@
   "SubLocation": "Sub Location",
   "SubLocationHelp": "(optional) Specific place within a location (e.g. drawer X or shelf Y).",
   "Substitute": "Substitute",
+  "SubstituteAvailable": "Substitute available: {names}",
   "SubstituteOnHand": "You have a substitute on hand.",
   "Substitutes": "Substitutes",
   "Subtitle": "Subtitle",
