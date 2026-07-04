@@ -59,5 +59,11 @@ function closeAlert() {
 </script>
 
 <style scoped>
-
+/* The default v-alert title reads too large/heavy for an inline help hint —
+ * lighten the weight and shrink it toward a subtitle so it doesn't dominate. */
+:deep(.v-alert-title) {
+    font-size: 0.95rem;
+    font-weight: 500;
+    line-height: 1.4;
+}
 </style>
