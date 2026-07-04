@@ -427,4 +427,30 @@ describe('SearchPage (Phase 3 rewrite)', () => {
             expect(wrapper.find('.v-pagination').exists()).toBe(true)
         })
     })
+
+    // Guard for the per-filter placement toggles: they must show an active-state
+    // highlight. The old v-btn-toggle group swallowed each button's :active prop
+    // (no group model-value → nothing highlighted), so clicking Page/Panel never
+    // filled the button. Independent toggle buttons must flip their active fill.
+    describe('filter placement toggles', () => {
+        it('toggles the active fill on the per-filter Page button when clicked', async () => {
+            const {wrapper} = await mountSearchPage()
+            // The settings drawer is a v-bottom-sheet in the test viewport; its
+            // content teleports to document.body, so query the document.
+            ;(wrapper.vm as any).openSettingsPanel('settings')
+            await flushPromises()
+
+            const pageBtn = document.querySelector('[data-test^="placement-page-"]') as HTMLElement
+            expect(pageBtn).not.toBeNull()
+            const testId = pageBtn.getAttribute('data-test')!
+            const before = pageBtn.classList.contains('v-btn--variant-flat')
+
+            pageBtn.click()
+            await flushPromises()
+
+            const after = document.querySelector(`[data-test="${testId}"]`)!.classList.contains('v-btn--variant-flat')
+            expect(after).toBe(!before)
+            wrapper.unmount()
+        })
+    })
 })
