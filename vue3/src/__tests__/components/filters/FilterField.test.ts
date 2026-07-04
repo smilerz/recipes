@@ -77,4 +77,21 @@ describe('FilterField — rating-unrated (unified rating + unrated control)', ()
         expect(clearFilter).toHaveBeenCalledWith('ratingGte')
         expect(clearFilter).toHaveBeenCalledWith('unrated')
     })
+
+    // Item 2: the vertical divider between the ban toggle and the stars was a
+    // stray artifact — the ban glyph already separates the two visually.
+    it('renders no vertical divider between the unrated toggle and the stars', () => {
+        const {wrapper} = mountField(RATING_DEF)
+        expect(wrapper.find('.v-divider').exists()).toBe(false)
+    })
+
+    // Item 4: the ban toggle must not render a filled button box (which sat off
+    // the stars' baseline). It stays a text-variant icon — colored primary when
+    // active, muted when not — so it aligns with the plain-variant rating stars.
+    it('keeps the unrated toggle boxless (text variant, no flat fill) even when active', () => {
+        const {wrapper} = mountField(RATING_DEF, {unrated: '1'})
+        const cls = wrapper.find('.unrated-toggle').classes()
+        expect(cls).toContain('v-btn--variant-text')
+        expect(cls).not.toContain('v-btn--variant-flat')
+    })
 })
