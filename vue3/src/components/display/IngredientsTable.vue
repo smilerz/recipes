@@ -118,7 +118,7 @@ import {computed, reactive, ref} from 'vue'
 import {Ingredient} from "@/openapi";
 import {calculateFoodAmount} from "../../utils/number_utils";
 import {useUserPreferenceStore} from "../../stores/UserPreferenceStore";
-import {ingredientToFoodString, ingredientToUnitString} from "@/utils/model_utils.ts";
+import {ingredientToFoodString, ingredientToUnitString, parseBooleanAnnotation} from "@/utils/model_utils.ts";
 import IngredientContextMenu from "@/components/inputs/IngredientContextMenu.vue";
 import {useDisplay} from "vuetify";
 import {useI18n} from "vue-i18n";
@@ -208,16 +208,12 @@ function truncateNote(note: string | undefined, reserved: number = 0): string {
     return note.length > budget ? note.substring(0, budget) + '...' : note
 }
 
-/** Matches FoodList.ts isInInventory pattern — annotation comes as "True"/"False" string */
 function isOnHand(i: Ingredient): boolean {
-    const inv = i.food?.inInventory
-    if (inv === true || inv === 'True' || inv === 'true') return true
-    return !!i.food?.foodOnhand
+    return parseBooleanAnnotation(i.food?.inInventory) || !!i.food?.foodOnhand
 }
 
 function isOnShoppingList(i: Ingredient): boolean {
-    const s = i.food?.shopping
-    return s === true || s === 'True' || s === 'true'
+    return parseBooleanAnnotation(i.food?.shopping)
 }
 
 // Show the first available substitute — the same one the mobile substitute
