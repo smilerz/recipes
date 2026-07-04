@@ -452,4 +452,33 @@ describe('SearchPage (Phase 3 rewrite)', () => {
             wrapper.unmount()
         })
     })
+
+    // Regression: the page rendered inline/drawer filters from its own
+    // empty->defaults fallback (and a merge-hack for the drawer), so unselecting
+    // every Page filter left them all visible. Rendering must follow the
+    // placement toggles (useFilterPlacement).
+    describe('inline/drawer filter visibility follows the placement toggles', () => {
+        it('renders no inline filters when the inline placement list is explicitly empty', async () => {
+            const {wrapper} = await mountSearchPage({}, 'grid', {search_inlineFilters: []})
+            expect((wrapper.vm as any).inlineGroups).toEqual([])
+            wrapper.unmount()
+        })
+
+        it('renders only the selected inline filter, not the unselected defaults', async () => {
+            const {wrapper} = await mountSearchPage({}, 'grid', {search_inlineFilters: ['_keywordsGroup']})
+            const keys = (wrapper.vm as any).inlineGroups.flatMap((g: any) => g[1].map((d: any) => d.key))
+            expect(keys).toContain('_keywordsGroup')
+            expect(keys).not.toContain('_foodsGroup')
+            expect(keys).not.toContain('_booksGroup')
+            wrapper.unmount()
+        })
+
+        it('drops a drawer filter that was unselected from the panel', async () => {
+            const {wrapper} = await mountSearchPage({}, 'grid', {search_drawerFilters: ['_keywordsGroup']})
+            const keys = [...(wrapper.vm as any).drawerFilterDefs.values()].flat().map((d: any) => d.key)
+            expect(keys).toContain('_keywordsGroup')
+            expect(keys).not.toContain('_foodsGroup')
+            wrapper.unmount()
+        })
+    })
 })
