@@ -961,15 +961,19 @@ class FoodSerializer(UniqueFieldsMixin, WritableNestedModelSerializer, RecipeCou
         cached = self.context.get('_substitute_inventory')
         if cached is not None:
             return cached.get(obj.id, False)
-        # Fallback for single-object serialization (retrieve, create, etc.)
+        # Fallback for single-object serialization (retrieve, create, etc.).
+        # Must scope inventory to the caller's household to match the batch/list
+        # path (FoodViewSet._compute_substitute_flags), otherwise retrieve would
+        # report another household's inventory as available.
         try:
-            substitute_ids = [s.id for s in obj.substitute.all()]
-            filter = Q(id__in=substitute_ids)
-            if obj.substitute_siblings:
-                filter |= Q(path__startswith=obj.path[:Food.steplen * (obj.depth - 1)], depth=obj.depth)
-            if obj.substitute_children:
-                filter |= Q(path__startswith=obj.path, depth__gt=obj.depth)
-            return Food.objects.filter(filter).filter(inventoryentry__amount__gt=0).exists()
+            try:
+                household = self.context["request"].user_space.household
+            except AttributeError:
+                household = None
+            inventory_q = Q(inventoryentry__amount__gt=0)
+            if household is not None:
+                inventory_q &= Q(inventoryentry__inventory_location__household=household)
+            return Food.objects.filter(self._substitute_candidates_filter(obj)).filter(inventory_q).exists()
         except AttributeError:
             return False
 
