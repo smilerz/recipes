@@ -14,13 +14,16 @@ export function useFilterPlacement() {
     // When the saved list is empty, fall back to the defaults so the toggles
     // reflect the placement the page actually renders (SearchPage applies the
     // same fallback) instead of showing every filter as "not set".
+    // Fall back to the defaults only when the setting was never saved — an
+    // explicitly emptied list (user turned every placement off) must be honoured,
+    // otherwise emptying it silently resurrects the defaults.
     function effectiveInline(): string[] {
         const raw = deviceSettings.search_inlineFilters
-        return (raw && raw.length > 0) ? raw : DEFAULT_INLINE_FILTERS
+        return raw == null ? DEFAULT_INLINE_FILTERS : raw
     }
     function effectiveDrawer(): string[] {
         const raw = deviceSettings.search_drawerFilters
-        return (raw && raw.length > 0) ? raw : DEFAULT_DRAWER_FILTERS
+        return raw == null ? DEFAULT_DRAWER_FILTERS : raw
     }
 
     function isInlineSelected(key: string) {
