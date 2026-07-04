@@ -1,7 +1,7 @@
 <template>
-    <v-alert :title="props.title" closable @click:close="closeAlert()" v-if="showAlert">
+    <v-alert :title="props.title" density="compact" closable @click:close="closeAlert()" v-if="showAlert">
         <template #prepend>
-            <v-icon icon="$help"></v-icon>
+            <v-icon icon="$help" size="small"></v-icon>
         </template>
         <p>
         {{ props.text}}
@@ -63,7 +63,7 @@ function closeAlert() {
  * lighten the weight and shrink it toward a subtitle so it doesn't dominate. */
 :deep(.v-alert-title) {
     font-size: 0.95rem;
-    font-weight: 500;
-    line-height: 1.4;
+    font-weight: 600;
+    line-height: 1.3;
 }
 </style>

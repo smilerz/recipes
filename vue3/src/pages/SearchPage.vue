@@ -311,28 +311,17 @@
                     <CollapsibleSection :label="$t(group)">
                         <div v-for="def in defs" :key="def.key" class="d-flex align-center px-4 py-1 ga-1">
                             <span class="text-body-2 flex-grow-1">{{ $t(def.labelKey) }}</span>
-                            <!-- Page and Panel are independent placements (a filter can be
-                                 on both, either, or neither), so use two standalone toggle
-                                 buttons rather than a v-btn-toggle group — the group would
-                                 swallow each button's active state without a group model. -->
-                            <div class="d-flex ga-1">
-                                <v-btn
-                                    :data-test="'placement-page-' + def.key"
-                                    size="x-small" density="compact"
-                                    :variant="isInlineSelected(def.key) ? 'flat' : 'outlined'"
-                                    :color="isInlineSelected(def.key) ? 'primary' : undefined"
-                                    :aria-pressed="isInlineSelected(def.key)"
-                                    @click="toggleInline(def.key)"
-                                >{{ $t('Page') }}</v-btn>
-                                <v-btn
-                                    :data-test="'placement-panel-' + def.key"
-                                    size="x-small" density="compact"
-                                    :variant="isDrawerSelected(def.key) ? 'flat' : 'outlined'"
-                                    :color="isDrawerSelected(def.key) ? 'primary' : undefined"
-                                    :aria-pressed="isDrawerSelected(def.key)"
-                                    @click="toggleDrawer(def.key)"
-                                >{{ $t('Panel') }}</v-btn>
-                            </div>
+                            <!-- Page and Panel are independent placements (both/either/neither),
+                                 so a multiple v-btn-toggle driven by model-value — matching the
+                                 View / Saved Search toggles above — stays compact and highlights
+                                 the active placements. -->
+                            <v-btn-toggle
+                                multiple density="compact" color="primary"
+                                :model-value="placementValue(def.key)"
+                                @update:model-value="(v) => setPlacement(def.key, v as string[])">
+                                <v-btn :data-test="'placement-page-' + def.key" value="page" size="x-small">{{ $t('Page') }}</v-btn>
+                                <v-btn :data-test="'placement-panel-' + def.key" value="panel" size="x-small">{{ $t('Panel') }}</v-btn>
+                            </v-btn-toggle>
                         </div>
                     </CollapsibleSection>
                 </template>
@@ -445,6 +434,20 @@ const pageSize = useRouteQuery('pageSize', useUserPreferenceStore().deviceSettin
 const settings = useModelListSettings(computed(() => 'search'))
 const {isInlineSelected, toggleInline, isDrawerSelected, toggleDrawer, configurableFiltersByGroup: makeConfigurable} = useFilterPlacement()
 const configurableFiltersByGroup = makeConfigurable(groupedFilterDefs)
+
+// Placement toggle <-> v-btn-toggle model bridge: the group's selected values
+// (['page','panel'] subset) mirror the inline/drawer flags; applying a change
+// toggles whichever flag differs.
+function placementValue(key: string): string[] {
+    const v: string[] = []
+    if (isInlineSelected(key)) v.push('page')
+    if (isDrawerSelected(key)) v.push('panel')
+    return v
+}
+function setPlacement(key: string, val: string[]) {
+    if (val.includes('page') !== isInlineSelected(key)) toggleInline(key)
+    if (val.includes('panel') !== isDrawerSelected(key)) toggleDrawer(key)
+}
 
 const drawerTabs = computed(() => [
     {key: 'filters', label: t('Filters'), icon: 'fa-solid fa-filter'},
