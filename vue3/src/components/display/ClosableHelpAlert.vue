@@ -62,5 +62,13 @@ function closeAlert() {
 </script>
 
 <style scoped>
-
+/* v-alert lays out content and the close button in a flex row, so the close
+ * reserves a right-hand column and the body text wraps short of the margin.
+ * Float the close out of flow (top-right) so the text uses the full width. */
+:deep(.v-alert__close) {
+    position: absolute;
+    top: 6px;
+    inset-inline-end: 6px;
+    margin: 0;
+}
 </style>
