@@ -58,7 +58,7 @@ function mountMenu(ingredient: any = INGREDIENT) {
     const vuetify = createVuetify({components: vuetifyComponents, directives: vuetifyDirectives})
     const router = createRouter({history: createMemoryHistory(), routes: [{path: '/', component: {template: '<div/>'}}]})
     return mount(IngredientContextMenu, {
-        props: {ingredient},
+        props: {ingredient, ingredientFactor: 1},
         global: {
             plugins: [pinia, i18n, vuetify, router],
             stubs: {
@@ -162,6 +162,22 @@ describe('IngredientContextMenu', () => {
         }
         const w = mountMenu({...INGREDIENT, food})
         expect((w.vm as any).hasSubstitutes).toBe(true)
+    })
+
+    // Anti-pattern fix: the menu must NOT mutate props.ingredient.food in place;
+    // it emits update:foodStatus so the owner (IngredientsTable) applies the change.
+    it('toggleIgnoreShopping emits update:foodStatus and does not mutate the prop food', async () => {
+        (apiMock as any).apiFoodPartialUpdate = vi.fn().mockResolvedValue({})
+        const food = {...INGREDIENT.food, ignoreShopping: false}
+        const w = mountMenu({...INGREDIENT, food})
+
+        await (w.vm as any).toggleIgnoreShopping()
+
+        const events = w.emitted('update:foodStatus')
+        expect(events).toBeTruthy()
+        expect(events![0][0]).toEqual({ignoreShopping: true})
+        // the prop object must be left untouched — the parent owns the update
+        expect(food.ignoreShopping).toBe(false)
     })
 
     // Substitutes submenu must NOT fetch /api/food/{id}/substitutes/ — the
