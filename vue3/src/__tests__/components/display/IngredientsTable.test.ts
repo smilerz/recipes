@@ -139,10 +139,11 @@ describe('IngredientsTable inline onhand / substitute', () => {
         expect(html).not.toContain('FullListName')
     })
 
-    // Inline text shows ONE random available substitute, not a list. Keeps
-    // the row short regardless of how many onhand substitutes exist. The
-    // aria-label on the yellow icon still lists all for screen readers.
-    it('inline substitute text renders exactly one name from availableSubstitutes', () => {
+    // Inline text shows the FIRST available substitute (deterministic — the
+    // same one the mobile substitute chip surfaces via substituteChip). Keeps
+    // the row short; the aria-label on the yellow icon still lists all for
+    // screen readers.
+    it('inline substitute text renders the first availableSubstitute deterministically', () => {
         const ing = makeIngredient({food: {
             foodOnhand: false,
             availableSubstitutes: [
@@ -152,12 +153,14 @@ describe('IngredientsTable inline onhand / substitute', () => {
             ],
             substituteOnhand: true,
         }})
-        const mathSpy = vi.spyOn(Math, 'random').mockReturnValue(0.5) // → index floor(0.5*3) = 1 → Beta
+        // Guard against random selection re-creeping in: even when Math.random
+        // would steer to a later index, the pick must be the first substitute.
+        const mathSpy = vi.spyOn(Math, 'random').mockReturnValue(0.99)
         try {
             const w = mountTable([ing])
             const visible = w.find('.text-caption.text-medium-emphasis').text()
-            expect(visible).toContain('Beta')
-            expect(visible).not.toContain('Alpha')
+            expect(visible).toContain('Alpha')
+            expect(visible).not.toContain('Beta')
             expect(visible).not.toContain('Gamma')
             expect(visible).not.toContain(',')
         } finally {
