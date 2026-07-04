@@ -102,14 +102,10 @@ describe('AutomationList config', () => {
             expect(keys).toContain('disabled')
         })
 
-        it('per-type stat keys follow camelCase (type + enum-value without underscores)', () => {
-            // e.g., FOOD_ALIAS -> typeFOODALIAS
-            const typeStats = AUTOMATION_STAT_DEFS.filter(s => s.key.startsWith('type'))
-            expect(typeStats.length).toBeGreaterThan(0)
-            for (const stat of typeStats) {
-                expect(stat.key).not.toMatch(/_/)
-            }
-        })
+        // NOTE: per-type automation stat chips were intentionally dropped
+        // (clutter — type is already a filter); statDefs.test.ts guards their
+        // absence. The old "per-type stat keys" test here was resurrected by
+        // photo-enhancements' squashed rebuild snapshot and has been removed.
     })
 
     describe('AUTOMATION_LIST_SETTINGS', () => {
