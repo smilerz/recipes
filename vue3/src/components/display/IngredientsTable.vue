@@ -62,6 +62,7 @@
                             :ingredient="i"
                             :ingredient-factor="ingredientFactor"
                             @scale="(factor: number) => emit('scale', factor)"
+                            @update:food-status="(s) => i.food && Object.assign(i.food, s)"
                         />
                     </td>
                 </template>
@@ -104,7 +105,7 @@
                     <v-icon v-if="hasNote(i) && notesDisplay === 'bubble' && !useUserPreferenceStore().isPrintMode" class="far fa-comment" size="small" @click.stop="openNoteIdx = openNoteIdx === idx ? null : idx">
                         <v-tooltip :model-value="openNoteIdx === idx" activator="parent" location="start" :open-on-hover="false" :open-on-click="false">{{ i.note }}</v-tooltip>
                     </v-icon>
-                    <IngredientContextMenu v-if="showActions && i.food" :ingredient="i" :ingredient-factor="ingredientFactor" @scale="(factor: number) => emit('scale', factor)" />
+                    <IngredientContextMenu v-if="showActions && i.food" :ingredient="i" :ingredient-factor="ingredientFactor" @scale="(factor: number) => emit('scale', factor)" @update:food-status="(s) => i.food && Object.assign(i.food, s)" />
                 </template>
             </v-list-item>
         </template>

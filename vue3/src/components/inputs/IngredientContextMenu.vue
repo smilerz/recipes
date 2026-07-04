@@ -97,6 +97,9 @@ const props = defineProps<{
 
 const emit = defineEmits<{
     scale: [factor: number]
+    // Report food-status changes to the owner (IngredientsTable) instead of
+    // mutating props.ingredient.food in place.
+    'update:foodStatus': [status: {shopping?: string | boolean; inInventory?: string | boolean; foodOnhand?: boolean; ignoreShopping?: boolean}]
 }>()
 
 const {t} = useI18n()
@@ -188,7 +191,7 @@ async function toggleShopping() {
             const removed = await removeFromShopping({id: food.id, name: food.name}, dialog, t)
             if (removed) {
                 shoppingStatus.value = await checkShoppingStatus(food.id)
-                food.shopping = shoppingStatus.value ? 'True' : 'False'
+                emit('update:foodStatus', {shopping: shoppingStatus.value ? 'True' : 'False'})
             }
         } else {
             await addToShopping(
@@ -197,7 +200,7 @@ async function toggleShopping() {
                 props.ingredient.unit,
             )
             shoppingStatus.value = true
-            food.shopping = 'True'
+            emit('update:foodStatus', {shopping: 'True'})
             useMessageStore().addPreparedMessage(PreparedMessage.CREATE_SUCCESS)
         }
     } catch (err) {
@@ -221,8 +224,7 @@ async function toggleInventory() {
             {amount: props.ingredient.amount * props.ingredientFactor, unit: props.ingredient.unit ?? null},
         )
         inventoryStatus.value = hasEntries
-        food.inInventory = hasEntries ? 'True' : 'False'
-        food.foodOnhand = hasEntries
+        emit('update:foodStatus', {inInventory: hasEntries ? 'True' : 'False', foodOnhand: hasEntries})
     } catch (err) {
         useMessageStore().addError(ErrorMessageType.UPDATE_ERROR, err)
     } finally {
@@ -239,7 +241,7 @@ async function toggleIgnoreShopping() {
     try {
         await new ApiApi().apiFoodPartialUpdate({id: food.id, patchedFood: {ignoreShopping: newValue}})
         localIgnoreShopping.value = newValue
-        food.ignoreShopping = newValue
+        emit('update:foodStatus', {ignoreShopping: newValue})
     } catch (err) {
         useMessageStore().addError(ErrorMessageType.UPDATE_ERROR, err)
     } finally {
