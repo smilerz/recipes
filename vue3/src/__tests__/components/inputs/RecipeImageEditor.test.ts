@@ -5,7 +5,7 @@
  * binding (M-FE-6 regression — was $t('AdjustFocalPoint'), now $t('Crop')).
  */
 import {describe, it, expect, vi, beforeEach} from 'vitest'
-import {mount} from '@vue/test-utils'
+import {mount, flushPromises} from '@vue/test-utils'
 import {createPinia, setActivePinia} from 'pinia'
 import {createI18n} from 'vue-i18n'
 import {createVuetify} from 'vuetify'
@@ -21,16 +21,14 @@ vi.mock('@/stores/MessageStore', () => ({
     ErrorMessageType: {CREATE_ERROR: 'CREATE_ERROR', UPDATE_ERROR: 'UPDATE_ERROR', DELETE_ERROR: 'DELETE_ERROR'},
     PreparedMessage: {CREATE_SUCCESS: 'CREATE_SUCCESS', UPDATE_SUCCESS: 'UPDATE_SUCCESS'},
 }))
+const {patchRecipeImageMock} = vi.hoisted(() => ({patchRecipeImageMock: vi.fn()}))
 vi.mock('@/composables/useFileApi', () => ({
     useFileApi: () => ({
-        uploadRecipeImage: vi.fn().mockResolvedValue({}),
+        createRecipeImage: vi.fn().mockResolvedValue({}),
+        updateRecipeImageCropData: vi.fn().mockResolvedValue({}),
         deleteRecipeImage: vi.fn().mockResolvedValue({}),
-        updateRecipeImage: vi.fn().mockResolvedValue({}),
-        reorderRecipeImages: vi.fn().mockResolvedValue({}),
+        patchRecipeImage: patchRecipeImageMock,
     }),
-}))
-vi.mock('@/composables/useDjangoUrls', () => ({
-    useDjangoUrls: () => ({djangoUrl: (p: string) => p}),
 }))
 
 import RecipeImageEditor from '@/components/inputs/RecipeImageEditor.vue'
@@ -51,7 +49,10 @@ function mountEditor(images: any[] = []) {
 }
 
 describe('RecipeImageEditor', () => {
-    beforeEach(() => setActivePinia(createPinia()))
+    beforeEach(() => {
+        setActivePinia(createPinia())
+        patchRecipeImageMock.mockReset().mockResolvedValue({})
+    })
 
     it('mounts without error with empty images', () => {
         const w = mountEditor([])
@@ -72,5 +73,36 @@ describe('RecipeImageEditor', () => {
         // rendered DOM: the i18n key is "Crop", not "AdjustFocalPoint".
         const html = w.html()
         expect(html).not.toContain('AdjustFocalPoint')
+    })
+
+    // The set-primary and reorder paths must go through useFileApi
+    // (patchRecipeImage), not a hand-rolled fetch with inline CSRF.
+    it('setPrimary patches is_primary via patchRecipeImage and clears the others', async () => {
+        patchRecipeImageMock.mockResolvedValue({id: 2, isPrimary: true})
+        const imgs = [
+            {id: 1, file: '/a.jpg', isPrimary: true, order: 0},
+            {id: 2, file: '/b.jpg', isPrimary: false, order: 1},
+        ]
+        const w = mountEditor(imgs)
+
+        await (w.vm as any).setPrimary(1)
+        await flushPromises()
+
+        expect(patchRecipeImageMock).toHaveBeenCalledWith(2, {is_primary: true})
+        expect(imgs[0].isPrimary).toBe(false)
+    })
+
+    it('onReorder patches each image order via patchRecipeImage', async () => {
+        const imgs = [
+            {id: 10, file: '/a.jpg', isPrimary: true, order: 5},
+            {id: 11, file: '/b.jpg', isPrimary: false, order: 9},
+        ]
+        const w = mountEditor(imgs)
+
+        ;(w.vm as any).onReorder()
+        await flushPromises()
+
+        expect(patchRecipeImageMock).toHaveBeenCalledWith(10, {order: 0})
+        expect(patchRecipeImageMock).toHaveBeenCalledWith(11, {order: 1})
     })
 })
