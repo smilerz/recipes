@@ -218,18 +218,10 @@ function isOnShoppingList(i: Ingredient): boolean {
     return s === true || s === 'True' || s === 'true'
 }
 
-const substitutePickCache = new Map<number, string>()
-
+// Show the first available substitute — the same one the mobile substitute
+// chip surfaces via substituteChip(), so the two views never disagree.
 function substituteText(i: Ingredient): string {
-    const subs = i.food?.availableSubstitutes ?? []
-    if (!subs.length) return ''
-    const key = i.id as number | undefined
-    if (key != null && substitutePickCache.has(key)) {
-        return substitutePickCache.get(key)!
-    }
-    const pick = subs[Math.floor(Math.random() * subs.length)]?.name ?? ''
-    if (key != null) substitutePickCache.set(key, pick)
-    return pick
+    return i.food?.availableSubstitutes?.[0]?.name ?? ''
 }
 
 // Number of display characters the inline substitute block contributes when
