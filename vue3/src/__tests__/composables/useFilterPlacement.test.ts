@@ -40,15 +40,31 @@ function setup(inline?: string[], drawer?: string[]) {
 describe('useFilterPlacement — default fallback', () => {
     beforeEach(() => resetApiMock())
 
-    it('reflects the default placement when the saved list is empty', () => {
-        const { composable } = setup([], [])
+    it('falls back to defaults only when the setting was never saved (null/undefined)', () => {
+        const { composable, store } = setup()
+        store.deviceSettings.search_inlineFilters = undefined as unknown as string[]
+        store.deviceSettings.search_drawerFilters = undefined as unknown as string[]
         expect(composable.isInlineSelected('_keywordsGroup')).toBe(true)   // an inline default
         expect(composable.isInlineSelected('ratingGte')).toBe(false)       // not an inline default
         expect(composable.isDrawerSelected('ratingGte')).toBe(true)        // a drawer default
     })
 
+    it('respects an explicitly emptied list instead of resurrecting defaults', () => {
+        const { composable } = setup([], [])
+        expect(composable.isInlineSelected('_keywordsGroup')).toBe(false)
+        expect(composable.isDrawerSelected('ratingGte')).toBe(false)
+    })
+
+    it('turning off the last inline filter keeps it off (regression: defaults returned)', () => {
+        const { composable, store } = setup(['_keywordsGroup'], undefined)
+        composable.toggleInline('_keywordsGroup')  // now empty
+        expect(store.deviceSettings.search_inlineFilters).toEqual([])
+        expect(composable.isInlineSelected('_keywordsGroup')).toBe(false)
+        expect(composable.isInlineSelected('_foodsGroup')).toBe(false)
+    })
+
     it('toggling out of the default state keeps the other defaults', () => {
-        const { composable, store } = setup([], undefined)
+        const { composable, store } = setup(['_keywordsGroup', '_foodsGroup', '_booksGroup'], undefined)
         composable.toggleInline('_keywordsGroup')
         expect(composable.isInlineSelected('_keywordsGroup')).toBe(false)
         expect(composable.isInlineSelected('_foodsGroup')).toBe(true)

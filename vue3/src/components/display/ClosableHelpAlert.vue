@@ -1,8 +1,11 @@
 <template>
-    <v-alert :title="props.title" density="compact" closable @click:close="closeAlert()" v-if="showAlert">
-        <template #prepend>
-            <v-icon icon="$help" size="small"></v-icon>
-        </template>
+    <v-alert density="compact" closable @click:close="closeAlert()" v-if="showAlert">
+        <!-- Icon inline with the title so the body text below can use the full
+             width of the alert instead of being indented under a prepend icon. -->
+        <div v-if="props.title" class="d-flex align-center mb-1">
+            <v-icon icon="$help" size="small" class="me-2"></v-icon>
+            <span class="text-subtitle-2 font-weight-bold">{{ props.title }}</span>
+        </div>
         <p>
         {{ props.text}}
             <v-btn color="success" class="float-right" v-if="props.actionText && !props.actionLink" @click="emit('click')">{{ actionText}}</v-btn>
@@ -59,11 +62,5 @@ function closeAlert() {
 </script>
 
 <style scoped>
-/* The default v-alert title reads too large/heavy for an inline help hint —
- * lighten the weight and shrink it toward a subtitle so it doesn't dominate. */
-:deep(.v-alert-title) {
-    font-size: 0.95rem;
-    font-weight: 600;
-    line-height: 1.3;
-}
+
 </style>
