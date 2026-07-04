@@ -14,7 +14,12 @@ import { createI18n } from 'vue-i18n'
 import { createVuetify } from 'vuetify'
 import { apiMock, resetApiMock } from '@/__tests__/api-mock'
 
-vi.mock('@/openapi', () => ({ ApiApi: class { constructor() { return apiMock } } }))
+// importOriginal keeps real named exports (e.g. AutomationTypeEnum, reached transitively
+// via ModelSelect -> Models.ts -> AutomationList) so the module doesn't blow up on load.
+vi.mock('@/openapi', async (importOriginal) => ({
+    ...(await importOriginal<any>()),
+    ApiApi: class { constructor() { return apiMock } },
+}))
 vi.mock('@vueuse/core', async () => {
     const { ref } = await import('vue')
     return { useStorage: (_k: string, d: any) => ref(d) }
