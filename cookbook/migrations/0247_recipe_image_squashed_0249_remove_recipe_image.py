@@ -88,4 +88,8 @@ class Migration(migrations.Migration):
             model_name='recipe',
             name='image',
         ),
+        migrations.AddConstraint(
+            model_name='recipeimage',
+            constraint=models.UniqueConstraint(condition=models.Q(('is_primary', True)), fields=('recipe',), name='unique_primary_image_per_recipe'),
+        ),
     ]

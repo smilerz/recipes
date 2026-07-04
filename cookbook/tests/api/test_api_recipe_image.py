@@ -1,11 +1,22 @@
+import io
 import json
 
 import pytest
 from django.contrib import auth
+from django.core.files.uploadedfile import SimpleUploadedFile
+from django.db import transaction
+from django.db.utils import IntegrityError
 from django.urls import reverse
 from django_scopes import scopes_disabled
+from PIL import Image
 
 from cookbook.models import RecipeImage
+
+
+def _jpeg_bytes():
+    buf = io.BytesIO()
+    Image.new('RGB', (2, 2), 'red').save(buf, 'JPEG')
+    return buf.getvalue()
 
 LIST_URL = 'api:recipeimage-list'
 DETAIL_URL = 'api:recipeimage-detail'
@@ -68,24 +79,67 @@ def test_recipe_overview_and_flat_image_from_primary(u1_s1, space_1, recipe_1_s1
     assert fmatch['image_crop_data'] == crop
 
 
-def test_multi_primary_determinism(u1_s1, space_1, recipe_1_s1):
-    """Two is_primary RecipeImages on one recipe → the serializer deterministically
-    picks the one with the lowest (order, pk)."""
+def test_only_one_primary_image_per_recipe(u1_s1, space_1, recipe_1_s1):
+    """The DB constraint forbids two is_primary images on a single recipe."""
+    user = auth.get_user(u1_s1)
+    with scopes_disabled():
+        RecipeImage.objects.create(
+            recipe=recipe_1_s1, file='recipes/a.jpg', is_primary=True,
+            order=0, created_by=user, space=space_1,
+        )
+        with pytest.raises(IntegrityError):
+            with transaction.atomic():
+                RecipeImage.objects.create(
+                    recipe=recipe_1_s1, file='recipes/b.jpg', is_primary=True,
+                    order=1, created_by=user, space=space_1,
+                )
+
+
+def test_primary_image_fallback_determinism(u1_s1, space_1, recipe_1_s1):
+    """With no image flagged primary, the serializer falls back to the first
+    image by (order, pk) — deterministically, regardless of insertion order."""
     user = auth.get_user(u1_s1)
     with scopes_disabled():
         recipe_1_s1.image = ''
         recipe_1_s1.save()
         # create higher-order first so pk order != desired order
         RecipeImage.objects.create(
-            recipe=recipe_1_s1, file='recipes/second.jpg', is_primary=True,
+            recipe=recipe_1_s1, file='recipes/second.jpg', is_primary=False,
             order=5, created_by=user, space=space_1,
         )
         RecipeImage.objects.create(
-            recipe=recipe_1_s1, file='recipes/first.jpg', is_primary=True,
+            recipe=recipe_1_s1, file='recipes/first.jpg', is_primary=False,
             order=1, created_by=user, space=space_1,
         )
     body = json.loads(u1_s1.get(reverse('api:recipe-detail', args=[recipe_1_s1.id])).content)
     assert 'first.jpg' in (body['image'] or '')
+
+
+def test_api_patch_second_primary_demotes_first(u1_s1, space_1, recipe_1_s1, img_1):
+    """PATCH-ing a second image primary must demote the first (perform_update
+    reorder) rather than violate the constraint with a transient two-primaries."""
+    user = auth.get_user(u1_s1)
+    with scopes_disabled():
+        img2 = RecipeImage.objects.create(
+            recipe=recipe_1_s1, file='recipes/b.jpg', is_primary=False,
+            order=1, created_by=user, space=space_1,
+        )
+    r = u1_s1.patch(reverse(DETAIL_URL, args=[img2.id]), {'is_primary': True}, content_type='application/json')
+    assert r.status_code == 200
+    with scopes_disabled():
+        primaries = list(RecipeImage.objects.filter(recipe=recipe_1_s1, is_primary=True))
+        assert len(primaries) == 1
+        assert primaries[0].id == img2.id
+
+
+def test_api_create_second_primary_demotes_first(u1_s1, space_1, recipe_1_s1, img_1):
+    """POST-ing a new primary image must demote the existing primary
+    (perform_create reorder) rather than 500 on the constraint."""
+    upload = SimpleUploadedFile('new.jpg', _jpeg_bytes(), content_type='image/jpeg')
+    r = u1_s1.post(reverse(LIST_URL), {'recipe': recipe_1_s1.id, 'file': upload, 'is_primary': True})
+    assert r.status_code == 201
+    with scopes_disabled():
+        assert RecipeImage.objects.filter(recipe=recipe_1_s1, is_primary=True).count() == 1
 
 
 def test_primary_flag_preferred_over_order(u1_s1, space_1, recipe_1_s1):

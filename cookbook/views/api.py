@@ -2983,14 +2983,16 @@ class RecipeImageViewSet(LoggingMixin, viewsets.ModelViewSet):
         return self.queryset.all()
 
     def perform_update(self, serializer):
-        instance = serializer.save()
-        if instance.is_primary:
-            RecipeImage.objects.filter(recipe=instance.recipe, is_primary=True).exclude(pk=instance.pk).update(is_primary=False)
+        # Demote the existing primary BEFORE saving this one (the unique
+        # constraint can't be deferred, so two primaries can't coexist mid-txn).
+        if serializer.validated_data.get('is_primary'):
+            RecipeImage.objects.filter(recipe=serializer.instance.recipe, is_primary=True).exclude(pk=serializer.instance.pk).update(is_primary=False)
+        serializer.save()
 
     def perform_create(self, serializer):
-        instance = serializer.save(created_by=self.request.user, space=self.request.space)
-        if instance.is_primary:
-            RecipeImage.objects.filter(recipe=instance.recipe, is_primary=True).exclude(pk=instance.pk).update(is_primary=False)
+        if serializer.validated_data.get('is_primary'):
+            RecipeImage.objects.filter(recipe=serializer.validated_data.get('recipe'), is_primary=True).update(is_primary=False)
+        serializer.save(created_by=self.request.user, space=self.request.space)
 
     def perform_destroy(self, instance):
         recipe = instance.recipe

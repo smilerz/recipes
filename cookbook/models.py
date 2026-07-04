@@ -1161,6 +1161,13 @@ class RecipeImage(ExportModelOperationsMixin('recipe_image'), models.Model, Perm
 
     class Meta:
         ordering = ['order', 'pk']
+        constraints = [
+            models.UniqueConstraint(
+                fields=['recipe'],
+                condition=models.Q(is_primary=True),
+                name='unique_primary_image_per_recipe',
+            ),
+        ]
 
 
 class Comment(ExportModelOperationsMixin('comment'), models.Model, PermissionModelMixin):
