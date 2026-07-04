@@ -85,21 +85,21 @@
              keep it on one line inside narrow inline cards / drawers. -->
         <div class="d-flex align-center">
             <!-- fa-ban (the app's "none/exclude" glyph) = "no rating / never
-                 rated". A non-star icon + the divider keep it from reading as a
-                 6th star; aria-label carries the meaning for screen readers.
-                 Muted when inactive (matches the faint star outlines), primary
-                 when selected. -->
+                 rated". A non-star icon keeps it from reading as a 6th star;
+                 aria-label carries the meaning for screen readers. Boxless
+                 text variant (never a filled button) so it aligns with the
+                 plain-variant stars: muted when inactive (matches the faint
+                 star outlines), primary when selected. -->
             <v-btn
                 :class="['unrated-toggle', {'text-medium-emphasis': !isUnrated}]"
                 icon="fa-solid fa-ban"
-                :variant="isUnrated ? 'flat' : 'text'"
+                variant="text"
                 :color="isUnrated ? 'primary' : undefined"
                 size="small" density="compact"
                 :aria-label="$t('Unrated')"
                 :aria-pressed="isUnrated"
                 @click="toggleUnrated"
             />
-            <v-divider vertical class="mx-1" />
             <v-rating
                 :model-value="unratedRatingValue"
                 @update:model-value="onSelectStar"
