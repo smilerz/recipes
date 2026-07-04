@@ -201,8 +201,12 @@ async function openManage(opts: {
     try {
         const result = await new ApiApi().apiInventoryEntryList({foodId: opts.foodId, pageSize: 100})
         existingEntries.value = result.results ?? []
-    } catch {
+    } catch (err) {
+        // Fall back to an empty list so the dialog still opens, but signal the
+        // failure — a silent empty list is indistinguishable from a genuinely
+        // empty pantry and would invite duplicate adds.
         existingEntries.value = []
+        useMessageStore().addError(ErrorMessageType.FETCH_ERROR, err)
     } finally {
         loadingEntries.value = false
     }

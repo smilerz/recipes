@@ -19,8 +19,15 @@ import * as vuetifyComponents from 'vuetify/components'
 import * as vuetifyDirectives from 'vuetify/directives'
 
 import {apiMock, resetApiMock} from '@/__tests__/api-mock'
+import {ErrorMessageType} from '@/stores/MessageStore'
 
 vi.mock('@/openapi', async (imp) => ({...(await imp<any>()), ApiApi: class { constructor() { return apiMock } }}))
+
+// The component only ever calls useMessageStore().addError inline, so a stub
+// store lets us assert on it without pulling the real store's useI18n (which
+// must run inside a setup function) into the test's top-level scope.
+const {addErrorMock} = vi.hoisted(() => ({addErrorMock: vi.fn()}))
+vi.mock('@/stores/MessageStore', async (imp) => ({...(await imp<any>()), useMessageStore: () => ({addError: addErrorMock})}))
 
 import InventoryQuickAddDialog from '@/components/dialogs/InventoryQuickAddDialog.vue'
 
@@ -49,7 +56,7 @@ function clickAdd() {
 }
 
 describe('InventoryQuickAddDialog manage-mode add', () => {
-    beforeEach(() => resetApiMock())
+    beforeEach(() => { resetApiMock(); addErrorMock.mockClear() })
 
     it('ICM-ADD-01: posts inventory_location.household from the selected location', async () => {
         apiMock.apiInventoryEntryList.mockResolvedValue({results: []})
@@ -102,6 +109,30 @@ describe('InventoryQuickAddDialog manage-mode add', () => {
         expect(apiMock.apiInventoryEntryCreate).toHaveBeenCalledTimes(1)
         const payload = apiMock.apiInventoryEntryCreate.mock.calls[0][0].inventoryEntry
         expect(payload.food.name).toBe('celery')
+        wrapper.unmount()
+    })
+
+    it('ICM-ADD-03: surfaces a FETCH_ERROR when the existing-entries load fails', async () => {
+        const err = new Error('boom')
+        apiMock.apiInventoryEntryList.mockRejectedValue(err)
+        const wrapper = mountDialog()
+
+        void (wrapper.vm as any).openManage({
+            title: 'Pantry: celery',
+            foodId: 42,
+            foodName: 'celery',
+            locations: [{value: 2, label: 'Bar Cart', household: {id: 1, name: 'Default'}}],
+            defaultLocationId: 2,
+            amount: 4,
+            unit: null,
+        })
+        await flushPromises()
+
+        // A failed load must be signalled — not silently rendered as an empty
+        // pantry (which would invite duplicate adds).
+        expect(addErrorMock).toHaveBeenCalledWith(ErrorMessageType.FETCH_ERROR, err)
+        // ...while the dialog still opens with an empty list so it stays usable.
+        expect((wrapper.vm as any).existingEntries).toEqual([])
         wrapper.unmount()
     })
 })
