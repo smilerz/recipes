@@ -107,18 +107,26 @@ export function useFileApi() {
     }
 
     /**
-     * updates crop_data on an existing RecipeImage
+     * PATCHes arbitrary fields on an existing RecipeImage (snake_case keys, as
+     * the API expects — e.g. {is_primary: true}, {order: 2}, {crop_data: ...}).
      */
-    function updateRecipeImageCropData(id: number, cropData: Record<string, number>): Promise<RecipeImage> {
+    function patchRecipeImage(id: number, data: Record<string, unknown>): Promise<RecipeImage> {
         fileApiLoading.value = true
         return fetch(getDjangoUrl(`api/recipe-image/${id}/`), {
             method: 'PATCH',
             headers: {'X-CSRFToken': getCookie('csrftoken'), 'Content-Type': 'application/json'},
-            body: JSON.stringify({crop_data: cropData}),
+            body: JSON.stringify(data),
         }).then(r => {
             if (r.ok) return r.json().then(j => RecipeImageFromJSON(j))
             throw new ResponseError(r)
         }).finally(() => { fileApiLoading.value = false })
+    }
+
+    /**
+     * updates crop_data on an existing RecipeImage
+     */
+    function updateRecipeImageCropData(id: number, cropData: Record<string, number>): Promise<RecipeImage> {
+        return patchRecipeImage(id, {crop_data: cropData})
     }
 
     /**
@@ -217,5 +225,5 @@ export function useFileApi() {
         })
     }
 
-    return {fileApiLoading, createOrUpdateUserFile, updateUserFileCropData, createRecipeImage, createRecipeImageFromUrl, updateRecipeImageCropData, deleteRecipeImage, doAiImport, doAppImport}
+    return {fileApiLoading, createOrUpdateUserFile, updateUserFileCropData, createRecipeImage, createRecipeImageFromUrl, patchRecipeImage, updateRecipeImageCropData, deleteRecipeImage, doAiImport, doAppImport}
 }
