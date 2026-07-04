@@ -56,7 +56,7 @@ function mountTable(ingredients: any[], context: 'overview' | 'step' = 'overview
     }
     const pinia = createPinia()
     pinia.use(prePopulate)
-    const i18n = createI18n({legacy: false, locale: 'en', messages: {en: {}}, missingWarn: false, fallbackWarn: false})
+    const i18n = createI18n({legacy: false, locale: 'en', messages: {en: {SubstituteAvailable: 'i18n-sub[{names}]'}}, missingWarn: false, fallbackWarn: false})
     const vuetify = createVuetify({
         components: vuetifyComponents, directives: vuetifyDirectives,
         display: {mobileBreakpoint: 0}, // desktop — inline status gated on !mobile
@@ -177,6 +177,21 @@ describe('IngredientsTable inline onhand / substitute', () => {
         const w = mountTable([ing])
         expect(w.html()).toContain('Solo')
     })
+
+    // The substitute icon's aria-label must be localized (via $t), not a
+    // hardcoded English string — guards the SubstituteAvailable i18n key.
+    it('substitute icon aria-label is localized and lists the available substitutes', () => {
+        const ing = makeIngredient({food: {
+            foodOnhand: false,
+            availableSubstitutes: [{id: 2, name: 'Margarine'}, {id: 3, name: 'Ghee'}],
+            substituteOnhand: true,
+        }})
+        const w = mountTable([ing])
+        const icon = w.find('.fa-right-left')
+        // Distinctive test translation proves the label is localized via $t,
+        // not the hardcoded English "Substitute available: ...".
+        expect(icon.attributes('aria-label')).toBe('i18n-sub[Margarine, Ghee]')
+    })
 })
 
 describe('IngredientsTable note truncation', () => {
@@ -198,7 +213,7 @@ describe('IngredientsTable note truncation', () => {
         }
         const pinia = createPinia()
         pinia.use(prePopulate)
-        const i18n = createI18n({legacy: false, locale: 'en', messages: {en: {}}, missingWarn: false, fallbackWarn: false})
+        const i18n = createI18n({legacy: false, locale: 'en', messages: {en: {SubstituteAvailable: 'i18n-sub[{names}]'}}, missingWarn: false, fallbackWarn: false})
         const vuetify = createVuetify({
             components: vuetifyComponents, directives: vuetifyDirectives,
             display: {mobileBreakpoint: 0},
@@ -269,7 +284,7 @@ describe('IngredientsTable mobile Option-C list layout', () => {
         }
         const pinia = createPinia()
         pinia.use(prePopulate)
-        const i18n = createI18n({legacy: false, locale: 'en', messages: {en: {}}, missingWarn: false, fallbackWarn: false})
+        const i18n = createI18n({legacy: false, locale: 'en', messages: {en: {SubstituteAvailable: 'i18n-sub[{names}]'}}, missingWarn: false, fallbackWarn: false})
         const vuetify = createVuetify({
             components: vuetifyComponents, directives: vuetifyDirectives,
             display: {mobileBreakpoint: 9999}, // force mobile at any width

@@ -121,9 +121,11 @@ import {useUserPreferenceStore} from "../../stores/UserPreferenceStore";
 import {ingredientToFoodString, ingredientToUnitString} from "@/utils/model_utils.ts";
 import IngredientContextMenu from "@/components/inputs/IngredientContextMenu.vue";
 import {useDisplay} from "vuetify";
+import {useI18n} from "vue-i18n";
 
 const emit = defineEmits(['scale'])
 const {mobile} = useDisplay()
+const {t} = useI18n()
 
 const props = defineProps({
     showNotes: {
@@ -236,8 +238,8 @@ function inlineSubstituteLength(i: Ingredient): number {
 
 function substituteLabel(i: Ingredient): string {
     const subs = i.food?.availableSubstitutes ?? []
-    if (subs.length) return `Substitute available: ${subs.map(s => s.name).join(', ')}`
-    return 'Substitute available'
+    if (subs.length) return t('SubstituteAvailable', {names: subs.map(s => s.name).join(', ')})
+    return t('SubstituteOnHand')
 }
 
 </script>
