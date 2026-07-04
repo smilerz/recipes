@@ -1822,3 +1822,29 @@ def test_substitute_onhand(recipe_with_food, u1_s1, space_1, use_inventory):
 
     response = u1_s1.get(reverse(DETAIL_URL, args=[food.id]))
     assert json.loads(response.content)['substitute_onhand'] is True
+
+
+def test_substitute_inventory_retrieve_is_household_scoped(u1_s1, u2_s1, space_1):
+    """substitute_inventory on the retrieve/single-object path must match the batch
+    list path: only inventory in the CALLER's household counts. A substitute stocked
+    solely in another household's location must NOT report substitute_inventory=True."""
+    user1 = auth.get_user(u1_s1)
+    user2 = auth.get_user(u2_s1)
+    with scopes_disabled():
+        hh_a = Household.objects.create(name=f'hh-a-{uuid.uuid4()}', space=space_1)
+        hh_b = Household.objects.create(name=f'hh-b-{uuid.uuid4()}', space=space_1)
+        UserSpace.objects.filter(user=user1, space=space_1).update(household=hh_a)
+        UserSpace.objects.filter(user=user2, space=space_1).update(household=hh_b)
+
+        food = Food.objects.create(name=f'f-{uuid.uuid4()}', space=space_1)
+        substitute = Food.objects.create(name=f's-{uuid.uuid4()}', space=space_1)
+        food.substitute.add(substitute)
+
+        # substitute is stocked ONLY in household B's location
+        loc_b = InventoryLocationFactory(household=hh_b, space=space_1, created_by=user2)
+        InventoryEntryFactory(food=substitute, amount=1, inventory_location=loc_b,
+                              space=space_1, created_by=user2)
+
+    # caller is in household A → their household has no such inventory
+    response = u1_s1.get(reverse(DETAIL_URL, args=[food.id]))
+    assert json.loads(response.content)['substitute_inventory'] is False
