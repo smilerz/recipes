@@ -90,6 +90,11 @@ updates:
       - "docker"
       - "dependencies"
       - "automerge"
+    ignore:
+      # python 3.14+ is incompatible with our pinned litellm (Requires-Python
+      # <3.14). Stay on 3.13 until litellm supports 3.14 (dependabot #719).
+      - dependency-name: "python"
+        versions: [">=3.14"]
 
   - package-ecosystem: "devcontainers"
     directory: "/"
