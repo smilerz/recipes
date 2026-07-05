@@ -16,6 +16,27 @@ DETAIL_URL = 'api:recipe-detail'
 STATS_URL = 'api:recipe-stats'
 
 
+def test_recipe_list_schema_declares_filter_params():
+    """The /api/recipe/ list operation MUST declare every filter query param in
+    the OpenAPI schema. drf-spectacular only emits params it knows about, and the
+    generated TS client forwards only declared params — an undeclared filter is
+    silently dropped before the request. `unrated` and the unit AND/exclude
+    variants (units_and/units_or_not/units_and_not) were handled by recipe_search
+    but never declared, so those filters no-op'd from the UI. Guard them."""
+    from drf_spectacular.generators import SchemaGenerator
+
+    schema = SchemaGenerator().get_schema(request=None, public=True)
+    params = schema['paths']['/api/recipe/']['get'].get('parameters', [])
+    names = {p['name'] for p in params}
+
+    expected = {
+        'unrated',
+        'units', 'units_or', 'units_and', 'units_or_not', 'units_and_not',
+    }
+    missing = expected - names
+    assert not missing, f'/api/recipe/ list is missing OpenAPI query params: {sorted(missing)}'
+
+
 # TODO need to add extensive tests against recipe search to go through all of the combinations of parameters
 # probably needs to include a far more extensive set of initial recipes to effectively test results
 # and to ensure that all parts of the code are exercised.

@@ -2130,11 +2130,16 @@ class RecipePagination(PageNumberPagination):
     OpenApiParameter(name='books_or_not', description=_('Book IDs, repeat for multiple. Exclude recipes with any of the books.'), type=int, many=True),
     OpenApiParameter(name='books_and_not', description=_('Book IDs, repeat for multiple. Exclude recipes with all of the books.'), type=int, many=True),
 
-    OpenApiParameter(name='units', description=_('ID of unit a recipe should have.'), type=int),
+    OpenApiParameter(name='units', description=_('ID of unit a recipe should have. For multiple repeat parameter. Equivalent to units_or'), type=int, many=True),
+    OpenApiParameter(name='units_or', description=_('Unit IDs, repeat for multiple. Return recipes with any of the units'), type=int, many=True),
+    OpenApiParameter(name='units_and', description=_('Unit IDs, repeat for multiple. Return recipes with all of the units.'), type=int, many=True),
+    OpenApiParameter(name='units_or_not', description=_('Unit IDs, repeat for multiple. Exclude recipes with any of the units.'), type=int, many=True),
+    OpenApiParameter(name='units_and_not', description=_('Unit IDs, repeat for multiple. Exclude recipes with all of the units.'), type=int, many=True),
 
     OpenApiParameter(name='rating', description=_('Exact rating of recipe'), type=int),
     OpenApiParameter(name='rating_gte', description=_('Rating a recipe should have or greater.'), type=int),
     OpenApiParameter(name='rating_lte', description=_('Rating a recipe should have or smaller.'), type=int),
+    OpenApiParameter(name='unrated', description=_('If only unrated recipes (never rated by the current user) should be returned. Mutually exclusive with rating. [''true''/''<b>false</b>'']'), type=bool),
 
     OpenApiParameter(name='timescooked', description=_('Filter recipes cooked X times.'), type=int),
     OpenApiParameter(name='timescooked_gte', description=_('Filter recipes cooked X times or more.'), type=int),

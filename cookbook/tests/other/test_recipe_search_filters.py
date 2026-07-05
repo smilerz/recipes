@@ -207,6 +207,50 @@ class TestUnitFilters:
         ids = set(results.values_list('id', flat=True))
         assert {s.r1.id, s.r2.id, s.r3.id} == ids
 
+    def test_unit_and_both(self, with_units, u1_s1, space_1, make_search_request):
+        """AND returns only recipes with ALL specified units (r3 has both)."""
+        s = with_units
+        req = make_search_request(u1_s1)
+        results = do_search(req, space_1, units_and=[s.obj1.id, s.obj2.id])
+        ids = set(results.values_list('id', flat=True))
+        assert ids == {s.r3.id}
+
+    def test_unit_or_not(self, with_units, u1_s1, space_1, make_search_request):
+        """OR NOT excludes recipes with any of the units (r1, r3 have obj1)."""
+        s = with_units
+        req = make_search_request(u1_s1)
+        results = do_search(req, space_1, units_or_not=[s.obj1.id])
+        ids = set(results.values_list('id', flat=True))
+        assert s.r1.id not in ids
+        assert s.r3.id not in ids
+        assert s.r2.id in ids
+
+    def test_unit_and_not(self, with_units, u1_s1, space_1, make_search_request):
+        """AND NOT excludes recipes with ALL of the units (only r3 has both)."""
+        s = with_units
+        req = make_search_request(u1_s1)
+        results = do_search(req, space_1, units_and_not=[s.obj1.id, s.obj2.id])
+        ids = set(results.values_list('id', flat=True))
+        assert s.r3.id not in ids
+        assert s.r1.id in ids
+        assert s.r2.id in ids
+
+
+class TestUnratedFilter:
+    """unrated=True returns only recipes the current user has never rated."""
+
+    def test_unrated_excludes_rated(self, search_recipes, u1_s1, space_1, make_search_request):
+        s = search_recipes
+        user = auth.get_user(u1_s1)
+        with scopes_disabled():
+            CookLogFactory.create(recipe=s.r1, created_by=user, rating=4, space=space_1)
+        req = make_search_request(u1_s1)
+        results = do_search(req, space_1, unrated=True)
+        ids = set(results.values_list('id', flat=True))
+        assert s.r1.id not in ids        # rated → excluded
+        assert s.r2.id in ids
+        assert s.r3.id in ids
+
 
 # ========================== DATE FILTERS ==========================
 
