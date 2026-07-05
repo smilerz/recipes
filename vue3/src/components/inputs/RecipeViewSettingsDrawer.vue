@@ -11,16 +11,16 @@
             <div data-test="ingredient-display-panel" class="pa-3">
                         <!-- Live preview (mobile only): the desktop recipe uses the multi-column
                              table, which can't be shown faithfully in the narrow drawer, so on
-                             desktop we rely on the labelled Summary/Detail controls below. -->
+                             desktop we rely on the labelled Overview/Steps controls below. -->
                         <div v-if="mobile" class="settings-preview mb-4">
-                            <div class="text-caption text-medium-emphasis">{{ $t('Summary') }}</div>
+                            <div class="text-caption text-medium-emphasis">{{ $t('Overview') }}</div>
                             <div data-test="preview-summary" class="preview-pane">
                                 <IngredientsTable
                                     :model-value="previewSummary" :ingredient-factor="1" context="overview"
                                     :show-checkbox="deviceSettings.recipe_overviewShowCheckboxes" :show-actions="deviceSettings.recipe_overviewShowActions"
                                 />
                             </div>
-                            <div class="text-caption text-medium-emphasis mt-2">{{ $t('Detail') }}</div>
+                            <div class="text-caption text-medium-emphasis mt-2">{{ $t('Steps') }}</div>
                             <div data-test="preview-detail" class="preview-pane">
                                 <IngredientsTable
                                     :model-value="previewDetail" :ingredient-factor="1" context="step"
@@ -29,11 +29,11 @@
                             </div>
                         </div>
 
-                        <!-- Per-setting Summary / Detail controls. -->
+                        <!-- Per-setting Overview / Steps controls. -->
                         <div class="settings-grid">
                             <div></div>
-                            <div class="col-head">{{ $t('Summary') }}</div>
-                            <div class="col-head">{{ $t('Detail') }}</div>
+                            <div class="col-head">{{ $t('Overview') }}</div>
+                            <div class="col-head">{{ $t('Steps') }}</div>
 
                             <div class="setting-label">{{ $t('StartExpanded') }}</div>
                             <div class="setting-cell" data-test="summary-expanded">
@@ -69,19 +69,19 @@
                             </div>
 
                             <!-- Notes selects need more room than the switch columns, so they
-                                 break to a full-width row with their own Summary/Detail labels. -->
+                                 break to a full-width row with their own Overview/Steps labels. -->
                             <div class="full-row">
                                 <div class="setting-label mb-1">{{ $t('IngredientNotes') }}</div>
                                 <div class="notes-selects">
                                     <v-select
                                         v-model="deviceSettings.recipe_overviewNotesDisplay"
-                                        data-test="summary-notes" :label="$t('Summary')"
+                                        data-test="summary-notes" :label="$t('Overview')"
                                         :items="notesDisplayOptions" item-title="label" item-value="value"
                                         hide-details density="compact" variant="outlined"
                                     />
                                     <v-select
                                         v-model="deviceSettings.recipe_stepNotesDisplay"
-                                        data-test="detail-notes" :label="$t('Detail')"
+                                        data-test="detail-notes" :label="$t('Steps')"
                                         :items="notesDisplayOptions" item-title="label" item-value="value"
                                         hide-details density="compact" variant="outlined"
                                     />
