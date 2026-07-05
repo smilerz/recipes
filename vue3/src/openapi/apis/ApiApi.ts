@@ -1208,7 +1208,7 @@ export interface ApiEnterpriseSocialRecipeUpdateRequest {
 }
 
 export interface ApiEnterpriseSpaceCreateRequest {
-    enterpriseSpace: EnterpriseSpace;
+    enterpriseSpace: Omit<EnterpriseSpace, 'space'|'billingLicensedModules'|'billingCustomerId'|'billingSubscriptionId'|'billingSubscriptionStatus'|'billingMonthlyPrice'>;
 }
 
 export interface ApiEnterpriseSpaceDestroyRequest {
@@ -1222,7 +1222,7 @@ export interface ApiEnterpriseSpaceListRequest {
 
 export interface ApiEnterpriseSpacePartialUpdateRequest {
     space: number;
-    patchedEnterpriseSpace?: PatchedEnterpriseSpace;
+    patchedEnterpriseSpace?: Omit<PatchedEnterpriseSpace, 'space'|'billingLicensedModules'|'billingCustomerId'|'billingSubscriptionId'|'billingSubscriptionStatus'|'billingMonthlyPrice'>;
 }
 
 export interface ApiEnterpriseSpaceRetrieveRequest {
@@ -1231,7 +1231,7 @@ export interface ApiEnterpriseSpaceRetrieveRequest {
 
 export interface ApiEnterpriseSpaceUpdateRequest {
     space: number;
-    enterpriseSpace: EnterpriseSpace;
+    enterpriseSpace: Omit<EnterpriseSpace, 'space'|'billingLicensedModules'|'billingCustomerId'|'billingSubscriptionId'|'billingSubscriptionStatus'|'billingMonthlyPrice'>;
 }
 
 export interface ApiExportCreateRequest {

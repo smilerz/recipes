@@ -16,11 +16,13 @@
 /**
  * * `ERPNEXT` - ErpNext
  * * `SEVDESK` - SevDesk
+ * * `STRIPE` - Stripe
  * @export
  */
 export const InvoiceSystemEnum = {
     Erpnext: 'ERPNEXT',
-    Sevdesk: 'SEVDESK'
+    Sevdesk: 'SEVDESK',
+    Stripe: 'STRIPE'
 } as const;
 export type InvoiceSystemEnum = typeof InvoiceSystemEnum[keyof typeof InvoiceSystemEnum];
 
