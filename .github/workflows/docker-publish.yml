@@ -1,8 +1,8 @@
 name: Publish Docker Image
 
-# Publishes smilerz/recipes:latest from the default branch. Runs on every
-# push to preview; CI (ci.yml + vue-ci.yml) runs in parallel and is not
-# gated on — if a push breaks tests, revert or fix-forward.
+# Publishes smilerz/recipes:latest and :preview from the default branch. Runs
+# on every push to preview; CI (ci.yml + vue-ci.yml) runs in parallel and is
+# not gated on — if a push breaks tests, revert or fix-forward.
 #
 # Rollback handles:
 #   smilerz/recipes:latest-<short_sha>      (specific commit)
@@ -62,6 +62,7 @@ jobs:
             latest=false
           tags: |
             type=raw,value=latest
+            type=raw,value=preview
             type=sha,prefix=latest-
             type=raw,value=latest-{{date 'YYYYMMDD'}}
 
