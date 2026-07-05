@@ -7,27 +7,40 @@ import {DateTime} from "luxon";
 export const SEARCH_DEBOUNCE_MS = 300
 
 
+/** A single subtitle segment: plain text, or text that links to a filtered route. */
+export interface SubtitlePart {
+    text: string
+    to?: { name: string; query: Record<string, string | number> }
+}
+
 /**
- * Builds a dot-separated subtitle string from an item's column values.
- * Used by both mobile and desktop subtitle displays.
+ * Builds an item's subtitle as structured parts (used by both mobile and desktop
+ * subtitle displays) so callers can render a `filterLink` column (e.g. the recipe
+ * count) as a clickable link to the filtered search while keeping the rest as plain
+ * text. A link is only emitted for a positive numeric value; 0 stays as plain text.
  */
-export function buildSubtitleText(
+export function buildSubtitleParts(
     item: any,
-    columns: { key: string; field?: string; title: string }[],
+    columns: { key: string; field?: string; title: string; filterLink?: { route: string; param: string } }[],
     t: (key: string) => string,
-): string {
-    const parts: string[] = []
+): SubtitlePart[] {
+    const parts: SubtitlePart[] = []
     for (const col of columns) {
         const field = col.field ?? col.key
         const val = getNestedProperty(item, field)
         if (val == null || val === '' || val === false) continue
         if (typeof val === 'number' || typeof val === 'boolean') {
-            parts.push(`${t(col.title)}: ${val}`)
+            const text = `${t(col.title)}: ${val}`
+            if (col.filterLink && typeof val === 'number' && val > 0) {
+                parts.push({text, to: {name: col.filterLink.route, query: {[col.filterLink.param]: item.id}}})
+            } else {
+                parts.push({text})
+            }
         } else {
-            parts.push(String(val))
+            parts.push({text: String(val)})
         }
     }
-    return parts.join(' \u00b7 ')
+    return parts
 }
 
 export function getNestedProperty(object: any, path: string): any {

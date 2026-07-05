@@ -167,7 +167,11 @@
                             {{ ancestorPathMap.get(item.id) }}
                         </v-list-item-subtitle>
                         <v-list-item-subtitle v-if="subtitleMap.has(item.id)">
-                            {{ subtitleMap.get(item.id) }}
+                            <template v-for="(part, i) in subtitleMap.get(item.id)" :key="i">
+                                <span v-if="i > 0" class="text-disabled">&nbsp;&middot;&nbsp;</span>
+                                <router-link v-if="part.to" :to="part.to" class="text-primary" @click.stop>{{ part.text }}</router-link>
+                                <template v-else>{{ part.text }}</template>
+                            </template>
                         </v-list-item-subtitle>
 
                         <template #append>
@@ -227,7 +231,7 @@ import {useI18n} from 'vue-i18n'
 import type {ActionDef, ModelItem} from '@/composables/modellist/types'
 import {getAncestorPath} from '@/composables/modellist/types'
 import type {ModelTableHeaders} from '@/types/Models'
-import {buildSubtitleText} from '@/utils/utils'
+import {buildSubtitleParts} from '@/utils/utils'
 import {useSwipeGesture, SLOT_WIDTH} from '@/composables/useSwipeGesture'
 import {useTouchDetect} from '@/composables/useTouchDetect'
 import {MODEL_LIST_SETTINGS_KEY} from '@/composables/modellist/useModelListSettings'
@@ -424,14 +428,14 @@ const ancestorPathMap = computed(() => {
     return map
 })
 
-/** Build subtitle map — computed once per render, not twice per item */
+/** Build subtitle parts map — structured so filterLink columns render as links */
 const subtitleMap = computed(() => {
     const cols = subtitleColumns.value
-    const map = new Map<number, string>()
+    const map = new Map<number, ReturnType<typeof buildSubtitleParts>>()
     for (const item of props.items) {
         if (item._isLoadMore) continue
-        const text = buildSubtitleText(item, cols, t)
-        if (text) map.set(item.id, text)
+        const parts = buildSubtitleParts(item, cols, t)
+        if (parts.length) map.set(item.id, parts)
     }
     return map
 })
