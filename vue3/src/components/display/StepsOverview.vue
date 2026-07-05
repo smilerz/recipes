@@ -49,7 +49,9 @@
 
                 <v-row v-if="useUserPreferenceStore().deviceSettings.recipe_mergeStepOverview">
                     <v-col class="pa-1" cols="12" md="6">
-                        <ingredients-table v-model="mergedIngredients" :ingredient-factor="props.ingredientFactor" :show-checkbox="useUserPreferenceStore().deviceSettings.recipe_overviewShowCheckboxes" context="overview"></ingredients-table>
+                        <ingredients-table v-model="mergedIngredients" :ingredient-factor="props.ingredientFactor"
+                                           :show-actions="useUserPreferenceStore().deviceSettings.recipe_overviewShowActions"
+                                           :show-checkbox="useUserPreferenceStore().deviceSettings.recipe_overviewShowCheckboxes" context="overview"></ingredients-table>
                     </v-col>
                 </v-row>
 
