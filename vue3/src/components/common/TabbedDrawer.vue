@@ -7,6 +7,7 @@
         :permanent="isPinned && isOpen"
         :temporary="!isPinned"
         disable-resize-watcher
+        disable-route-watcher
     >
         <v-toolbar density="compact" flat>
             <v-spacer />
