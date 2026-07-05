@@ -27,6 +27,7 @@ const NavDrawerStub = {
         permanent: Boolean,
         temporary: Boolean,
         disableResizeWatcher: Boolean,
+        disableRouteWatcher: Boolean,
         location: String,
         width: [String, Number],
     },
@@ -87,6 +88,18 @@ describe('TabbedDrawer', () => {
             const stub = wrapper.findComponent({name: 'VNavigationDrawer'})
             expect(stub.exists()).toBe(true)
             expect(stub.props('disableResizeWatcher')).toBe(true)
+        })
+
+        it('passes disable-route-watcher so a filter-driven router.replace() does not auto-close the drawer', () => {
+            // useUrlFilters calls router.replace({query}) on EVERY filter change to
+            // persist filters in the URL. A temporary v-navigation-drawer closes
+            // itself on ANY route change (VNavigationDrawer watches
+            // router.currentRoute) unless disableRouteWatcher is set — so every
+            // dropdown/tri-state/toggle/unrated click would dismiss the drawer.
+            // Guard the prop so a rebase can't silently re-enable the auto-close.
+            const wrapper = mountDrawer()
+            const stub = wrapper.findComponent({name: 'VNavigationDrawer'})
+            expect(stub.props('disableRouteWatcher')).toBe(true)
         })
 
         it('clicking pin toggle emits update:pinned but does NOT emit update:modelValue false', async () => {
