@@ -11,6 +11,18 @@
 <html lang="{{ LANGUAGE_CODE }}">
 <head>
     <base href="{{ request.META.SCRIPT_NAME|default:'' }}/">
+
+    {# Pin Vuetify's cascade-layer order before anything else loads. Vuetify 4
+       injects its theme colours as <style id="vuetify-theme-stylesheet"> wrapped
+       in @layer vuetify-utilities at runtime; in the production build that style
+       lands in <head> before the bundled vuetify/styles link, so the browser
+       registers vuetify-utilities as the FIRST (lowest-priority) layer and
+       component base styles (e.g. .v-card{display:block}) win over utilities
+       (.d-flex, .pa-3, …). Declaring the canonical order here — first CSS in the
+       document — fixes the precedence so utilities win as intended. Works in dev
+       and build; harmless where the order is already correct. #}
+    <style>@layer vuetify-core, vuetify-components, vuetify-overrides, vuetify-utilities, vuetify-final;</style>
+
     <title>Tandoor</title>
     <meta name="description" content="{% trans 'Tandoor Recipe Manager' %}">
     <meta charset="utf-8">
