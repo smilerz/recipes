@@ -20,6 +20,8 @@
  * * `FLATLY` - Flatly
  * * `SUPERHERO` - Superhero
  * * `TANDOOR_DARK` - Tandoor Dark (INCOMPLETE)
+ * * `CERULEAN` - Cerulean
+ * * `SLATE` - Slate
  * @export
  */
 export const ThemeEnum = {
@@ -28,7 +30,9 @@ export const ThemeEnum = {
     Darkly: 'DARKLY',
     Flatly: 'FLATLY',
     Superhero: 'SUPERHERO',
-    TandoorDark: 'TANDOOR_DARK'
+    TandoorDark: 'TANDOOR_DARK',
+    Cerulean: 'CERULEAN',
+    Slate: 'SLATE'
 } as const;
 export type ThemeEnum = typeof ThemeEnum[keyof typeof ThemeEnum];
 

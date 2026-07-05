@@ -17,6 +17,21 @@ const USER_SPACES_KEY = 'TANDOOR_USER_SPACES'
 const SPACES_KEY = 'TANDOOR_SPACES'
 
 /**
+ * Maps the stored UserPreference.theme enum to a Vuetify theme name. Unknown or dead
+ * legacy values (BOOTSTRAP/SUPERHERO from the old Bootstrap frontend) fall back to
+ * light. Print mode always forces light (handled in updateTheme). Exported so the
+ * theme test can guard it against the CosmeticSettings selector without re-declaring.
+ */
+export const THEME_MAP: Record<string, string> = {
+    TANDOOR: 'light',
+    TANDOOR_DARK: 'dark',
+    CERULEAN: 'cerulean',
+    FLATLY: 'flat',
+    DARKLY: 'midnight',
+    SLATE: 'slate',
+}
+
+/**
  * Rewrites any device-setting values whose domain has shrunk since the
  * setting was first saved. Runs once on store init so stale localStorage
  * entries do not leave the user pinned to a removed option.
@@ -322,12 +337,17 @@ export const useUserPreferenceStore = defineStore('user_preference_store', () =>
      * applies user settings regarding themes/styling
      */
     function updateTheme() {
-        if (userSettings.value.theme == 'TANDOOR_DARK' && !isPrintMode.value) {
-            vuetify.theme.change('dark')
-        } else {
+        if (isPrintMode.value) {
             vuetify.theme.change('light')
+            return
         }
+        vuetify.theme.change(THEME_MAP[userSettings.value.theme] ?? 'light')
     }
+
+    // Nav bar background: an explicit space colour wins, then the user's explicit
+    // colour, otherwise fall back to the active theme's `tandoor` token so the nav
+    // follows the selected theme's primary (empty = "follow theme").
+    const navBarColor = computed(() => activeSpace.value.navBgColor || userSettings.value.navBgColor || 'tandoor')
 
     let initPromise: Promise<any> | null = null
 
@@ -357,6 +377,7 @@ export const useUserPreferenceStore = defineStore('user_preference_store', () =>
         userSettings,
         serverSettings,
         activeSpace,
+        navBarColor,
         userSpaces,
         spaces,
         activeUserSpace,
