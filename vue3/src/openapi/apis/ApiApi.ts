@@ -1589,7 +1589,12 @@ export interface ApiRecipeListRequest {
     timescooked?: number;
     timescookedGte?: number;
     timescookedLte?: number;
-    units?: number;
+    units?: Array<number>;
+    unitsAnd?: Array<number>;
+    unitsAndNot?: Array<number>;
+    unitsOr?: Array<number>;
+    unitsOrNot?: Array<number>;
+    unrated?: boolean;
     updatedon?: Date;
     updatedonGte?: Date;
     updatedonLte?: Date;
@@ -12204,6 +12209,26 @@ export class ApiApi extends runtime.BaseAPI {
 
         if (requestParameters['units'] != null) {
             queryParameters['units'] = requestParameters['units'];
+        }
+
+        if (requestParameters['unitsAnd'] != null) {
+            queryParameters['units_and'] = requestParameters['unitsAnd'];
+        }
+
+        if (requestParameters['unitsAndNot'] != null) {
+            queryParameters['units_and_not'] = requestParameters['unitsAndNot'];
+        }
+
+        if (requestParameters['unitsOr'] != null) {
+            queryParameters['units_or'] = requestParameters['unitsOr'];
+        }
+
+        if (requestParameters['unitsOrNot'] != null) {
+            queryParameters['units_or_not'] = requestParameters['unitsOrNot'];
+        }
+
+        if (requestParameters['unrated'] != null) {
+            queryParameters['unrated'] = requestParameters['unrated'];
         }
 
         if (requestParameters['updatedon'] != null) {
