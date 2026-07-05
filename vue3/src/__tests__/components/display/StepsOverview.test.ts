@@ -14,12 +14,14 @@ import {createRouter, createMemoryHistory} from 'vue-router'
 
 import {makeUserPreference} from '@/__tests__/factories'
 import StepsOverview from '@/components/display/StepsOverview.vue'
+import IngredientsTable from '@/components/display/IngredientsTable.vue'
 
-function mountOverview(steps: any[]) {
+function mountOverview(steps: any[], deviceOverrides: Record<string, any> = {}) {
     const prePopulate: PiniaPlugin = ({store}) => {
         if (store.$id === 'user_preference_store') {
             store.userSettings = makeUserPreference() as any
             store.deviceSettings.recipe_overviewExpanded = true // open the panel so its content renders
+            Object.assign(store.deviceSettings, deviceOverrides)
         }
     }
     const pinia = createPinia(); pinia.use(prePopulate)
@@ -70,5 +72,23 @@ describe('StepsOverview hides empty steps', () => {
              ingredients: [{id: 11, isHeader: true}]}, // header pseudo-ingredient, no food
         ]
         expect(mountOverview(steps).html()).not.toContain('Just a header')
+    })
+})
+
+describe('StepsOverview merged overview forwards the ingredient menu', () => {
+    beforeEach(() => setActivePinia(createPinia()))
+
+    // Merged ("Summary") mode collapses all steps into one table. It must still
+    // honour recipe_overviewShowActions so the IngredientContextMenu can appear —
+    // the structured mode already does. Guard against the merged table dropping
+    // :show-actions (it silently falls back to the false default otherwise).
+    it('passes show-actions to the single merged ingredients table', () => {
+        const wrapper = mountOverview([withFood(1, 'A')], {
+            recipe_mergeStepOverview: true,
+            recipe_overviewShowActions: true,
+        })
+        const tables = wrapper.findAllComponents(IngredientsTable)
+        expect(tables).toHaveLength(1) // merged mode renders exactly one table
+        expect(tables[0].props('showActions')).toBe(true)
     })
 })
