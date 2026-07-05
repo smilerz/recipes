@@ -175,4 +175,14 @@ describe('RecipeViewSettingsDrawer (consolidated)', () => {
         expect(w.find('[data-test="preview-summary"]').exists()).toBe(false)
         expect(w.find('[data-test="preview-detail"]').exists()).toBe(false)
     })
+
+    // The two ingredient-display columns are the overview context and the step
+    // context. They are labelled "Overview" / "Steps" (was "Summary" / "Detail").
+    // Guard the rename so a rebase can't silently revert it. Kept inside this
+    // describe so it inherits the beforeEach that renders the panel (on branches
+    // where the panel is route-gated, that beforeEach sets the required route).
+    it('labels the two ingredient-display columns Overview and Steps', () => {
+        const heads = mountDrawer().findAll('.col-head').map(e => e.text())
+        expect(heads).toEqual(['Overview', 'Steps'])
+    })
 })
