@@ -372,6 +372,7 @@
   "KeywordHelp": "Keywords can be used to organize you recipe collection.",
   "Keyword_Alias": "Keyword Alias",
   "IncludeChildren": "Include children",
+  "IncludeSortOrder": "Include sort order",
   "Keywords": "Keywords",
   "KeywordsAnd": "Keywords (all)",
   "KeywordsAndNot": "Keywords (exclude all)",

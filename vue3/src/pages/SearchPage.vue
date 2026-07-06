@@ -348,6 +348,7 @@
                 <v-closable-card-title :title="$t('SavedSearch')" v-model="dialog" />
                 <v-card-text>
                     <v-text-field :label="$t('Name')" v-model="newFilterName" />
+                    <v-checkbox v-if="ordering" v-model="includeSort" :label="$t('IncludeSortOrder')" hide-details density="compact" />
                 </v-card-text>
                 <v-card-actions>
                     <v-btn prepend-icon="$create" color="create" @click="createCustomFilter()">{{ $t('Create') }}</v-btn>
@@ -375,6 +376,7 @@ import {useUserPreferenceStore} from '@/stores/UserPreferenceStore'
 import {useUrlFilters} from '@/composables/useUrlFilters'
 import {RECIPE_FILTER_DEFS, RECIPE_SORT_DEFS} from '@/composables/modellist/RecipeList'
 import type {FilterDef, FilterValue, StatDef} from '@/composables/modellist/types'
+import {buildSearchBlob, parseSearchBlob, type FilterBlob} from '@/utils/savedSearchBlob'
 
 function isoDaysAgo(days: number): string {
     const d = new Date()
@@ -516,6 +518,14 @@ const selectedCustomFilter = ref<CustomFilter | null>(null)
 const filterSnapshot = ref('')
 const dialog = ref(false)
 const newFilterName = ref('')
+// Whether the saved search stores its sort order. Stateful (not just a save-time
+// arg) so the no-arg filtersToJson() reflects it — sort changes then register in
+// savedFilterModified. ON when a loaded filter carries sort_order or the "Include
+// sort order" checkbox is ticked.
+const includeSort = ref(false)
+// `search` keys not recognized by the serde (legacy/removed/foreign), preserved
+// verbatim across an edit so nothing is silently dropped.
+const unknownStash = ref<Record<string, unknown>>({})
 
 // Batch action dialogs
 
@@ -621,67 +631,15 @@ function startReQueryWatcher() {
 
 /* ─── Saved CustomFilter ─────────────────────────────────────────────── */
 
-type FilterBlob = { query?: string, version?: '2', [k: string]: unknown }
-
 function filtersToJson(): FilterBlob {
-    const out: FilterBlob = {}
-    if (query.value) out.query = query.value
-    for (const def of RECIPE_FILTER_DEFS) {
-        const raw = getFilter(def.key)
-        if (raw === undefined || raw === '') continue
-        if (def.type === 'tag-select') {
-            const items = raw.split(',').filter(s => s.length > 0).map(Number).filter(n => !isNaN(n))
-            if (items.length > 0) out[def.key] = items
-        } else if (def.type === 'date-range' || def.type === 'number-range') {
-            const sep = raw.indexOf('~')
-            if (sep < 0) continue
-            const prefix = def.key
-            const gte = raw.slice(0, sep), lte = raw.slice(sep + 1)
-            const isNum = def.type === 'number-range'
-            if (gte) out[`${prefix}_gte`] = isNum ? Number(gte) : gte
-            if (lte) out[`${prefix}_lte`] = isNum ? Number(lte) : lte
-        } else if (def.type === 'rating-half' || def.type === 'rating-unrated') {
-            const n = Number(raw); if (!isNaN(n)) out[def.key] = n
-        } else if (def.type === 'tristate' || def.type === 'toggle') {
-            out[def.key] = raw === '1'
-        } else if (def.type === 'number') {
-            const n = Number(raw); if (!isNaN(n)) out[def.key] = n
-        } else {
-            out[def.key] = raw
-        }
-    }
-    out.version = '2'
-    return out
-}
-
-function applyFilterBlob(params: FilterBlob) {
-    if (params.unrated_only === true) {
-        setFilter('unrated', '1')
-    }
-    // Backward compat: old saved searches stored rating as rating_gte/rating_lte
-    if (params.rating_gte != null) setFilter('ratingGte', String(params.rating_gte))
-    if (params.rating_lte != null) setFilter('ratingLte', String(params.rating_lte))
-    for (const def of RECIPE_FILTER_DEFS) {
-        if (def.type === 'date-range' || def.type === 'number-range') {
-            const prefix = def.key
-            const gte = params[`${prefix}_gte`] ?? params[`${def.key}_gte`]
-            const lte = params[`${prefix}_lte`] ?? params[`${def.key}_lte`]
-            if (gte != null || lte != null) setFilter(def.key, {gte: gte ?? null, lte: lte ?? null})
-        } else if (def.type === 'rating-half' || def.type === 'rating-unrated') {
-            const v = params[def.key]
-            if (v != null && v !== '') setFilter(def.key, String(v))
-        } else if (def.type === 'tag-select') {
-            const v = params[def.key]
-            if (Array.isArray(v) && v.length > 0) setFilter(def.key, v.map(Number).filter(n => !isNaN(n)))
-        } else if (def.type === 'tristate' || def.type === 'toggle') {
-            const v = params[def.key]
-            if (v === true || v === 'true' || v === 1 || v === '1') setFilter(def.key, '1')
-            else if (v === false || v === 'false' || v === 0 || v === '0') setFilter(def.key, '0')
-        } else {
-            const v = params[def.key]
-            if (v != null && v !== '') setFilter(def.key, String(v))
-        }
-    }
+    return buildSearchBlob({
+        defs: RECIPE_FILTER_DEFS,
+        getFilter,
+        query: query.value,
+        ordering: ordering.value,
+        includeSort: includeSort.value,
+        stash: unknownStash.value,
+    })
 }
 
 function snapshotFilters() { filterSnapshot.value = JSON.stringify(filtersToJson()) }
@@ -700,9 +658,14 @@ function loadSelectedCustomFilter() {
     // intermediate searches with partial/empty filters.
     if (stopReQueryWatcher) { stopReQueryWatcher(); stopReQueryWatcher = null }
     clearAllFilters()
-    if (typeof blob.query === 'string') query.value = blob.query
-    else query.value = ''
-    applyFilterBlob(blob)
+    query.value = typeof blob.query === 'string' ? blob.query : ''
+    const {applies, ordering: ord, hasSort, stash} = parseSearchBlob({defs: RECIPE_FILTER_DEFS, blob})
+    for (const a of applies) setFilter(a.key, a.value)
+    // Restore the stored sort (and track that this filter carries one). A filter
+    // without a sort_order leaves the current ordering untouched (sort is optional).
+    includeSort.value = hasSort
+    if (hasSort && ord != null) ordering.value = ord
+    unknownStash.value = stash
     snapshotFilters()
     startReQueryWatcher()
     searchRecipes({page: 1})
@@ -719,6 +682,7 @@ function saveCustomFilter() {
             .finally(() => { loading.value = false })
     } else {
         newFilterName.value = ''
+        includeSort.value = false  // opt-in per save; checkbox shown only when a sort is active
         dialog.value = true
     }
 }
