@@ -13,7 +13,7 @@
                 <v-window show-arrows>
                     <v-window-item v-for="(w, i) in recipeWindows" :key="i" class="pt-1 pb-1">
                         <v-row density="compact">
-                            <v-col class="pr-0 pl-0" v-for="r in w" :key="r.id">
+                            <v-col class="pr-0 pl-0" :style="cardColStyle" v-for="r in w" :key="r.id">
                                 <recipe-card :recipe="r" :show_description="true" :show-keywords="true"></recipe-card>
                             </v-col>
                         </v-row>
@@ -97,6 +97,18 @@ const queryParams = ref<Record<string, string | number | number[]>>({})
 const title = computed(() => entityName.value || t(MODE_CONFIG[props.mode].label))
 const icon = computed(() => MODE_CONFIG[props.mode].icon)
 const numberOfCols = computed(() => homePageCols(name.value))
+// Keep every card at one column width. flex-basis MUST be 0 (not the column %):
+// a non-zero basis plus the inter-card gaps overflows the row and wraps the last
+// card to a second line. With basis 0 the cards distribute the row evenly (no
+// wrap); flex-grow fills a full row, and max-width caps each at exactly one column
+// width so a window with fewer recipes than columns leaves trailing space instead
+// of stretching a lone card across the row (the reported bug). A computed style is
+// used rather than a `cols` prop because homePageCols can return 5 (xl), not a
+// 12-grid divisor. At xs (1 col) the cap is 100% → a phone card fills the width.
+const cardColStyle = computed(() => {
+    const width = 100 / numberOfCols.value
+    return {flex: '1 1 0%', maxWidth: `${width}%`}
+})
 
 onMounted(() => {
     loadRecipes()
