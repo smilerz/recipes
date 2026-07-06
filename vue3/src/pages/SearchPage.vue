@@ -47,7 +47,7 @@
                     </template>
                     <template #below-search-actions v-if="savedSearchInline && !selectMode">
                         <template v-if="!filtersCollapsed">
-                            <v-btn variant="text" size="small" prepend-icon="fa-solid fa-upload"
+                            <v-btn v-if="!editMode" variant="text" size="small" prepend-icon="fa-solid fa-upload"
                                    :disabled="selectedCustomFilter == null"
                                    @click="loadSelectedCustomFilter()" class="text-none">
                                 {{ $t('Load') }}
@@ -56,11 +56,17 @@
                                    @click="saveCustomFilter()" class="text-none">
                                 {{ $t('Save') }}
                             </v-btn>
-                            <v-btn v-if="selectedCustomFilter != null" icon variant="text" size="small"
-                                   :color="editMode ? 'edit' : undefined" :aria-label="$t('Edit')"
-                                   @click="editMode = !editMode">
+                            <v-btn v-if="selectedCustomFilter != null && !editMode" icon variant="text" size="small"
+                                   :aria-label="$t('Edit')" @click="editMode = true">
                                 <v-icon icon="$edit" />
                                 <v-tooltip activator="parent" location="top">{{ $t('Edit') }}</v-tooltip>
+                            </v-btn>
+                            <v-btn v-if="editMode" variant="text" size="small" @click="cancelEdit()" class="text-none">
+                                {{ $t('Cancel') }}
+                            </v-btn>
+                            <v-btn v-if="editMode" variant="text" size="small" color="delete" prepend-icon="$delete"
+                                   @click="deleteCustomFilter()" class="text-none ms-2">
+                                {{ $t('Delete') }}
                             </v-btn>
                         </template>
                     </template>
@@ -247,7 +253,7 @@
                 <div v-if="!savedSearchInline" class="px-4 py-2">
                     <model-select model="CustomFilter" v-model="selectedCustomFilter" density="compact" />
                     <div class="d-flex ga-1 mt-1">
-                        <v-btn variant="text" size="small" prepend-icon="fa-solid fa-upload"
+                        <v-btn v-if="!editMode" variant="text" size="small" prepend-icon="fa-solid fa-upload"
                                :disabled="selectedCustomFilter == null"
                                @click="loadSelectedCustomFilter()" class="text-none">
                             {{ $t('Load') }}
@@ -256,11 +262,17 @@
                                @click="saveCustomFilter()" class="text-none">
                             {{ $t('Save') }}
                         </v-btn>
-                        <v-btn v-if="selectedCustomFilter != null" icon variant="text" size="small"
-                               :color="editMode ? 'edit' : undefined" :aria-label="$t('Edit')"
-                               @click="editMode = !editMode">
+                        <v-btn v-if="selectedCustomFilter != null && !editMode" icon variant="text" size="small"
+                               :aria-label="$t('Edit')" @click="editMode = true">
                             <v-icon icon="$edit" />
                             <v-tooltip activator="parent" location="top">{{ $t('Edit') }}</v-tooltip>
+                        </v-btn>
+                        <v-btn v-if="editMode" variant="text" size="small" @click="cancelEdit()" class="text-none">
+                            {{ $t('Cancel') }}
+                        </v-btn>
+                        <v-btn v-if="editMode" variant="text" size="small" color="delete" prepend-icon="$delete"
+                               @click="deleteCustomFilter()" class="text-none ms-2">
+                            {{ $t('Delete') }}
                         </v-btn>
                     </div>
                     <v-divider class="mt-2" />
@@ -368,6 +380,8 @@
             </v-card>
         </v-dialog>
 
+        <action-confirm-dialog ref="confirmDialogRef" />
+
         <!-- Batch action dialogs — coming soon. The selection bar UI is active
              but actions are disabled until the batch-actions feature branch lands. -->
     </v-container>
@@ -382,7 +396,7 @@ import {useI18n} from 'vue-i18n'
 import {useDisplay} from 'vuetify'
 
 import {ApiApi, type ApiRecipeListRequest, type CustomFilter, type RecipeOverview} from '@/openapi'
-import {ErrorMessageType, useMessageStore} from '@/stores/MessageStore'
+import {ErrorMessageType, PreparedMessage, useMessageStore} from '@/stores/MessageStore'
 import {useUserPreferenceStore} from '@/stores/UserPreferenceStore'
 
 import {useUrlFilters} from '@/composables/useUrlFilters'
@@ -426,6 +440,7 @@ import ClosableHelpAlert from '@/components/display/ClosableHelpAlert.vue'
 import RecipeContextMenu from '@/components/inputs/RecipeContextMenu.vue'
 import KeywordsBar from '@/components/display/KeywordsBar.vue'
 import VClosableCardTitle from '@/components/dialogs/VClosableCardTitle.vue'
+import ActionConfirmDialog from '@/components/dialogs/ActionConfirmDialog.vue'
 import RecipeCard from '@/components/display/RecipeCard.vue'
 import RandomIcon from '@/components/display/RandomIcon.vue'
 import type {EditorSupportedTypes} from '@/types/Models'
@@ -481,6 +496,7 @@ const savedSearchInline = computed({
 // is a reactive override inside the visibility computeds (no settings mutation):
 // exiting edit mode reverts naturally.
 const editMode = ref(false)
+const confirmDialogRef = ref<InstanceType<typeof ActionConfirmDialog> | null>(null)
 
 // ─── Drawer filter visibility (search-specific) ────────────────────────
 // Drawer filters are driven by useFilterPlacement (isDrawerSelected) so what
@@ -577,7 +593,7 @@ function openSettingsPanel(tab: 'settings' | 'filters') {
 }
 
 // Exposed for component tests — script setup doesn't auto-expose bindings.
-defineExpose({openSettingsPanel, settingsActiveTab, settingsPanelOpen, onTableUpdate, filterParams, pageSize, applyStatFilter, inlineGroups, drawerFilterDefs, editMode})
+defineExpose({openSettingsPanel, settingsActiveTab, settingsPanelOpen, onTableUpdate, filterParams, pageSize, applyStatFilter, inlineGroups, drawerFilterDefs, editMode, selectedCustomFilter, saveCustomFilter, cancelEdit, deleteCustomFilter, confirmDialogRef})
 
 function resetAll() {
     query.value = ''
@@ -693,21 +709,59 @@ function loadSelectedCustomFilter() {
     searchRecipes({page: 1})
 }
 
-function saveCustomFilter() {
+async function saveCustomFilter() {
     const api = new ApiApi()
     if (selectedCustomFilter.value != null) {
         loading.value = true
         selectedCustomFilter.value.search = filtersToJson() as any
-        api.apiCustomFilterUpdate({id: selectedCustomFilter.value.id!, customFilter: selectedCustomFilter.value})
-            .then((r) => { selectedCustomFilter.value = r; snapshotFilters() })
-            .catch(err => useMessageStore().addError(ErrorMessageType.UPDATE_ERROR, err))
-            .finally(() => { loading.value = false })
+        try {
+            const r = await api.apiCustomFilterUpdate({id: selectedCustomFilter.value.id!, customFilter: selectedCustomFilter.value})
+            selectedCustomFilter.value = r
+            snapshotFilters()
+            editMode.value = false
+        } catch (err) {
+            useMessageStore().addError(ErrorMessageType.UPDATE_ERROR, err)
+        } finally {
+            loading.value = false
+        }
     } else {
         newFilterName.value = ''
         includeSort.value = false  // opt-in per save; checkbox shown only when a sort is active
         dialog.value = true
     }
 }
+
+/** Exit edit mode without persisting — no changes to anything. */
+function cancelEdit() { editMode.value = false }
+
+/** Delete the loaded saved search (with confirmation), then clear + exit edit mode. */
+async function deleteCustomFilter() {
+    if (!selectedCustomFilter.value) return
+    const confirmed = await confirmDialogRef.value?.open({
+        title: t('Delete'),
+        message: t('delete_confirmation', {source: selectedCustomFilter.value.name}),
+        confirmLabel: t('Delete'),
+        confirmColor: 'delete',
+        confirmIcon: '$delete',
+    })
+    if (!confirmed) return
+    const id = selectedCustomFilter.value.id!
+    loading.value = true
+    try {
+        await new ApiApi().apiCustomFilterDestroy({id})
+        selectedCustomFilter.value = null
+        editMode.value = false
+        useMessageStore().addPreparedMessage(PreparedMessage.DELETE_SUCCESS)
+    } catch (err) {
+        useMessageStore().addError(ErrorMessageType.DELETE_ERROR, err)
+    } finally {
+        loading.value = false
+    }
+}
+
+// Deselecting the saved search while editing must not strand the user in edit
+// mode with the pencil (v-if selectedCustomFilter) gone.
+watch(selectedCustomFilter, (v) => { if (!v) editMode.value = false })
 
 function createCustomFilter() {
     const api = new ApiApi()
