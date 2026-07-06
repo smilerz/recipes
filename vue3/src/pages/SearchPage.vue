@@ -56,6 +56,12 @@
                                    @click="saveCustomFilter()" class="text-none">
                                 {{ $t('Save') }}
                             </v-btn>
+                            <v-btn v-if="selectedCustomFilter != null" icon variant="text" size="small"
+                                   :color="editMode ? 'edit' : undefined" :aria-label="$t('Edit')"
+                                   @click="editMode = !editMode">
+                                <v-icon icon="$edit" />
+                                <v-tooltip activator="parent" location="top">{{ $t('Edit') }}</v-tooltip>
+                            </v-btn>
                         </template>
                     </template>
                     <template #search-append-inner v-if="!selectMode && (inlineGroups.length > 0 || savedSearchInline)">
@@ -249,6 +255,12 @@
                         <v-btn variant="text" size="small" prepend-icon="$save"
                                @click="saveCustomFilter()" class="text-none">
                             {{ $t('Save') }}
+                        </v-btn>
+                        <v-btn v-if="selectedCustomFilter != null" icon variant="text" size="small"
+                               :color="editMode ? 'edit' : undefined" :aria-label="$t('Edit')"
+                               @click="editMode = !editMode">
+                            <v-icon icon="$edit" />
+                            <v-tooltip activator="parent" location="top">{{ $t('Edit') }}</v-tooltip>
                         </v-btn>
                     </div>
                     <v-divider class="mt-2" />
@@ -462,15 +474,23 @@ const savedSearchInline = computed({
     set: (val: boolean) => { useUserPreferenceStore().deviceSettings.search_savedSearchInline = val },
 })
 
+// ─── Saved-search edit mode ─────────────────────────────────────────────
+// When editing a loaded saved search, reveal ALL non-hidden filter fields so the
+// user can see/change every field it uses — regardless of their per-filter
+// placement config (they may have hidden fields from both page and drawer). This
+// is a reactive override inside the visibility computeds (no settings mutation):
+// exiting edit mode reverts naturally.
+const editMode = ref(false)
+
 // ─── Drawer filter visibility (search-specific) ────────────────────────
 // Drawer filters are driven by useFilterPlacement (isDrawerSelected) so what
 // renders always matches the Panel toggles — including an explicitly emptied
 // list. Ungrouped filters (no group) are not placement-configurable and always
-// show.
+// show. In edit mode, placement is overridden to show all non-hidden defs.
 const drawerFilterDefs = computed(() => {
     const filtered = new Map<string, FilterDef[]>()
     for (const [group, defs] of groupedFilterDefs.value) {
-        const visible = defs.filter(d => !d.hidden && (!group || isDrawerSelected(d.key)))
+        const visible = defs.filter(d => !d.hidden && (editMode.value || !group || isDrawerSelected(d.key)))
         if (visible.length > 0) filtered.set(group, visible)
     }
     return filtered
@@ -478,12 +498,14 @@ const drawerFilterDefs = computed(() => {
 
 // ─── Inline filter visibility (per-filter granularity) ──────────────────
 // Driven by useFilterPlacement (isInlineSelected) so what renders on the page
-// matches the Page toggles, including an explicitly emptied list.
+// matches the Page toggles, including an explicitly emptied list. In edit mode,
+// show all non-hidden defs (the `!d.hidden` guard keeps the hidden `unrated` /
+// tag-select variant keys out of the inline area).
 const inlineGroups = computed(() => {
     const result: [string, FilterDef[]][] = []
     for (const [group, defs] of groupedFilterDefs.value) {
         if (!group) continue
-        const visible = defs.filter(d => isInlineSelected(d.key))
+        const visible = defs.filter(d => editMode.value ? !d.hidden : isInlineSelected(d.key))
         if (visible.length > 0) result.push([group, visible])
     }
     return result
@@ -555,7 +577,7 @@ function openSettingsPanel(tab: 'settings' | 'filters') {
 }
 
 // Exposed for component tests — script setup doesn't auto-expose bindings.
-defineExpose({openSettingsPanel, settingsActiveTab, settingsPanelOpen, onTableUpdate, filterParams, pageSize, applyStatFilter, inlineGroups, drawerFilterDefs})
+defineExpose({openSettingsPanel, settingsActiveTab, settingsPanelOpen, onTableUpdate, filterParams, pageSize, applyStatFilter, inlineGroups, drawerFilterDefs, editMode})
 
 function resetAll() {
     query.value = ''
