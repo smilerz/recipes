@@ -577,5 +577,16 @@ describe('SearchPage (Phase 3 rewrite)', () => {
             expect(vm.editMode).toBe(false)
             wrapper.unmount()
         })
+
+        it('mounting with ?editFilter=<id> fetches the filter, loads it, and enters edit mode', async () => {
+            apiMock.apiCustomFilterRetrieve = vi.fn().mockResolvedValue({id: 7, name: 'F', search: {keywords: [1]}})
+            const {wrapper} = await mountSearchPage({editFilter: '7'})
+            const vm = wrapper.vm as any
+            await flushPromises()
+            expect(apiMock.apiCustomFilterRetrieve).toHaveBeenCalledWith({id: 7})
+            expect(vm.selectedCustomFilter?.id).toBe(7)
+            expect(vm.editMode).toBe(true)
+            wrapper.unmount()
+        })
     })
 })
