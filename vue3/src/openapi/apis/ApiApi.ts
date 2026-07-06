@@ -20,6 +20,7 @@ import type {
   AiProvider,
   AutoMealPlan,
   Automation,
+  AutomationStats,
   BookmarkletImport,
   ConnectorConfig,
   CookLog,
@@ -46,6 +47,7 @@ import type {
   InventoryLog,
   InviteLink,
   Keyword,
+  KeywordStats,
   Localization,
   MealPlan,
   MealType,
@@ -166,6 +168,7 @@ import type {
   SyncLog,
   Unit,
   UnitConversion,
+  UnitStats,
   User,
   UserFile,
   UserPreference,
@@ -184,6 +187,8 @@ import {
     AutoMealPlanToJSON,
     AutomationFromJSON,
     AutomationToJSON,
+    AutomationStatsFromJSON,
+    AutomationStatsToJSON,
     BookmarkletImportFromJSON,
     BookmarkletImportToJSON,
     ConnectorConfigFromJSON,
@@ -236,6 +241,8 @@ import {
     InviteLinkToJSON,
     KeywordFromJSON,
     KeywordToJSON,
+    KeywordStatsFromJSON,
+    KeywordStatsToJSON,
     LocalizationFromJSON,
     LocalizationToJSON,
     MealPlanFromJSON,
@@ -476,6 +483,8 @@ import {
     UnitToJSON,
     UnitConversionFromJSON,
     UnitConversionToJSON,
+    UnitStatsFromJSON,
+    UnitStatsToJSON,
     UserFromJSON,
     UserToJSON,
     UserFileFromJSON,
@@ -831,8 +840,25 @@ export interface ApiFoodInheritFieldRetrieveRequest {
 }
 
 export interface ApiFoodListRequest {
+    expired?: boolean;
+    expiringSoon?: number;
+    hasChildren?: boolean;
+    hasInventory?: boolean;
+    hasRecipe?: boolean;
+    hasSubstitute?: boolean;
+    ignoreShopping?: boolean;
+    inShoppingList?: boolean;
+    inventoryLocation?: number;
+    onhand?: boolean;
+    ordering?: string;
     page?: number;
     pageSize?: number;
+    query?: string;
+    root?: number;
+    supermarketCategory?: number;
+    tree?: number;
+    treeSearch?: boolean;
+    usedInRecipes?: boolean;
 }
 
 export interface ApiFoodMergeUpdateRequest {
@@ -3296,7 +3322,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * logs request counts to redis cache total/per user/
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
      */
     async apiAutomationCreateRaw(requestParameters: ApiAutomationCreateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Automation>> {
         if (requestParameters['automation'] == null) {
@@ -3331,7 +3357,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * logs request counts to redis cache total/per user/
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
      */
     async apiAutomationCreate(requestParameters: ApiAutomationCreateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Automation> {
         const response = await this.apiAutomationCreateRaw(requestParameters, initOverrides);
@@ -3339,7 +3365,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * logs request counts to redis cache total/per user/
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
      */
     async apiAutomationDestroyRaw(requestParameters: ApiAutomationDestroyRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
         if (requestParameters['id'] == null) {
@@ -3372,14 +3398,14 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * logs request counts to redis cache total/per user/
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
      */
     async apiAutomationDestroy(requestParameters: ApiAutomationDestroyRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
         await this.apiAutomationDestroyRaw(requestParameters, initOverrides);
     }
 
     /**
-     * logs request counts to redis cache total/per user/
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
      */
     async apiAutomationListRaw(requestParameters: ApiAutomationListRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PaginatedAutomationList>> {
         const queryParameters: any = {};
@@ -3436,7 +3462,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * logs request counts to redis cache total/per user/
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
      */
     async apiAutomationList(requestParameters: ApiAutomationListRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PaginatedAutomationList> {
         const response = await this.apiAutomationListRaw(requestParameters, initOverrides);
@@ -3444,7 +3470,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * logs request counts to redis cache total/per user/
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
      */
     async apiAutomationPartialUpdateRaw(requestParameters: ApiAutomationPartialUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Automation>> {
         if (requestParameters['id'] == null) {
@@ -3480,7 +3506,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * logs request counts to redis cache total/per user/
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
      */
     async apiAutomationPartialUpdate(requestParameters: ApiAutomationPartialUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Automation> {
         const response = await this.apiAutomationPartialUpdateRaw(requestParameters, initOverrides);
@@ -3488,7 +3514,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * logs request counts to redis cache total/per user/
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
      */
     async apiAutomationRetrieveRaw(requestParameters: ApiAutomationRetrieveRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Automation>> {
         if (requestParameters['id'] == null) {
@@ -3521,7 +3547,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * logs request counts to redis cache total/per user/
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
      */
     async apiAutomationRetrieve(requestParameters: ApiAutomationRetrieveRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Automation> {
         const response = await this.apiAutomationRetrieveRaw(requestParameters, initOverrides);
@@ -3529,7 +3555,40 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * logs request counts to redis cache total/per user/
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
+     */
+    async apiAutomationStatsRetrieveRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<AutomationStats>> {
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.apiKey) {
+            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
+        }
+
+
+        let urlPath = `/api/automation/stats/`;
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => AutomationStatsFromJSON(jsonValue));
+    }
+
+    /**
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
+     */
+    async apiAutomationStatsRetrieve(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<AutomationStats> {
+        const response = await this.apiAutomationStatsRetrieveRaw(initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
      */
     async apiAutomationUpdateRaw(requestParameters: ApiAutomationUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Automation>> {
         if (requestParameters['id'] == null) {
@@ -3572,7 +3631,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * logs request counts to redis cache total/per user/
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
      */
     async apiAutomationUpdate(requestParameters: ApiAutomationUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Automation> {
         const response = await this.apiAutomationUpdateRaw(requestParameters, initOverrides);
@@ -4259,7 +4318,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * logs request counts to redis cache total/per user/
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
      */
     async apiCookLogCreateRaw(requestParameters: ApiCookLogCreateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<CookLog>> {
         if (requestParameters['cookLog'] == null) {
@@ -4294,7 +4353,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * logs request counts to redis cache total/per user/
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
      */
     async apiCookLogCreate(requestParameters: ApiCookLogCreateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<CookLog> {
         const response = await this.apiCookLogCreateRaw(requestParameters, initOverrides);
@@ -4302,7 +4361,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * logs request counts to redis cache total/per user/
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
      */
     async apiCookLogDestroyRaw(requestParameters: ApiCookLogDestroyRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
         if (requestParameters['id'] == null) {
@@ -4335,14 +4394,14 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * logs request counts to redis cache total/per user/
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
      */
     async apiCookLogDestroy(requestParameters: ApiCookLogDestroyRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
         await this.apiCookLogDestroyRaw(requestParameters, initOverrides);
     }
 
     /**
-     * logs request counts to redis cache total/per user/
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
      */
     async apiCookLogListRaw(requestParameters: ApiCookLogListRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PaginatedCookLogList>> {
         const queryParameters: any = {};
@@ -4387,7 +4446,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * logs request counts to redis cache total/per user/
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
      */
     async apiCookLogList(requestParameters: ApiCookLogListRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PaginatedCookLogList> {
         const response = await this.apiCookLogListRaw(requestParameters, initOverrides);
@@ -4395,7 +4454,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * logs request counts to redis cache total/per user/
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
      */
     async apiCookLogPartialUpdateRaw(requestParameters: ApiCookLogPartialUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<CookLog>> {
         if (requestParameters['id'] == null) {
@@ -4431,7 +4490,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * logs request counts to redis cache total/per user/
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
      */
     async apiCookLogPartialUpdate(requestParameters: ApiCookLogPartialUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<CookLog> {
         const response = await this.apiCookLogPartialUpdateRaw(requestParameters, initOverrides);
@@ -4439,7 +4498,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * logs request counts to redis cache total/per user/
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
      */
     async apiCookLogRetrieveRaw(requestParameters: ApiCookLogRetrieveRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<CookLog>> {
         if (requestParameters['id'] == null) {
@@ -4472,7 +4531,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * logs request counts to redis cache total/per user/
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
      */
     async apiCookLogRetrieve(requestParameters: ApiCookLogRetrieveRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<CookLog> {
         const response = await this.apiCookLogRetrieveRaw(requestParameters, initOverrides);
@@ -4480,7 +4539,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * logs request counts to redis cache total/per user/
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
      */
     async apiCookLogUpdateRaw(requestParameters: ApiCookLogUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<CookLog>> {
         if (requestParameters['id'] == null) {
@@ -4523,7 +4582,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * logs request counts to redis cache total/per user/
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
      */
     async apiCookLogUpdate(requestParameters: ApiCookLogUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<CookLog> {
         const response = await this.apiCookLogUpdateRaw(requestParameters, initOverrides);
@@ -4531,7 +4590,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * logs request counts to redis cache total/per user/
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
      */
     async apiCustomFilterCreateRaw(requestParameters: ApiCustomFilterCreateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<CustomFilter>> {
         if (requestParameters['customFilter'] == null) {
@@ -4566,7 +4625,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * logs request counts to redis cache total/per user/
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
      */
     async apiCustomFilterCreate(requestParameters: ApiCustomFilterCreateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<CustomFilter> {
         const response = await this.apiCustomFilterCreateRaw(requestParameters, initOverrides);
@@ -4574,7 +4633,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * logs request counts to redis cache total/per user/
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
      */
     async apiCustomFilterDestroyRaw(requestParameters: ApiCustomFilterDestroyRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
         if (requestParameters['id'] == null) {
@@ -4607,14 +4666,14 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * logs request counts to redis cache total/per user/
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
      */
     async apiCustomFilterDestroy(requestParameters: ApiCustomFilterDestroyRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
         await this.apiCustomFilterDestroyRaw(requestParameters, initOverrides);
     }
 
     /**
-     * logs request counts to redis cache total/per user/
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
      */
     async apiCustomFilterListRaw(requestParameters: ApiCustomFilterListRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PaginatedCustomFilterList>> {
         const queryParameters: any = {};
@@ -4671,7 +4730,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * logs request counts to redis cache total/per user/
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
      */
     async apiCustomFilterList(requestParameters: ApiCustomFilterListRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PaginatedCustomFilterList> {
         const response = await this.apiCustomFilterListRaw(requestParameters, initOverrides);
@@ -4679,7 +4738,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * logs request counts to redis cache total/per user/
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
      */
     async apiCustomFilterPartialUpdateRaw(requestParameters: ApiCustomFilterPartialUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<CustomFilter>> {
         if (requestParameters['id'] == null) {
@@ -4715,7 +4774,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * logs request counts to redis cache total/per user/
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
      */
     async apiCustomFilterPartialUpdate(requestParameters: ApiCustomFilterPartialUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<CustomFilter> {
         const response = await this.apiCustomFilterPartialUpdateRaw(requestParameters, initOverrides);
@@ -4723,7 +4782,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * logs request counts to redis cache total/per user/
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
      */
     async apiCustomFilterRetrieveRaw(requestParameters: ApiCustomFilterRetrieveRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<CustomFilter>> {
         if (requestParameters['id'] == null) {
@@ -4756,7 +4815,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * logs request counts to redis cache total/per user/
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
      */
     async apiCustomFilterRetrieve(requestParameters: ApiCustomFilterRetrieveRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<CustomFilter> {
         const response = await this.apiCustomFilterRetrieveRaw(requestParameters, initOverrides);
@@ -4764,7 +4823,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * logs request counts to redis cache total/per user/
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
      */
     async apiCustomFilterUpdateRaw(requestParameters: ApiCustomFilterUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<CustomFilter>> {
         if (requestParameters['id'] == null) {
@@ -4807,7 +4866,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * logs request counts to redis cache total/per user/
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
      */
     async apiCustomFilterUpdate(requestParameters: ApiCustomFilterUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<CustomFilter> {
         const response = await this.apiCustomFilterUpdateRaw(requestParameters, initOverrides);
@@ -5195,7 +5254,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * logs request counts to redis cache total/per user/
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
      */
     async apiFoodAipropertiesCreateRaw(requestParameters: ApiFoodAipropertiesCreateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Food>> {
         if (requestParameters['id'] == null) {
@@ -5242,7 +5301,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * logs request counts to redis cache total/per user/
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
      */
     async apiFoodAipropertiesCreate(requestParameters: ApiFoodAipropertiesCreateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Food> {
         const response = await this.apiFoodAipropertiesCreateRaw(requestParameters, initOverrides);
@@ -5250,7 +5309,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * logs request counts to redis cache total/per user/
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
      */
     async apiFoodBatchUpdateUpdateRaw(requestParameters: ApiFoodBatchUpdateUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<FoodBatchUpdate>> {
         if (requestParameters['foodBatchUpdate'] == null) {
@@ -5285,7 +5344,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * logs request counts to redis cache total/per user/
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
      */
     async apiFoodBatchUpdateUpdate(requestParameters: ApiFoodBatchUpdateUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<FoodBatchUpdate> {
         const response = await this.apiFoodBatchUpdateUpdateRaw(requestParameters, initOverrides);
@@ -5346,7 +5405,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * logs request counts to redis cache total/per user/
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
      */
     async apiFoodCreateRaw(requestParameters: ApiFoodCreateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Food>> {
         if (requestParameters['food'] == null) {
@@ -5381,7 +5440,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * logs request counts to redis cache total/per user/
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
      */
     async apiFoodCreate(requestParameters: ApiFoodCreateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Food> {
         const response = await this.apiFoodCreateRaw(requestParameters, initOverrides);
@@ -5389,7 +5448,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * logs request counts to redis cache total/per user/
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
      */
     async apiFoodDestroyRaw(requestParameters: ApiFoodDestroyRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
         if (requestParameters['id'] == null) {
@@ -5422,7 +5481,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * logs request counts to redis cache total/per user/
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
      */
     async apiFoodDestroy(requestParameters: ApiFoodDestroyRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
         await this.apiFoodDestroyRaw(requestParameters, initOverrides);
@@ -5554,10 +5613,54 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * logs request counts to redis cache total/per user/
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
      */
     async apiFoodListRaw(requestParameters: ApiFoodListRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PaginatedFoodList>> {
         const queryParameters: any = {};
+
+        if (requestParameters['expired'] != null) {
+            queryParameters['expired'] = requestParameters['expired'];
+        }
+
+        if (requestParameters['expiringSoon'] != null) {
+            queryParameters['expiring_soon'] = requestParameters['expiringSoon'];
+        }
+
+        if (requestParameters['hasChildren'] != null) {
+            queryParameters['has_children'] = requestParameters['hasChildren'];
+        }
+
+        if (requestParameters['hasInventory'] != null) {
+            queryParameters['has_inventory'] = requestParameters['hasInventory'];
+        }
+
+        if (requestParameters['hasRecipe'] != null) {
+            queryParameters['has_recipe'] = requestParameters['hasRecipe'];
+        }
+
+        if (requestParameters['hasSubstitute'] != null) {
+            queryParameters['has_substitute'] = requestParameters['hasSubstitute'];
+        }
+
+        if (requestParameters['ignoreShopping'] != null) {
+            queryParameters['ignore_shopping'] = requestParameters['ignoreShopping'];
+        }
+
+        if (requestParameters['inShoppingList'] != null) {
+            queryParameters['in_shopping_list'] = requestParameters['inShoppingList'];
+        }
+
+        if (requestParameters['inventoryLocation'] != null) {
+            queryParameters['inventory_location'] = requestParameters['inventoryLocation'];
+        }
+
+        if (requestParameters['onhand'] != null) {
+            queryParameters['onhand'] = requestParameters['onhand'];
+        }
+
+        if (requestParameters['ordering'] != null) {
+            queryParameters['ordering'] = requestParameters['ordering'];
+        }
 
         if (requestParameters['page'] != null) {
             queryParameters['page'] = requestParameters['page'];
@@ -5565,6 +5668,30 @@ export class ApiApi extends runtime.BaseAPI {
 
         if (requestParameters['pageSize'] != null) {
             queryParameters['page_size'] = requestParameters['pageSize'];
+        }
+
+        if (requestParameters['query'] != null) {
+            queryParameters['query'] = requestParameters['query'];
+        }
+
+        if (requestParameters['root'] != null) {
+            queryParameters['root'] = requestParameters['root'];
+        }
+
+        if (requestParameters['supermarketCategory'] != null) {
+            queryParameters['supermarket_category'] = requestParameters['supermarketCategory'];
+        }
+
+        if (requestParameters['tree'] != null) {
+            queryParameters['tree'] = requestParameters['tree'];
+        }
+
+        if (requestParameters['treeSearch'] != null) {
+            queryParameters['tree_search'] = requestParameters['treeSearch'];
+        }
+
+        if (requestParameters['usedInRecipes'] != null) {
+            queryParameters['used_in_recipes'] = requestParameters['usedInRecipes'];
         }
 
         const headerParameters: runtime.HTTPHeaders = {};
@@ -5587,7 +5714,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * logs request counts to redis cache total/per user/
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
      */
     async apiFoodList(requestParameters: ApiFoodListRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PaginatedFoodList> {
         const response = await this.apiFoodListRaw(requestParameters, initOverrides);
@@ -5595,7 +5722,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * logs request counts to redis cache total/per user/
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
      */
     async apiFoodMergeUpdateRaw(requestParameters: ApiFoodMergeUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Food>> {
         if (requestParameters['id'] == null) {
@@ -5646,7 +5773,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * logs request counts to redis cache total/per user/
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
      */
     async apiFoodMergeUpdate(requestParameters: ApiFoodMergeUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Food> {
         const response = await this.apiFoodMergeUpdateRaw(requestParameters, initOverrides);
@@ -5654,7 +5781,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * logs request counts to redis cache total/per user/
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
      */
     async apiFoodMoveUpdateRaw(requestParameters: ApiFoodMoveUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Food>> {
         if (requestParameters['id'] == null) {
@@ -5705,7 +5832,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * logs request counts to redis cache total/per user/
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
      */
     async apiFoodMoveUpdate(requestParameters: ApiFoodMoveUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Food> {
         const response = await this.apiFoodMoveUpdateRaw(requestParameters, initOverrides);
@@ -5766,7 +5893,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * logs request counts to redis cache total/per user/
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
      */
     async apiFoodPartialUpdateRaw(requestParameters: ApiFoodPartialUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Food>> {
         if (requestParameters['id'] == null) {
@@ -5802,7 +5929,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * logs request counts to redis cache total/per user/
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
      */
     async apiFoodPartialUpdate(requestParameters: ApiFoodPartialUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Food> {
         const response = await this.apiFoodPartialUpdateRaw(requestParameters, initOverrides);
@@ -5863,7 +5990,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * logs request counts to redis cache total/per user/
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
      */
     async apiFoodRetrieveRaw(requestParameters: ApiFoodRetrieveRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Food>> {
         if (requestParameters['id'] == null) {
@@ -5896,7 +6023,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * logs request counts to redis cache total/per user/
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
      */
     async apiFoodRetrieve(requestParameters: ApiFoodRetrieveRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Food> {
         const response = await this.apiFoodRetrieveRaw(requestParameters, initOverrides);
@@ -5904,7 +6031,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * logs request counts to redis cache total/per user/
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
      */
     async apiFoodShoppingUpdateRaw(requestParameters: ApiFoodShoppingUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Food>> {
         if (requestParameters['id'] == null) {
@@ -5947,7 +6074,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * logs request counts to redis cache total/per user/
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
      */
     async apiFoodShoppingUpdate(requestParameters: ApiFoodShoppingUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Food> {
         const response = await this.apiFoodShoppingUpdateRaw(requestParameters, initOverrides);
@@ -5955,7 +6082,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * logs request counts to redis cache total/per user/
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
      */
     async apiFoodStatsRetrieveRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<FoodStats>> {
         const queryParameters: any = {};
@@ -5980,7 +6107,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * logs request counts to redis cache total/per user/
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
      */
     async apiFoodStatsRetrieve(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<FoodStats> {
         const response = await this.apiFoodStatsRetrieveRaw(initOverrides);
@@ -5988,7 +6115,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * logs request counts to redis cache total/per user/
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
      */
     async apiFoodSubstitutesRetrieveRaw(requestParameters: ApiFoodSubstitutesRetrieveRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<FoodSimple>> {
         if (requestParameters['id'] == null) {
@@ -6021,7 +6148,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * logs request counts to redis cache total/per user/
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
      */
     async apiFoodSubstitutesRetrieve(requestParameters: ApiFoodSubstitutesRetrieveRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<FoodSimple> {
         const response = await this.apiFoodSubstitutesRetrieveRaw(requestParameters, initOverrides);
@@ -6029,7 +6156,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * logs request counts to redis cache total/per user/
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
      */
     async apiFoodUpdateRaw(requestParameters: ApiFoodUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Food>> {
         if (requestParameters['id'] == null) {
@@ -6072,7 +6199,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * logs request counts to redis cache total/per user/
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
      */
     async apiFoodUpdate(requestParameters: ApiFoodUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Food> {
         const response = await this.apiFoodUpdateRaw(requestParameters, initOverrides);
@@ -8495,7 +8622,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * logs request counts to redis cache total/per user/
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
      */
     async apiKeywordCreateRaw(requestParameters: ApiKeywordCreateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Keyword>> {
         if (requestParameters['keyword'] == null) {
@@ -8530,7 +8657,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * logs request counts to redis cache total/per user/
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
      */
     async apiKeywordCreate(requestParameters: ApiKeywordCreateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Keyword> {
         const response = await this.apiKeywordCreateRaw(requestParameters, initOverrides);
@@ -8538,7 +8665,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * logs request counts to redis cache total/per user/
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
      */
     async apiKeywordDestroyRaw(requestParameters: ApiKeywordDestroyRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
         if (requestParameters['id'] == null) {
@@ -8571,14 +8698,14 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * logs request counts to redis cache total/per user/
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
      */
     async apiKeywordDestroy(requestParameters: ApiKeywordDestroyRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
         await this.apiKeywordDestroyRaw(requestParameters, initOverrides);
     }
 
     /**
-     * logs request counts to redis cache total/per user/
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
      */
     async apiKeywordListRaw(requestParameters: ApiKeywordListRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PaginatedKeywordList>> {
         const queryParameters: any = {};
@@ -8651,7 +8778,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * logs request counts to redis cache total/per user/
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
      */
     async apiKeywordList(requestParameters: ApiKeywordListRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PaginatedKeywordList> {
         const response = await this.apiKeywordListRaw(requestParameters, initOverrides);
@@ -8659,7 +8786,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * logs request counts to redis cache total/per user/
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
      */
     async apiKeywordMergeUpdateRaw(requestParameters: ApiKeywordMergeUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Keyword>> {
         if (requestParameters['id'] == null) {
@@ -8710,7 +8837,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * logs request counts to redis cache total/per user/
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
      */
     async apiKeywordMergeUpdate(requestParameters: ApiKeywordMergeUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Keyword> {
         const response = await this.apiKeywordMergeUpdateRaw(requestParameters, initOverrides);
@@ -8718,7 +8845,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * logs request counts to redis cache total/per user/
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
      */
     async apiKeywordMoveUpdateRaw(requestParameters: ApiKeywordMoveUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Keyword>> {
         if (requestParameters['id'] == null) {
@@ -8769,7 +8896,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * logs request counts to redis cache total/per user/
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
      */
     async apiKeywordMoveUpdate(requestParameters: ApiKeywordMoveUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Keyword> {
         const response = await this.apiKeywordMoveUpdateRaw(requestParameters, initOverrides);
@@ -8830,7 +8957,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * logs request counts to redis cache total/per user/
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
      */
     async apiKeywordPartialUpdateRaw(requestParameters: ApiKeywordPartialUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Keyword>> {
         if (requestParameters['id'] == null) {
@@ -8866,7 +8993,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * logs request counts to redis cache total/per user/
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
      */
     async apiKeywordPartialUpdate(requestParameters: ApiKeywordPartialUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Keyword> {
         const response = await this.apiKeywordPartialUpdateRaw(requestParameters, initOverrides);
@@ -8927,7 +9054,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * logs request counts to redis cache total/per user/
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
      */
     async apiKeywordRetrieveRaw(requestParameters: ApiKeywordRetrieveRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Keyword>> {
         if (requestParameters['id'] == null) {
@@ -8960,7 +9087,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * logs request counts to redis cache total/per user/
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
      */
     async apiKeywordRetrieve(requestParameters: ApiKeywordRetrieveRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Keyword> {
         const response = await this.apiKeywordRetrieveRaw(requestParameters, initOverrides);
@@ -8968,7 +9095,40 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * logs request counts to redis cache total/per user/
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
+     */
+    async apiKeywordStatsRetrieveRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<KeywordStats>> {
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.apiKey) {
+            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
+        }
+
+
+        let urlPath = `/api/keyword/stats/`;
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => KeywordStatsFromJSON(jsonValue));
+    }
+
+    /**
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
+     */
+    async apiKeywordStatsRetrieve(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<KeywordStats> {
+        const response = await this.apiKeywordStatsRetrieveRaw(initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
      */
     async apiKeywordUpdateRaw(requestParameters: ApiKeywordUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Keyword>> {
         if (requestParameters['id'] == null) {
@@ -9011,7 +9171,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * logs request counts to redis cache total/per user/
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
      */
     async apiKeywordUpdate(requestParameters: ApiKeywordUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Keyword> {
         const response = await this.apiKeywordUpdateRaw(requestParameters, initOverrides);
@@ -17382,7 +17542,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * logs request counts to redis cache total/per user/
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
      */
     async apiUnitCreateRaw(requestParameters: ApiUnitCreateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Unit>> {
         if (requestParameters['unit'] == null) {
@@ -17417,7 +17577,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * logs request counts to redis cache total/per user/
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
      */
     async apiUnitCreate(requestParameters: ApiUnitCreateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Unit> {
         const response = await this.apiUnitCreateRaw(requestParameters, initOverrides);
@@ -17425,7 +17585,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * logs request counts to redis cache total/per user/
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
      */
     async apiUnitDestroyRaw(requestParameters: ApiUnitDestroyRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
         if (requestParameters['id'] == null) {
@@ -17458,14 +17618,14 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * logs request counts to redis cache total/per user/
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
      */
     async apiUnitDestroy(requestParameters: ApiUnitDestroyRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
         await this.apiUnitDestroyRaw(requestParameters, initOverrides);
     }
 
     /**
-     * logs request counts to redis cache total/per user/
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
      */
     async apiUnitListRaw(requestParameters: ApiUnitListRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PaginatedUnitList>> {
         const queryParameters: any = {};
@@ -17522,7 +17682,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * logs request counts to redis cache total/per user/
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
      */
     async apiUnitList(requestParameters: ApiUnitListRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PaginatedUnitList> {
         const response = await this.apiUnitListRaw(requestParameters, initOverrides);
@@ -17530,7 +17690,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * logs request counts to redis cache total/per user/
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
      */
     async apiUnitMergeUpdateRaw(requestParameters: ApiUnitMergeUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Unit>> {
         if (requestParameters['id'] == null) {
@@ -17581,7 +17741,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * logs request counts to redis cache total/per user/
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
      */
     async apiUnitMergeUpdate(requestParameters: ApiUnitMergeUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Unit> {
         const response = await this.apiUnitMergeUpdateRaw(requestParameters, initOverrides);
@@ -17642,7 +17802,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * logs request counts to redis cache total/per user/
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
      */
     async apiUnitPartialUpdateRaw(requestParameters: ApiUnitPartialUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Unit>> {
         if (requestParameters['id'] == null) {
@@ -17678,7 +17838,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * logs request counts to redis cache total/per user/
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
      */
     async apiUnitPartialUpdate(requestParameters: ApiUnitPartialUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Unit> {
         const response = await this.apiUnitPartialUpdateRaw(requestParameters, initOverrides);
@@ -17739,7 +17899,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * logs request counts to redis cache total/per user/
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
      */
     async apiUnitRetrieveRaw(requestParameters: ApiUnitRetrieveRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Unit>> {
         if (requestParameters['id'] == null) {
@@ -17772,7 +17932,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * logs request counts to redis cache total/per user/
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
      */
     async apiUnitRetrieve(requestParameters: ApiUnitRetrieveRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Unit> {
         const response = await this.apiUnitRetrieveRaw(requestParameters, initOverrides);
@@ -17780,7 +17940,40 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * logs request counts to redis cache total/per user/
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
+     */
+    async apiUnitStatsRetrieveRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<UnitStats>> {
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.apiKey) {
+            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
+        }
+
+
+        let urlPath = `/api/unit/stats/`;
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => UnitStatsFromJSON(jsonValue));
+    }
+
+    /**
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
+     */
+    async apiUnitStatsRetrieve(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<UnitStats> {
+        const response = await this.apiUnitStatsRetrieveRaw(initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
      */
     async apiUnitUpdateRaw(requestParameters: ApiUnitUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Unit>> {
         if (requestParameters['id'] == null) {
@@ -17823,7 +18016,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * logs request counts to redis cache total/per user/
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
      */
     async apiUnitUpdate(requestParameters: ApiUnitUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Unit> {
         const response = await this.apiUnitUpdateRaw(requestParameters, initOverrides);
@@ -17884,7 +18077,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * logs request counts to redis cache total/per user/
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
      */
     async apiUserFileCreateRaw(requestParameters: ApiUserFileCreateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<UserFile>> {
         if (requestParameters['name'] == null) {
@@ -17998,7 +18191,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * logs request counts to redis cache total/per user/
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
      */
     async apiUserFileCreate(requestParameters: ApiUserFileCreateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<UserFile> {
         const response = await this.apiUserFileCreateRaw(requestParameters, initOverrides);
@@ -18006,7 +18199,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * logs request counts to redis cache total/per user/
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
      */
     async apiUserFileDestroyRaw(requestParameters: ApiUserFileDestroyRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
         if (requestParameters['id'] == null) {
@@ -18039,14 +18232,14 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * logs request counts to redis cache total/per user/
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
      */
     async apiUserFileDestroy(requestParameters: ApiUserFileDestroyRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
         await this.apiUserFileDestroyRaw(requestParameters, initOverrides);
     }
 
     /**
-     * logs request counts to redis cache total/per user/
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
      */
     async apiUserFileListRaw(requestParameters: ApiUserFileListRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PaginatedUserFileList>> {
         const queryParameters: any = {};
@@ -18099,7 +18292,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * logs request counts to redis cache total/per user/
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
      */
     async apiUserFileList(requestParameters: ApiUserFileListRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PaginatedUserFileList> {
         const response = await this.apiUserFileListRaw(requestParameters, initOverrides);
@@ -18160,7 +18353,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * logs request counts to redis cache total/per user/
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
      */
     async apiUserFilePartialUpdateRaw(requestParameters: ApiUserFilePartialUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<UserFile>> {
         if (requestParameters['id'] == null) {
@@ -18240,7 +18433,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * logs request counts to redis cache total/per user/
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
      */
     async apiUserFilePartialUpdate(requestParameters: ApiUserFilePartialUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<UserFile> {
         const response = await this.apiUserFilePartialUpdateRaw(requestParameters, initOverrides);
@@ -18301,7 +18494,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * logs request counts to redis cache total/per user/
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
      */
     async apiUserFileRetrieveRaw(requestParameters: ApiUserFileRetrieveRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<UserFile>> {
         if (requestParameters['id'] == null) {
@@ -18334,7 +18527,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * logs request counts to redis cache total/per user/
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
      */
     async apiUserFileRetrieve(requestParameters: ApiUserFileRetrieveRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<UserFile> {
         const response = await this.apiUserFileRetrieveRaw(requestParameters, initOverrides);
@@ -18342,7 +18535,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * logs request counts to redis cache total/per user/
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
      */
     async apiUserFileUpdateRaw(requestParameters: ApiUserFileUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<UserFile>> {
         if (requestParameters['id'] == null) {
@@ -18464,7 +18657,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * logs request counts to redis cache total/per user/
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
      */
     async apiUserFileUpdate(requestParameters: ApiUserFileUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<UserFile> {
         const response = await this.apiUserFileUpdateRaw(requestParameters, initOverrides);
@@ -19009,7 +19202,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * logs request counts to redis cache total/per user/
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
      */
     async apiViewLogCreateRaw(requestParameters: ApiViewLogCreateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ViewLog>> {
         if (requestParameters['viewLog'] == null) {
@@ -19044,7 +19237,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * logs request counts to redis cache total/per user/
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
      */
     async apiViewLogCreate(requestParameters: ApiViewLogCreateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ViewLog> {
         const response = await this.apiViewLogCreateRaw(requestParameters, initOverrides);
@@ -19052,7 +19245,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * logs request counts to redis cache total/per user/
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
      */
     async apiViewLogDestroyRaw(requestParameters: ApiViewLogDestroyRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
         if (requestParameters['id'] == null) {
@@ -19085,14 +19278,14 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * logs request counts to redis cache total/per user/
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
      */
     async apiViewLogDestroy(requestParameters: ApiViewLogDestroyRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
         await this.apiViewLogDestroyRaw(requestParameters, initOverrides);
     }
 
     /**
-     * logs request counts to redis cache total/per user/
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
      */
     async apiViewLogListRaw(requestParameters: ApiViewLogListRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PaginatedViewLogList>> {
         const queryParameters: any = {};
@@ -19133,7 +19326,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * logs request counts to redis cache total/per user/
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
      */
     async apiViewLogList(requestParameters: ApiViewLogListRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PaginatedViewLogList> {
         const response = await this.apiViewLogListRaw(requestParameters, initOverrides);
@@ -19141,7 +19334,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * logs request counts to redis cache total/per user/
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
      */
     async apiViewLogPartialUpdateRaw(requestParameters: ApiViewLogPartialUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ViewLog>> {
         if (requestParameters['id'] == null) {
@@ -19177,7 +19370,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * logs request counts to redis cache total/per user/
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
      */
     async apiViewLogPartialUpdate(requestParameters: ApiViewLogPartialUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ViewLog> {
         const response = await this.apiViewLogPartialUpdateRaw(requestParameters, initOverrides);
@@ -19185,7 +19378,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * logs request counts to redis cache total/per user/
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
      */
     async apiViewLogRetrieveRaw(requestParameters: ApiViewLogRetrieveRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ViewLog>> {
         if (requestParameters['id'] == null) {
@@ -19218,7 +19411,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * logs request counts to redis cache total/per user/
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
      */
     async apiViewLogRetrieve(requestParameters: ApiViewLogRetrieveRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ViewLog> {
         const response = await this.apiViewLogRetrieveRaw(requestParameters, initOverrides);
@@ -19226,7 +19419,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * logs request counts to redis cache total/per user/
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
      */
     async apiViewLogUpdateRaw(requestParameters: ApiViewLogUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ViewLog>> {
         if (requestParameters['id'] == null) {
@@ -19269,7 +19462,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * logs request counts to redis cache total/per user/
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
      */
     async apiViewLogUpdate(requestParameters: ApiViewLogUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ViewLog> {
         const response = await this.apiViewLogUpdateRaw(requestParameters, initOverrides);
