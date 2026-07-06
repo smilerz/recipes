@@ -517,4 +517,65 @@ describe('SearchPage (Phase 3 rewrite)', () => {
             wrapper.unmount()
         })
     })
+
+    describe('edit-mode Save / Cancel / Delete', () => {
+        async function mountEditing() {
+            const {wrapper} = await mountSearchPage()
+            const vm = wrapper.vm as any
+            vm.selectedCustomFilter = {id: 5, name: 'X', search: {}}
+            vm.editMode = true
+            await flushPromises()
+            return {wrapper, vm}
+        }
+
+        it('Save persists via apiCustomFilterUpdate and exits edit mode', async () => {
+            apiMock.apiCustomFilterUpdate = vi.fn().mockResolvedValue({id: 5, name: 'X', search: {}})
+            const {wrapper, vm} = await mountEditing()
+            await vm.saveCustomFilter()
+            await flushPromises()
+            expect(apiMock.apiCustomFilterUpdate).toHaveBeenCalled()
+            expect(vm.editMode).toBe(false)
+            wrapper.unmount()
+        })
+
+        it('Cancel exits edit mode without persisting', async () => {
+            apiMock.apiCustomFilterUpdate = vi.fn()
+            const {wrapper, vm} = await mountEditing()
+            vm.cancelEdit()
+            expect(vm.editMode).toBe(false)
+            expect(apiMock.apiCustomFilterUpdate).not.toHaveBeenCalled()
+            wrapper.unmount()
+        })
+
+        it('Delete confirms, destroys, clears the selection and exits edit mode', async () => {
+            apiMock.apiCustomFilterDestroy = vi.fn().mockResolvedValue(undefined)
+            const {wrapper, vm} = await mountEditing()
+            vm.confirmDialogRef = {open: vi.fn().mockResolvedValue(true)}  // auto-confirm
+            await vm.deleteCustomFilter()
+            await flushPromises()
+            expect(apiMock.apiCustomFilterDestroy).toHaveBeenCalledWith({id: 5})
+            expect(vm.selectedCustomFilter).toBe(null)
+            expect(vm.editMode).toBe(false)
+            wrapper.unmount()
+        })
+
+        it('does NOT destroy when the delete confirm is declined', async () => {
+            apiMock.apiCustomFilterDestroy = vi.fn()
+            const {wrapper, vm} = await mountEditing()
+            vm.confirmDialogRef = {open: vi.fn().mockResolvedValue(false)}
+            await vm.deleteCustomFilter()
+            await flushPromises()
+            expect(apiMock.apiCustomFilterDestroy).not.toHaveBeenCalled()
+            expect(vm.editMode).toBe(true)  // still editing
+            wrapper.unmount()
+        })
+
+        it('deselecting the filter exits edit mode', async () => {
+            const {wrapper, vm} = await mountEditing()
+            vm.selectedCustomFilter = null
+            await flushPromises()
+            expect(vm.editMode).toBe(false)
+            wrapper.unmount()
+        })
+    })
 })
