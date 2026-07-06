@@ -76,3 +76,56 @@ describe('HorizontalRecipeWindow — New section "More" link (#4646)', () => {
         expect(query.createdon_gte).not.toBe(DateTime.now().minus({ days: 14 }).toISODate())
     })
 })
+
+// A window with fewer recipes than the column count must NOT let a card stretch
+// across the whole row (a single matching recipe used to span the full width).
+// Cards may grow to fill a partial row but are capped at 2x their normal column
+// width, so a lone card stays a sensible size instead of spanning everything.
+describe('HorizontalRecipeWindow — cards pinned to one column width (no stretch, no wrap)', () => {
+    beforeEach(() => {
+        resetApiMock()
+    })
+
+    async function mountWith(results: Array<Record<string, unknown>>) {
+        apiMock.apiRecipeList = vi.fn().mockResolvedValue({ count: results.length, results })
+        const pinia = createPinia()
+        const i18n = createI18n({ legacy: false, locale: 'en', messages: { en: {} }, missingWarn: false, fallbackWarn: false })
+        const router: Router = createRouter({
+            history: createMemoryHistory(),
+            routes: [
+                { path: '/', component: { template: '<div/>' } },
+                { path: '/advanced-search', name: 'SearchPage', component: { template: '<div/>' } },
+            ],
+        })
+        const wrapper = mount(HorizontalRecipeWindow, {
+            props: { mode: 'random' },
+            global: {
+                plugins: [pinia, i18n, router],
+                stubs: { RecipeCard: { template: '<div class="stub-card"/>' } },
+            },
+        })
+        await flushPromises()
+        return wrapper
+    }
+
+    it('pins a lone card to one column width (basis-0 fill, capped, no stretch)', async () => {
+        const wrapper = await mountWith([{ id: 1, name: 'Only One' }])
+
+        // The card columns are the innermost ones (pr-0 pl-0); the outer window
+        // wrapper col also contains the stub as a descendant, so match by class.
+        const cardCols = wrapper.findAll('.v-col.pr-0.pl-0')
+        expect(cardCols.length).toBe(1)
+
+        const style = cardCols[0].attributes('style') ?? ''
+        // flex-basis MUST be 0 — a non-zero basis + inter-card gaps overflows and
+        // wraps the last card; basis 0 distributes the row evenly (no wrap).
+        expect(style).toMatch(/flex:\s*1 1 0/)
+        // max-width caps each card at one column width: a positive % well under
+        // 100% (so a lone card leaves trailing space instead of stretching). At the
+        // test breakpoint (md, 4 cols) this is 25% — assert < 40 to exclude the old
+        // 2x cap (50%) and full-row stretch.
+        const maxW = Number(/max-width:\s*([\d.]+)%/.exec(style)?.[1])
+        expect(maxW).toBeGreaterThan(0)
+        expect(maxW).toBeLessThan(40)
+    })
+})
