@@ -481,4 +481,40 @@ describe('SearchPage (Phase 3 rewrite)', () => {
             wrapper.unmount()
         })
     })
+
+    // Editing a saved search must let the user see EVERY field it might use,
+    // regardless of their per-filter placement config (they may hide all fields).
+    // Edit mode overrides placement to show all non-hidden defs; hidden defs
+    // (unrated, the tag-select variant keys) must never leak into view.
+    describe('edit mode overrides placement to reveal all non-hidden fields', () => {
+        it('drawer: a filter hidden from the panel appears only once edit mode is on', async () => {
+            const {wrapper} = await mountSearchPage({}, 'grid', {search_drawerFilters: []})
+            const vm = wrapper.vm as any
+            const before = [...vm.drawerFilterDefs.values()].flat().map((d: any) => d.key)
+            expect(before).not.toContain('servings')  // grouped + not drawer-selected → hidden
+
+            vm.editMode = true
+            await flushPromises()
+            const after = [...vm.drawerFilterDefs.values()].flat().map((d: any) => d.key)
+            expect(after).toContain('servings')
+            expect(after).toContain('hasPhoto')
+            expect(after).not.toContain('unrated')   // hidden def never shown
+            expect(after).not.toContain('keywords')  // hidden tag-select variant
+            wrapper.unmount()
+        })
+
+        it('inline: edit mode shows all non-hidden grouped defs and respects !hidden', async () => {
+            const {wrapper} = await mountSearchPage({}, 'grid', {search_inlineFilters: []})
+            const vm = wrapper.vm as any
+            expect(vm.inlineGroups).toEqual([])  // placement empty, not editing
+
+            vm.editMode = true
+            await flushPromises()
+            const keys = vm.inlineGroups.flatMap((g: any) => g[1].map((d: any) => d.key))
+            expect(keys).toContain('servings')
+            expect(keys).not.toContain('unrated')   // finding #3: inline branch must guard !hidden
+            expect(keys).not.toContain('keywords')
+            wrapper.unmount()
+        })
+    })
 })
