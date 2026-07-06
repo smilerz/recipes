@@ -624,6 +624,8 @@
   "Save_and_View": "Save & View",
   "Saved": "Saved",
   "SavedSearch": "Saved Search",
+  "SavedSearchFilterCriteriaNotice": "This saved search has filter fields that aren't shown here — they're kept. Edit them on the search page.",
+  "SortOrder": "Sort order",
   "SavedSearchHelp": "Saved searches can be used to save search filters to easily retrieve them later or automatically populate recipe books. ",
   "ScalableNumber": "Scalable Number",
   "Scale": "Scale",

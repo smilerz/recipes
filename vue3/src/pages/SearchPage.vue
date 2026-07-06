@@ -805,7 +805,21 @@ function applyStatFilter(filter: Record<string, FilterValue>) {
 
 /* ─── Lifecycle ─────────────────────────────────────────────────────── */
 
-onMounted(() => {
+onMounted(async () => {
+    // Deep-link from the database page's Edit action: preload the saved search and
+    // open it in edit mode. loadSelectedCustomFilter() starts the watcher + searches.
+    const editFilterId = Number(route.query.editFilter)
+    if (editFilterId) {
+        try {
+            selectedCustomFilter.value = await new ApiApi().apiCustomFilterRetrieve({id: editFilterId})
+            loadSelectedCustomFilter()
+            editMode.value = true
+            loadStats()
+            return
+        } catch {
+            // Filter not found (e.g. deleted) — fall through to a normal search.
+        }
+    }
     searchRecipes({page: page.value})
     startReQueryWatcher()
     loadStats()
