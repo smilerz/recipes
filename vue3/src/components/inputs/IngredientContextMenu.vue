@@ -68,6 +68,11 @@
                 <v-list-item v-if="ingredient.unit" link :to="{name: 'ModelEditPage', params: { model: 'Unit', id: ingredient.unit.id}}" :prepend-icon="TUnit.icon">
                     {{ $t('Unit') }}
                 </v-list-item>
+
+                <!-- View in pantry (only when the food is on hand) -->
+                <v-list-item v-if="viewInPantry" link :to="viewInPantry" prepend-icon="$pantry">
+                    {{ $t('ViewInPantry') }}
+                </v-list-item>
             </v-list>
         </v-menu>
     </v-btn>
@@ -162,6 +167,14 @@ const triggerColor = computed(() => {
 const hasSubstitutes = computed(() => {
     const food = props.ingredient.food
     return (food?.availableSubstitutes?.length ?? 0) > 0
+})
+
+// "View in pantry" nav target — opens the pantry filtered to this food. Shown
+// only when the food is actually in the pantry (null hides the menu item).
+const viewInPantry = computed(() => {
+    const food = props.ingredient.food
+    if (!food?.id || !inventoryStatus.value) return null
+    return {name: 'PantryPage', query: {food_id: food.id}}
 })
 
 watch(menuOpen, (open) => {

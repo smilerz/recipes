@@ -42,6 +42,15 @@ export interface StructuredMessage {
 }
 
 /**
+ * Optional snackbar action button (e.g. Undo). The callback lives only on the in-memory
+ * snackbarQueue message — the persisted message log drops it on serialization, which is fine.
+ */
+export interface MessageAction {
+    label: string
+    callback: () => void
+}
+
+/**
  * Type Message holding all required contents of a message
  */
 export class Message {
@@ -50,9 +59,10 @@ export class Message {
     showTimeout = 0
     msg = {} as StructuredMessage
     data = {} as any
+    action?: MessageAction
     code = ''
 
-    constructor(type: MessageType, msg: string | StructuredMessage, showTimeout?: number, data?: any) {
+    constructor(type: MessageType, msg: string | StructuredMessage, showTimeout?: number, data?: any, action?: MessageAction) {
         if (typeof showTimeout === 'undefined') {
             showTimeout = 0
         }
@@ -67,6 +77,7 @@ export class Message {
         this.msg = msg
         this.showTimeout = showTimeout
         this.data = data
+        this.action = action
         this.createdAt = DateTime.now().toSeconds()
     }
 
@@ -88,11 +99,11 @@ export const useMessageStore = defineStore('message_store', () => {
      * @param {number} showTimeout optional number of ms to show message to user, set to 0 or leave undefined for silent message
      * @param {string} data optional additional data only shown in log
      */
-    function addMessage(type: MessageType, msg: string | StructuredMessage, showTimeout?: number, data?: any) {
+    function addMessage(type: MessageType, msg: string | StructuredMessage, showTimeout?: number, data?: any, action?: MessageAction) {
         if (typeof msg == 'string') {
             msg = {title: '', text: msg} as StructuredMessage
         }
-        let message = new Message(type, msg, showTimeout, data)
+        let message = new Message(type, msg, showTimeout, data, action)
 
         messages.value.push(message)
         if (message.showTimeout > 0) {

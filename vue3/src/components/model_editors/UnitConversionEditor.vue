@@ -23,7 +23,7 @@
                     </v-col>
                     <v-col md="6">
                         <!-- TODO fix card overflow invisible, overflow-visible class is not working -->
-                        <model-select  v-model="editingObj.baseUnit" model="Unit"></model-select>
+                        <model-select  v-model="editingObj.baseUnit" model="Unit" :label="$t('Unit')"></model-select>
                     </v-col>
                 </v-row>
                 <v-row class="mt-0">
@@ -37,7 +37,7 @@
                     </v-col>
                     <v-col md="6">
                         <!-- TODO fix card overflow invisible, overflow-visible class is not working -->
-                        <model-select  v-model="editingObj.convertedUnit" model="Unit"></model-select>
+                        <model-select  v-model="editingObj.convertedUnit" model="Unit" :label="$t('Unit')"></model-select>
                     </v-col>
                 </v-row>
                 <v-row>

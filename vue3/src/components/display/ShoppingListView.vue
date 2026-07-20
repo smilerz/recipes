@@ -10,6 +10,11 @@
             <i class="fa-solid fa-store fa-fw"></i> <span class="d-none d-md-block ms-1">{{ useUserPreferenceStore().deviceSettings.shopping_selected_supermarket.name }}</span>
         </v-tab>
 
+        <v-btn class="float-right" height="100%" rounded="0" variant="text"
+               prepend-icon="$pantry" @click="stockUpDialog?.open()">
+            <span>{{ $t('StockUp') }}</span>
+        </v-btn>
+
         <v-menu :close-on-content-click="false">
             <template v-slot:activator="{ props }">
                 <v-btn
@@ -100,6 +105,7 @@
     </v-banner>
 
     <shopping-export-dialog v-model="exportDialog" activator="model"></shopping-export-dialog>
+    <stock-up-dialog ref="stockUpDialog"></stock-up-dialog>
 
     <v-window v-model="currentTab">
         <v-window-item value="shopping">
@@ -191,7 +197,7 @@
                             <template v-for="category in shoppingListItems" :key="category.name">
 
 
-                                <v-list-subheader :style="subheaderStyle" v-if="category.name === useShoppingStore().UNDEFINED_CATEGORY">
+                                <v-list-subheader class="shopping-category-header" :style="subheaderStyle" v-if="category.name === useShoppingStore().UNDEFINED_CATEGORY">
 
                                     <v-btn color="secondary" variant="text" icon="fa-regular fa-square" @click="selectAll(category)"
                                            v-if="selectEnabled && !isAllSelected(category)"></v-btn>
@@ -201,14 +207,13 @@
 
                                 </v-list-subheader>
 
-                                <v-list-subheader :style="subheaderStyle" v-else>
+                                <v-list-subheader class="shopping-category-header" :style="subheaderStyle" v-else>
                                     <v-btn color="secondary" variant="text" icon="fa-regular fa-square" @click="selectAll(category)"
                                            v-if="selectEnabled && !isAllSelected(category)"></v-btn>
                                     <v-btn color="secondary" variant="text" icon="fa-solid fa-square-check" @click="deselectCategory(category)"
                                            v-if="selectEnabled && isAllSelected(category)"></v-btn>
                                     {{ category.name }}
                                 </v-list-subheader>
-                                <v-divider></v-divider>
 
                                 <template v-for="[i, value] in category.foods" :key="value.food.id">
                                     <shopping-line-item :shopping-list-food="value" :select-enabled="selectEnabled"></shopping-line-item>
@@ -358,6 +363,7 @@ import {DateTime} from "luxon";
 import ModelEditDialog from "@/components/dialogs/ModelEditDialog.vue";
 import {onBeforeRouteLeave} from "vue-router";
 import ShoppingExportDialog from "@/components/dialogs/ShoppingExportDialog.vue";
+import StockUpDialog from "@/components/dialogs/StockUpDialog.vue";
 import AddToShoppingDialog from "@/components/dialogs/AddToShoppingDialog.vue";
 import {TSupermarket} from "@/types/Models.ts";
 import ShoppingListSelectChip from "@/components/inputs/ShoppingListSelectChip.vue";
@@ -370,6 +376,7 @@ const props = defineProps({
 })
 
 const exportDialog = ref(false)
+const stockUpDialog = ref<InstanceType<typeof StockUpDialog> | null>(null)
 const currentTab = ref("shopping")
 const supermarkets = ref([] as Supermarket[])
 const manualAddRecipe = ref<undefined | Recipe>(undefined)
@@ -572,5 +579,18 @@ function isAllSelected(category: IShoppingListCategory | undefined = undefined) 
 </script>
 
 <style scoped>
-
+/* Q2/DEC-5: make supermarket-category subheaders read as real section headers — bolder,
+   tinted, and sticky — instead of faint grey text lost between dense rows. Tokens only. */
+.shopping-category-header {
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: rgb(var(--v-theme-on-surface)) !important;
+    opacity: 1;
+    background: rgba(var(--v-theme-primary), 0.08);
+    border-radius: 4px;
+    position: sticky;
+    top: 0;
+    z-index: 1;
+}
 </style>

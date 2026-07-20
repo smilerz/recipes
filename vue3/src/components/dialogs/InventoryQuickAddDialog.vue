@@ -66,11 +66,36 @@
                     model="Unit"
                     v-model="selectedUnit"
                     :label="$t('Unit')"
+                    variant="outlined"
                     density="compact"
                     can-clear
                     hide-details
                     append-to-body
                 />
+
+                <v-text-field
+                    v-model="expires"
+                    :label="$t('Expires')"
+                    type="date"
+                    variant="outlined"
+                    density="compact"
+                    hide-details
+                    class="mt-3"
+                >
+                    <template #append-inner v-if="selectedLocationIsFreezer">
+                        <v-btn
+                            icon="fa-solid fa-snowflake"
+                            size="small"
+                            density="compact"
+                            variant="plain"
+                            data-test="freezer-expiry-btn"
+                            :title="$t('Freezer')"
+                            :aria-label="$t('Freezer')"
+                            @click.stop="freezerDialog = true"
+                        />
+                    </template>
+                </v-text-field>
+                <freezer-expiry-dialog v-model="freezerDialog" v-model:date="freezerDate" />
             </v-card-text>
 
             <v-card-actions>
@@ -94,19 +119,27 @@
 </template>
 
 <script setup lang="ts">
-import {ref, watch} from 'vue'
+import {computed, ref, watch} from 'vue'
+import {DateTime} from 'luxon'
 import VClosableCardTitle from '@/components/dialogs/VClosableCardTitle.vue'
+import FreezerExpiryDialog from '@/components/dialogs/FreezerExpiryDialog.vue'
 import ModelSelect from '@/components/inputs/ModelSelect.vue'
+import {useI18n} from 'vue-i18n'
 import {ApiApi, type InventoryEntry, type Unit} from '@/openapi'
 import {ErrorMessageType, useMessageStore} from '@/stores/MessageStore'
+import {announcePantryAdd} from '@/composables/useInventoryActions'
+import {isoDateToApiDate} from '@/utils/pantry_utils'
 
 export type InventoryQuickAddResult = {
     locationId: number
     amount: number
     unit: Unit | null
+    expires: string | null // YYYY-MM-DD
 }
 
-type LocationItem = {value: number, label: string, household?: {id: number, name: string}}
+type LocationItem = {value: number, label: string, household?: {id: number, name: string}, isFreezer?: boolean}
+
+const {t} = useI18n()
 
 const dialog = ref(false)
 const title = ref('')
@@ -114,6 +147,17 @@ const locationItems = ref<LocationItem[]>([])
 const selectedLocationId = ref<number | null>(null)
 const amount = ref(1)
 const selectedUnit = ref<Unit | null>(null)
+const expires = ref<string | null>(null)
+const freezerDialog = ref(false)
+
+const selectedLocationIsFreezer = computed(() =>
+    locationItems.value.find(l => l.value === selectedLocationId.value)?.isFreezer ?? false)
+
+// FreezerExpiryDialog v-models a JS Date; our field is a date-only ISO string — glue both ways.
+const freezerDate = computed<Date>({
+    get: () => expires.value ? new Date(`${expires.value}T00:00:00`) : new Date(),
+    set: (d: Date) => { expires.value = DateTime.fromJSDate(d).toISODate() },
+})
 
 // Quick-add mode state
 let resolvePromise: ((result: InventoryQuickAddResult | null) => void) | null = null
@@ -150,6 +194,7 @@ function open(opts: {
     selectedLocationId.value = opts.defaultLocationId ?? (opts.locations.length === 1 ? opts.locations[0].value : null)
     amount.value = opts.amount ?? 1
     selectedUnit.value = opts.unit ?? null
+    expires.value = null
     isManageMode.value = false
     dialog.value = true
 
@@ -165,6 +210,7 @@ function confirm() {
         locationId: selectedLocationId.value!,
         amount: amount.value,
         unit: selectedUnit.value,
+        expires: expires.value,
     })
     resolvePromise = null
 }
@@ -191,6 +237,7 @@ async function openManage(opts: {
     selectedLocationId.value = opts.defaultLocationId ?? (opts.locations.length === 1 ? opts.locations[0].value : null)
     amount.value = opts.amount ?? 1
     selectedUnit.value = opts.unit ?? null
+    expires.value = null
     isManageMode.value = true
     manageFoodId.value = opts.foodId
     manageFoodName.value = opts.foodName
@@ -255,11 +302,15 @@ async function handleManageAdd() {
                 inventoryLocation: {id: selectedLocationId.value, name: locationItem?.label ?? '', household: locationItem?.household} as any,
                 unit: (selectedUnit.value ?? null) as any,
                 amount: amount.value,
+                // UTC midnight — the client wire format truncates toISOString (DEFECT-01 class)
+                expires: expires.value ? isoDateToApiDate(expires.value) : null,
             },
         })
         existingEntries.value.push(entry)
+        announcePantryAdd(manageFoodName.value, entry.expires, t)  // FR-D6: surface the (auto-set) expiry
         amount.value = 1
         selectedUnit.value = null
+        expires.value = null
     } catch (err) {
         useMessageStore().addError(ErrorMessageType.CREATE_ERROR, err)
     } finally {

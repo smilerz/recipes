@@ -30,8 +30,25 @@
                     </span>
                 </div>
                 <div class="d-flex  flex-column flex-grow-1 align-self-center">
-                    {{ pluralString(shoppingListFood.food, (amounts.length > 1 ? 2 : amounts[0]?.amount ?? 1)) }}
+                    <span>
+                        {{ pluralString(shoppingListFood.food, (amounts.length > 1 ? 2 : amounts[0]?.amount ?? 1)) }}
+                        <pantry-jar-indicator :in-inventory="parseBooleanAnnotation(shoppingListFood.food?.inInventory)"
+                                              :earliest-expiry="shoppingListFood.food?.earliestExpiry" size="x-small" class="ml-1"></pantry-jar-indicator>
+                    </span>
                     <span v-if="infoRow"><small class="text-disabled">{{ infoRow }}</small></span>
+                    <!-- FR-H3: the check-off → pantry loop affordance, only on checked rows -->
+                    <span v-if="isChecked" class="mt-1">
+                        <!-- min-height keeps the ≥44px tap target (FR-K4); :disabled (not just
+                             :loading, which doesn't gate clicks) prevents a double-tap creating two lots -->
+                        <v-btn v-if="!foodInPantry" variant="tonal" color="create" style="min-height: 44px"
+                               prepend-icon="$pantry" :loading="pantryAdding" :disabled="pantryAdding"
+                               data-test="add-pantry-chip" @click.stop="addToPantry">
+                            {{ $t('AddToPantry') }}
+                        </v-btn>
+                        <span v-else class="text-success text-caption text-no-wrap">
+                            <v-icon icon="fa-solid fa-check" size="small"></v-icon> {{ $t('InPantry') }}
+                        </span>
+                    </span>
                 </div>
             </div>
         </div>
@@ -72,9 +89,14 @@ import {ErrorMessageType, useMessageStore} from "@/stores/MessageStore";
 import {IShoppingListFood, ShoppingLineAmount} from "@/types/Shopping";
 import {isDelayed, isEntryVisible, isShoppingListFoodDelayed, isShoppingListFoodVisible} from "@/utils/logic_utils";
 import ShoppingLineItemDialog from "@/components/dialogs/ShoppingLineItemDialog.vue";
-import {pluralString, isSingularAmount} from "@/utils/model_utils.ts";
+import {pluralString, isSingularAmount, parseBooleanAnnotation} from "@/utils/model_utils.ts";
 import ShoppingListsBar from "@/components/display/ShoppingListsBar.vue";
+import PantryJarIndicator from "@/components/display/PantryJarIndicator.vue";
+import {useInventoryActions} from "@/composables/useInventoryActions";
+import {useI18n} from "vue-i18n";
 
+const {t} = useI18n()
+const {quickPantryAdd} = useInventoryActions()
 const emit = defineEmits(['clicked'])
 
 const props = defineProps({
@@ -112,6 +134,22 @@ const isChecked = computed(() => {
     }
     return true
 })
+
+// FR-H3: the check-off → pantry loop. A checked-off food that isn't in the pantry gets a one-tap
+// "＋ pantry" affordance; once on hand (already, or just added) it reads "in pantry ✓".
+const pantryAdding = ref(false)
+const pantryAddedLocal = ref(false)
+const foodInPantry = computed(() =>
+    parseBooleanAnnotation(props.shoppingListFood.food?.inInventory) || pantryAddedLocal.value)
+
+async function addToPantry() {
+    const food = props.shoppingListFood.food
+    if (!food?.id || pantryAdding.value) return  // re-entrancy guard against a double-tap
+    pantryAdding.value = true
+    const ok = await quickPantryAdd({id: food.id, name: food.name}, t)
+    if (ok) pantryAddedLocal.value = true
+    pantryAdding.value = false
+}
 
 /**
  * style action button depending on if all items are checked or not

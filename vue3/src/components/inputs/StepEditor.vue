@@ -47,11 +47,11 @@
                     <v-number-input :label="$t('Time')" v-model="step.time" :min="0" :step="5" control-variant="split"></v-number-input>
                 </v-col>
                 <v-col cols="12" md="6" v-if="showRecipe || step.stepRecipe != null">
-                    <model-select model="Recipe" v-model="step.stepRecipeData"
+                    <model-select model="Recipe" :label="$t('Recipe')" v-model="step.stepRecipeData"
                                   @update:modelValue="step.stepRecipe = (step.stepRecipeData != null) ? step.stepRecipeData.id! : null"></model-select>
                 </v-col>
                 <v-col cols="12" md="6" v-if="showFile || step.file != null">
-                    <model-select model="UserFile" v-model="step.file"></model-select>
+                    <model-select model="UserFile" :label="$t('File')" v-model="step.file"></model-select>
                 </v-col>
             </v-row>
 

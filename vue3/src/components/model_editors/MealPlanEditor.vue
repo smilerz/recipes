@@ -25,7 +25,7 @@
 
                         <v-row>
                             <v-col cols="12" md="6">
-                                <ModelSelect model="Recipe" v-model="editingObj.recipe"
+                                <ModelSelect model="Recipe" :label="$t('Recipe')" v-model="editingObj.recipe"
                                              @update:modelValue="editingObj.servings = editingObj.recipe ? editingObj.recipe.servings : 1"></ModelSelect>
                                 <!--                                <v-number-input label="Days" control-variant="split" :min="1"></v-number-input>-->
                                 <!--TODO create days input with +/- synced to date -->
@@ -80,7 +80,7 @@
                                     </v-btn-group>
                                 </v-input>
 
-                                <ModelSelect model="MealType" :allow-create="true" v-model="editingObj.mealType"></ModelSelect>
+                                <ModelSelect model="MealType" :label="$t('Meal_Type')" :allow-create="true" v-model="editingObj.mealType"></ModelSelect>
                                 <v-number-input control-variant="split" :min="0" v-model="editingObj.servings" :label="$t('Servings')" :precision="2"></v-number-input>
                             </v-col>
 

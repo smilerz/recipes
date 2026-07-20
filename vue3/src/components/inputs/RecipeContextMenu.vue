@@ -1,4 +1,8 @@
 <template>
+    <v-btn v-if="props.context === 'view'" variant="text" :size="props.size"
+           class="d-print-none" prepend-icon="$pantry" @click="openUseUp">
+        {{ $t('UseUp') }}
+    </v-btn>
     <v-btn icon="fa-solid fa-ellipsis-v" variant="plain" :size="props.size" class="d-print-none" :aria-label="$t('Actions')">
         <v-icon icon="fa-solid fa-ellipsis-v"></v-icon>
         <v-menu activator="parent" close-on-content-click>
@@ -73,6 +77,7 @@
     <add-to-shopping-dialog v-if="isVisible('shopping')" :recipe="props.recipe" :open="shoppingDialog" @update:open="shoppingDialog = $event"></add-to-shopping-dialog>
     <add-to-book-dialog v-if="addToBookDialog" :recipe="props.recipe" v-model="addToBookDialog"></add-to-book-dialog>
     <log-cooking-dialog v-if="logCookingDialog" :recipe="props.recipe" v-model="logCookingDialog"></log-cooking-dialog>
+    <use-up-dialog v-if="props.context === 'view'" ref="useUpDialog"></use-up-dialog>
     <delete-confirm-dialog v-if="deleteDialog" :object-name="props.recipe.name" model-name="Recipe"
                            @delete="confirmDelete" v-model="deleteDialog"></delete-confirm-dialog>
 
@@ -95,6 +100,8 @@ import RecipeShareDialog from "@/components/dialogs/RecipeShareDialog.vue";
 import AddToShoppingDialog from "@/components/dialogs/AddToShoppingDialog.vue";
 import AddToBookDialog from "@/components/dialogs/AddToBookDialog.vue";
 import LogCookingDialog from "@/components/dialogs/LogCookingDialog.vue";
+import UseUpDialog from "@/components/dialogs/UseUpDialog.vue";
+import {recipeFoodIds} from "@/utils/pantry_utils";
 import DeleteConfirmDialog from "@/components/dialogs/DeleteConfirmDialog.vue";
 import RecipeImageEditor from "@/components/inputs/RecipeImageEditor.vue";
 import VClosableCardTitle from "@/components/dialogs/VClosableCardTitle.vue";
@@ -133,9 +140,19 @@ const photoEditorDialog = ref(false)
 const photoEditorImages = ref<any[]>([])
 const duplicateLoading = ref(false)
 const exportLoading = ref(false)
+const useUpDialog = ref<InstanceType<typeof UseUpDialog> | null>(null)
 
 function isVisible(key: string): boolean {
     return deviceSettings.card_visibleMenuItems.includes(key)
+}
+
+/** Open Use up scoped to this recipe's on-hand ingredients (FR-I5); the dialog intersects the
+ *  recipe's food ids with the pantry, so passing all recipe food ids is safe. */
+function openUseUp() {
+    useUpDialog.value?.open({
+        foodIds: recipeFoodIds(props.recipe),
+        title: t('UseUpRecipe', {recipe: props.recipe.name}),
+    })
 }
 
 function openPhotoEditor() {
