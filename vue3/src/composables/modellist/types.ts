@@ -45,7 +45,16 @@ export type ColumnType = 'text' | 'number' | 'boolean-indicator' | 'status-chip'
 /**
  * Filter control types for the filter panel.
  */
-export type FilterType = 'tristate' | 'model-select' | 'number' | 'select'
+export type FilterType = 'tristate' | 'toggle' | 'model-select' | 'number' | 'select' | 'tag-select' | 'tag-group' | 'date-range' | 'number-range' | 'rating-half' | 'rating-unrated'
+
+/** Range filter value: an open- or closed-ended interval. */
+export type RangeValue = {
+    gte?: string | number | null,
+    lte?: string | number | null,
+}
+
+/** Discriminated value type accepted by setFilter. */
+export type FilterValue = string | number[] | string[] | RangeValue | undefined
 
 /**
  * Filter definition for a model list.
@@ -70,6 +79,20 @@ export type FilterDef = {
     suffixKey?: string,
     /** For select type: available options with value and localization key */
     options?: {value: string, labelKey: string}[],
+    /** Participates in state/chips/bridge but skipped by FilterPanel rendering. */
+    hidden?: boolean,
+    /** For tag-group: the 4 variant keys [any, all, orNot, andNot] */
+    variantKeys?: [string, string, string, string],
+    /** For tag-group: hide any/all toggles for simpler filters */
+    showToggles?: boolean,
+    /** For tag-group: allow expanding to 4 rows */
+    expandable?: boolean,
+    /** Override multiselect placeholder text */
+    selectPlaceholder?: string,
+    /** For rating-unrated: the companion boolean filter key set when the
+     *  "0 / Unrated" position is chosen (e.g. 'unrated'). Picking a star clears
+     *  it; picking 0 sets it and clears this filter's own rating value. */
+    unratedKey?: string,
 }
 
 /**
@@ -168,6 +191,10 @@ export type ListSettings = {
     statsFooter?: boolean,
     /** Whether a mobile-specific list layout is available */
     mobileList?: boolean,
+    /** Whether "include children" toggle is available (for hierarchical keyword/food search) */
+    includeChildren?: boolean,
+    /** Whether per-filter Page/Panel visibility settings are available */
+    filterVisibility?: boolean,
     /** Per-model default values for device settings */
     defaults?: SettingsDefaults,
 }
@@ -185,6 +212,11 @@ export type StatDef = {
     icon: string,
     /** Vuetify color for the chip */
     color: string,
+    /** Optional: when present, the chip becomes clickable. Returns a map of
+     *  filter-key → FilterValue to apply on click (resolved lazily so
+     *  time-sensitive filters like "created in last N days" pick up the
+     *  click-time value). */
+    filter?: () => Record<string, FilterValue>,
 }
 
 /**
