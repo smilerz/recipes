@@ -11,6 +11,38 @@ LIST_URL = 'api:customfilter-list'
 DETAIL_URL = 'api:customfilter-detail'
 
 
+def test_ordering_name(u1_s1, space_1):
+    """Characterization: name ordering is case-insensitive (Lower() path)."""
+    user = auth.get_user(u1_s1)
+    with scopes_disabled():
+        z = CustomFilter.objects.create(name='char_zzz', type=CustomFilter.RECIPE, search={}, created_by=user, space=space_1)
+        a = CustomFilter.objects.create(name='char_aaa', type=CustomFilter.RECIPE, search={}, created_by=user, space=space_1)
+
+    asc = json.loads(u1_s1.get(f'{reverse(LIST_URL)}?ordering=name').content)
+    names_asc = [r['name'] for r in asc['results']]
+    assert names_asc.index(a.name) < names_asc.index(z.name)
+
+    desc = json.loads(u1_s1.get(f'{reverse(LIST_URL)}?ordering=-name').content)
+    names_desc = [r['name'] for r in desc['results']]
+    assert names_desc.index(z.name) < names_desc.index(a.name)
+
+
+def test_ordering_type(u1_s1, space_1):
+    """Characterization: type ordering (plain-field path, no Lower())."""
+    user = auth.get_user(u1_s1)
+    with scopes_disabled():
+        r = CustomFilter.objects.create(name='char_type_r', type=CustomFilter.RECIPE, search={}, created_by=user, space=space_1)
+        f = CustomFilter.objects.create(name='char_type_f', type=CustomFilter.FOOD, search={}, created_by=user, space=space_1)
+
+    asc = json.loads(u1_s1.get(f'{reverse(LIST_URL)}?ordering=type').content)
+    ids_asc = [r['id'] for r in asc['results']]
+    assert ids_asc.index(f.id) < ids_asc.index(r.id)  # FOOD sorts before RECIPE
+
+    desc = json.loads(u1_s1.get(f'{reverse(LIST_URL)}?ordering=-type').content)
+    ids_desc = [r['id'] for r in desc['results']]
+    assert ids_desc.index(r.id) < ids_desc.index(f.id)
+
+
 @pytest.fixture()
 def obj_1(space_1, u1_s1):
     with scopes_disabled():
