@@ -16,7 +16,9 @@ export const CUSTOMFILTER_FILTER_DEFS: FilterDef[] = [
 ]
 
 export const CUSTOMFILTER_ACTION_DEFS: ActionDef[] = [
-    {key: 'edit', labelKey: 'Edit', icon: 'fa-solid fa-pen', group: 'Actions', routeName: 'ModelEditPage', routeParams: (item: ModelItem, modelName: string) => ({model: modelName, id: item.id})},
+    // Edit opens the saved search on the search page in edit mode (full filter +
+    // sort editing there), rather than the limited name/type/shared model editor.
+    {key: 'edit', labelKey: 'Edit', icon: 'fa-solid fa-pen', group: 'Actions', routeName: 'SearchPage', routeQuery: (item: ModelItem) => ({editFilter: item.id})},
     {key: 'delete', labelKey: 'Delete', icon: 'fa-solid fa-trash', group: 'Actions', isDanger: true,
         routeName: 'ModelDeletePage',
         routeParams: (item: ModelItem, modelName: string) => ({model: modelName, id: item.id})},
