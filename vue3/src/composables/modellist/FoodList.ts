@@ -7,17 +7,16 @@ import type {FilterDef, ActionDef, BatchAction, StatDef, ListSettings, SortDef, 
 import {useShoppingActions} from '@/composables/useShoppingActions'
 import {useInventoryActions} from '@/composables/useInventoryActions'
 import {ErrorMessageType, useMessageStore} from '@/stores/MessageStore'
+import {parseBooleanAnnotation} from '@/utils/model_utils'
 
 /** The backend annotates shopping_status via Exists() → CharField, yielding "True"/"False" strings. */
 function isOnShoppingList(item: ModelItem): boolean {
-    const v = item.shopping
-    return v === true || v === 'True' || v === 'true'
+    return parseBooleanAnnotation(item.shopping)
 }
 
 /** The backend annotates has_inventory_status via Exists() → CharField, yielding "True"/"False" strings. */
 function isInInventory(item: ModelItem): boolean {
-    const v = item.inInventory
-    return v === true || v === 'True' || v === 'true'
+    return parseBooleanAnnotation(item.inInventory)
 }
 
 /**

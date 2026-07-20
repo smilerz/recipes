@@ -107,7 +107,7 @@
         </template>
         <v-row>
             <v-col>
-                <ModelListToolbar
+                <ListToolbar
                     v-if="showListToolbar"
                     v-model:query="query"
                     v-model:ordering="ordering"
@@ -309,7 +309,7 @@ import {useUrlFilters} from "@/composables/useUrlFilters";
 import ModelListCellRenderer from "@/components/model_list/ModelListCellRenderer.vue";
 import ModelListDataTable from "@/components/model_list/ModelListDataTable.vue";
 import ModelListSettingsPanel from "@/components/model_list/ModelListSettingsPanel.vue"
-import ModelListToolbar from "@/components/model_list/ModelListToolbar.vue";
+import ListToolbar from "@/components/model_list/ListToolbar.vue";
 import ModelListCreateButton from "@/components/model_list/ModelListCreateButton.vue";
 import ModelListFilterChips from "@/components/model_list/ModelListFilterChips.vue";
 import SelectionBar from "@/components/common/SelectionBar.vue";
@@ -346,7 +346,10 @@ const itemsPerPageOptions = [
 
 const query = useRouteQuery('query', "")
 const page = useRouteQuery('page', 1, {transform: Number})
-const pageSize = useRouteQuery('pageSize', useUserPreferenceStore().deviceSettings.general_tableItemsPerPage, {transform: Number})
+// Pinia v3 useStore() disrupts Vue's injection context when called inline as a
+// function argument — evaluate the default separately before calling useRouteQuery.
+const _defaultPageSize = useUserPreferenceStore().deviceSettings.general_tableItemsPerPage
+const pageSize = useRouteQuery('pageSize', _defaultPageSize, {transform: Number})
 const ordering = useRouteQuery('ordering', '')
 
 // Clear custom ordering when a search query is entered — relevance takes priority
@@ -413,7 +416,7 @@ const hasActiveSearchState = computed(() =>
 )
 
 // Render the toolbar whenever it has any control to show. disableSearch hides
-// only the search field (see ModelListToolbar), so a model can still surface
+// only the search field (see ListToolbar), so a model can still surface
 // multi-select, sort or filter affordances with search turned off.
 const showListToolbar = computed(() => {
     const m = currentModel.value

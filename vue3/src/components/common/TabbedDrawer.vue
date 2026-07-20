@@ -10,6 +10,7 @@
         <v-toolbar density="compact" flat>
             <v-spacer />
             <v-btn
+                v-if="pinnable"
                 :icon="isPinned ? 'fa-solid fa-thumbtack' : 'fa-solid fa-thumbtack fa-rotate-90'"
                 variant="plain"
                 size="small"
@@ -25,14 +26,16 @@
             />
         </v-toolbar>
 
-        <v-tabs v-model="currentTab" density="compact" grow>
-            <v-tab v-for="tab in tabs" :key="tab.key" :value="tab.key">
-                <v-icon start size="small">{{ tab.icon }}</v-icon>
-                {{ tab.label }}
-            </v-tab>
-        </v-tabs>
+        <template v-if="tabs.length > 1">
+            <v-tabs v-model="currentTab" density="compact" grow>
+                <v-tab v-for="tab in tabs" :key="tab.key" :value="tab.key">
+                    <v-icon start size="small">{{ tab.icon }}</v-icon>
+                    {{ tab.label }}
+                </v-tab>
+            </v-tabs>
 
-        <v-divider />
+            <v-divider />
+        </template>
 
         <v-tabs-window v-model="currentTab">
             <v-tabs-window-item v-for="tab in tabs" :key="tab.key" :value="tab.key">
@@ -44,23 +47,25 @@
     <v-bottom-sheet v-else v-model="isOpen" scrollable>
         <v-card :style="sheetDragStyle">
             <div
-                role="presentation"
-                style="display: flex; justify-content: center; padding: 12px 0 4px; cursor: grab; touch-action: none;"
+                role="button"
+                :aria-label="$t('Close')"
+                style="display: flex; align-items: center; justify-content: center; height: 36px; cursor: pointer; touch-action: none;"
+                @click="isOpen = false"
                 @touchstart.passive="onSheetDragStart"
                 @touchmove="onSheetDragMove"
                 @touchend.passive="onSheetDragEnd"
             >
-                <div style="width: 40px; height: 4px; border-radius: 2px; background: rgba(var(--v-theme-on-surface), 0.3);" />
+                <div style="width: 48px; height: 5px; border-radius: 3px; background: rgba(var(--v-theme-on-surface), 0.3);" />
             </div>
 
             <v-card-title class="d-flex align-center pa-0">
-                <v-tabs v-model="currentTab" density="compact" grow>
+                <v-tabs v-if="tabs.length > 1" v-model="currentTab" density="compact" grow>
                     <v-tab v-for="tab in tabs" :key="tab.key" :value="tab.key">
                         <v-icon start size="small">{{ tab.icon }}</v-icon>
                         {{ tab.label }}
                     </v-tab>
                 </v-tabs>
-                <v-btn icon="fa-solid fa-times" variant="plain" size="small" :aria-label="$t('Close')" @click="isOpen = false" />
+                <span v-else class="text-subtitle-2 px-4 flex-grow-1">{{ tabs[0]?.label }}</span>
             </v-card-title>
 
             <v-divider />
@@ -90,12 +95,16 @@ const props = withDefaults(defineProps<{
     modelValue: boolean
     activeTab?: string
     pinned?: boolean
+    pinnable?: boolean
     tabs: { key: string, label: string, icon: string }[]
     width?: number
+    useSheet?: boolean
 }>(), {
     activeTab: undefined,
     pinned: false,
+    pinnable: true,
     width: 320,
+    useSheet: false,
 })
 
 const emit = defineEmits<{
@@ -104,7 +113,8 @@ const emit = defineEmits<{
     'update:pinned': [val: boolean]
 }>()
 
-const {mobile} = useDisplay()
+const {mobile: vuetifyMobile} = useDisplay()
+const mobile = computed(() => vuetifyMobile.value || props.useSheet)
 
 const isOpen = computed({
     get: () => props.modelValue,
