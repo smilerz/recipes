@@ -21,6 +21,12 @@ describe('CustomFilterList config', () => {
         expect(keys).toContain('delete')
     })
 
+    it('edit action opens the saved search on the search page in edit mode', () => {
+        const edit = CUSTOMFILTER_ACTION_DEFS.find(a => a.key === 'edit')!
+        expect(edit.routeName).toBe('SearchPage')
+        expect(edit.routeQuery?.({id: 7} as any)).toEqual({editFilter: 7})
+    })
+
     it('list settings target the customFilter namespace', () => {
         expect(CUSTOMFILTER_LIST_SETTINGS.settingsKey).toBe('customFilter')
     })
