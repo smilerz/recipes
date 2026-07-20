@@ -5,7 +5,8 @@ import { makeRecipeBook, makeUser } from '@/__tests__/factories'
 import { mountPage } from '@/__tests__/pages/page-mount-helper'
 import { SEARCH_DEBOUNCE_MS } from '@/utils/utils'
 
-vi.mock('@/openapi', () => ({
+vi.mock('@/openapi', async (importOriginal) => ({
+    ...(await importOriginal<any>()),
     ApiApi: class { constructor() { return apiMock } },
 }))
 
