@@ -792,6 +792,10 @@ class Food(ExportModelOperationsMixin('food'), TreeModel, PermissionModelMixin):
 
     preferred_unit = models.ForeignKey(Unit, on_delete=models.SET_NULL, null=True, blank=True, default=None, related_name='preferred_unit')
     preferred_shopping_unit = models.ForeignKey(Unit, on_delete=models.SET_NULL, null=True, blank=True, default=None, related_name='preferred_shopping_unit')
+    # pantry: default shelf life (days) auto-fills a new lot's expiry; default purchase pack amount
+    # pairs with preferred_shopping_unit for the shopping list. Both optional, per-food, not inheritable.
+    shelf_life_days = models.PositiveIntegerField(null=True, blank=True, default=None)
+    shopping_amount = models.DecimalField(max_digits=16, decimal_places=4, null=True, blank=True, default=None)
     fdc_id = models.IntegerField(null=True, default=None, blank=True)
 
     open_data_slug = models.CharField(max_length=128, null=True, blank=True, default=None)
@@ -836,6 +840,17 @@ class Food(ExportModelOperationsMixin('food'), TreeModel, PermissionModelMixin):
         self.properties.clear()
         Ingredient.objects.filter(food=self).update(food=target)
         ShoppingListEntry.objects.filter(food=self).update(food=target)
+        # reassign inventory lots before delete — InventoryEntry.food is CASCADE, so the source's
+        # lots would otherwise be silently deleted on merge (e.g. Open Data import dedup)
+        InventoryEntry.objects.filter(food=self).update(food=target)
+        # carry the pantry fields over when the target has none, so a merge never drops them
+        target_dirty = False
+        for field in ('shelf_life_days', 'shopping_amount', 'preferred_unit_id', 'preferred_shopping_unit_id'):
+            if getattr(target, field) is None and getattr(self, field) is not None:
+                setattr(target, field, getattr(self, field))
+                target_dirty = True
+        if target_dirty:
+            target.save()
         self.delete()
         return target
 

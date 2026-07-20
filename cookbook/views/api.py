@@ -28,7 +28,7 @@ from django.core.cache import caches
 from django.core.exceptions import FieldError, ValidationError
 from django.core.files import File
 from django.core.files.base import ContentFile
-from django.db import DEFAULT_DB_ALIAS
+from django.db import DEFAULT_DB_ALIAS, transaction
 from django.db.models import Case, Count, Exists, OuterRef, ProtectedError, Q, Subquery, Value, When, QuerySet
 from django.db.models import Prefetch
 from django.db.models.fields import BooleanField
@@ -56,6 +56,7 @@ from rest_framework import mixins
 from rest_framework.authtoken.views import ObtainAuthToken
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.exceptions import APIException, PermissionDenied
+from rest_framework.exceptions import ValidationError as DRFValidationError
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.parsers import JSONParser, MultiPartParser
 from rest_framework.renderers import JSONRenderer, TemplateHTMLRenderer, BaseRenderer
@@ -73,7 +74,9 @@ from cookbook.helper import recipe_url_import as helper
 from cookbook.helper.HelperFunctions import str2bool, safe_request
 from cookbook.helper.ai_helper import can_perform_ai_request, AiCallbackHandler
 from cookbook.helper.batch_edit_helper import add_to_relation, remove_from_relation, remove_all_from_relation, set_relation
+from cookbook.helper.food_availability_helper import _is_available, annotate_food_inventory, request_household
 from cookbook.helper.image_processing import handle_image, set_primary_recipe_image
+from cookbook.helper.inventory_helper import add_food_to_pantry, get_or_create_default_inventory_location, reduce_food_to_amount, set_food_onhand
 from cookbook.helper.ingredient_parser import IngredientParser
 from cookbook.helper.open_data_importer import OpenDataImporter
 from cookbook.helper.permission_helper import (CustomIsAdmin, CustomIsOwner, CustomIsOwnerReadOnly, CustomIsShared,
@@ -113,6 +116,7 @@ from cookbook.serializer import (AccessTokenSerializer, AutomationSerializer, Au
                                  ShoppingListEntrySerializer, ShoppingListRecipeSerializer, SpaceSerializer,
                                  StepSerializer, StorageSerializer,
                                  InventoryLocationSerializer, InventoryEntrySerializer, InventoryLogSerializer,
+                                 DrawDownSerializer, StockUpSerializer,
                                  SupermarketCategoryRelationSerializer, SupermarketCategorySerializer,
                                  SupermarketSerializer, SyncLogSerializer, SyncSerializer,
                                  UnitConversionSerializer, UnitSerializer, UserFileSerializer, UserPreferenceSerializer,
@@ -946,6 +950,10 @@ class InventoryEntryViewSet(LoggingMixin, viewsets.ModelViewSet, DeleteRelationM
     def get_queryset(self):
         queryset = self.queryset.filter(space=self.request.space)
 
+        # the pantry is household-scoped (FR-B4) — never leak another household's lots in a shared space
+        household = getattr(self.request.user_space, 'household', None)
+        queryset = queryset.filter(inventory_location__household=household) if household is not None else queryset.none()
+
         if self.action == 'list':
             if 'empty' not in self.request.query_params:
                 queryset = queryset.filter(amount__gt=0)
@@ -965,6 +973,91 @@ class InventoryEntryViewSet(LoggingMixin, viewsets.ModelViewSet, DeleteRelationM
 
         queryset = queryset.order_by('expires')
         return queryset
+
+    @extend_schema(request=StockUpSerializer, responses=None)
+    @decorators.action(detail=False, methods=['POST'], serializer_class=StockUpSerializer)
+    def stock_up(self, request):
+        """Bulk add-to-pantry (FR-F5): one on-hand lot per item, each written through
+        add_food_to_pantry so an InventoryLog B_ADD is recorded. Requires a household."""
+        household = getattr(request.user_space, 'household', None)
+        if household is None:
+            return Response(
+                {'detail': _('Stocking the pantry requires a household. Set up a household first.')},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        serializer = StockUpSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        created = 0
+        with transaction.atomic():
+            for item in serializer.validated_data['items']:
+                food = Food.objects.filter(id=item['food'], space=request.space).first()
+                if food is None:
+                    continue
+                unit = Unit.objects.filter(id=item['unit'], space=request.space).first() if item['unit'] else None
+                location = None
+                if item['inventory_location']:
+                    location = InventoryLocation.objects.filter(
+                        id=item['inventory_location'], household=household,
+                    ).first()
+                    if location is None:
+                        # Silent fallback to the default would invert intent (e.g. shelf-life
+                        # autofill applied to an item the user pointed at a freezer). 400 + rollback.
+                        raise DRFValidationError(
+                            {'inventory_location': _('Inventory location %(id)s does not exist in your household.')
+                             % {'id': item['inventory_location']}})
+                add_food_to_pantry(
+                    food, request.user, request.space, household,
+                    amount=item['amount'],
+                    unit=unit,
+                    expires=item['expires'],
+                    location=location,
+                )
+                created += 1
+        return Response({'created': created})
+
+    @extend_schema(request=DrawDownSerializer, responses=None)
+    @decorators.action(detail=False, methods=['POST'], serializer_class=DrawDownSerializer)
+    def draw_down(self, request):
+        """Use up (FR-G): reduce each food's household lots to the given new total, earliest-expiry
+        first, writing a B_REMOVE log per touched lot. Reduce-only. Requires a household."""
+        household = getattr(request.user_space, 'household', None)
+        if household is None:
+            return Response(
+                {'detail': _('Using up pantry items requires a household. Set up a household first.')},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        serializer = DrawDownSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        with transaction.atomic():
+            for item in serializer.validated_data['items']:
+                food = Food.objects.filter(id=item['food'], space=request.space).first()
+                if food is None:
+                    continue
+                kwargs = {}
+                # 'unit' has no serializer default, so key presence == caller sent a scope
+                # (omitted = legacy all-lots; null = unit-less lots; id = that unit's lots).
+                if 'unit' in item:
+                    scope_unit = None
+                    if item['unit'] is not None:
+                        scope_unit = Unit.objects.filter(id=item['unit'], space=request.space).first()
+                        if scope_unit is None:
+                            continue
+                    kwargs['unit'] = scope_unit
+                if item['new_unit'] is not None:
+                    new_unit = Unit.objects.filter(id=item['new_unit'], space=request.space).first()
+                    if new_unit is None:
+                        # Skipping would drop the user's reduce+relabel while reporting ok — the
+                        # same intent inversion the stock_up location 400 guards against. (A bad
+                        # SCOPE unit id, by contrast, is outcome-equivalent to a no-op and skips.)
+                        raise DRFValidationError(
+                            {'new_unit': _('Unit %(id)s does not exist.') % {'id': item['new_unit']}})
+                    kwargs['new_unit'] = new_unit
+                reduce_food_to_amount(food, household, item['amount'], **kwargs)
+        return Response({'ok': True})
 
 
 @extend_schema_view(list=extend_schema(parameters=[
@@ -1208,11 +1301,9 @@ class FoodViewSet(OrderingMixin, LoggingMixin, TreeMixin, DeleteRelationMixing):
         except AttributeError:  # Anonymous users (using share links) don't have shared users
             return []
 
-    def _inventory_subquery(self, space):
-        return InventoryEntry.objects.filter(food=OuterRef('id'), amount__gt=0, space=space)
-
-    def _expired_subquery(self, space):
-        return InventoryEntry.objects.filter(food=OuterRef('id'), amount__gt=0, expires__lt=timezone.localdate(), space=space)
+    @property
+    def _household(self):
+        return request_household(self.request)
 
     def _annotate_and_prefetch(self, qs):
         shared_users = self._shared_users
@@ -1225,8 +1316,8 @@ class FoodViewSet(OrderingMixin, LoggingMixin, TreeMixin, DeleteRelationMixing):
         else:
             qs = qs.annotate(shopping_status=Value(False, output_field=BooleanField()))
 
-        qs = qs.annotate(has_inventory_status=Exists(self._inventory_subquery(self.request.space)))
-        qs = qs.annotate(has_expired_status=Exists(self._expired_subquery(self.request.space)))
+        # Inventory reads are household-scoped (FR-B4); no expiry annotation on the flat list (FR-I6).
+        qs = annotate_food_inventory(qs, self._household, timezone.localdate())
 
         return qs \
             .prefetch_related('onhand_users', 'inherit_fields', 'child_inherit_fields', 'substitute') \
@@ -1237,10 +1328,11 @@ class FoodViewSet(OrderingMixin, LoggingMixin, TreeMixin, DeleteRelationMixing):
 
         onhand = self.request.query_params.get('onhand', None)
         if onhand is not None:
+            available = _is_available(self._household, shared_users)
             if str2bool(onhand):
-                qs = qs.filter(onhand_users__id__in=shared_users).distinct()
+                qs = qs.filter(available).distinct()
             else:
-                qs = qs.exclude(onhand_users__id__in=shared_users)
+                qs = qs.exclude(available)
 
         qs = self._apply_tristate(qs, 'has_substitute', Q(substitute__isnull=False), Q(substitute__isnull=True), distinct=True)
         qs = self._apply_tristate(qs, 'in_shopping_list', Q(shopping_status=True), Q(shopping_status=False))
@@ -1282,6 +1374,7 @@ class FoodViewSet(OrderingMixin, LoggingMixin, TreeMixin, DeleteRelationMixing):
                     inventoryentry__expires__gte=today,
                     inventoryentry__expires__lte=today + datetime.timedelta(days=days),
                     inventoryentry__amount__gt=0,
+                    inventoryentry__inventory_location__household=self._household,
                 ).distinct()
             except ValueError:
                 pass
@@ -1409,18 +1502,15 @@ class FoodViewSet(OrderingMixin, LoggingMixin, TreeMixin, DeleteRelationMixing):
             empty = {f.id: False for f in foods}
             return empty, empty.copy()
 
-        from cookbook.helper.food_availability_helper import _is_available
-
-        # 1 query: which substitutes are available (legacy onhand_users OR inventory)?
+        # 1 query: which substitutes are available (household inventory, amount>0)?
         available_ids = set(
             Food.objects.filter(id__in=all_sub_ids).filter(_is_available(household, shared_users))
             .values_list('id', flat=True)
         )
 
         # 1 query: which substitutes have inventory only? (drives substitute_inventory)
-        inventory_q = Q(inventoryentry__amount__gt=0)
-        if household is not None:
-            inventory_q &= Q(inventoryentry__inventory_location__household=household)
+        # Strictly household-scoped (FR-B4): household=None → IS NULL → no inventory (no space-wide fallback).
+        inventory_q = Q(inventoryentry__amount__gt=0, inventoryentry__inventory_location__household=household)
         inventory_ids = set(
             Food.objects.filter(id__in=all_sub_ids).filter(inventory_q)
             .values_list('id', flat=True)
@@ -1457,10 +1547,8 @@ class FoodViewSet(OrderingMixin, LoggingMixin, TreeMixin, DeleteRelationMixing):
         shared_users = self._shared_users
         base_qs = Food.objects.filter(space=request.space)
 
-        base_qs = base_qs.annotate(
-            _has_inventory=Exists(self._inventory_subquery(request.space)),
-            _has_expired=Exists(self._expired_subquery(request.space)),
-        )
+        # Inventory counts are household-scoped (FR-B4), matching the list filters.
+        base_qs = annotate_food_inventory(base_qs, self._household, timezone.localdate())
 
         if shared_users:
             shopping_sub = ShoppingListEntry.objects.filter(
@@ -1470,18 +1558,18 @@ class FoodViewSet(OrderingMixin, LoggingMixin, TreeMixin, DeleteRelationMixing):
                 created_by__in=shared_users,
             )
             agg = base_qs.annotate(_shopping=Exists(shopping_sub)).aggregate(
-                onhand=Count('pk', filter=Q(onhand_users__id__in=shared_users), distinct=True),
+                onhand=Count('pk', filter=_is_available(self._household, shared_users), distinct=True),
                 shopping=Count('pk', filter=Q(_shopping=True), distinct=True),
                 ignored=Count('pk', filter=Q(ignore_shopping=True), distinct=True),
-                inventory=Count('pk', filter=Q(_has_inventory=True), distinct=True),
-                expired=Count('pk', filter=Q(_has_expired=True), distinct=True),
+                inventory=Count('pk', filter=Q(has_inventory_status=True), distinct=True),
+                expired=Count('pk', filter=Q(has_expired_status=True), distinct=True),
                 total=Count('pk', distinct=True),
             )
         else:
             agg = base_qs.aggregate(
                 ignored=Count('pk', filter=Q(ignore_shopping=True)),
-                inventory=Count('pk', filter=Q(_has_inventory=True)),
-                expired=Count('pk', filter=Q(_has_expired=True)),
+                inventory=Count('pk', filter=Q(has_inventory_status=True)),
+                expired=Count('pk', filter=Q(has_expired_status=True)),
                 total=Count('pk'),
             )
             agg.update(onhand=0, shopping=0)
@@ -1720,22 +1808,29 @@ class FoodViewSet(OrderingMixin, LoggingMixin, TreeMixin, DeleteRelationMixing):
             foods = Food.objects.filter(id__in=serializer.validated_data['foods'], space=self.request.space)
             safe_food_ids = Food.objects.filter(id__in=serializer.validated_data['foods'], space=self.request.space).values_list('id', flat=True)
 
+            on_hand = serializer.validated_data.get('on_hand', None)
+            household = self._household
+            if on_hand is not None and household is None:
+                # guard before any write so a missing household can't leave a partial batch update
+                return Response(
+                    {'on_hand': [_('Marking a food on-hand requires a household. Set up a household first.')]},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
             if 'category' in serializer.validated_data:
                 foods.update(supermarket_category_id=serializer.validated_data['category'])
 
             if 'ignore_shopping' in serializer.validated_data and serializer.validated_data['ignore_shopping'] is not None:
                 foods.update(ignore_shopping=serializer.validated_data['ignore_shopping'])
 
-            if 'on_hand' in serializer.validated_data and serializer.validated_data['on_hand'] is not None:
-                household_user_ids = list(get_household_user_ids(request.user_space))
-                if serializer.validated_data['on_hand']:
-                    user_relation = []
-                    for f in safe_food_ids:
-                        for uid in household_user_ids:
-                            user_relation.append(Food.onhand_users.through(food_id=f, user_id=uid))
-                    Food.onhand_users.through.objects.bulk_create(user_relation, ignore_conflicts=True, unique_fields=('food_id', 'user_id',))
-                else:
-                    Food.onhand_users.through.objects.filter(food_id__in=safe_food_ids, user_id__in=household_user_ids).delete()
+            if on_hand is not None:
+                shared_users = User.objects.filter(id__in=get_household_user_ids(request.user_space))
+                # resolve the household default location once for the whole batch, not per food
+                location = get_or_create_default_inventory_location(household, request.user, self.request.space) if on_hand else None
+                with transaction.atomic():
+                    for f in foods:
+                        set_food_onhand(f, on_hand, user=request.user, space=self.request.space,
+                                        household=household, shared_users=shared_users, location=location)
 
             if 'substitute_children' in serializer.validated_data and serializer.validated_data['substitute_children'] is not None:
                 foods.update(substitute_children=serializer.validated_data['substitute_children'])
@@ -2203,6 +2298,8 @@ class RecipeViewSet(LoggingMixin, viewsets.ModelViewSet, DeleteRelationMixing):
         except AttributeError:
             shared_users = []
 
+        household = request_household(self.request)
+
         food_qs = Food.objects.all()
         if shared_users:
             shopping_filter = {'space': self.request.space, 'food': OuterRef('id'), 'checked': False, 'created_by__in': shared_users}
@@ -2210,9 +2307,8 @@ class RecipeViewSet(LoggingMixin, viewsets.ModelViewSet, DeleteRelationMixing):
         else:
             food_qs = food_qs.annotate(shopping_status=Value(False, output_field=BooleanField()))
 
-        food_qs = food_qs.annotate(
-            has_inventory_status=Exists(InventoryEntry.objects.filter(food=OuterRef('id'), amount__gt=0, space=self.request.space))
-        )
+        # Household-scoped inventory (FR-B4) + earliest_expiry so ingredient-row jars tint (FR-I2).
+        food_qs = annotate_food_inventory(food_qs, household, timezone.localdate(), with_expiry=True)
         return Prefetch('steps__ingredients__food', queryset=food_qs)
 
     def get_queryset(self):
@@ -2717,11 +2813,15 @@ class ShoppingListEntryViewSet(LoggingMixin, viewsets.ModelViewSet):
     def get_queryset(self):
         self.queryset = self.queryset.filter(space=self.request.space)
 
+        # Household-scoped inventory + earliest_expiry on the nested food so shopping rows tint the
+        # pantry jar (FR-H2 / FR-B4), matching FoodViewSet / RecipeViewSet.
+        food_qs = annotate_food_inventory(Food.objects.all(), request_household(self.request), timezone.localdate(), with_expiry=True)
+
         # select_related("list_recipe")
         self.queryset = self.queryset.filter(
             Q(created_by=self.request.user)
             | Q(created_by__in=get_household_user_ids(self.request.user_space))).prefetch_related('created_by',
-                                                                                                  'food',
+                                                                                                  Prefetch('food', queryset=food_qs),
                                                                                                   'food__shopping_lists',
                                                                                                   'shopping_lists',
                                                                                                   'unit',
@@ -2797,17 +2897,7 @@ class ShoppingListEntryViewSet(LoggingMixin, viewsets.ModelViewSet):
                 else:
                     bulk_entries.update(checked=checked, updated_at=update_timestamp, completed_at=None)
                 serializer.validated_data['timestamp'] = update_timestamp
-
-                # update the onhand for food if shopping_add_onhand is True
-                if request.user.userpreference.shopping_add_onhand:
-                    foods = Food.objects.filter(id__in=bulk_entries.values('food'))
-                    household_users = User.objects.filter(id__in=household_user_ids)
-                    if checked:
-                        for f in foods:
-                            f.onhand_users.add(*household_users)
-                    elif not checked:
-                        for f in foods:
-                            f.onhand_users.remove(*household_users)
+                # onhand-on-checkoff retired (FR-L1/L3): add-to-pantry is now an explicit action.
 
             # ---------- shopping lists -------------
             if 'shopping_lists_add' in serializer.validated_data:

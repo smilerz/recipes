@@ -8,7 +8,7 @@ from django.utils import timezone
 from django_scopes import scopes_disabled
 
 from cookbook.helper.permission_helper import invalidate_household_cache
-from cookbook.models import ShoppingListEntry, Household, UserSpace
+from cookbook.models import InventoryEntry, ShoppingListEntry, Household, UserSpace
 from cookbook.tests.factories import FoodFactory, ShoppingListEntryFactory
 
 LIST_URL = 'api:shoppinglistentry-list'
@@ -108,6 +108,23 @@ def test_add(arg, request, sle):
     assert r.status_code == arg[1]
     if r.status_code == 201:
         assert response['food']['id'] == sle[0].food.pk
+
+
+def test_checkoff_does_not_set_onhand(u1_s1, sle):
+    """FR-L1: check-off no longer marks the food on-hand, even with shopping_add_onhand on."""
+    user = auth.get_user(u1_s1)
+    with scopes_disabled():
+        pref = user.userpreference
+        pref.shopping_add_onhand = True
+        pref.save()
+
+    entry = sle[0]
+    r = u1_s1.patch(reverse(DETAIL_URL, args={entry.id}), {'checked': True}, content_type='application/json')
+    assert r.status_code == 200
+    with scopes_disabled():
+        assert entry.food.onhand_users.count() == 0
+        # check-off must not touch the pantry either
+        assert not InventoryEntry.objects.filter(food=entry.food).exists()
 
 
 def test_delete(u1_s1, u1_s2, sle):
@@ -247,6 +264,36 @@ def test_filter_by_checked(u1_s1, space_1):
     r = json.loads(u1_s1.get(f'{reverse(LIST_URL)}?food={food.id}&checked=true').content)
     assert r['count'] == 1
     assert r['results'][0]['checked'] is True
+
+
+def test_entry_food_carries_household_inventory(u1_s1, space_1):
+    """Shopping-entry nested food carries in_inventory + household earliest_expiry so the row can
+    render the read-only pantry jar (FR-H2). Another household's earlier lot is ignored (FR-B4)."""
+    from cookbook.models import InventoryLocation
+    from cookbook.tests.factories import HouseholdFactory, InventoryEntryFactory, InventoryLocationFactory
+
+    user = auth.get_user(u1_s1)
+    today = timezone.localdate()
+    with scopes_disabled():
+        household = Household.objects.create(name='hh', space=space_1)
+        UserSpace.objects.filter(user=user, space=space_1).update(household=household)
+        invalidate_household_cache(UserSpace.objects.get(user=user, space=space_1))
+
+        food = FoodFactory(space=space_1)
+        ShoppingListEntryFactory(food=food, space=space_1, created_by=user, checked=False)
+
+        loc = InventoryLocationFactory(space=space_1, household=household)
+        InventoryEntryFactory(space=space_1, food=food, inventory_location=loc, amount=1,
+                              expires=today + timedelta(days=5))
+        # earlier lot in a different household — must be ignored
+        other_loc = InventoryLocationFactory(space=space_1, household=HouseholdFactory(space=space_1))
+        InventoryEntryFactory(space=space_1, food=food, inventory_location=other_loc, amount=1,
+                              expires=today + timedelta(days=1))
+
+    results = json.loads(u1_s1.get(reverse(LIST_URL)).content)['results']
+    row = next(r for r in results if r['food']['id'] == food.id)
+    assert row['food']['in_inventory'] == 'True'
+    assert row['food']['earliest_expiry'] == (today + timedelta(days=5)).isoformat()
 
 
 # TODO test auto onhand

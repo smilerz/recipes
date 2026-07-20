@@ -6,6 +6,7 @@ from django.db.models.functions import Coalesce
 from django.utils.translation import gettext as _
 
 from cookbook.connectors.connector_manager import ActionType, ConnectorManager
+from cookbook.helper.food_availability_helper import _is_available
 from cookbook.helper.permission_helper import get_household_user_ids
 from cookbook.models import Ingredient, MealPlan, Recipe, ShoppingListEntry, ShoppingListRecipe, SupermarketCategoryRelation
 
@@ -85,7 +86,10 @@ class RecipeShoppingEditor():
         if exclude_onhand:
             queryset = Ingredient.objects.filter(step__recipe__id=id, food__ignore_shopping=False, space=self.space)
             owner_user_space = self.created_by.userspace_set.filter(space=self.space).first()
-            queryset = queryset.exclude(food__onhand_users__id__in=get_household_user_ids(owner_user_space))
+            household = getattr(owner_user_space, 'household', None)
+            # _is_available is inventory-only now; shopping_users is vestigial, so skip the query
+            available = _is_available(household, [], prefix='food__')
+            queryset = queryset.exclude(available)
             return queryset
         else:
             return Ingredient.objects.filter(step__recipe__id=id, food__ignore_shopping=False, space=self.space)

@@ -1,27 +1,75 @@
-from django.db.models import Exists, OuterRef, Q
+from django.db.models import Exists, OuterRef, Q, Subquery
 from django.db.models.functions import Substr
 
-from cookbook.models import Food
+from cookbook.models import Food, InventoryEntry
 
 
-def _is_available(household, shopping_users):
-    q = Q(onhand_users__in=shopping_users)
-    if household is not None:
-        q = q | Q(
-            inventoryentry__amount__gt=0,
-            inventoryentry__inventory_location__household=household,
-        )
-    return q
+def request_household(request):
+    """The requesting user's household (or None) — the single scope for all pantry/inventory reads.
+
+    None for anonymous share-link requests and users who skipped household setup; callers treat
+    that as 'no inventory' (see :func:`annotate_food_inventory` / :func:`_is_available`). Shared by
+    every viewset that scopes inventory so the resolution can never drift between them.
+    """
+    return getattr(getattr(request, 'user_space', None), 'household', None)
+
+
+def _household_lots(household, *, expired_before=None):
+    """Correlated on-hand-lot subquery (``amount>0``) for a food, scoped to ``household``.
+
+    ``InventoryLocation.household`` is a required FK, so ``household=None`` compiles to an
+    ``IS NULL`` match — i.e. no lots — which is the correct empty inventory read for a user
+    without a household (and, unlike an empty ``__in``, never raises ``EmptyResultSet``).
+    ``expired_before`` narrows to lots already past that date.
+    """
+    qs = InventoryEntry.objects.filter(food=OuterRef('id'), amount__gt=0, inventory_location__household=household)
+    if expired_before is not None:
+        qs = qs.filter(expires__lt=expired_before)
+    return qs
+
+
+def annotate_food_inventory(qs, household, today, *, with_expiry=False):
+    """Annotate a Food queryset with household-scoped inventory state (FR-B4).
+
+    Adds ``has_inventory_status`` and ``has_expired_status`` (booleans). With ``with_expiry`` also
+    adds ``earliest_expiry`` — ``MIN(expires)`` over dated on-hand lots — which tints the pantry
+    jar amber/red on recipe and shopping rows. It is deliberately left off the flat food list for
+    performance (FR-I6: food-DB list shows the plain in-stock jar, no expiry tint).
+    """
+    qs = qs.annotate(
+        has_inventory_status=Exists(_household_lots(household)),
+        has_expired_status=Exists(_household_lots(household, expired_before=today)),
+    )
+    if with_expiry:
+        earliest = _household_lots(household).filter(expires__isnull=False).order_by('expires').values('expires')[:1]
+        qs = qs.annotate(earliest_expiry=Subquery(earliest))
+    return qs
+
+
+def _is_available(household, shopping_users, prefix=''):
+    """Availability Q: the food has a household inventory lot (``amount>0``).
+
+    ``prefix`` relocates the lookups for querysets not rooted on Food (e.g. ``'food__'`` for an
+    Ingredient queryset). Legacy ``onhand_users`` is retired (P1.7) — nothing is available without a
+    household. ``shopping_users`` is kept for signature stability but no longer used.
+    """
+    if household is None:
+        # always-false, but NOT an empty __in — that raises EmptyResultSet and zeroes the
+        # whole conditional aggregate it sits in (the food stats Count filters)
+        return Q(**{f'{prefix}pk__lt': 0})
+    return Q(**{
+        f'{prefix}inventoryentry__amount__gt': 0,
+        f'{prefix}inventoryentry__inventory_location__household': household,
+    })
 
 
 def _substitute_available(household, shopping_users):
-    q = Q(substitute__onhand_users__in=shopping_users)
-    if household is not None:
-        q = q | Q(
-            substitute__inventoryentry__amount__gt=0,
-            substitute__inventoryentry__inventory_location__household=household,
-        )
-    return q
+    if household is None:
+        return Q(substitute__pk__lt=0)
+    return Q(
+        substitute__inventoryentry__amount__gt=0,
+        substitute__inventoryentry__inventory_location__household=household,
+    )
 
 
 def _tree_substitute_filter(household, shopping_users, *, tree_field, tree_q):
