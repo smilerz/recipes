@@ -120,3 +120,60 @@ describe('ModelListMobileView', () => {
         // reading from injected settings means no localStorage access at all.
     })
 })
+
+describe('ModelListMobileView — subtitle filter links', () => {
+    beforeEach(() => setActivePinia(createPinia()))
+
+    // vue-router is module-mocked (top of file) without RouterLink, so register a stub
+    // that exposes the resolved `to` target for assertion.
+    const RouterLinkStub = {
+        name: 'RouterLink',
+        props: ['to'],
+        template: '<a class="rl-stub" :data-to="JSON.stringify(to)"><slot/></a>',
+    }
+    const numrecipeCol = {key: 'numrecipe', title: 'Recipes', filterLink: {route: 'SearchPage', param: 'foods'}}
+
+    function mountWithSubtitle(item: any) {
+        const settings = {
+            quickActionKeys: computed(() => []),
+            mobileSubtitleKeys: computed(() => ['numrecipe']),
+            swipeEnabled: ref(false),
+            swipeLeftKeys: computed(() => []),
+            swipeRightKeys: computed(() => []),
+            showMobileHeaders: ref(false),
+            swipeHintDismissed: ref(false),
+        } as any
+        const i18n = createI18n({legacy: false, locale: 'en', messages: {en: {Recipes: 'Recipes'}}, missingWarn: false, fallbackWarn: false})
+        const vuetify = createVuetify({components: vuetifyComponents, directives: vuetifyDirectives})
+        return mount(ModelListMobileView, {
+            props: {
+                items: [item], itemsLength: 1, loading: false, page: 1, itemsPerPage: 10,
+                selectMode: false, selectedItems: [], allColumns: [numrecipeCol], actionDefs: [],
+                groupedActionDefs: new Map(), getToggleState: () => false,
+                treeActive: false, treeSuspended: false,
+                expandedIds: new Set<number>(), loadingIds: new Set<number>(),
+                toggleExpand: vi.fn(), settingsKey: 'food', labelField: 'name',
+            },
+            global: {
+                plugins: [createPinia(), i18n, vuetify],
+                provide: {[MODEL_LIST_SETTINGS_KEY as unknown as string]: settings},
+                components: {RouterLink: RouterLinkStub},
+                stubs: {ActionMenu: {template: '<div/>'}},
+            },
+        })
+    }
+
+    it('renders the recipe count as a filter link when > 0', () => {
+        const w = mountWithSubtitle({id: 42, name: 'Butter', numrecipe: 5})
+        const link = w.find('a.rl-stub')
+        expect(link.exists()).toBe(true)
+        expect(link.text()).toContain('Recipes: 5')
+        expect(JSON.parse(link.attributes('data-to')!)).toEqual({name: 'SearchPage', query: {foods: 42}})
+    })
+
+    it('renders the recipe count as plain text (no link) when 0', () => {
+        const w = mountWithSubtitle({id: 42, name: 'Butter', numrecipe: 0})
+        expect(w.find('a.rl-stub').exists()).toBe(false)
+        expect(w.text()).toContain('Recipes: 0')
+    })
+})

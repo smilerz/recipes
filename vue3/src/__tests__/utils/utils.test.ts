@@ -5,7 +5,46 @@ import {
     stringToBool,
     boolOrUndefinedTransformer,
     numberOrUndefinedTransformer,
+    buildSubtitleParts,
 } from '@/utils/utils'
+
+const t = (k: string) => k
+
+describe('buildSubtitleParts', () => {
+    const recipesCol = {key: 'numrecipe', title: 'Recipes', filterLink: {route: 'SearchPage', param: 'foods'}}
+    const plainCol = {key: 'plural', title: 'Plural'}
+
+    it('emits a link part for a positive numeric value with a filterLink', () => {
+        const parts = buildSubtitleParts({id: 42, numrecipe: 5}, [recipesCol], t)
+        expect(parts).toEqual([
+            {text: 'Recipes: 5', to: {name: 'SearchPage', query: {foods: 42}}},
+        ])
+    })
+
+    it('emits plain text (no link) when the value is 0', () => {
+        // 0 still shows as text (preserves current subtitle content) but is not a link
+        const parts = buildSubtitleParts({id: 42, numrecipe: 0}, [recipesCol], t)
+        expect(parts).toEqual([{text: 'Recipes: 0'}])
+    })
+
+    it('emits no part when a filterLink is set but the value is null', () => {
+        const parts = buildSubtitleParts({id: 42, numrecipe: null}, [recipesCol], t)
+        expect(parts).toEqual([])
+    })
+
+    it('emits plain text for a column without a filterLink', () => {
+        const parts = buildSubtitleParts({id: 42, plural: 'apples'}, [plainCol], t)
+        expect(parts).toEqual([{text: 'apples'}])
+    })
+
+    it('mixes link and text parts across columns', () => {
+        const parts = buildSubtitleParts({id: 7, numrecipe: 3, plural: 'apples'}, [recipesCol, plainCol], t)
+        expect(parts).toEqual([
+            {text: 'Recipes: 3', to: {name: 'SearchPage', query: {foods: 7}}},
+            {text: 'apples'},
+        ])
+    })
+})
 
 describe('getNestedProperty', () => {
     it('returns top-level property', () => {
