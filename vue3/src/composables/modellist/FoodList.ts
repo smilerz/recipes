@@ -44,13 +44,8 @@ export const FOOD_FILTER_DEFS: FilterDef[] = [
  */
 export const FOOD_ACTION_DEFS: ActionDef[] = [
     // Status toggles
-    {key: 'onhand', labelKey: 'OnHand', icon: 'fa-solid fa-clipboard-check', isToggle: true, toggleField: 'foodOnhand', activeColor: 'success', inactiveColor: '', group: 'Status',
-        colorResolver: (item: ModelItem) => {
-            if (item.foodOnhand) return 'success'
-            if (item.substituteOnhand) return 'warning'
-            return undefined
-        },
-    },
+    // (The legacy `onhand`/foodOnhand toggle was retired — the `pantry` toggle below is the single
+    // on-hand affordance now that foodOnhand writes to household inventory. FR-L1/FR-L4/FR-E5.)
     {key: 'shopping', labelKey: 'Shopping', icon: 'fa-solid fa-cart-shopping', isToggle: true, toggleField: 'shopping', activeColor: 'success', inactiveColor: '', group: 'Status', requiresConfirmation: true,
         isActive: isOnShoppingList,
         colorResolver: (item: ModelItem) => isOnShoppingList(item) ? 'success' : undefined,

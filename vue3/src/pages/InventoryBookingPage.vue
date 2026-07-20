@@ -29,11 +29,11 @@
                                 <v-btn value="move" prepend-icon="fa-solid fa-arrow-right">{{ $t('Move') }}</v-btn>
                             </v-btn-toggle>
 
-                            <model-select model="InventoryEntry" v-model="inventoryEntry" v-if="['remove','move'].includes(bookingMode)"
+                            <model-select model="InventoryEntry" :label="$t('InventoryEntry')" v-model="inventoryEntry" v-if="['remove','move'].includes(bookingMode)"
                                           @update:modelValue="inventoryEntrySelected()">
                             </model-select>
 
-                            <model-select model="Food" allow-create v-model="food" v-if="['add'].includes(bookingMode)"></model-select>
+                            <model-select model="Food" :label="$t('Food')" allow-create v-model="food" v-if="['add'].includes(bookingMode)"></model-select>
 
                             <v-card variant="outlined" class="mb-4" v-if="inventoryEntry">
                                 <v-card-title>
@@ -49,7 +49,7 @@
                                 </v-card-text>
                             </v-card>
 
-                            <model-select model="InventoryLocation" v-model="inventoryLocation" v-if="['add','move'].includes(bookingMode)">
+                            <model-select model="InventoryLocation" :label="$t('InventoryLocation')" v-model="inventoryLocation" v-if="['add','move'].includes(bookingMode)">
                                 <template #append>
                                     <v-btn icon>
                                         <v-icon icon="$create"></v-icon>
@@ -63,7 +63,7 @@
                             <v-text-field :label="$t('Code')" v-model="code" v-if="['add'].includes(bookingMode)"></v-text-field>
 
                             <v-number-input :label="$t('Amount')" :precision="2" v-model="amount" v-if="['add', 'remove'].includes(bookingMode)"></v-number-input>
-                            <model-select model="Unit" allow-create v-model="unit" v-if="['add'].includes(bookingMode)"></model-select>
+                            <model-select model="Unit" :label="$t('Unit')" allow-create v-model="unit" v-if="['add'].includes(bookingMode)"></model-select>
 
                             <v-date-input :label="$t('Expires')" v-model="expires" v-if="['add'].includes(bookingMode)">
                                 <template #append-inner>

@@ -6,9 +6,9 @@
             <v-card-text>
 
                 <v-form>
-                    <model-select model="MealType" v-model="autoMealPlan.mealTypeId" :object="false"></model-select>
+                    <model-select model="MealType" :label="$t('Meal_Type')" v-model="autoMealPlan.mealTypeId" :object="false"></model-select>
                     <div class="d-flex keyword-row">
-                        <model-select model="Keyword" v-model="keywordIds" mode="tags" :object="false" class="flex-grow-1 keyword-select" hide-details></model-select>
+                        <model-select model="Keyword" :label="$t('Keyword')" v-model="keywordIds" mode="tags" :object="false" class="flex-grow-1 keyword-select" hide-details></model-select>
                         <v-btn-toggle v-model="keywordMode" mandatory divided border class="keyword-toggle">
                             <v-btn value="and">AND</v-btn>
                             <v-btn value="or">OR</v-btn>

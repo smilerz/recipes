@@ -1,24 +1,37 @@
 import {unref} from 'vue'
+import {DateTime} from 'luxon'
 import type {ActionConfirmEntry} from '@/components/dialogs/ActionConfirmDialog.vue'
 import type {InventoryQuickAddResult} from '@/components/dialogs/InventoryQuickAddDialog.vue'
 import type {ActionConfirmDialogInstance, FoodRef, TranslateFunc} from '@/composables/modellist/types'
 import {ApiApi, type Food, type InventoryEntry, type InventoryLocation, type Unit} from '@/openapi'
-import {ErrorMessageType, useMessageStore} from '@/stores/MessageStore'
+import {ErrorMessageType, MessageType, useMessageStore} from '@/stores/MessageStore'
 import {useUserPreferenceStore} from '@/stores/UserPreferenceStore'
+import {isoDateToApiDate} from '@/utils/pantry_utils'
 
 const api = new ApiApi()
+
+/**
+ * FR-D6: surface an add-to-pantry, including the (possibly auto-set) expiry, so the date is never
+ * silent. Shared by every client add path (quick-add and the manage dialog).
+ */
+export function announcePantryAdd(foodName: string, expires: Date | null | undefined, t: TranslateFunc) {
+    const title = t('AddedToPantry', {food: foodName})
+    const text = expires ? t('ExpiresOn', {date: DateTime.fromJSDate(expires).toLocaleString(DateTime.DATE_MED)}) : ''
+    useMessageStore().addMessage(MessageType.SUCCESS, {title, text}, 6000)
+}
 
 export type InventoryLocationRef = {
     id: number
     name: string
     household: {id: number, name: string}
+    isFreezer?: boolean
 }
 
 /** Instance type for InventoryQuickAddDialog template ref. */
 export type InventoryQuickAddDialogInstance = {
     open: (opts: {
         title: string,
-        locations: {value: number, label: string}[],
+        locations: {value: number, label: string, isFreezer?: boolean}[],
         defaultLocationId?: number | null,
         amount?: number,
         unit?: Unit | null,
@@ -27,7 +40,7 @@ export type InventoryQuickAddDialogInstance = {
         title: string,
         foodId: number,
         foodName: string,
-        locations: {value: number, label: string, household?: {id: number, name: string}}[],
+        locations: {value: number, label: string, household?: {id: number, name: string}, isFreezer?: boolean}[],
         defaultLocationId?: number | null,
         amount?: number,
         unit?: Unit | null,
@@ -39,19 +52,20 @@ export function useInventoryActions() {
      * Add a food to inventory at the given location.
      * On 400/404 (stale location), clears the saved default and throws.
      */
-    async function addToInventory(food: FoodRef, location: InventoryLocationRef, amount: number = 1, unit?: Unit | null): Promise<boolean> {
+    async function addToInventory(food: FoodRef, location: InventoryLocationRef, amount: number = 1, unit?: Unit | null, expires?: string | null): Promise<InventoryEntry> {
         const store = useUserPreferenceStore()
         try {
-            await api.apiInventoryEntryCreate({
+            return await api.apiInventoryEntryCreate({
                 inventoryEntry: {
                     food: {id: food.id, name: food.name} as Food,
                     inventoryLocation: {id: location.id, name: location.name, household: location.household} as InventoryLocation,
                     // TODO: regenerate OpenAPI schema — serializer now accepts null
                     unit: (unit ?? null) as any,
                     amount,
+                    // UTC midnight — the client wire format truncates toISOString (DEFECT-01 class)
+                    expires: expires ? isoDateToApiDate(expires) : null,
                 },
             })
-            return true
         } catch (err: any) {
             if (err?.response?.status === 400 || err?.response?.status === 404) {
                 store.deviceSettings.food_defaultInventoryLocation = null
@@ -81,6 +95,7 @@ export function useInventoryActions() {
                 id: l.id!,
                 name: l.name,
                 household: {id: l.household.id!, name: l.household.name},
+                isFreezer: l.isFreezer ?? false,
             }))
         } catch (err) {
             useMessageStore().addError(ErrorMessageType.FETCH_ERROR, err)
@@ -95,7 +110,7 @@ export function useInventoryActions() {
         const saved = getDefaultLocation()
         const dialogResult = await dialog.open({
             title: t('AddToInventory', {name: food.name}),
-            locations: locations.map(l => ({value: l.id, label: l.name})),
+            locations: locations.map(l => ({value: l.id, label: l.name, isFreezer: l.isFreezer})),
             defaultLocationId: saved?.id ?? null,
             amount: defaults?.amount ?? 1,
             unit: defaults?.unit ?? null,
@@ -114,7 +129,40 @@ export function useInventoryActions() {
         } as InventoryLocationRef
 
         try {
-            await addToInventory(food, selectedLoc, dialogResult.amount, dialogResult.unit)
+            const created = await addToInventory(food, selectedLoc, dialogResult.amount, dialogResult.unit, dialogResult.expires)
+            announcePantryAdd(food.name, created?.expires, t)  // FR-D6
+            return true
+        } catch (err) {
+            useMessageStore().addError(ErrorMessageType.CREATE_ERROR, err)
+            return false
+        }
+    }
+
+    /**
+     * One-tap "＋ pantry" from a checked-off shopping row (FR-H3): add the food at the saved default
+     * (or first) location and surface the expiry (FR-D6). When no location exists yet, route through
+     * the stock-up endpoint so the backend auto-creates the household's default "Pantry". Returns
+     * true on success. Only the presence toast — check-off undo stays on the shopping undo stack.
+     */
+    async function quickPantryAdd(food: FoodRef, t: TranslateFunc): Promise<boolean> {
+        try {
+            const result = await api.apiInventoryLocationList({pageSize: 100})
+            // lowest id first mirrors the server's default-location pick (FR-B5)
+            const locations = (result.results ?? []).filter(l => l.id != null).sort((a, b) => a.id! - b.id!)
+            if (locations.length === 0) {
+                // no locations yet — stock-up lets the backend resolve/create the default location
+                await api.apiInventoryEntryStockUpCreate({stockUp: {items: [{food: food.id, amount: 1}]}})
+                announcePantryAdd(food.name, null, t)
+                return true
+            }
+            const saved = getDefaultLocation()
+            const loc = saved ?? {
+                id: locations[0].id!,
+                name: locations[0].name,
+                household: {id: locations[0].household.id!, name: locations[0].household.name},
+            }
+            const created = await addToInventory(food, loc)
+            announcePantryAdd(food.name, created?.expires, t)  // FR-D6
             return true
         } catch (err) {
             useMessageStore().addError(ErrorMessageType.CREATE_ERROR, err)
@@ -256,6 +304,7 @@ export function useInventoryActions() {
                 id: l.id!,
                 name: l.name,
                 household: {id: l.household.id!, name: l.household.name},
+                isFreezer: l.isFreezer ?? false,
             }))
         } catch (err) {
             useMessageStore().addError(ErrorMessageType.FETCH_ERROR, err)
@@ -272,7 +321,7 @@ export function useInventoryActions() {
             title: `${t('Pantry')}: ${food.name}`,
             foodId: food.id,
             foodName: food.name,
-            locations: locations.map(l => ({value: l.id, label: l.name, household: l.household})),
+            locations: locations.map(l => ({value: l.id, label: l.name, household: l.household, isFreezer: l.isFreezer})),
             defaultLocationId: saved?.id ?? null,
             amount: defaults?.amount ?? 1,
             unit: defaults?.unit ?? null,
@@ -295,6 +344,56 @@ export function useInventoryActions() {
     }
 
     /**
+     * Restore a marked-out lot: put its amount back and remove the shopping entry the mark-out added.
+     */
+    async function undoMarkOut(entryId: number, amount: number, shoppingEntryId?: number): Promise<void> {
+        try {
+            // TODO: regenerate OpenAPI schema — PatchedInventoryEntry.amount accepts a plain number
+            await api.apiInventoryEntryPartialUpdate({id: entryId, patchedInventoryEntry: {amount} as any})
+            if (shoppingEntryId != null) {
+                await api.apiShoppingListEntryDestroy({id: shoppingEntryId})
+            }
+        } catch (err) {
+            useMessageStore().addError(ErrorMessageType.DELETE_ERROR, err)
+        }
+    }
+
+    /**
+     * Mark a pantry lot as used up and move its food to the shopping list (FR-A5):
+     * zeroes the lot's amount so the InventoryLog records a remove (deleting would log nothing),
+     * then adds the food to the shopping list. Shows an undo snackbar that restores the lot and
+     * removes the shopping entry; `onChange` (e.g. a table reload) runs after an undo. Returns true
+     * on success.
+     */
+    async function markOutToList(entry: {id: number, food: FoodRef, amount?: number, unit?: Unit | null}, t: TranslateFunc, onChange?: () => void): Promise<boolean> {
+        const originalAmount = entry.amount ?? 1
+        try {
+            // TODO: regenerate OpenAPI schema — PatchedInventoryEntry.amount accepts a plain number
+            await api.apiInventoryEntryPartialUpdate({id: entry.id, patchedInventoryEntry: {amount: 0} as any})
+            const created = await api.apiShoppingListEntryCreate({
+                shoppingListEntry: {food: {id: entry.food.id, name: entry.food.name}, amount: 1, unit: entry.unit ?? undefined} as any,
+            })
+            useMessageStore().addMessage(
+                MessageType.SUCCESS,
+                t('MovedToShoppingList', {name: entry.food.name}),
+                6000,
+                {},
+                {
+                    label: t('Undo'),
+                    callback: async () => {
+                        await undoMarkOut(entry.id, originalAmount, created?.id)
+                        onChange?.()
+                    },
+                },
+            )
+            return true
+        } catch (err) {
+            useMessageStore().addError(ErrorMessageType.UPDATE_ERROR, err)
+            return false
+        }
+    }
+
+    /**
      * Check if a food has any inventory entries.
      */
     async function checkInventoryStatus(foodId: number): Promise<boolean> {
@@ -306,5 +405,5 @@ export function useInventoryActions() {
         }
     }
 
-    return {addToInventory, quickAddToInventory, manageInventory, removeFromInventory, ensureDefaultLocation, getDefaultLocation, checkInventoryStatus}
+    return {addToInventory, quickAddToInventory, quickPantryAdd, manageInventory, removeFromInventory, markOutToList, ensureDefaultLocation, getDefaultLocation, checkInventoryStatus}
 }

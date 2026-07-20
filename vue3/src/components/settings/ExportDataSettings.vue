@@ -6,8 +6,8 @@
         <v-select :items="exportFormats" :label="$t('Type')" v-model="exportType"></v-select>
 
         <v-checkbox :label="$t('AllRecipes')" v-model="allRecipes" :disabled="selectedRecipes.length > 0 || selectedFilter != null"></v-checkbox>
-        <ModelSelect model="Recipe" mode="tags" v-model="selectedRecipes" :disabled="allRecipes || selectedFilter != null"></ModelSelect>
-        <ModelSelect model="CustomFilter" mode="single" v-model="selectedFilter" :disabled="selectedRecipes.length > 0 || allRecipes"></ModelSelect>
+        <ModelSelect model="Recipe" :label="$t('Recipe')" mode="tags" v-model="selectedRecipes" :disabled="allRecipes || selectedFilter != null"></ModelSelect>
+        <ModelSelect model="CustomFilter" :label="$t('SavedSearch')" mode="single" v-model="selectedFilter" :disabled="selectedRecipes.length > 0 || allRecipes"></ModelSelect>
 
         <v-btn @click="doExport()" :loading="loading" :disabled="selectedRecipes.length == 0 && selectedFilter == null && !allRecipes">{{ $t('Export') }}</v-btn>
 
