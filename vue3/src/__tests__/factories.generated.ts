@@ -1933,6 +1933,8 @@ export function makeRecipe(overrides: Partial<Recipe> = {}): Recipe {
         name: 'Test name',
         description: '',
         image: '',
+        imageCropData: undefined as any,
+        images: [],
         keywords: [],
         steps: [],
         workingTime: 0,
@@ -1964,6 +1966,8 @@ export function makeMinimalRecipe(overrides: Partial<Recipe> = {}): Recipe {
         id: 1,
         name: 'Test name',
         image: '',
+        imageCropData: undefined as any,
+        images: [],
         steps: [],
         createdBy: undefined as any,
         createdAt: new Date('2026-01-01T00:00:00Z'),
@@ -1981,6 +1985,8 @@ export function makeEdgeCaseRecipe(overrides: Partial<Recipe> = {}): Recipe {
         name: '',
         description: null,
         image: null,
+        imageCropData: null,
+        images: [],
         keywords: [],
         steps: [],
         workingTime: 0,
@@ -2138,6 +2144,7 @@ export function makeRecipeFlat(overrides: Partial<RecipeFlat> = {}): RecipeFlat 
         id: 1,
         name: 'Test name',
         image: '',
+        imageCropData: undefined as any,
         ...overrides,
     } as RecipeFlat
 }
@@ -2147,6 +2154,7 @@ export function makeMinimalRecipeFlat(overrides: Partial<RecipeFlat> = {}): Reci
         id: 1,
         name: 'Test name',
         image: '',
+        imageCropData: undefined as any,
         ...overrides,
     } as RecipeFlat
 }
@@ -2156,6 +2164,7 @@ export function makeEdgeCaseRecipeFlat(overrides: Partial<RecipeFlat> = {}): Rec
         id: 0,
         name: '',
         image: null,
+        imageCropData: null,
         ...overrides,
     } as RecipeFlat
 }
@@ -2216,22 +2225,39 @@ export function makeEdgeCaseRecipeFromSourceResponse(overrides: Partial<RecipeFr
 
 export function makeRecipeImage(overrides: Partial<RecipeImage> = {}): RecipeImage {
     return {
-        image: '',
-        imageUrl: 'https://example.com',
+        id: 1,
+        recipe: 0,
+        file: '',
+        cropData: undefined as any,
+        order: 0,
+        isPrimary: false,
+        createdBy: 0,
+        createdAt: new Date('2026-01-01T00:00:00Z'),
         ...overrides,
     } as RecipeImage
 }
 
 export function makeMinimalRecipeImage(overrides: Partial<RecipeImage> = {}): RecipeImage {
     return {
+        id: 1,
+        recipe: 0,
+        file: '',
+        createdBy: 0,
+        createdAt: new Date('2026-01-01T00:00:00Z'),
         ...overrides,
     } as RecipeImage
 }
 
 export function makeEdgeCaseRecipeImage(overrides: Partial<RecipeImage> = {}): RecipeImage {
     return {
-        image: null,
-        imageUrl: null,
+        id: 0,
+        recipe: 0,
+        file: '',
+        cropData: null,
+        order: 0,
+        isPrimary: false,
+        createdBy: 0,
+        createdAt: new Date(0),
         ...overrides,
     } as RecipeImage
 }
@@ -2276,6 +2302,7 @@ export function makeRecipeOverview(overrides: Partial<RecipeOverview> = {}): Rec
         name: 'Test name',
         description: '',
         image: '',
+        imageCropData: undefined as any,
         keywords: [],
         workingTime: 0,
         waitingTime: 0,
@@ -2298,6 +2325,7 @@ export function makeMinimalRecipeOverview(overrides: Partial<RecipeOverview> = {
         id: 1,
         name: 'Test name',
         image: '',
+        imageCropData: undefined as any,
         keywords: [],
         workingTime: 0,
         waitingTime: 0,
@@ -2320,6 +2348,7 @@ export function makeEdgeCaseRecipeOverview(overrides: Partial<RecipeOverview> = 
         name: '',
         description: null,
         image: null,
+        imageCropData: null,
         keywords: [],
         workingTime: 0,
         waitingTime: 0,
