@@ -92,4 +92,28 @@ describe('useFileApi', () => {
             expect(fileApiLoading.value).toBe(false)
         })
     })
+
+    describe('patchRecipeImage', () => {
+        it('PATCHes recipe-image/{id}/ with the given data and returns the RecipeImage', async () => {
+            global.fetch = vi.fn().mockResolvedValue({
+                ok: true,
+                json: () => Promise.resolve({id: 3, is_primary: true, order: 2}),
+            })
+
+            const {patchRecipeImage} = useFileApi()
+            const result = await patchRecipeImage(3, {is_primary: true})
+
+            expect(global.fetch).toHaveBeenCalledWith(
+                expect.stringContaining('api/recipe-image/3/'),
+                expect.objectContaining({method: 'PATCH', body: JSON.stringify({is_primary: true})}),
+            )
+            expect(result.id).toBe(3)
+        })
+
+        it('throws a ResponseError on a non-ok response', async () => {
+            global.fetch = vi.fn().mockResolvedValue({ok: false, status: 400})
+            const {patchRecipeImage} = useFileApi()
+            await expect(patchRecipeImage(9, {order: 1})).rejects.toBeTruthy()
+        })
+    })
 })
