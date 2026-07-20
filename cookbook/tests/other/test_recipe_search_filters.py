@@ -207,6 +207,50 @@ class TestUnitFilters:
         ids = set(results.values_list('id', flat=True))
         assert {s.r1.id, s.r2.id, s.r3.id} == ids
 
+    def test_unit_and_both(self, with_units, u1_s1, space_1, make_search_request):
+        """AND returns only recipes with ALL specified units (r3 has both)."""
+        s = with_units
+        req = make_search_request(u1_s1)
+        results = do_search(req, space_1, units_and=[s.obj1.id, s.obj2.id])
+        ids = set(results.values_list('id', flat=True))
+        assert ids == {s.r3.id}
+
+    def test_unit_or_not(self, with_units, u1_s1, space_1, make_search_request):
+        """OR NOT excludes recipes with any of the units (r1, r3 have obj1)."""
+        s = with_units
+        req = make_search_request(u1_s1)
+        results = do_search(req, space_1, units_or_not=[s.obj1.id])
+        ids = set(results.values_list('id', flat=True))
+        assert s.r1.id not in ids
+        assert s.r3.id not in ids
+        assert s.r2.id in ids
+
+    def test_unit_and_not(self, with_units, u1_s1, space_1, make_search_request):
+        """AND NOT excludes recipes with ALL of the units (only r3 has both)."""
+        s = with_units
+        req = make_search_request(u1_s1)
+        results = do_search(req, space_1, units_and_not=[s.obj1.id, s.obj2.id])
+        ids = set(results.values_list('id', flat=True))
+        assert s.r3.id not in ids
+        assert s.r1.id in ids
+        assert s.r2.id in ids
+
+
+class TestUnratedFilter:
+    """unrated=True returns only recipes the current user has never rated."""
+
+    def test_unrated_excludes_rated(self, search_recipes, u1_s1, space_1, make_search_request):
+        s = search_recipes
+        user = auth.get_user(u1_s1)
+        with scopes_disabled():
+            CookLogFactory.create(recipe=s.r1, created_by=user, rating=4, space=space_1)
+        req = make_search_request(u1_s1)
+        results = do_search(req, space_1, unrated=True)
+        ids = set(results.values_list('id', flat=True))
+        assert s.r1.id not in ids        # rated → excluded
+        assert s.r2.id in ids
+        assert s.r3.id in ids
+
 
 # ========================== DATE FILTERS ==========================
 
@@ -467,6 +511,17 @@ class TestRatingFilter:
         s = with_ratings
         req = make_search_request(u1_s1)
         results = do_search(req, space_1, rating='0')
+        ids = set(results.values_list('id', flat=True))
+        assert s.r1.id not in ids
+        assert s.r2.id not in ids
+        assert s.r3.id in ids
+        assert len(ids) == 11
+
+    def test_unrated_param_returns_unrated(self, with_ratings, u1_s1, space_1, make_search_request):
+        """?unrated=true returns recipes with no rating annotation."""
+        s = with_ratings
+        req = make_search_request(u1_s1)
+        results = do_search(req, space_1, unrated='true')
         ids = set(results.values_list('id', flat=True))
         assert s.r1.id not in ids
         assert s.r2.id not in ids
@@ -786,6 +841,88 @@ class TestIncludeChildren:
         assert s.r1.id not in ids
 
 
+# ========================== RECIPE PROPERTY FILTERS ==========================
+
+
+class TestRecipePropertyFilters:
+
+    def test_working_time_gte(self, search_recipes, u1_s1, space_1, make_search_request):
+        s = search_recipes
+        with scopes_disabled():
+            s.r1.working_time = 30
+            s.r1.save()
+            s.r2.working_time = 60
+            s.r2.save()
+        req = make_search_request(u1_s1)
+        results = do_search(req, space_1, working_time_gte='45')
+        ids = set(results.values_list('id', flat=True))
+        assert s.r2.id in ids
+        assert s.r1.id not in ids
+
+    def test_working_time_lte(self, search_recipes, u1_s1, space_1, make_search_request):
+        s = search_recipes
+        with scopes_disabled():
+            s.r1.working_time = 30
+            s.r1.save()
+            s.r2.working_time = 60
+            s.r2.save()
+        req = make_search_request(u1_s1)
+        results = do_search(req, space_1, working_time_lte='45')
+        ids = set(results.values_list('id', flat=True))
+        assert s.r1.id in ids
+        assert s.r2.id not in ids
+
+    def test_servings_range(self, search_recipes, u1_s1, space_1, make_search_request):
+        s = search_recipes
+        with scopes_disabled():
+            s.r1.servings = 2
+            s.r1.save()
+            s.r2.servings = 6
+            s.r2.save()
+            s.r3.servings = 4
+            s.r3.save()
+        req = make_search_request(u1_s1)
+        results = do_search(req, space_1, servings_gte='3', servings_lte='5')
+        ids = set(results.values_list('id', flat=True))
+        assert s.r3.id in ids
+        assert s.r1.id not in ids
+        assert s.r2.id not in ids
+
+    def test_has_photo_true(self, search_recipes, u1_s1, space_1, make_search_request):
+        s = search_recipes
+        req = make_search_request(u1_s1)
+        results = do_search(req, space_1, has_photo='true')
+        ids = set(results.values_list('id', flat=True))
+        for r in results:
+            assert r.image is not None or r.image != ''
+
+    def test_has_photo_false(self, search_recipes, u1_s1, space_1, make_search_request):
+        s = search_recipes
+        req = make_search_request(u1_s1)
+        results = do_search(req, space_1, has_photo='false')
+        ids = set(results.values_list('id', flat=True))
+        for r in results:
+            assert r.image is None or r.image == ''
+
+    def test_has_keywords_true(self, search_recipes, u1_s1, space_1, make_search_request):
+        s = search_recipes
+        req = make_search_request(u1_s1)
+        results = do_search(req, space_1, has_keywords='true')
+        ids = set(results.values_list('id', flat=True))
+        for r_id in ids:
+            with scopes_disabled():
+                assert Recipe.objects.get(id=r_id).keywords.exists()
+
+    def test_has_keywords_false(self, search_recipes, u1_s1, space_1, make_search_request):
+        s = search_recipes
+        req = make_search_request(u1_s1)
+        results = do_search(req, space_1, has_keywords='false')
+        ids = set(results.values_list('id', flat=True))
+        for r_id in ids:
+            with scopes_disabled():
+                assert not Recipe.objects.get(id=r_id).keywords.exists()
+
+
 # ========================== COMBINED FILTERS ==========================
 
 
@@ -1004,6 +1141,20 @@ class TestSortOrders:
         CookLogFactory.create(recipe=s.r2, created_by=user, rating=1.0, space=space_1)
         req = make_search_request(u1_s1)
         results = do_search(req, space_1, sort_order='-rating')
+        ids = list(results.values_list('id', flat=True))
+        assert ids.index(s.r1.id) < ids.index(s.r2.id)
+
+    def test_sort_times_cooked(self, search_recipes, u1_s1, space_1, make_search_request):
+        # R09-1: sort_order=-times_cooked raised a FieldError (HTTP 500) because the
+        # cook count is annotated as `favorite` and there is no `times_cooked` field.
+        s = search_recipes
+        user = auth.get_user(u1_s1)
+        for _ in range(5):
+            CookLogFactory.create(recipe=s.r1, created_by=user, space=space_1)
+        for _ in range(2):
+            CookLogFactory.create(recipe=s.r2, created_by=user, space=space_1)
+        req = make_search_request(u1_s1)
+        results = do_search(req, space_1, sort_order='-times_cooked')
         ids = list(results.values_list('id', flat=True))
         assert ids.index(s.r1.id) < ids.index(s.r2.id)
 
