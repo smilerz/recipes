@@ -28,7 +28,6 @@ const DEFAULT_STUBS: Record<string, Component> = {
     AddToShoppingDialog: { template: '<div class="stub-add-to-shopping-dialog"/>' },
     AutoPlanDialog: { template: '<div class="stub-auto-plan-dialog"/>' },
     RecipeShareDialog: { template: '<div class="stub-recipe-share-dialog"/>' },
-    ModelSelectVuetify: { template: '<div class="stub-model-select"/>' },
     StepEditor: { template: '<div class="stub-step-editor"/>' },
     PropertiesEditor: { template: '<div class="stub-properties-editor"/>' },
     GlobalSearchDialog: { template: '<div class="stub-global-search-dialog"/>' },
