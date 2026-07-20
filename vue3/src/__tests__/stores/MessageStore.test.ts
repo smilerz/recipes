@@ -67,6 +67,18 @@ describe('MessageStore', () => {
             expect(store.messages[0].msg.title).toBe('Warning')
             expect(store.messages[0].msg.text).toBe('details here')
         })
+
+        it('carries an optional action onto the queued message', () => {
+            const store = useMessageStore()
+            const callback = vi.fn()
+
+            store.addMessage(MessageType.SUCCESS, 'undoable', 3000, {}, { label: 'Undo', callback })
+
+            const queued = store.snackbarQueue.at(-1)!
+            expect(queued.action?.label).toBe('Undo')
+            queued.action?.callback()
+            expect(callback).toHaveBeenCalled()
+        })
     })
 
     describe('addError', () => {

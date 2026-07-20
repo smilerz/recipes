@@ -180,6 +180,18 @@ describe('IngredientContextMenu', () => {
         expect(food.ignoreShopping).toBe(false)
     })
 
+    // "View in pantry" (FR-I1 / phase-5): a NEW nav item that opens the pantry
+    // filtered to this food, shown only when the food is actually in the pantry.
+    it('viewInPantry routes to the pantry filtered by the food when the food is on hand', () => {
+        const w = mountMenu({...INGREDIENT, food: {...INGREDIENT.food, inInventory: 'True'}})
+        expect((w.vm as any).viewInPantry).toEqual({name: 'PantryPage', query: {food_id: 1}})
+    })
+
+    it('viewInPantry is null (item hidden) when the food is not in the pantry', () => {
+        const w = mountMenu({...INGREDIENT, food: {...INGREDIENT.food, inInventory: 'False', foodOnhand: false}})
+        expect((w.vm as any).viewInPantry).toBeNull()
+    })
+
     // Substitutes submenu must NOT fetch /api/food/{id}/substitutes/ — the
     // onhand subset is already on food.availableSubstitutes.
     it('toggleSubstitutes uses food.availableSubstitutes without any fetch call', async () => {
