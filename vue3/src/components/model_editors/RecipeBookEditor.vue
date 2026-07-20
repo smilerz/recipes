@@ -26,8 +26,8 @@
                     <v-form :disabled="loading">
                         <v-text-field :label="$t('Name')" v-model="editingObj.name"></v-text-field>
                         <v-textarea :label="$t('Description')" v-model="editingObj.description" rows="3"></v-textarea>
-                        <model-select model="User" v-model="editingObj.shared" mode="tags"></model-select>
-                        <model-select model="CustomFilter" v-model="editingObj.filter"></model-select>
+                        <model-select model="User" :label="$t('User')" v-model="editingObj.shared" mode="tags"></model-select>
+                        <model-select model="CustomFilter" :label="$t('SavedSearch')" v-model="editingObj.filter"></model-select>
                         <v-number-input :label="$t('Order')" :hint="$t('OrderInformation')" v-model="editingObj.order"></v-number-input>
                     </v-form>
                 </v-tabs-window-item>

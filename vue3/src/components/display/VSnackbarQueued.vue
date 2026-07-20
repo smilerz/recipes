@@ -8,22 +8,20 @@
             :vertical="showViewButton && props.vertical"
             :location="props.location"
             :close-on-back="false"
-            :multi-line="showViewButton"
+            :multi-line="showViewButton || !!visibleMessage.action"
         >
 <!--            <small>{{ DateTime.fromSeconds(visibleMessage.createdAt).toLocaleString(DateTime.DATETIME_MED) }}</small> <br/>-->
             <h3 v-if="visibleMessage.msg.title">{{ visibleMessage.msg.title }}</h3>
             <span  style="white-space: pre-wrap">{{ visibleMessage.msg.text }}</span>
 
-            <template #actions v-if="showViewButton">
-
-                <v-btn ref="ref_btn_view">{{$t('View')}}</v-btn>
-                <v-btn variant="text" @click="removeItem()">
+            <template #actions>
+                <v-btn v-if="visibleMessage.action" variant="text" @click="runAction()">{{ visibleMessage.action.label }}</v-btn>
+                <v-btn v-if="showViewButton" ref="ref_btn_view">{{$t('View')}}</v-btn>
+                <v-btn v-if="showViewButton || visibleMessage.action" variant="text" @click="removeItem()">
                     <span v-if="useMessageStore().snackbarQueue.length > 1">{{$t('Next')}} ({{ useMessageStore().snackbarQueue.length - 1 }})</span>
                     <span v-else>{{$t('Close')}}</span>
                 </v-btn>
-            </template>
-            <template #actions v-else>
-                <v-btn icon="$close" size="x-small" @click="removeItem()"></v-btn>
+                <v-btn v-else icon="$close" size="x-small" @click="removeItem()"></v-btn>
             </template>
         </v-snackbar>
 
@@ -113,6 +111,15 @@ function removeItem() {
     timeoutId.value = -1
     useMessageStore().snackbarQueue.shift()
     processQueue()
+}
+
+/**
+ * run the message's optional action (e.g. Undo) and dismiss the snackbar
+ */
+function runAction() {
+    const action = visibleMessage.value.action
+    removeItem()
+    action?.callback()
 }
 </script>
 

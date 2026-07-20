@@ -31,6 +31,27 @@
                         <!-- TODO fix card overflow invisible, overflow-visible class is not working -->
                         <model-select :label="$t('Category')" v-model="editingObj.supermarketCategory" model="SupermarketCategory" allow-create append-to-body></model-select>
                         <model-select :label="$t('ShoppingList')" :hint="$t('DefaultShoppingListHelp')" v-model="editingObj.shoppingLists" model="ShoppingList" mode="tags" allow-create append-to-body></model-select>
+
+                        <v-row density="compact" align="center" class="mb-2">
+                            <v-col cols="7">
+                                <v-number-input :label="$t('ShelfLife')" v-model="shelfLifeValue" :precision="0" :min="0" control-variant="hidden" clearable hide-details></v-number-input>
+                            </v-col>
+                            <v-col cols="5">
+                                <v-select :label="$t('Period')" v-model="shelfLifePeriod" hide-details
+                                          :items="[{title: $t('Days'), value: 'day'}, {title: $t('Weeks'), value: 'week'}, {title: $t('Months'), value: 'month'}]"></v-select>
+                            </v-col>
+                        </v-row>
+
+                        <v-row density="compact" align="center" class="mb-2">
+                            <v-col cols="7">
+                                <v-number-input :label="$t('ShoppingAmount')" v-model="editingObj.shoppingAmount" :precision="2" :min="0" control-variant="hidden" clearable hide-details></v-number-input>
+                            </v-col>
+                            <v-col cols="5">
+                                <model-select :label="$t('ShoppingUnit')" v-model="editingObj.preferredShoppingUnit" model="Unit" append-to-body inline hide-details></model-select>
+                            </v-col>
+                        </v-row>
+
+                        <model-select :label="$t('PreferredUnit')" v-model="editingObj.preferredUnit" model="Unit" append-to-body></model-select>
                     </v-form>
                 </v-tabs-window-item>
 
@@ -86,7 +107,7 @@
                                     </v-col>
                                     <v-col md="6">
                                         <!-- TODO fix card overflow invisible, overflow-visible class is not working -->
-                                        <model-select v-model="uc.baseUnit" model="Unit" hide-details></model-select>
+                                        <model-select v-model="uc.baseUnit" model="Unit" :label="$t('Unit')" hide-details></model-select>
                                     </v-col>
                                 </v-row>
                                 <v-row density="compact">
@@ -100,7 +121,7 @@
                                     </v-col>
                                     <v-col md="6">
                                         <!-- TODO fix card overflow invisible, overflow-visible class is not working -->
-                                        <model-select v-model="uc.convertedUnit" model="Unit"></model-select>
+                                        <model-select v-model="uc.convertedUnit" model="Unit" :label="$t('Unit')"></model-select>
                                     </v-col>
                                 </v-row>
                             </v-card-text>
@@ -172,6 +193,7 @@ import {openFdcPage} from "@/utils/fdc.ts";
 import {DateTime} from "luxon";
 import HierarchyEditor from "@/components/inputs/HierarchyEditor.vue";
 import {useRoute} from 'vue-router'
+import {shelfLifeFromDays, shelfLifeToDays, type ShelfLifePeriod} from "@/utils/pantry_utils.ts";
 
 
 const props = defineProps({
@@ -193,6 +215,27 @@ watch([() => props.item, () => props.itemId], () => {
 })
 
 // object specific data (for selects/display)
+
+// shelf life is stored as days but edited as a value + period (days/weeks/months)
+const shelfLifeValue = ref<number | null>(null)
+const shelfLifePeriod = ref<ShelfLifePeriod>('day')
+
+// initialize the value/period pickers whenever the stored days change (e.g. on load)
+watch(() => editingObj.value?.shelfLifeDays, (days) => {
+    const sl = shelfLifeFromDays(days)
+    shelfLifeValue.value = sl.value
+    shelfLifePeriod.value = sl.period
+}, {immediate: true})
+
+// write the pickers back to the stored days — only when it actually changes, so initializing the
+// pickers on load doesn't mark a pristine food as edited (undefined and null both mean "unset")
+watch([shelfLifeValue, shelfLifePeriod], ([value, period]) => {
+    if (!editingObj.value) return
+    const days = shelfLifeToDays(value, period)
+    if ((days ?? null) !== (editingObj.value.shelfLifeDays ?? null)) {
+        editingObj.value.shelfLifeDays = days
+    }
+})
 
 /**
  * compute label for the properties amount input to show user for

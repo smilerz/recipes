@@ -30,7 +30,7 @@
                             <span v-else>{{ ingredientToFoodString(i, ingredientFactor) }}</span>
 
                             <template v-if="showInlineStatus">
-                                <v-icon v-if="isOnHand(i)" icon="fa-solid fa-clipboard-check" color="success" size="x-small" class="ml-1" :aria-label="$t('OnHand')"></v-icon>
+                                <pantry-jar-indicator v-if="isOnHand(i)" in-inventory :earliest-expiry="i.food?.earliestExpiry" size="x-small" class="ml-1"></pantry-jar-indicator>
                                 <v-icon v-else-if="i.food.substituteOnhand" icon="fa-solid fa-right-left" color="success" size="x-small" class="ml-1" :aria-label="substituteLabel(i)"></v-icon>
                                 <v-icon v-if="isOnShoppingList(i)" icon="fa-solid fa-cart-shopping" color="success" size="x-small" class="ml-1" :aria-label="$t('Shopping')"></v-icon>
                                 <v-icon v-if="i.food.ignoreShopping" icon="fa-solid fa-ban" color="warning" size="x-small" class="ml-1" :aria-label="$t('IgnoreShopping')"></v-icon>
@@ -87,7 +87,7 @@
                         <span v-else>{{ ingredientToFoodString(i, ingredientFactor) }}</span>
                     </template>
                     <template v-if="mobileStatus && i.food">
-                        <v-icon v-if="isOnHand(i)" icon="fa-solid fa-clipboard-check" color="success" size="x-small" class="ml-1" :aria-label="$t('OnHand')"></v-icon>
+                        <pantry-jar-indicator v-if="isOnHand(i)" in-inventory :earliest-expiry="i.food?.earliestExpiry" size="x-small" class="ml-1"></pantry-jar-indicator>
                         <v-icon v-if="isOnShoppingList(i)" icon="fa-solid fa-cart-shopping" color="success" size="x-small" class="ml-1" :aria-label="$t('Shopping')"></v-icon>
                         <v-icon v-if="i.food.ignoreShopping" icon="fa-solid fa-ban" color="warning" size="x-small" class="ml-1" :aria-label="$t('IgnoreShopping')"></v-icon>
                     </template>
@@ -120,6 +120,7 @@ import {calculateFoodAmount} from "../../utils/number_utils";
 import {useUserPreferenceStore} from "../../stores/UserPreferenceStore";
 import {ingredientToFoodString, ingredientToUnitString, parseBooleanAnnotation} from "@/utils/model_utils.ts";
 import IngredientContextMenu from "@/components/inputs/IngredientContextMenu.vue";
+import PantryJarIndicator from "@/components/display/PantryJarIndicator.vue";
 import {useDisplay} from "vuetify";
 import {useI18n} from "vue-i18n";
 
@@ -209,7 +210,8 @@ function truncateNote(note: string | undefined, reserved: number = 0): string {
 }
 
 function isOnHand(i: Ingredient): boolean {
-    return parseBooleanAnnotation(i.food?.inInventory) || !!i.food?.foodOnhand
+    // onhand_users is retired — availability is inventory-only now (FR-E5)
+    return parseBooleanAnnotation(i.food?.inInventory)
 }
 
 function isOnShoppingList(i: Ingredient): boolean {

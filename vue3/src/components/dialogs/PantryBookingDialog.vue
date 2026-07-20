@@ -9,13 +9,13 @@
                 <v-row v-if="['add','remove','move'].includes(bookingMode)">
                     <v-col>
                         <v-form>
-                            <model-select model="InventoryEntry" v-model="inventoryEntry" v-if="['remove','move'].includes(bookingMode)"
+                            <model-select model="InventoryEntry" :label="$t('InventoryEntry')" v-model="inventoryEntry" v-if="['remove','move'].includes(bookingMode)"
                                           @update:modelValue="inventoryEntrySelected()">
                             </model-select>
 
-                            <model-select model="Food" allow-create v-model="food" v-if="['add'].includes(bookingMode)"></model-select>
+                            <model-select model="Food" :label="$t('Food')" allow-create v-model="food" v-if="['add'].includes(bookingMode)"></model-select>
 
-                            <model-select model="InventoryLocation" v-model="inventoryLocation" v-if="['add','move'].includes(bookingMode)">
+                            <model-select model="InventoryLocation" :label="$t('InventoryLocation')" v-model="inventoryLocation" v-if="['add','move'].includes(bookingMode)">
                                 <template #append>
                                     <v-btn icon>
                                         <v-icon icon="$create"></v-icon>
@@ -25,7 +25,7 @@
                             </model-select>
 
                             <v-number-input :label="$t('Amount')" :precision="2" v-model="amount" v-if="['add', 'remove'].includes(bookingMode)"></v-number-input>
-                            <model-select model="Unit" allow-create v-model="unit" v-if="['add'].includes(bookingMode)" hide-details>
+                            <model-select model="Unit" :label="$t('Unit')" allow-create v-model="unit" v-if="['add'].includes(bookingMode)" hide-details>
                                 <template #append-inner>
                                     <v-chip v-for="u in commonUnits" :key="u.id" @click="unit = u" size="small" class="mr-1">
                                         {{ u.name }}
