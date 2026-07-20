@@ -91,6 +91,47 @@ def test_preference_update(u1_s1, u2_s1):
         assert not UserPreference.objects.filter(user=auth.get_user(u2_s1)).exists()
 
 
+@pytest.mark.parametrize("theme", [
+    UserPreference.CERULEAN,
+    UserPreference.SLATE,
+    UserPreference.FLATLY,
+    UserPreference.DARKLY,
+    UserPreference.TANDOOR,
+    UserPreference.TANDOOR_DARK,
+])
+def test_preference_update_theme_choices(theme, u1_s1):
+    # the Bootswatch-derived themes (and the Tandoor defaults) are valid choices;
+    # FLATLY/DARKLY are the enum values reused for the "Flat"/"Midnight" display themes
+    r = u1_s1.patch(
+        reverse(DETAIL_URL, args={auth.get_user(u1_s1).id}),
+        {'user': auth.get_user(u1_s1).id, 'theme': theme},
+        content_type='application/json'
+    )
+    assert r.status_code == 200
+    assert json.loads(r.content)['theme'] == theme
+
+
+def test_preference_update_theme_invalid_rejected(u1_s1):
+    r = u1_s1.patch(
+        reverse(DETAIL_URL, args={auth.get_user(u1_s1).id}),
+        {'user': auth.get_user(u1_s1).id, 'theme': 'NOT_A_THEME'},
+        content_type='application/json'
+    )
+    assert r.status_code == 400
+
+
+def test_preference_update_nav_bg_color_empty_accepted(u1_s1):
+    # nav_bg_color uses blank=True so the "Reset" button can clear it (empty = follow
+    # theme). Without allow_blank this PATCH would 400 — guards the Reset write-path.
+    r = u1_s1.patch(
+        reverse(DETAIL_URL, args={auth.get_user(u1_s1).id}),
+        {'user': auth.get_user(u1_s1).id, 'nav_bg_color': ''},
+        content_type='application/json'
+    )
+    assert r.status_code == 200
+    assert json.loads(r.content)['nav_bg_color'] == ''
+
+
 def test_preference_delete(u1_s1, u2_s1):
     # can't delete other preference
     r = u1_s1.delete(

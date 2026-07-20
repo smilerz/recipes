@@ -3,7 +3,7 @@
         <v-app-bar color="tandoor" flat density="comfortable" v-if="!useUserPreferenceStore().isAuthenticated && !useUserPreferenceStore().isPrintMode">
 
         </v-app-bar>
-        <v-app-bar :color="useUserPreferenceStore().activeSpace.navBgColor ? useUserPreferenceStore().activeSpace.navBgColor : useUserPreferenceStore().userSettings.navBgColor"
+        <v-app-bar :color="useUserPreferenceStore().navBarColor"
                    flat density="comfortable" v-if="useUserPreferenceStore().isAuthenticated && !useUserPreferenceStore().isPrintMode"
                    :absolute="!useUserPreferenceStore().userSettings.navSticky"
                    :scroll-behavior="useUserPreferenceStore().userSettings.navSticky ? 'elevate' : ''">
