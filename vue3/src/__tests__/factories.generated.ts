@@ -71,6 +71,7 @@ import type {
     RecipeOverview,
     RecipeShoppingUpdate,
     RecipeSimple,
+    RecipeStats,
     SearchFields,
     SearchPreference,
     ServerSettings,
@@ -2389,6 +2390,42 @@ export function makeEdgeCaseRecipeSimple(overrides: Partial<RecipeSimple> = {}):
         url: '',
         ...overrides,
     } as RecipeSimple
+}
+
+export function makeRecipeStats(overrides: Partial<RecipeStats> = {}): RecipeStats {
+    return {
+        makenowReady: 0,
+        new: 0,
+        unrated: 0,
+        neverCooked: 0,
+        private: 0,
+        total: 0,
+        ...overrides,
+    } as RecipeStats
+}
+
+export function makeMinimalRecipeStats(overrides: Partial<RecipeStats> = {}): RecipeStats {
+    return {
+        makenowReady: 0,
+        new: 0,
+        unrated: 0,
+        neverCooked: 0,
+        private: 0,
+        total: 0,
+        ...overrides,
+    } as RecipeStats
+}
+
+export function makeEdgeCaseRecipeStats(overrides: Partial<RecipeStats> = {}): RecipeStats {
+    return {
+        makenowReady: 0,
+        new: 0,
+        unrated: 0,
+        neverCooked: 0,
+        private: 0,
+        total: 0,
+        ...overrides,
+    } as RecipeStats
 }
 
 export function makeSearchFields(overrides: Partial<SearchFields> = {}): SearchFields {
