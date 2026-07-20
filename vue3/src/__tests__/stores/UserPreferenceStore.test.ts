@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest'
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { setActivePinia, createPinia } from 'pinia'
 import { makeUserPreference, makeServerSettings, makeSpace, makeUserSpace } from '@/__tests__/factories'
 import { apiMock, resetApiMock } from '@/__tests__/api-mock'
@@ -22,8 +22,10 @@ vi.mock('vue-router', () => ({
     useRouter: () => ({ push: vi.fn().mockResolvedValue(undefined) }),
 }))
 
+// Shared mutable ref so updateTheme's print-mode branch can be toggled per test.
+const { printModeRef } = vi.hoisted(() => ({ printModeRef: { value: false } }))
 vi.mock('@vueuse/router', () => ({
-    useRouteQuery: () => ({ value: false }),
+    useRouteQuery: () => printModeRef,
 }))
 
 vi.mock('@vueuse/core', async () => {
@@ -34,6 +36,7 @@ vi.mock('@vueuse/core', async () => {
 })
 
 import { useUserPreferenceStore } from '@/stores/UserPreferenceStore'
+import vuetify from '@/vuetify'
 
 describe('UserPreferenceStore', () => {
     beforeEach(() => {
@@ -129,6 +132,71 @@ describe('UserPreferenceStore', () => {
 
             store.activeSpace = makeSpace({ id: 999 })
             expect(store.activeUserSpace).toBeNull()
+        })
+    })
+
+    describe('navBarColor', () => {
+        it('falls back to the theme tandoor token when no explicit colour is set', () => {
+            const store = useUserPreferenceStore()
+            store.activeSpace = makeSpace({ navBgColor: '' })
+            store.userSettings = makeUserPreference({ navBgColor: '' })
+            expect(store.navBarColor).toBe('tandoor')
+        })
+
+        it('uses the user colour when set and no space colour', () => {
+            const store = useUserPreferenceStore()
+            store.activeSpace = makeSpace({ navBgColor: '' })
+            store.userSettings = makeUserPreference({ navBgColor: '#123456' })
+            expect(store.navBarColor).toBe('#123456')
+        })
+
+        it('lets an explicit space colour override the user colour', () => {
+            const store = useUserPreferenceStore()
+            store.activeSpace = makeSpace({ navBgColor: '#abcdef' })
+            store.userSettings = makeUserPreference({ navBgColor: '#123456' })
+            expect(store.navBarColor).toBe('#abcdef')
+        })
+    })
+
+    describe('updateTheme', () => {
+        let changeSpy: ReturnType<typeof vi.spyOn>
+        beforeEach(() => {
+            changeSpy = vi.spyOn(vuetify.theme, 'change').mockImplementation(() => {})
+            printModeRef.value = false
+        })
+        afterEach(() => {
+            changeSpy.mockRestore()
+            printModeRef.value = false
+        })
+
+        it.each([
+            ['TANDOOR', 'light'],
+            ['TANDOOR_DARK', 'dark'],
+            ['CERULEAN', 'cerulean'],
+            ['FLATLY', 'flat'],
+            ['DARKLY', 'midnight'],
+            ['SLATE', 'slate'],
+        ])('maps theme %s to the %s Vuetify theme', (theme, expected) => {
+            const store = useUserPreferenceStore()
+            store.userSettings = makeUserPreference({ theme: theme as any })
+            store.updateTheme()
+            expect(changeSpy).toHaveBeenCalledWith(expected)
+        })
+
+        it('falls back to light for an unknown/legacy theme value', () => {
+            const store = useUserPreferenceStore()
+            store.userSettings = makeUserPreference({ theme: 'SUPERHERO' as any })
+            store.updateTheme()
+            expect(changeSpy).toHaveBeenCalledWith('light')
+        })
+
+        it('forces the light theme in print mode regardless of the stored theme', () => {
+            printModeRef.value = true
+            const store = useUserPreferenceStore()
+            store.userSettings = makeUserPreference({ theme: 'DARKLY' as any })
+            store.updateTheme()
+            expect(changeSpy).toHaveBeenCalledWith('light')
+            expect(changeSpy).not.toHaveBeenCalledWith('midnight')
         })
     })
 
