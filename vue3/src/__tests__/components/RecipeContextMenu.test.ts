@@ -33,6 +33,8 @@ vi.mock('@/utils/cookie', () => ({
 
 import RecipeContextMenu from '@/components/inputs/RecipeContextMenu.vue'
 
+const useUpOpenSpy = vi.fn()
+
 function mountMenu(deviceOverrides: Record<string, any> = {}, props: Record<string, any> = {}) {
     const prePopulate: PiniaPlugin = ({ store }) => {
         if (store.$id === 'user_preference_store') {
@@ -52,7 +54,7 @@ function mountMenu(deviceOverrides: Record<string, any> = {}, props: Record<stri
             Add_to_Book: 'Add to Book', Log_Cooking: 'Log Cooking', Edit_Photo: 'Edit Photo',
             Property_Editor: 'Property Editor', Share: 'Share', Export: 'Export',
             Duplicate: 'Duplicate', Print: 'Print', Delete: 'Delete', Copy: 'Copy',
-            DisplaySettings: 'Display Settings',
+            DisplaySettings: 'Display Settings', UseUp: 'Use up', PantryForThisRecipe: 'Pantry for this recipe',
         }},
         missingWarn: false, fallbackWarn: false,
     })
@@ -85,6 +87,13 @@ function mountMenu(deviceOverrides: Record<string, any> = {}, props: Record<stri
                 AddToBookDialog: { template: '<div class="stub-add-book-dialog"/>' },
                 LogCookingDialog: { template: '<div class="stub-log-cooking-dialog"/>' },
                 DeleteConfirmDialog: { template: '<div class="stub-delete-confirm"/>' },
+                UseUpDialog: defineComponent({
+                    name: 'UseUpDialog',
+                    setup(_, { expose }) {
+                        expose({ open: useUpOpenSpy })
+                        return () => null
+                    },
+                }),
             },
         },
     })
@@ -180,6 +189,35 @@ describe('RecipeContextMenu', () => {
             expect(text).toContain('Log Cooking')
             expect(text).toContain('Edit Photo')
         })
+    })
+})
+
+describe('use up (view context only)', () => {
+    beforeEach(() => { resetApiMock(); useUpOpenSpy.mockClear() })
+
+    const recipeWithFoods = {
+        id: 5, name: 'Pancakes',
+        steps: [{ingredients: [{food: {id: 1, name: 'Flour'}}, {food: {id: 2, name: 'Milk'}}]}],
+    }
+
+    it('shows Use up on the recipe view', () => {
+        const w = mountMenu({}, { context: 'view', recipe: recipeWithFoods })
+        expect(w.text()).toContain('Use up')
+    })
+
+    it('does not show Use up on a card (avoids card_visibleMenuItems gating entirely)', () => {
+        const w = mountMenu({}, { context: 'card', recipe: recipeWithFoods })
+        expect(w.text()).not.toContain('Use up')
+    })
+
+    it('opens the dialog scoped to the recipe food ids from the visible button', async () => {
+        const w = mountMenu({}, { context: 'view', recipe: recipeWithFoods })
+        const btn = w.findAll('button').find(el => el.text().includes('Use up'))
+        await btn!.trigger('click')
+        await w.vm.$nextTick()
+
+        expect(useUpOpenSpy).toHaveBeenCalledTimes(1)
+        expect(useUpOpenSpy.mock.calls[0][0].foodIds.sort()).toEqual([1, 2])
     })
 })
 

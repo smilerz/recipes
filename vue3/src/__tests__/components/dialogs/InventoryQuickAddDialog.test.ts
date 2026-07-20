@@ -45,6 +45,9 @@ function mountDialog() {
                 // irrelevant to these tests (unit stays null).
                 ModelSelect: {template: '<div class="model-select-stub" />'},
                 VClosableCardTitle: {template: '<div class="title-stub" />'},
+                // v-dialog activator="model" trips a Vuetify activator watcher under
+                // jsdom; the freezer dialog's own behavior is not under test here.
+                FreezerExpiryDialog: {template: '<div class="freezer-dialog-stub" />'},
             },
         },
     })
@@ -135,6 +138,59 @@ describe('InventoryQuickAddDialog manage-mode add', () => {
         // ...while the dialog still opens with an empty list so it stays usable.
         expect((wrapper.vm as any).existingEntries).toEqual([])
         wrapper.unmount()
+    })
+})
+
+describe('InventoryQuickAddDialog expiry field (FR-C2/FR-D6 gap + DEC-4 freezer)', () => {
+    beforeEach(() => { setActivePinia(createPinia()); resetApiMock() })
+
+    it('QA-EXP-01: shows an editable expires date field', async () => {
+        const w = mountDialog()
+        void (w.vm as any).open({
+            title: 'Add', locations: [{value: 3, label: 'Pantry'}], defaultLocationId: 3,
+        })
+        await flushPromises()
+
+        expect(document.querySelector('input[type="date"]')).toBeTruthy()
+        w.unmount()
+    })
+
+    it('QA-EXP-02: quick-add resolves with the chosen expiry', async () => {
+        const w = mountDialog()
+        const promise = (w.vm as any).open({
+            title: 'Add', locations: [{value: 3, label: 'Pantry'}], defaultLocationId: 3,
+        }) as Promise<any>
+        await flushPromises()
+
+        // drive the real input so the v-model wiring is load-bearing, not just the ref
+        const dateInput = document.querySelector('input[type="date"]') as HTMLInputElement
+        dateInput.value = '2026-12-24'
+        dateInput.dispatchEvent(new Event('input'))
+        await flushPromises()
+        clickAdd()
+        const result = await promise
+        // let VDialog's close watcher (await nextTick -> overlay focus handling)
+        // finish while the component is still mounted, else it NPEs under jsdom
+        await flushPromises()
+
+        expect(result.expires).toBe('2026-12-24')
+        w.unmount()
+    })
+
+    it('QA-EXP-03: the freezer prefill button shows only for freezer locations', async () => {
+        const w = mountDialog()
+        void (w.vm as any).open({
+            title: 'Add',
+            locations: [{value: 3, label: 'Pantry'}, {value: 9, label: 'Chest freezer', isFreezer: true}],
+            defaultLocationId: 3,
+        })
+        await flushPromises()
+        expect(document.querySelector('[data-test="freezer-expiry-btn"]')).toBeNull()
+
+        ;(w.vm as any).selectedLocationId = 9
+        await flushPromises()
+        expect(document.querySelector('[data-test="freezer-expiry-btn"]')).toBeTruthy()
+        w.unmount()
     })
 })
 
