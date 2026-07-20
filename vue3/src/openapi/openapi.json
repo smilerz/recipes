@@ -18102,6 +18102,8 @@ components:
       - FLATLY
       - SUPERHERO
       - TANDOOR_DARK
+      - CERULEAN
+      - SLATE
       type: string
       description: |-
         * `TANDOOR` - Tandoor
@@ -18110,6 +18112,8 @@ components:
         * `FLATLY` - Flatly
         * `SUPERHERO` - Superhero
         * `TANDOOR_DARK` - Tandoor Dark (INCOMPLETE)
+        * `CERULEAN` - Cerulean
+        * `SLATE` - Slate
     Unit:
       type: object
       description: |-
