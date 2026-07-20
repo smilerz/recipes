@@ -292,9 +292,9 @@ import {computed, h, onBeforeMount, provide, ref, shallowRef, toRef, triggerRef,
 import {ErrorMessageType, useMessageStore} from "@/stores/MessageStore";
 import {useI18n} from "vue-i18n";
 import {EditorSupportedModels, GenericModel, getGenericModelFromString, Model, ModelTableHeaders} from "@/types/Models";
-import {buildSubtitleText} from "@/utils/utils";
+import {buildSubtitleParts} from "@/utils/utils";
 
-import {useRoute, useRouter} from "vue-router";
+import {useRoute, useRouter, RouterLink} from "vue-router";
 import {useUserPreferenceStore} from "@/stores/UserPreferenceStore";
 import ModelMergeDialog from "@/components/dialogs/ModelMergeDialog.vue";
 import {VDataTableUpdateOptions} from "@/vuetify";
@@ -585,9 +585,18 @@ function renderNameContent(item: ModelItem, col: ModelTableHeaders) {
         }
     }
 
-    const subtitle = buildSubtitleText(item, desktopSubtitleColumns.value, t)
-    if (subtitle) {
-        lines.push(h('span', {class: 'text-caption text-medium-emphasis text-truncate'}, subtitle))
+    const parts = buildSubtitleParts(item, desktopSubtitleColumns.value, t)
+    if (parts.length) {
+        const children: any[] = []
+        parts.forEach((part, i) => {
+            if (i > 0) children.push(h('span', {class: 'text-disabled'}, ' · '))
+            if (part.to) {
+                children.push(h(RouterLink, {to: part.to, class: 'text-primary', onClick: (e: Event) => e.stopPropagation()}, () => part.text))
+            } else {
+                children.push(part.text)
+            }
+        })
+        lines.push(h('span', {class: 'text-caption text-medium-emphasis text-truncate'}, children))
     }
 
     if (lines.length === 1) return renderer

@@ -13,7 +13,14 @@
                         :label="$t('Theme')"
                         class="mt-2"
                         v-model="userPrefs.userSettings.theme"
-                        :items="[{title: 'Tandoor', value: 'TANDOOR'}, {title: 'Tandoor Dark', value: 'TANDOOR_DARK'}]"
+                        :items="[
+                            {title: 'Tandoor', value: 'TANDOOR'},
+                            {title: 'Tandoor Dark', value: 'TANDOOR_DARK'},
+                            {title: 'Cerulean', value: 'CERULEAN'},
+                            {title: 'Flat', value: 'FLATLY'},
+                            {title: 'Midnight', value: 'DARKLY'},
+                            {title: 'Slate', value: 'SLATE'},
+                        ]"
                     />
 
                     <v-label class="mt-2">{{ $t('Nav_Color') }}</v-label>
@@ -25,6 +32,7 @@
                         :swatches="[['#ddbf86'],['#b98766'],['#b55e4f'],['#82aa8b'],['#385f84']]"
                         class="mb-2"
                     />
+                    <v-btn variant="text" size="small" @click="userPrefs.userSettings.navBgColor = ''">{{ $t('Reset') }}</v-btn>
 
                     <v-checkbox :label="$t('Show_Logo')" :hint="$t('Show_Logo_Help')" persistent-hint v-model="userPrefs.userSettings.navShowLogo" />
                     <v-checkbox :label="$t('Sticky_Nav')" :hint="$t('Sticky_Nav_Help')" persistent-hint v-model="userPrefs.userSettings.navSticky" />
