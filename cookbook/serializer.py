@@ -903,6 +903,7 @@ class FoodSerializer(UniqueFieldsMixin, WritableNestedModelSerializer, RecipeCou
     substitute_onhand = serializers.SerializerMethodField('get_substitute_onhand')
     available_substitutes = serializers.SerializerMethodField('get_available_substitutes')
     in_inventory = serializers.CharField(source='has_inventory_status', read_only=True)
+    earliest_expiry = serializers.SerializerMethodField('get_earliest_expiry')
     substitute_inventory = serializers.SerializerMethodField('get_substitute_inventory')
     substitute = FoodSimpleSerializer(many=True, allow_null=True, required=False)
     # Only set when tree_search=true + filters expand the queryset via
@@ -913,6 +914,8 @@ class FoodSerializer(UniqueFieldsMixin, WritableNestedModelSerializer, RecipeCou
     shopping_lists = ShoppingListSerializer(many=True, required=False)
     properties = PropertySerializer(many=True, allow_null=True, required=False)
     properties_food_unit = UnitSerializer(allow_null=True, required=False)
+    preferred_unit = UnitSerializer(allow_null=True, required=False)
+    preferred_shopping_unit = UnitSerializer(allow_null=True, required=False)
     properties_food_amount = CustomDecimalField(required=False)
 
     recipe_filter = 'steps__ingredients__food'
@@ -995,9 +998,8 @@ class FoodSerializer(UniqueFieldsMixin, WritableNestedModelSerializer, RecipeCou
                 household = self.context["request"].user_space.household
             except AttributeError:
                 household = None
-            inventory_q = Q(inventoryentry__amount__gt=0)
-            if household is not None:
-                inventory_q &= Q(inventoryentry__inventory_location__household=household)
+            # Strictly household-scoped (FR-B4): household=None → IS NULL → no inventory.
+            inventory_q = Q(inventoryentry__amount__gt=0, inventoryentry__inventory_location__household=household)
             return Food.objects.filter(self._substitute_candidates_filter(obj)).filter(inventory_q).exists()
         except AttributeError:
             return False
@@ -1006,6 +1008,38 @@ class FoodSerializer(UniqueFieldsMixin, WritableNestedModelSerializer, RecipeCou
     def get_matched_filter(self, obj):
         """None for non-expanded responses, bool when tree_search=true (E-8)."""
         return getattr(obj, 'matched_filter', None)
+
+    @extend_schema_field(serializers.DateField(allow_null=True))
+    def get_earliest_expiry(self, obj):
+        """MIN(expires) over the household's dated on-hand lots (FR-I2), tolerant of querysets
+        that don't annotate it — e.g. the flat food list (FR-I6) — where it is None."""
+        return getattr(obj, 'earliest_expiry', None)
+
+    def _onhand_household_or_raise(self):
+        """Resolve the request's household for a food_onhand write, or 400 if it has none.
+
+        The pantry is household-scoped, so a food_onhand toggle requires one — fail loudly here
+        rather than silently no-op (P1.3-B decision).
+        """
+        user_space = getattr(self.context['request'], 'user_space', None)
+        household = getattr(user_space, 'household', None)
+        if household is None:
+            raise ValidationError({'food_onhand': _('Marking a food on-hand requires a household. Set up a household first.')})
+        return user_space, household
+
+    def _apply_food_onhand(self, food, onhand):
+        """Route the food_onhand toggle (FR-I1) through household inventory instead of onhand_users (FR-L1).
+
+        ``onhand=True`` creates one on-hand lot at the household default location (idempotent —
+        skipped if one already exists); ``onhand=False`` zeroes the household's lots. Either way the
+        caller's shared users are removed from the legacy ``onhand_users`` (data cleanup — availability
+        is inventory-only now). Delegates to the shared ``set_food_onhand`` helper.
+        """
+        from cookbook.helper.inventory_helper import set_food_onhand
+        request = self.context['request']
+        user_space, household = self._onhand_household_or_raise()
+        shared_users = User.objects.filter(id__in=get_household_user_ids(user_space))
+        set_food_onhand(food, onhand, user=request.user, space=request.space, household=household, shared_users=shared_users)
 
     def create(self, validated_data):
         name = validated_data['name'].strip()
@@ -1025,23 +1059,18 @@ class FoodSerializer(UniqueFieldsMixin, WritableNestedModelSerializer, RecipeCou
                 name=sc_name,
                 space=space, defaults=sm_category)
         onhand = validated_data.pop('food_onhand', None)
+        if onhand is not None:
+            self._onhand_household_or_raise()  # fail before creating the food if no household
         if recipe := validated_data.get('recipe', None):
             validated_data['recipe'] = Recipe.objects.get(**recipe)
 
-        # assuming if on hand for user also onhand for household members
-        if onhand is not None:
-            shared_users = list(User.objects.filter(id__in=get_household_user_ids(self.context['request'].user_space)))
-            if self.instance:
-                onhand_users = self.instance.onhand_users.all()
-            else:
-                onhand_users = []
-            if onhand:
-                validated_data['onhand_users'] = list(onhand_users) + shared_users
-            else:
-                validated_data['onhand_users'] = list(set(onhand_users) - set(shared_users))
-
         if properties_food_unit := validated_data.pop('properties_food_unit', None):
             properties_food_unit = Unit.objects.filter(name=properties_food_unit['name']).first()
+
+        # resolve the pantry unit FKs by name so they land in get_or_create's defaults as instances
+        for unit_field in ('preferred_unit', 'preferred_shopping_unit'):
+            if nested := validated_data.get(unit_field, None):
+                validated_data[unit_field] = Unit.objects.filter(name=nested['name'], space=space).first()
 
         properties = validated_data.pop('properties', None)
 
@@ -1054,6 +1083,9 @@ class FoodSerializer(UniqueFieldsMixin, WritableNestedModelSerializer, RecipeCou
                 obj.properties.add(Property.objects.create(property_type_id=p['property_type']['id'],
                                                            property_amount=p['property_amount'], space=space))
 
+        if onhand is not None:
+            self._apply_food_onhand(obj, onhand)
+
         return obj
 
     def update(self, instance, validated_data):
@@ -1061,17 +1093,12 @@ class FoodSerializer(UniqueFieldsMixin, WritableNestedModelSerializer, RecipeCou
             validated_data['name'] = name.strip()
         if plural_name := validated_data.get('plural_name', None):
             validated_data['plural_name'] = plural_name.strip()
-        # assuming if on hand for user also onhand for household members
-        onhand = validated_data.get('food_onhand', None)
+        # food_onhand routes to household inventory (FR-L1) — apply before saving so a missing
+        # household fails the whole request instead of persisting a partial update
+        onhand = validated_data.pop('food_onhand', None)
         reset_inherit = self.initial_data.get('reset_inherit', False)
         if onhand is not None:
-            shared_user_ids = get_household_user_ids(self.context["request"].user_space)
-            shared_users = list(User.objects.filter(id__in=shared_user_ids))
-
-            if onhand:
-                validated_data['onhand_users'] = list(self.instance.onhand_users.all()) + shared_users
-            else:
-                validated_data['onhand_users'] = list(set(self.instance.onhand_users.all()) - set(shared_users))
+            self._apply_food_onhand(instance, onhand)
 
         # update before resetting inheritance
         saved_instance = super(FoodSerializer, self).update(instance, validated_data)
@@ -1085,7 +1112,8 @@ class FoodSerializer(UniqueFieldsMixin, WritableNestedModelSerializer, RecipeCou
             'id', 'name', 'plural_name', 'description', 'shopping', 'recipe', 'url', 'properties', 'properties_food_amount', 'properties_food_unit', 'fdc_id',
             'food_onhand', 'supermarket_category', 'parent', 'numchild', 'numrecipe', 'inherit_fields', 'full_name', 'ignore_shopping',
             'substitute', 'substitute_siblings', 'substitute_children', 'substitute_onhand', 'available_substitutes', 'child_inherit_fields', 'open_data_slug', 'shopping_lists',
-            'in_inventory', 'substitute_inventory', 'matched_filter',
+            'in_inventory', 'earliest_expiry', 'substitute_inventory', 'matched_filter',
+            'preferred_unit', 'preferred_shopping_unit', 'shelf_life_days', 'shopping_amount',
         )
         read_only_fields = ('id', 'numchild', 'parent', 'numrecipe')
 
@@ -1644,6 +1672,19 @@ class ShoppingListRecipeSerializer(serializers.ModelSerializer):
 class FoodShoppingSerializer(serializers.ModelSerializer):
     supermarket_category = SupermarketCategorySerializer(read_only=True)
     shopping_lists = ShoppingListSerializer(read_only=True, many=True)
+    # Household-scoped inventory annotations for the shopping-row pantry jar (FR-H2), mirroring
+    # FoodSerializer but via SerializerMethodField so the write/create response — where the food
+    # is unannotated — degrades to 'False'/null instead of raising.
+    in_inventory = serializers.SerializerMethodField('get_in_inventory')
+    earliest_expiry = serializers.SerializerMethodField('get_earliest_expiry')
+
+    @extend_schema_field(serializers.CharField(allow_null=True))
+    def get_in_inventory(self, obj):
+        return str(getattr(obj, 'has_inventory_status', False))
+
+    @extend_schema_field(serializers.DateField(allow_null=True))
+    def get_earliest_expiry(self, obj):
+        return getattr(obj, 'earliest_expiry', None)
 
     # TODO duplicate code with FoodSerializer, merge into one or use proper function
     def create(self, validated_data):
@@ -1675,7 +1716,7 @@ class FoodShoppingSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Food
-        fields = ('id', 'name', 'plural_name', 'supermarket_category', 'shopping_lists')
+        fields = ('id', 'name', 'plural_name', 'supermarket_category', 'shopping_lists', 'in_inventory', 'earliest_expiry')
 
 
 class ShoppingListEntrySerializer(WritableNestedModelSerializer):
@@ -1739,18 +1780,11 @@ class ShoppingListEntrySerializer(WritableNestedModelSerializer):
         return obj
 
     def update(self, instance, validated_data):
-        user = self.context['request'].user
-
         if 'mealplan_id' in validated_data:
             del validated_data['mealplan_id']
 
-        # update the onhand for food if shopping_add_onhand is True
-        if user.userpreference.shopping_add_onhand:
-            if checked := validated_data.get('checked', None):
-                validated_data['completed_at'] = timezone.now()
-                instance.food.onhand_users.add(*User.objects.filter(id__in=get_household_user_ids(self.context['request'].user_space)))
-            elif not checked:
-                instance.food.onhand_users.remove(*User.objects.filter(id__in=get_household_user_ids(self.context['request'].user_space)))
+        # onhand-on-checkoff retired (FR-L1/L3): adding to the pantry is now an explicit action
+        # (the ＋pantry chip → add_food_to_pantry). completed_at is still set in run_validation().
         return super().update(instance, validated_data)
 
     class Meta:
@@ -1905,6 +1939,44 @@ class InventoryLocationSerializer(UniqueFieldsMixin, SpacedModelSerializer, Writ
         fields = ('id', 'name', 'is_freezer', 'household')
 
 
+class StockUpItemSerializer(serializers.Serializer):
+    """One row of a bulk stock-up request (FR-F5)."""
+    food = serializers.IntegerField()
+    amount = serializers.DecimalField(max_digits=16, decimal_places=4, required=False, default=1)
+    unit = serializers.IntegerField(required=False, allow_null=True, default=None)
+    inventory_location = serializers.IntegerField(required=False, allow_null=True, default=None)
+    expires = serializers.DateField(required=False, allow_null=True, default=None)
+
+
+class StockUpSerializer(serializers.Serializer):
+    items = StockUpItemSerializer(many=True)
+
+
+class DrawDownItemSerializer(serializers.Serializer):
+    """One row of a Use-up draw-down request (FR-G): the food and its new total amount.
+
+    ``unit`` scopes the reduction to lots in that unit (DEC-2) — deliberately no default, so an
+    OMITTED key (legacy all-lots behavior) stays distinguishable from an explicit ``null`` (scope
+    to unit-less lots). ``new_unit`` re-declares the remainder in a different unit (DEC-3:
+    "started with 1 gallon, now have 1 cup")."""
+    food = serializers.IntegerField()
+    amount = serializers.DecimalField(max_digits=16, decimal_places=4)
+    unit = serializers.IntegerField(required=False, allow_null=True)
+    new_unit = serializers.IntegerField(required=False, allow_null=True, default=None)
+
+    def validate(self, data):
+        # Without a unit scope, new_unit would re-declare across ALL units (earliest lot of any
+        # unit survives, everything else zeroed) — the endpoint's most destructive write, reachable
+        # by a client merely dropping a key. Require the scope explicitly.
+        if data.get('new_unit') is not None and 'unit' not in data:
+            raise serializers.ValidationError(_('new_unit requires a unit scope on the same item.'))
+        return data
+
+
+class DrawDownSerializer(serializers.Serializer):
+    items = DrawDownItemSerializer(many=True)
+
+
 class InventoryEntrySerializer(SpacedModelSerializer, WritableNestedModelSerializer):
     inventory_location = InventoryLocationSerializer()
     food = FoodSerializer()
@@ -1924,21 +1996,15 @@ class InventoryEntrySerializer(SpacedModelSerializer, WritableNestedModelSeriali
 
         instance = super().create(validated_data)
 
-        if not instance.code:
-            instance.code = hex(instance.id)[2:].upper()
-            instance.save()
+        # FR-D1: auto-fill the expiry from the food's shelf life when none was given (editable suggestion).
+        from cookbook.helper.inventory_helper import apply_shelf_life_expiry, finalize_new_inventory_entry
+        auto_expiry = apply_shelf_life_expiry(instance.food, instance.expires, instance.inventory_location)
+        if auto_expiry != instance.expires:
+            instance.expires = auto_expiry
+            instance.save(update_fields=['expires'])
 
-        InventoryLog.objects.create(
-            space=instance.space,
-            entry=instance,
-            booking_type=InventoryLog.B_ADD,
-            old_amount=0,
-            new_amount=instance.amount,
-            old_inventory_location=instance.inventory_location,
-            new_inventory_location=instance.inventory_location,
-        )
-
-        return instance
+        # code + B_ADD log via the shared finalizer (single source of truth with add_food_to_pantry)
+        return finalize_new_inventory_entry(instance)
 
     def update(self, instance, validated_data):
         old_amount = instance.amount

@@ -361,3 +361,41 @@ def test_recipe_stats_permission(arg, request):
     """Stats is a read action — anonymous blocked, authenticated allowed."""
     c = request.getfixturevalue(arg[0])
     assert c.get(reverse(STATS_URL)).status_code == arg[1]
+
+
+def test_recipe_step_food_carries_household_earliest_expiry(u1_s1, space_1):
+    """Nested step-ingredient food carries earliest_expiry = MIN(expires) over the requesting
+    user's household on-hand lots, so the pantry jar can tint amber/red (FR-I2). An earlier lot
+    in a different household of the same space is ignored (FR-B4)."""
+    from cookbook.helper.permission_helper import invalidate_household_cache
+    from cookbook.models import InventoryLocation, UserSpace
+    from cookbook.tests.factories import (HouseholdFactory, InventoryEntryFactory,
+                                          InventoryLocationFactory)
+
+    user = auth.get_user(u1_s1)
+    today = datetime.date.today()
+    with scopes_disabled():
+        recipe = RecipeFactory(space=space_1, created_by=user)
+        food = recipe.steps.first().ingredients.first().food
+
+        us = UserSpace.objects.filter(user=user, space=space_1).first()
+        if us.household_id is None:
+            us.household = HouseholdFactory(space=space_1)
+            us.save()
+        loc = InventoryLocation.objects.filter(household=us.household).first() \
+            or InventoryLocationFactory(space=space_1, household=us.household)
+        # two dated lots in the user's household — earliest is +5d
+        InventoryEntryFactory(space=space_1, food=food, inventory_location=loc, amount=1,
+                              expires=today + datetime.timedelta(days=5))
+        InventoryEntryFactory(space=space_1, food=food, inventory_location=loc, amount=1,
+                              expires=today + datetime.timedelta(days=20))
+        # an EARLIER lot in a different household — must be ignored
+        other_loc = InventoryLocationFactory(space=space_1, household=HouseholdFactory(space=space_1))
+        InventoryEntryFactory(space=space_1, food=food, inventory_location=other_loc, amount=1,
+                              expires=today + datetime.timedelta(days=1))
+        invalidate_household_cache(us)
+
+    r = u1_s1.get(reverse(DETAIL_URL, args=[recipe.pk]))
+    assert r.status_code == 200
+    step_food = r.json()['steps'][0]['ingredients'][0]['food']
+    assert step_food['earliest_expiry'] == (today + datetime.timedelta(days=5)).isoformat()
