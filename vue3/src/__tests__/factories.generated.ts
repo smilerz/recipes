@@ -23,6 +23,8 @@ import type {
     ConnectorConfig,
     CookLog,
     CustomFilter,
+    DrawDown,
+    DrawDownItem,
     ExportLog,
     ExportRequest,
     FdcQuery,
@@ -93,6 +95,8 @@ import type {
     SourceImportUnit,
     Space,
     Step,
+    StockUp,
+    StockUpItem,
     Storage,
     Supermarket,
     SupermarketCategory,
@@ -584,6 +588,55 @@ export function makeEdgeCaseCustomFilter(overrides: Partial<CustomFilter> = {}):
     } as CustomFilter
 }
 
+export function makeDrawDown(overrides: Partial<DrawDown> = {}): DrawDown {
+    return {
+        items: [],
+        ...overrides,
+    } as DrawDown
+}
+
+export function makeMinimalDrawDown(overrides: Partial<DrawDown> = {}): DrawDown {
+    return {
+        items: [],
+        ...overrides,
+    } as DrawDown
+}
+
+export function makeEdgeCaseDrawDown(overrides: Partial<DrawDown> = {}): DrawDown {
+    return {
+        items: [],
+        ...overrides,
+    } as DrawDown
+}
+
+export function makeDrawDownItem(overrides: Partial<DrawDownItem> = {}): DrawDownItem {
+    return {
+        food: 0,
+        amount: 1,
+        unit: 0,
+        newUnit: 0,
+        ...overrides,
+    } as DrawDownItem
+}
+
+export function makeMinimalDrawDownItem(overrides: Partial<DrawDownItem> = {}): DrawDownItem {
+    return {
+        food: 0,
+        amount: 1,
+        ...overrides,
+    } as DrawDownItem
+}
+
+export function makeEdgeCaseDrawDownItem(overrides: Partial<DrawDownItem> = {}): DrawDownItem {
+    return {
+        food: 0,
+        amount: 0,
+        unit: null,
+        newUnit: null,
+        ...overrides,
+    } as DrawDownItem
+}
+
 export function makeExportLog(overrides: Partial<ExportLog> = {}): ExportLog {
     return {
         id: 1,
@@ -740,8 +793,13 @@ export function makeFood(overrides: Partial<Food> = {}): Food {
         openDataSlug: '',
         shoppingLists: [],
         inInventory: '',
+        earliestExpiry: new Date('2026-01-01T00:00:00Z'),
         substituteInventory: false,
         matchedFilter: false,
+        preferredUnit: undefined as any,
+        preferredShoppingUnit: undefined as any,
+        shelfLifeDays: 0,
+        shoppingAmount: 1,
         ...overrides,
     } as Food
 }
@@ -758,6 +816,7 @@ export function makeMinimalFood(overrides: Partial<Food> = {}): Food {
         substituteOnhand: false,
         availableSubstitutes: [],
         inInventory: '',
+        earliestExpiry: new Date('2026-01-01T00:00:00Z'),
         substituteInventory: false,
         matchedFilter: false,
         ...overrides,
@@ -794,8 +853,13 @@ export function makeEdgeCaseFood(overrides: Partial<Food> = {}): Food {
         openDataSlug: null,
         shoppingLists: [],
         inInventory: '',
+        earliestExpiry: null,
         substituteInventory: false,
         matchedFilter: false,
+        preferredUnit: null,
+        preferredShoppingUnit: null,
+        shelfLifeDays: null,
+        shoppingAmount: null,
         ...overrides,
     } as Food
 }
@@ -908,6 +972,8 @@ export function makeFoodShopping(overrides: Partial<FoodShopping> = {}): FoodSho
         pluralName: 'Test plural_name',
         supermarketCategory: undefined as any,
         shoppingLists: [],
+        inInventory: '',
+        earliestExpiry: new Date('2026-01-01T00:00:00Z'),
         ...overrides,
     } as FoodShopping
 }
@@ -918,6 +984,8 @@ export function makeMinimalFoodShopping(overrides: Partial<FoodShopping> = {}): 
         name: 'Test name',
         supermarketCategory: undefined as any,
         shoppingLists: [],
+        inInventory: '',
+        earliestExpiry: new Date('2026-01-01T00:00:00Z'),
         ...overrides,
     } as FoodShopping
 }
@@ -929,6 +997,8 @@ export function makeEdgeCaseFoodShopping(overrides: Partial<FoodShopping> = {}):
         pluralName: null,
         supermarketCategory: undefined as any,
         shoppingLists: [],
+        inInventory: null,
+        earliestExpiry: null,
         ...overrides,
     } as FoodShopping
 }
@@ -3212,6 +3282,56 @@ export function makeEdgeCaseStep(overrides: Partial<Step> = {}): Step {
         showIngredientsTable: false,
         ...overrides,
     } as Step
+}
+
+export function makeStockUp(overrides: Partial<StockUp> = {}): StockUp {
+    return {
+        items: [],
+        ...overrides,
+    } as StockUp
+}
+
+export function makeMinimalStockUp(overrides: Partial<StockUp> = {}): StockUp {
+    return {
+        items: [],
+        ...overrides,
+    } as StockUp
+}
+
+export function makeEdgeCaseStockUp(overrides: Partial<StockUp> = {}): StockUp {
+    return {
+        items: [],
+        ...overrides,
+    } as StockUp
+}
+
+export function makeStockUpItem(overrides: Partial<StockUpItem> = {}): StockUpItem {
+    return {
+        food: 0,
+        amount: 1,
+        unit: 0,
+        inventoryLocation: 0,
+        expires: new Date('2026-01-01T00:00:00Z'),
+        ...overrides,
+    } as StockUpItem
+}
+
+export function makeMinimalStockUpItem(overrides: Partial<StockUpItem> = {}): StockUpItem {
+    return {
+        food: 0,
+        ...overrides,
+    } as StockUpItem
+}
+
+export function makeEdgeCaseStockUpItem(overrides: Partial<StockUpItem> = {}): StockUpItem {
+    return {
+        food: 0,
+        amount: 0,
+        unit: null,
+        inventoryLocation: null,
+        expires: null,
+        ...overrides,
+    } as StockUpItem
 }
 
 export function makeStorage(overrides: Partial<Storage> = {}): Storage {

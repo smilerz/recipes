@@ -25,6 +25,7 @@ import type {
   ConnectorConfig,
   CookLog,
   CustomFilter,
+  DrawDown,
   ExportLog,
   ExportRequest,
   FdcQuery,
@@ -160,6 +161,7 @@ import type {
   ShoppingListRecipe,
   Space,
   Step,
+  StockUp,
   Storage,
   Supermarket,
   SupermarketCategory,
@@ -197,6 +199,8 @@ import {
     CookLogToJSON,
     CustomFilterFromJSON,
     CustomFilterToJSON,
+    DrawDownFromJSON,
+    DrawDownToJSON,
     ExportLogFromJSON,
     ExportLogToJSON,
     ExportRequestFromJSON,
@@ -467,6 +471,8 @@ import {
     SpaceToJSON,
     StepFromJSON,
     StepToJSON,
+    StockUpFromJSON,
+    StockUpToJSON,
     StorageFromJSON,
     StorageToJSON,
     SupermarketFromJSON,
@@ -807,7 +813,7 @@ export interface ApiFdcSearchRetrieveRequest {
 
 export interface ApiFoodAipropertiesCreateRequest {
     id: number;
-    food: Omit<Food, 'shopping'|'parent'|'numchild'|'numrecipe'|'fullName'|'substituteOnhand'|'availableSubstitutes'|'inInventory'|'substituteInventory'|'matchedFilter'>;
+    food: Omit<Food, 'shopping'|'parent'|'numchild'|'numrecipe'|'fullName'|'substituteOnhand'|'availableSubstitutes'|'inInventory'|'earliestExpiry'|'substituteInventory'|'matchedFilter'>;
     provider?: number;
 }
 
@@ -823,7 +829,7 @@ export interface ApiFoodCascadingListRequest {
 }
 
 export interface ApiFoodCreateRequest {
-    food: Omit<Food, 'shopping'|'parent'|'numchild'|'numrecipe'|'fullName'|'substituteOnhand'|'availableSubstitutes'|'inInventory'|'substituteInventory'|'matchedFilter'>;
+    food: Omit<Food, 'shopping'|'parent'|'numchild'|'numrecipe'|'fullName'|'substituteOnhand'|'availableSubstitutes'|'inInventory'|'earliestExpiry'|'substituteInventory'|'matchedFilter'>;
 }
 
 export interface ApiFoodDestroyRequest {
@@ -832,7 +838,7 @@ export interface ApiFoodDestroyRequest {
 
 export interface ApiFoodFdcCreateRequest {
     id: number;
-    food: Omit<Food, 'shopping'|'parent'|'numchild'|'numrecipe'|'fullName'|'substituteOnhand'|'availableSubstitutes'|'inInventory'|'substituteInventory'|'matchedFilter'>;
+    food: Omit<Food, 'shopping'|'parent'|'numchild'|'numrecipe'|'fullName'|'substituteOnhand'|'availableSubstitutes'|'inInventory'|'earliestExpiry'|'substituteInventory'|'matchedFilter'>;
 }
 
 export interface ApiFoodInheritFieldRetrieveRequest {
@@ -864,13 +870,13 @@ export interface ApiFoodListRequest {
 export interface ApiFoodMergeUpdateRequest {
     id: number;
     target: number;
-    food: Omit<Food, 'shopping'|'parent'|'numchild'|'numrecipe'|'fullName'|'substituteOnhand'|'availableSubstitutes'|'inInventory'|'substituteInventory'|'matchedFilter'>;
+    food: Omit<Food, 'shopping'|'parent'|'numchild'|'numrecipe'|'fullName'|'substituteOnhand'|'availableSubstitutes'|'inInventory'|'earliestExpiry'|'substituteInventory'|'matchedFilter'>;
 }
 
 export interface ApiFoodMoveUpdateRequest {
     id: number;
     parent: number;
-    food: Omit<Food, 'shopping'|'parent'|'numchild'|'numrecipe'|'fullName'|'substituteOnhand'|'availableSubstitutes'|'inInventory'|'substituteInventory'|'matchedFilter'>;
+    food: Omit<Food, 'shopping'|'parent'|'numchild'|'numrecipe'|'fullName'|'substituteOnhand'|'availableSubstitutes'|'inInventory'|'earliestExpiry'|'substituteInventory'|'matchedFilter'>;
 }
 
 export interface ApiFoodNullingListRequest {
@@ -882,7 +888,7 @@ export interface ApiFoodNullingListRequest {
 
 export interface ApiFoodPartialUpdateRequest {
     id: number;
-    patchedFood?: Omit<PatchedFood, 'shopping'|'parent'|'numchild'|'numrecipe'|'fullName'|'substituteOnhand'|'availableSubstitutes'|'inInventory'|'substituteInventory'|'matchedFilter'>;
+    patchedFood?: Omit<PatchedFood, 'shopping'|'parent'|'numchild'|'numrecipe'|'fullName'|'substituteOnhand'|'availableSubstitutes'|'inInventory'|'earliestExpiry'|'substituteInventory'|'matchedFilter'>;
 }
 
 export interface ApiFoodProtectingListRequest {
@@ -898,7 +904,7 @@ export interface ApiFoodRetrieveRequest {
 
 export interface ApiFoodShoppingUpdateRequest {
     id: number;
-    food: Omit<Food, 'shopping'|'parent'|'numchild'|'numrecipe'|'fullName'|'substituteOnhand'|'availableSubstitutes'|'inInventory'|'substituteInventory'|'matchedFilter'>;
+    food: Omit<Food, 'shopping'|'parent'|'numchild'|'numrecipe'|'fullName'|'substituteOnhand'|'availableSubstitutes'|'inInventory'|'earliestExpiry'|'substituteInventory'|'matchedFilter'>;
 }
 
 export interface ApiFoodSubstitutesRetrieveRequest {
@@ -907,7 +913,7 @@ export interface ApiFoodSubstitutesRetrieveRequest {
 
 export interface ApiFoodUpdateRequest {
     id: number;
-    food: Omit<Food, 'shopping'|'parent'|'numchild'|'numrecipe'|'fullName'|'substituteOnhand'|'availableSubstitutes'|'inInventory'|'substituteInventory'|'matchedFilter'>;
+    food: Omit<Food, 'shopping'|'parent'|'numchild'|'numrecipe'|'fullName'|'substituteOnhand'|'availableSubstitutes'|'inInventory'|'earliestExpiry'|'substituteInventory'|'matchedFilter'>;
 }
 
 export interface ApiGetExternalFileLinkRetrieveRequest {
@@ -1035,6 +1041,10 @@ export interface ApiInventoryEntryDestroyRequest {
     id: number;
 }
 
+export interface ApiInventoryEntryDrawDownCreateRequest {
+    drawDown: DrawDown;
+}
+
 export interface ApiInventoryEntryListRequest {
     code?: string;
     empty?: boolean;
@@ -1065,6 +1075,10 @@ export interface ApiInventoryEntryProtectingListRequest {
 
 export interface ApiInventoryEntryRetrieveRequest {
     id: number;
+}
+
+export interface ApiInventoryEntryStockUpCreateRequest {
+    stockUp: StockUp;
 }
 
 export interface ApiInventoryEntryUpdateRequest {
@@ -7481,6 +7495,48 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
+     * Use up (FR-G): reduce each food\'s household lots to the given new total, earliest-expiry first, writing a B_REMOVE log per touched lot. Reduce-only. Requires a household.
+     */
+    async apiInventoryEntryDrawDownCreateRaw(requestParameters: ApiInventoryEntryDrawDownCreateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
+        if (requestParameters['drawDown'] == null) {
+            throw new runtime.RequiredError(
+                'drawDown',
+                'Required parameter "drawDown" was null or undefined when calling apiInventoryEntryDrawDownCreate().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        if (this.configuration && this.configuration.apiKey) {
+            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
+        }
+
+
+        let urlPath = `/api/inventory-entry/draw_down/`;
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: DrawDownToJSON(requestParameters['drawDown']),
+        }, initOverrides);
+
+        return new runtime.VoidApiResponse(response);
+    }
+
+    /**
+     * Use up (FR-G): reduce each food\'s household lots to the given new total, earliest-expiry first, writing a B_REMOVE log per touched lot. Reduce-only. Requires a household.
+     */
+    async apiInventoryEntryDrawDownCreate(requestParameters: ApiInventoryEntryDrawDownCreateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
+        await this.apiInventoryEntryDrawDownCreateRaw(requestParameters, initOverrides);
+    }
+
+    /**
      * logs request counts to redis cache total/per user/
      */
     async apiInventoryEntryListRaw(requestParameters: ApiInventoryEntryListRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PaginatedInventoryEntryList>> {
@@ -7726,6 +7782,48 @@ export class ApiApi extends runtime.BaseAPI {
     async apiInventoryEntryRetrieve(requestParameters: ApiInventoryEntryRetrieveRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<InventoryEntry> {
         const response = await this.apiInventoryEntryRetrieveRaw(requestParameters, initOverrides);
         return await response.value();
+    }
+
+    /**
+     * Bulk add-to-pantry (FR-F5): one on-hand lot per item, each written through add_food_to_pantry so an InventoryLog B_ADD is recorded. Requires a household.
+     */
+    async apiInventoryEntryStockUpCreateRaw(requestParameters: ApiInventoryEntryStockUpCreateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
+        if (requestParameters['stockUp'] == null) {
+            throw new runtime.RequiredError(
+                'stockUp',
+                'Required parameter "stockUp" was null or undefined when calling apiInventoryEntryStockUpCreate().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        if (this.configuration && this.configuration.apiKey) {
+            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
+        }
+
+
+        let urlPath = `/api/inventory-entry/stock_up/`;
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: StockUpToJSON(requestParameters['stockUp']),
+        }, initOverrides);
+
+        return new runtime.VoidApiResponse(response);
+    }
+
+    /**
+     * Bulk add-to-pantry (FR-F5): one on-hand lot per item, each written through add_food_to_pantry so an InventoryLog B_ADD is recorded. Requires a household.
+     */
+    async apiInventoryEntryStockUpCreate(requestParameters: ApiInventoryEntryStockUpCreateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
+        await this.apiInventoryEntryStockUpCreateRaw(requestParameters, initOverrides);
     }
 
     /**
