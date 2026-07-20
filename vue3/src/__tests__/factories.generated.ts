@@ -3677,7 +3677,7 @@ export function makeEdgeCaseUserPreference(overrides: Partial<UserPreference> = 
     return {
         user: undefined as any,
         image: null,
-        theme: 'TANDOOR_DARK' as any,
+        theme: 'SLATE' as any,
         navBgColor: '',
         navShowLogo: false,
         defaultUnit: '',
