@@ -11161,27 +11161,40 @@ components:
         name:
           type: string
           maxLength: 128
-        search:
-          type: string
+        type:
+          $ref: '#/components/schemas/CustomFilterTypeEnum'
+        search: {}
         shared:
           type: array
           items:
             $ref: '#/components/schemas/User'
         created_by:
-          type: integer
+          allOf:
+          - $ref: '#/components/schemas/User'
           readOnly: true
       required:
       - created_by
       - name
-      - search
+    CustomFilterTypeEnum:
+      enum:
+      - RECIPE
+      - FOOD
+      - KEYWORD
+      type: string
+      description: |-
+        * `RECIPE` - Recipe
+        * `FOOD` - Food
+        * `KEYWORD` - Keyword
     DefaultPageEnum:
       enum:
+      - HOME
       - SEARCH
       - PLAN
       - BOOKS
       - SHOPPING
       type: string
       description: |-
+        * `HOME` - Home
         * `SEARCH` - Search
         * `PLAN` - Meal-Plan
         * `BOOKS` - Books
@@ -13739,14 +13752,16 @@ components:
         name:
           type: string
           maxLength: 128
-        search:
-          type: string
+        type:
+          $ref: '#/components/schemas/CustomFilterTypeEnum'
+        search: {}
         shared:
           type: array
           items:
             $ref: '#/components/schemas/User'
         created_by:
-          type: integer
+          allOf:
+          - $ref: '#/components/schemas/User'
           readOnly: true
     PatchedExportLog:
       type: object
@@ -14775,8 +14790,6 @@ components:
         nav_bg_color:
           type: string
           maxLength: 8
-        nav_text_color:
-          $ref: '#/components/schemas/SpaceNavTextColorEnum'
         logo_color_32:
           allOf:
           - $ref: '#/components/schemas/UserFileView'
@@ -15243,8 +15256,6 @@ components:
         nav_bg_color:
           type: string
           maxLength: 8
-        nav_text_color:
-          $ref: '#/components/schemas/UserPreferenceNavTextColorEnum'
         nav_show_logo:
           type: boolean
         default_unit:
@@ -15253,8 +15264,6 @@ components:
         default_page:
           $ref: '#/components/schemas/DefaultPageEnum'
         use_fractions:
-          type: boolean
-        use_kj:
           type: boolean
         nav_sticky:
           type: boolean
@@ -15315,6 +15324,7 @@ components:
         food_children_exist:
           type: boolean
           readOnly: true
+        start_page_sections: {}
     PatchedUserSpace:
       type: object
       description: Adds nested create feature
@@ -16486,8 +16496,6 @@ components:
         nav_bg_color:
           type: string
           maxLength: 8
-        nav_text_color:
-          $ref: '#/components/schemas/SpaceNavTextColorEnum'
         logo_color_32:
           allOf:
           - $ref: '#/components/schemas/UserFileView'
@@ -16553,16 +16561,6 @@ components:
       - max_users
       - recipe_count
       - user_count
-    SpaceNavTextColorEnum:
-      enum:
-      - BLANK
-      - LIGHT
-      - DARK
-      type: string
-      description: |-
-        * `BLANK` - -------
-        * `LIGHT` - Light
-        * `DARK` - Dark
     SpaceThemeEnum:
       enum:
       - BLANK
@@ -17107,8 +17105,6 @@ components:
         nav_bg_color:
           type: string
           maxLength: 8
-        nav_text_color:
-          $ref: '#/components/schemas/UserPreferenceNavTextColorEnum'
         nav_show_logo:
           type: boolean
         default_unit:
@@ -17117,8 +17113,6 @@ components:
         default_page:
           $ref: '#/components/schemas/DefaultPageEnum'
         use_fractions:
-          type: boolean
-        use_kj:
           type: boolean
         nav_sticky:
           type: boolean
@@ -17179,18 +17173,11 @@ components:
         food_children_exist:
           type: boolean
           readOnly: true
+        start_page_sections: {}
       required:
       - food_children_exist
       - food_inherit_default
       - user
-    UserPreferenceNavTextColorEnum:
-      enum:
-      - LIGHT
-      - DARK
-      type: string
-      description: |-
-        * `LIGHT` - Light
-        * `DARK` - Dark
     UserSpace:
       type: object
       description: Adds nested create feature

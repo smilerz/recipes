@@ -521,9 +521,10 @@ export function makeCustomFilter(overrides: Partial<CustomFilter> = {}): CustomF
     return {
         id: 1,
         name: 'Test name',
-        search: '',
+        type: 'RECIPE' as any,
+        search: undefined as any,
         shared: [],
-        createdBy: 0,
+        createdBy: undefined as any,
         ...overrides,
     } as CustomFilter
 }
@@ -532,8 +533,7 @@ export function makeMinimalCustomFilter(overrides: Partial<CustomFilter> = {}): 
     return {
         id: 1,
         name: 'Test name',
-        search: '',
-        createdBy: 0,
+        createdBy: undefined as any,
         ...overrides,
     } as CustomFilter
 }
@@ -542,9 +542,10 @@ export function makeEdgeCaseCustomFilter(overrides: Partial<CustomFilter> = {}):
     return {
         id: 0,
         name: '',
-        search: '',
+        type: 'KEYWORD' as any,
+        search: undefined as any,
         shared: [],
-        createdBy: 0,
+        createdBy: undefined as any,
         ...overrides,
     } as CustomFilter
 }
@@ -2946,7 +2947,6 @@ export function makeSpace(overrides: Partial<Space> = {}): Space {
         spaceTheme: 'BLANK' as any,
         customSpaceTheme: undefined as any,
         navBgColor: '',
-        navTextColor: 'BLANK' as any,
         logoColor32: undefined as any,
         logoColor128: undefined as any,
         logoColor144: undefined as any,
@@ -3004,7 +3004,6 @@ export function makeEdgeCaseSpace(overrides: Partial<Space> = {}): Space {
         spaceTheme: 'TANDOOR_DARK' as any,
         customSpaceTheme: null,
         navBgColor: '',
-        navTextColor: 'DARK' as any,
         logoColor32: null,
         logoColor128: null,
         logoColor144: null,
@@ -3467,12 +3466,10 @@ export function makeUserPreference(overrides: Partial<UserPreference> = {}): Use
         image: undefined as any,
         theme: 'TANDOOR' as any,
         navBgColor: '',
-        navTextColor: 'LIGHT' as any,
         navShowLogo: false,
         defaultUnit: '',
-        defaultPage: 'SEARCH' as any,
+        defaultPage: 'HOME' as any,
         useFractions: false,
-        useKj: false,
         navSticky: false,
         ingredientDecimals: 0,
         comments: false,
@@ -3492,6 +3489,7 @@ export function makeUserPreference(overrides: Partial<UserPreference> = {}): Use
         leftHanded: false,
         showStepIngredients: false,
         foodChildrenExist: false,
+        startPageSections: undefined as any,
         ...overrides,
     } as UserPreference
 }
@@ -3511,12 +3509,10 @@ export function makeEdgeCaseUserPreference(overrides: Partial<UserPreference> = 
         image: null,
         theme: 'TANDOOR_DARK' as any,
         navBgColor: '',
-        navTextColor: 'DARK' as any,
         navShowLogo: false,
         defaultUnit: '',
         defaultPage: 'SHOPPING' as any,
         useFractions: false,
-        useKj: false,
         navSticky: false,
         ingredientDecimals: 0,
         comments: false,
@@ -3536,6 +3532,7 @@ export function makeEdgeCaseUserPreference(overrides: Partial<UserPreference> = 
         leftHanded: false,
         showStepIngredients: false,
         foodChildrenExist: false,
+        startPageSections: undefined as any,
         ...overrides,
     } as UserPreference
 }
