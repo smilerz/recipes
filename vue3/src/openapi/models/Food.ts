@@ -274,6 +274,12 @@ export interface Food {
     readonly inInventory: string;
     /**
      * 
+     * @type {Date}
+     * @memberof Food
+     */
+    readonly earliestExpiry: Date | null;
+    /**
+     * 
      * @type {boolean}
      * @memberof Food
      */
@@ -284,6 +290,30 @@ export interface Food {
      * @memberof Food
      */
     readonly matchedFilter: boolean;
+    /**
+     * 
+     * @type {Unit}
+     * @memberof Food
+     */
+    preferredUnit?: Unit | null;
+    /**
+     * 
+     * @type {Unit}
+     * @memberof Food
+     */
+    preferredShoppingUnit?: Unit | null;
+    /**
+     * 
+     * @type {number}
+     * @memberof Food
+     */
+    shelfLifeDays?: number | null;
+    /**
+     * 
+     * @type {number}
+     * @memberof Food
+     */
+    shoppingAmount?: number | null;
 }
 
 /**
@@ -299,6 +329,7 @@ export function instanceOfFood(value: object): value is Food {
     if (!('substituteOnhand' in value) || value['substituteOnhand'] === undefined) return false;
     if (!('availableSubstitutes' in value) || value['availableSubstitutes'] === undefined) return false;
     if (!('inInventory' in value) || value['inInventory'] === undefined) return false;
+    if (!('earliestExpiry' in value) || value['earliestExpiry'] === undefined) return false;
     if (!('substituteInventory' in value) || value['substituteInventory'] === undefined) return false;
     if (!('matchedFilter' in value) || value['matchedFilter'] === undefined) return false;
     return true;
@@ -342,8 +373,13 @@ export function FoodFromJSONTyped(json: any, ignoreDiscriminator: boolean): Food
         'openDataSlug': json['open_data_slug'] == null ? undefined : json['open_data_slug'],
         'shoppingLists': json['shopping_lists'] == null ? undefined : ((json['shopping_lists'] as Array<any>).map(ShoppingListFromJSON)),
         'inInventory': json['in_inventory'],
+        'earliestExpiry': (json['earliest_expiry'] == null ? null : new Date(json['earliest_expiry'])),
         'substituteInventory': json['substitute_inventory'],
         'matchedFilter': json['matched_filter'],
+        'preferredUnit': json['preferred_unit'] == null ? undefined : UnitFromJSON(json['preferred_unit']),
+        'preferredShoppingUnit': json['preferred_shopping_unit'] == null ? undefined : UnitFromJSON(json['preferred_shopping_unit']),
+        'shelfLifeDays': json['shelf_life_days'] == null ? undefined : json['shelf_life_days'],
+        'shoppingAmount': json['shopping_amount'] == null ? undefined : json['shopping_amount'],
     };
 }
 
@@ -351,7 +387,7 @@ export function FoodToJSON(json: any): Food {
     return FoodToJSONTyped(json, false);
 }
 
-export function FoodToJSONTyped(value?: Omit<Food, 'shopping'|'parent'|'numchild'|'numrecipe'|'full_name'|'substitute_onhand'|'available_substitutes'|'in_inventory'|'substitute_inventory'|'matched_filter'> | null, ignoreDiscriminator: boolean = false): any {
+export function FoodToJSONTyped(value?: Omit<Food, 'shopping'|'parent'|'numchild'|'numrecipe'|'full_name'|'substitute_onhand'|'available_substitutes'|'in_inventory'|'earliest_expiry'|'substitute_inventory'|'matched_filter'> | null, ignoreDiscriminator: boolean = false): any {
     if (value == null) {
         return value;
     }
@@ -378,6 +414,10 @@ export function FoodToJSONTyped(value?: Omit<Food, 'shopping'|'parent'|'numchild
         'child_inherit_fields': value['childInheritFields'] == null ? undefined : ((value['childInheritFields'] as Array<any>).map(FoodInheritFieldToJSON)),
         'open_data_slug': value['openDataSlug'],
         'shopping_lists': value['shoppingLists'] == null ? undefined : ((value['shoppingLists'] as Array<any>).map(ShoppingListToJSON)),
+        'preferred_unit': UnitToJSON(value['preferredUnit']),
+        'preferred_shopping_unit': UnitToJSON(value['preferredShoppingUnit']),
+        'shelf_life_days': value['shelfLifeDays'],
+        'shopping_amount': value['shoppingAmount'],
     };
 }
 

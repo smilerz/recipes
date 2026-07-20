@@ -274,6 +274,12 @@ export interface PatchedFood {
     readonly inInventory?: string;
     /**
      * 
+     * @type {Date}
+     * @memberof PatchedFood
+     */
+    readonly earliestExpiry?: Date | null;
+    /**
+     * 
      * @type {boolean}
      * @memberof PatchedFood
      */
@@ -284,6 +290,30 @@ export interface PatchedFood {
      * @memberof PatchedFood
      */
     readonly matchedFilter?: boolean;
+    /**
+     * 
+     * @type {Unit}
+     * @memberof PatchedFood
+     */
+    preferredUnit?: Unit | null;
+    /**
+     * 
+     * @type {Unit}
+     * @memberof PatchedFood
+     */
+    preferredShoppingUnit?: Unit | null;
+    /**
+     * 
+     * @type {number}
+     * @memberof PatchedFood
+     */
+    shelfLifeDays?: number | null;
+    /**
+     * 
+     * @type {number}
+     * @memberof PatchedFood
+     */
+    shoppingAmount?: number | null;
 }
 
 /**
@@ -331,8 +361,13 @@ export function PatchedFoodFromJSONTyped(json: any, ignoreDiscriminator: boolean
         'openDataSlug': json['open_data_slug'] == null ? undefined : json['open_data_slug'],
         'shoppingLists': json['shopping_lists'] == null ? undefined : ((json['shopping_lists'] as Array<any>).map(ShoppingListFromJSON)),
         'inInventory': json['in_inventory'] == null ? undefined : json['in_inventory'],
+        'earliestExpiry': json['earliest_expiry'] == null ? undefined : (new Date(json['earliest_expiry'])),
         'substituteInventory': json['substitute_inventory'] == null ? undefined : json['substitute_inventory'],
         'matchedFilter': json['matched_filter'] == null ? undefined : json['matched_filter'],
+        'preferredUnit': json['preferred_unit'] == null ? undefined : UnitFromJSON(json['preferred_unit']),
+        'preferredShoppingUnit': json['preferred_shopping_unit'] == null ? undefined : UnitFromJSON(json['preferred_shopping_unit']),
+        'shelfLifeDays': json['shelf_life_days'] == null ? undefined : json['shelf_life_days'],
+        'shoppingAmount': json['shopping_amount'] == null ? undefined : json['shopping_amount'],
     };
 }
 
@@ -340,7 +375,7 @@ export function PatchedFoodToJSON(json: any): PatchedFood {
     return PatchedFoodToJSONTyped(json, false);
 }
 
-export function PatchedFoodToJSONTyped(value?: Omit<PatchedFood, 'shopping'|'parent'|'numchild'|'numrecipe'|'full_name'|'substitute_onhand'|'available_substitutes'|'in_inventory'|'substitute_inventory'|'matched_filter'> | null, ignoreDiscriminator: boolean = false): any {
+export function PatchedFoodToJSONTyped(value?: Omit<PatchedFood, 'shopping'|'parent'|'numchild'|'numrecipe'|'full_name'|'substitute_onhand'|'available_substitutes'|'in_inventory'|'earliest_expiry'|'substitute_inventory'|'matched_filter'> | null, ignoreDiscriminator: boolean = false): any {
     if (value == null) {
         return value;
     }
@@ -367,6 +402,10 @@ export function PatchedFoodToJSONTyped(value?: Omit<PatchedFood, 'shopping'|'par
         'child_inherit_fields': value['childInheritFields'] == null ? undefined : ((value['childInheritFields'] as Array<any>).map(FoodInheritFieldToJSON)),
         'open_data_slug': value['openDataSlug'],
         'shopping_lists': value['shoppingLists'] == null ? undefined : ((value['shoppingLists'] as Array<any>).map(ShoppingListToJSON)),
+        'preferred_unit': UnitToJSON(value['preferredUnit']),
+        'preferred_shopping_unit': UnitToJSON(value['preferredShoppingUnit']),
+        'shelf_life_days': value['shelfLifeDays'],
+        'shopping_amount': value['shoppingAmount'],
     };
 }
 

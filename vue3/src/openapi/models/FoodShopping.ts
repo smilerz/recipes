@@ -64,6 +64,18 @@ export interface FoodShopping {
      * @memberof FoodShopping
      */
     readonly shoppingLists: Array<ShoppingList>;
+    /**
+     * 
+     * @type {string}
+     * @memberof FoodShopping
+     */
+    readonly inInventory: string | null;
+    /**
+     * 
+     * @type {Date}
+     * @memberof FoodShopping
+     */
+    readonly earliestExpiry: Date | null;
 }
 
 /**
@@ -73,6 +85,8 @@ export function instanceOfFoodShopping(value: object): value is FoodShopping {
     if (!('name' in value) || value['name'] === undefined) return false;
     if (!('supermarketCategory' in value) || value['supermarketCategory'] === undefined) return false;
     if (!('shoppingLists' in value) || value['shoppingLists'] === undefined) return false;
+    if (!('inInventory' in value) || value['inInventory'] === undefined) return false;
+    if (!('earliestExpiry' in value) || value['earliestExpiry'] === undefined) return false;
     return true;
 }
 
@@ -91,6 +105,8 @@ export function FoodShoppingFromJSONTyped(json: any, ignoreDiscriminator: boolea
         'pluralName': json['plural_name'] == null ? undefined : json['plural_name'],
         'supermarketCategory': SupermarketCategoryFromJSON(json['supermarket_category']),
         'shoppingLists': ((json['shopping_lists'] as Array<any>).map(ShoppingListFromJSON)),
+        'inInventory': json['in_inventory'],
+        'earliestExpiry': (json['earliest_expiry'] == null ? null : new Date(json['earliest_expiry'])),
     };
 }
 
@@ -98,7 +114,7 @@ export function FoodShoppingToJSON(json: any): FoodShopping {
     return FoodShoppingToJSONTyped(json, false);
 }
 
-export function FoodShoppingToJSONTyped(value?: Omit<FoodShopping, 'supermarket_category'|'shopping_lists'> | null, ignoreDiscriminator: boolean = false): any {
+export function FoodShoppingToJSONTyped(value?: Omit<FoodShopping, 'supermarket_category'|'shopping_lists'|'in_inventory'|'earliest_expiry'> | null, ignoreDiscriminator: boolean = false): any {
     if (value == null) {
         return value;
     }
