@@ -19,6 +19,8 @@ models/CookLog.ts
 models/CustomFilter.ts
 models/CustomFilterTypeEnum.ts
 models/DefaultPageEnum.ts
+models/DrawDown.ts
+models/DrawDownItem.ts
 models/ExportLog.ts
 models/ExportRequest.ts
 models/FdcQuery.ts
@@ -178,6 +180,8 @@ models/SourceImportUnit.ts
 models/Space.ts
 models/SpaceThemeEnum.ts
 models/Step.ts
+models/StockUp.ts
+models/StockUpItem.ts
 models/Storage.ts
 models/Supermarket.ts
 models/SupermarketCategory.ts

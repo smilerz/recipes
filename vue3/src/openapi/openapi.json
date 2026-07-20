@@ -3790,6 +3790,56 @@ paths:
               schema:
                 $ref: '#/components/schemas/PaginatedGenericModelReferenceList'
           description: ''
+  /api/inventory-entry/draw_down/:
+    post:
+      operationId: apiInventoryEntryDrawDownCreate
+      description: |-
+        Use up (FR-G): reduce each food's household lots to the given new total, earliest-expiry
+        first, writing a B_REMOVE log per touched lot. Reduce-only. Requires a household.
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DrawDown'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/DrawDown'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/DrawDown'
+        required: true
+      security:
+      - ApiKeyAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/inventory-entry/stock_up/:
+    post:
+      operationId: apiInventoryEntryStockUpCreate
+      description: |-
+        Bulk add-to-pantry (FR-F5): one on-hand lot per item, each written through
+        add_food_to_pantry so an InventoryLog B_ADD is recorded. Requires a household.
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StockUp'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/StockUp'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/StockUp'
+        required: true
+      security:
+      - ApiKeyAuth: []
+      responses:
+        '200':
+          description: No response body
   /api/inventory-location/:
     get:
       operationId: apiInventoryLocationList
@@ -12252,6 +12302,43 @@ components:
         * `PLAN` - Meal-Plan
         * `BOOKS` - Books
         * `SHOPPING` - Shopping
+    DrawDown:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/DrawDownItem'
+      required:
+      - items
+    DrawDownItem:
+      type: object
+      description: |-
+        One row of a Use-up draw-down request (FR-G): the food and its new total amount.
+
+        ``unit`` scopes the reduction to lots in that unit (DEC-2) — deliberately no default, so an
+        OMITTED key (legacy all-lots behavior) stays distinguishable from an explicit ``null`` (scope
+        to unit-less lots). ``new_unit`` re-declares the remainder in a different unit (DEC-3:
+        "started with 1 gallon, now have 1 cup").
+      properties:
+        food:
+          type: integer
+        amount:
+          type: number
+          format: double
+          maximum: 1000000000000
+          minimum: -1000000000000
+          exclusiveMaximum: true
+          exclusiveMinimum: true
+        unit:
+          type: integer
+          nullable: true
+        new_unit:
+          type: integer
+          nullable: true
+      required:
+      - amount
+      - food
     ExportLog:
       type: object
       properties:
@@ -12486,6 +12573,11 @@ components:
         in_inventory:
           type: string
           readOnly: true
+        earliest_expiry:
+          type: string
+          format: date
+          nullable: true
+          readOnly: true
         substitute_inventory:
           type: boolean
           readOnly: true
@@ -12494,8 +12586,31 @@ components:
           description: None for non-expanded responses, bool when tree_search=true
             (E-8).
           readOnly: true
+        preferred_unit:
+          allOf:
+          - $ref: '#/components/schemas/Unit'
+          nullable: true
+        preferred_shopping_unit:
+          allOf:
+          - $ref: '#/components/schemas/Unit'
+          nullable: true
+        shelf_life_days:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+          nullable: true
+        shopping_amount:
+          type: number
+          format: double
+          maximum: 1000000000000
+          minimum: -1000000000000
+          exclusiveMaximum: true
+          exclusiveMinimum: true
+          nullable: true
       required:
       - available_substitutes
+      - earliest_expiry
       - full_name
       - in_inventory
       - matched_filter
@@ -12677,7 +12792,18 @@ components:
           items:
             $ref: '#/components/schemas/ShoppingList'
           readOnly: true
+        in_inventory:
+          type: string
+          nullable: true
+          readOnly: true
+        earliest_expiry:
+          type: string
+          format: date
+          nullable: true
+          readOnly: true
       required:
+      - earliest_expiry
+      - in_inventory
       - name
       - shopping_lists
       - supermarket_category
@@ -15052,6 +15178,11 @@ components:
         in_inventory:
           type: string
           readOnly: true
+        earliest_expiry:
+          type: string
+          format: date
+          nullable: true
+          readOnly: true
         substitute_inventory:
           type: boolean
           readOnly: true
@@ -15060,6 +15191,28 @@ components:
           description: None for non-expanded responses, bool when tree_search=true
             (E-8).
           readOnly: true
+        preferred_unit:
+          allOf:
+          - $ref: '#/components/schemas/Unit'
+          nullable: true
+        preferred_shopping_unit:
+          allOf:
+          - $ref: '#/components/schemas/Unit'
+          nullable: true
+        shelf_life_days:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+          nullable: true
+        shopping_amount:
+          type: number
+          format: double
+          maximum: 1000000000000
+          minimum: -1000000000000
+          exclusiveMaximum: true
+          exclusiveMinimum: true
+          nullable: true
     PatchedHousehold:
       type: object
       description: Adds nested create feature
@@ -17862,6 +18015,41 @@ components:
       - ingredients
       - instructions_markdown
       - step_recipe_data
+    StockUp:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/StockUpItem'
+      required:
+      - items
+    StockUpItem:
+      type: object
+      description: One row of a bulk stock-up request (FR-F5).
+      properties:
+        food:
+          type: integer
+        amount:
+          type: number
+          format: double
+          maximum: 1000000000000
+          minimum: -1000000000000
+          exclusiveMaximum: true
+          exclusiveMinimum: true
+          default: 1.0000
+        unit:
+          type: integer
+          nullable: true
+        inventory_location:
+          type: integer
+          nullable: true
+        expires:
+          type: string
+          format: date
+          nullable: true
+      required:
+      - food
     Storage:
       type: object
       description: Adds nested create feature
