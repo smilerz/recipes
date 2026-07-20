@@ -1675,6 +1675,8 @@ export interface ApiShoppingListEntryDestroyRequest {
 }
 
 export interface ApiShoppingListEntryListRequest {
+    checked?: boolean;
+    food?: number;
     mealplan?: number;
     page?: number;
     pageSize?: number;
@@ -13129,6 +13131,14 @@ export class ApiApi extends runtime.BaseAPI {
      */
     async apiShoppingListEntryListRaw(requestParameters: ApiShoppingListEntryListRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PaginatedShoppingListEntryList>> {
         const queryParameters: any = {};
+
+        if (requestParameters['checked'] != null) {
+            queryParameters['checked'] = requestParameters['checked'];
+        }
+
+        if (requestParameters['food'] != null) {
+            queryParameters['food'] = requestParameters['food'];
+        }
 
         if (requestParameters['mealplan'] != null) {
             queryParameters['mealplan'] = requestParameters['mealplan'];
