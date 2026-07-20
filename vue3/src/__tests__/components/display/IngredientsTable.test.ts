@@ -26,6 +26,7 @@ vi.mock('@vueuse/router', () => ({useRouteQuery: (_k: string, d: any) => ref(d)}
 vi.mock('@/openapi', async (imp) => ({...(await imp<any>()), ApiApi: class { constructor() { return apiMock } }}))
 
 import IngredientsTable from '@/components/display/IngredientsTable.vue'
+import PantryJarIndicator from '@/components/display/PantryJarIndicator.vue'
 
 function makeIngredient(overrides: any = {}): any {
     return {
@@ -79,27 +80,25 @@ describe('IngredientsTable inline onhand / substitute', () => {
         resetApiMock()
     })
 
-    it("applies IngredientContextMenu's update:foodStatus to the ingredient food (live chip)", async () => {
-        const ing = makeIngredient({food: {foodOnhand: false, availableSubstitutes: [], substituteOnhand: false}})
+    it("applies IngredientContextMenu's update:foodStatus to the ingredient food (live jar)", async () => {
+        const ing = makeIngredient({food: {inInventory: 'False', availableSubstitutes: [], substituteOnhand: false}})
         const w = mountTable([ing], 'step', true)
-        expect(w.html()).not.toContain('fa-clipboard-check')
+        expect(w.findComponent(PantryJarIndicator).exists()).toBe(false)
 
         // Menu reports a status change; IngredientsTable (the model owner) applies it.
         const menu = w.findComponent({name: 'IngredientContextMenu'})
-        menu.vm.$emit('update:foodStatus', {foodOnhand: true})
+        menu.vm.$emit('update:foodStatus', {inInventory: 'True', foodOnhand: true})
         await w.vm.$nextTick()
 
-        expect(w.html()).toContain('fa-clipboard-check')  // on-hand chip now shows reactively
+        expect(w.findComponent(PantryJarIndicator).exists()).toBe(true)  // pantry jar shows reactively
     })
 
-    it('renders green onhand icon and no substitute names when food is onhand', () => {
-        const ing = makeIngredient({food: {foodOnhand: true, availableSubstitutes: [{id: 2, name: 'Margarine'}], substituteOnhand: true}})
+    it('renders the pantry jar and no substitute names when food is on hand', () => {
+        const ing = makeIngredient({food: {inInventory: 'True', availableSubstitutes: [{id: 2, name: 'Margarine'}], substituteOnhand: true}})
         const w = mountTable([ing])
-        const html = w.html()
-        // Green onhand clipboard-check is present
-        expect(html).toContain('fa-clipboard-check')
-        // Substitute names must NOT appear when the food itself is onhand
-        expect(html).not.toContain('Margarine')
+        expect(w.findComponent(PantryJarIndicator).exists()).toBe(true)
+        // Substitute names must NOT appear when the food itself is on hand
+        expect(w.html()).not.toContain('Margarine')
     })
 
     it('renders yellow substitute icon and available-substitute names when food is not onhand', () => {
@@ -256,7 +255,7 @@ describe('IngredientsTable note truncation', () => {
         const ing = makeIngredient({
             note,
             food: {
-                foodOnhand: true, // onhand → no substitute text even if availableSubstitutes present
+                inInventory: 'True', // on hand → no substitute text even if availableSubstitutes present
                 availableSubstitutes: [{id: 2, name: 'XYZABC'}],
                 substituteOnhand: true,
             },

@@ -10,25 +10,51 @@ vi.mock('@/openapi', async (importOriginal) => ({
 
 import InventoryEntryTable from '@/components/display/InventoryEntryTable.vue'
 
-describe('InventoryEntryTable pagination (R09-3)', () => {
+function entry(over: Record<string, any>) {
+    return {
+        id: 1, amount: 1, unit: null, subLocation: null,
+        food: { id: 10, name: 'Food' },
+        inventoryLocation: { id: 1, name: 'Pantry', isFreezer: false },
+        expires: null,
+        ...over,
+    }
+}
+
+describe('InventoryEntryTable — grouped pantry view', () => {
     beforeEach(() => {
         resetApiMock()
-        apiMock.apiInventoryEntryList.mockResolvedValue({ results: [], count: 25 })
     })
 
-    it('sends page and pageSize to the API so the server paginates', async () => {
-        // Bug: loadItems passed only food/location filters, so the API returned
-        // every row and v-data-table-server (server mode, no client slicing)
-        // rendered all of them while the footer claimed "1-N of count".
+    it('fetches all entries at once (bespoke grouped view, no server pagination)', async () => {
+        apiMock.apiInventoryEntryList.mockResolvedValue({ results: [], count: 0 })
+        mountPage(InventoryEntryTable)
+        await flushPromises()
+
+        // the table loads all entries in one page-500 call; the mounted PantryBookingDialog's
+        // own InventoryEntry picker also hits this endpoint, so target the table's call specifically
+        const tableCall = apiMock.apiInventoryEntryList.mock.calls.map(c => c[0]).find(p => p.pageSize === 500)
+        expect(tableCall).toBeTruthy()
+        expect(tableCall!.page).toBeUndefined()
+    })
+
+    it('splits entries into Expiring soon and In stock groups', async () => {
+        const soon = new Date(); soon.setDate(soon.getDate() + 1)
+        const later = new Date(); later.setDate(later.getDate() + 30)
+        apiMock.apiInventoryEntryList.mockResolvedValue({
+            results: [
+                entry({ id: 1, food: { id: 10, name: 'Milk' }, expires: soon }),
+                entry({ id: 2, food: { id: 11, name: 'Rice' }, expires: later }),
+            ],
+            count: 2,
+        })
+
         const wrapper = mountPage(InventoryEntryTable)
         await flushPromises()
 
-        const table = wrapper.findComponent({ name: 'VDataTableServer' })
-        table.vm.$emit('update:options', { page: 3, itemsPerPage: 10 })
-        await flushPromises()
-
-        const params = apiMock.apiInventoryEntryList.mock.calls.at(-1)![0]
-        expect(params.page).toBe(3)
-        expect(params.pageSize).toBe(10)
+        const text = wrapper.text()
+        expect(text).toContain('Milk')
+        expect(text).toContain('Rice')
+        expect(text).toContain('ExpiringSoon')
+        expect(text).toContain('InStock')
     })
 })

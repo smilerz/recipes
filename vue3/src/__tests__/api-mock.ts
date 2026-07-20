@@ -53,6 +53,9 @@ const API_METHODS = [
     'apiInventoryLocationList',
     'apiInventoryEntryList',
     'apiInventoryEntryCreate',
+    'apiInventoryEntryStockUpCreate',
+    'apiInventoryEntryDrawDownCreate',
+    'apiInventoryEntryPartialUpdate',
     'apiInventoryEntryDestroy',
     'apiUserFileList',
 ] as const

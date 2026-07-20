@@ -129,6 +129,61 @@ describe('ModelSelect — id-array hydration (mode=multiple, object=false)', () 
         expect(retrieveSpy).toHaveBeenCalledTimes(3)
     })
 
+    it('renders a persistent floating label by default (data-label drives the ::before notch)', async () => {
+        const wrapper = mountSelect({label: 'Unit'})
+        await flushPromises()
+
+        expect(wrapper.find('.material-multiselect').attributes('data-label')).toBe('Unit')
+    })
+
+    it('defaults to the underline variant; outlined is opt-in', async () => {
+        expect(mountSelect({label: 'Unit'}).find('.model-select--underline').exists()).toBe(true)
+        expect(mountSelect({label: 'Unit', variant: 'outlined'}).find('.model-select--outlined').exists()).toBe(true)
+    })
+
+    it('inline suppresses the floating label and marks the multiselect', async () => {
+        const wrapper = mountSelect({label: 'Unit', inline: true})
+        await flushPromises()
+
+        expect(wrapper.find('.material-multiselect').attributes('data-label')).toBeUndefined()
+        expect(wrapper.find('.model-select--inline').exists()).toBe(true)
+    })
+
+    it('non-inline labelled field suppresses the multiselect placeholder (the label doubles as it)', async () => {
+        const wrapper = mountSelect({label: 'Unit'})
+        await flushPromises()
+
+        expect(wrapper.findComponent({name: 'Multiselect'}).props('placeholder')).toBe('')
+    })
+
+    it('inline surfaces the label as the multiselect placeholder', async () => {
+        const wrapper = mountSelect({label: 'Unit', inline: true})
+        await flushPromises()
+
+        expect(wrapper.findComponent({name: 'Multiselect'}).props('placeholder')).toBe('Unit')
+    })
+
+    it('inline keeps an explicit placeholder over the label', async () => {
+        const wrapper = mountSelect({label: 'Unit', inline: true, placeholder: 'Pick one'})
+        await flushPromises()
+
+        expect(wrapper.findComponent({name: 'Multiselect'}).props('placeholder')).toBe('Pick one')
+    })
+
+    it('inline with no label falls back to the localized model placeholder', async () => {
+        const wrapper = mountSelect({inline: true})
+        await flushPromises()
+
+        expect(wrapper.findComponent({name: 'Multiselect'}).props('placeholder')).toBe('Keyword')
+    })
+
+    it('passes the label to the multiselect as its accessible name', async () => {
+        const wrapper = mountSelect({label: 'Unit', inline: true})
+        await flushPromises()
+
+        expect(wrapper.findComponent({name: 'Multiselect'}).props('aria')).toEqual({'aria-label': 'Unit'})
+    })
+
     it('handles retrieve() failure by silently skipping the id (no crash, no unhandled rejection)', async () => {
         retrieveSpy.mockReset()
         retrieveSpy.mockRejectedValue(new Error('boom'))
