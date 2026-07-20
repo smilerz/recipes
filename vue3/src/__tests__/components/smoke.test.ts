@@ -105,7 +105,6 @@ function smokeMount(component: Component, props: Record<string, any> = {}, extra
             plugins: [pinia, i18n, router],
             stubs: {
                 ModelSelect: { template: '<div class="stub-model-select"/>' },
-                ModelSelectVuetify: { template: '<div class="stub-model-select-vuetify"/>' },
                 VClosableCardTitle: { template: '<div class="stub-closable-title"/>' },
                 Multiselect: { template: '<div class="stub-multiselect"/>' },
                 RecipeContextMenu: { template: '<div class="stub-context-menu"/>' },
