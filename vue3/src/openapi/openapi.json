@@ -7533,6 +7533,17 @@ paths:
         automatically filtered to only contain unchecked items that are not older than the shopping recent days setting to not bloat endpoint
       parameters:
       - in: query
+        name: checked
+        schema:
+          type: boolean
+        description: Filter by checked state. When omitted, returns unchecked entries
+          plus recently-completed ones within the shopping_recent_days window.
+      - in: query
+        name: food
+        schema:
+          type: integer
+        description: Returns only entries for the given food id
+      - in: query
         name: mealplan
         schema:
           type: integer
