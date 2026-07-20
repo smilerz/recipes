@@ -103,7 +103,7 @@ from cookbook.serializer import (AccessTokenSerializer, AutomationSerializer, Au
                                  CookLogSerializer, CustomFilterSerializer,
                                  ExportLogSerializer, FoodInheritFieldSerializer, FoodSerializer,
                                  FoodSimpleSerializer, FoodStatsSerializer, UnitStatsSerializer,
-                                 KeywordStatsSerializer, AutomationStatsSerializer, GroupSerializer,
+                                 KeywordStatsSerializer, AutomationStatsSerializer, RecipeStatsSerializer, GroupSerializer,
                                  ImportLogSerializer, IngredientSerializer, IngredientSimpleSerializer,
                                  InviteLinkSerializer, KeywordSerializer, MealPlanSerializer, MealTypeSerializer,
                                  PropertySerializer, PropertyTypeSerializer,
@@ -317,6 +317,18 @@ class ExtendedRecipeMixin():
     OpenApiParameter(name='random', description='randomly orders entries (only works together with limit)', type=str),
 ]))
 class FuzzyFilterMixin(viewsets.ModelViewSet, ExtendedRecipeMixin):
+
+    def _apply_tristate(self, qs, param, true_q, false_q, distinct=False):
+        value = self.request.query_params.get(param, None)
+        if value is None:
+            return qs
+        if str2bool(value):
+            qs = qs.filter(true_q)
+            if distinct:
+                qs = qs.distinct()
+        else:
+            qs = qs.filter(false_q)
+        return qs
 
     def get_queryset(self):
         self.queryset = self.queryset.filter(space=self.request.space).order_by(Lower('name').asc())
@@ -1071,13 +1083,15 @@ class SupermarketCategoryRelationViewSet(LoggingMixin, StandardFilterModelViewSe
         return super().get_queryset()
 
 
-@extend_schema_view(list=extend_schema(parameters=[
-    OpenApiParameter(
-        name='ordering',
-        type=str,
-        description='Order results by field. Allowed: name, -name, numrecipe, -numrecipe, numchild, -numchild. Ignored when query is active.'
+@extend_schema_view(
+    list=extend_schema(
+        parameters=[
+            OpenApiParameter(name='ordering', type=str, description='Order results by field. Allowed: name, -name, numrecipe, -numrecipe, numchild, -numchild. Ignored when query is active.'),
+            OpenApiParameter(name='has_recipe', type=bool, description='Filter by whether keyword is used by at least one recipe'),
+            OpenApiParameter(name='has_children', type=bool, description='Filter by whether keyword has child keywords'),
+        ],
     ),
-]))
+)
 class KeywordViewSet(OrderingMixin, LoggingMixin, TreeMixin, DeleteRelationMixing):
     queryset = Keyword.objects
     model = Keyword
@@ -1090,7 +1104,10 @@ class KeywordViewSet(OrderingMixin, LoggingMixin, TreeMixin, DeleteRelationMixin
     ordering_plain_fields = {'numchild', '-numchild'}
 
     def get_queryset(self):
-        return self._apply_ordering(super().get_queryset())
+        qs = super().get_queryset()
+        qs = self._apply_tristate(qs, 'has_children', Q(numchild__gt=0), Q(numchild=0))
+        qs = self._apply_tristate(qs, 'has_recipe', Q(recipe_count__gt=0), Q(recipe_count=0))
+        return self._apply_ordering(qs)
 
     @decorators.action(detail=False, pagination_class=None, methods=['GET'], serializer_class=KeywordStatsSerializer, url_path='stats', url_name='stats')
     def stats(self, request):
@@ -1102,13 +1119,14 @@ class KeywordViewSet(OrderingMixin, LoggingMixin, TreeMixin, DeleteRelationMixin
         return Response({k: v or 0 for k, v in agg.items()})
 
 
-@extend_schema_view(list=extend_schema(parameters=[
-    OpenApiParameter(
-        name='ordering',
-        type=str,
-        description='Order results by field. Allowed: name, -name, numrecipe, -numrecipe. Ignored when query is active.'
+@extend_schema_view(
+    list=extend_schema(
+        parameters=[
+            OpenApiParameter(name='ordering', type=str, description='Order results by field. Allowed: name, -name, numrecipe, -numrecipe. Ignored when query is active.'),
+            OpenApiParameter(name='has_recipe', type=bool, description='Filter by whether unit is used by at least one recipe ingredient'),
+        ],
     ),
-]))
+)
 class UnitViewSet(OrderingMixin, LoggingMixin, MergeMixin, FuzzyFilterMixin, DeleteRelationMixing):
     queryset = Unit.objects
     model = Unit
@@ -1120,7 +1138,9 @@ class UnitViewSet(OrderingMixin, LoggingMixin, MergeMixin, FuzzyFilterMixin, Del
     ordering_field_map = {'numrecipe': 'recipe_count', '-numrecipe': '-recipe_count'}
 
     def get_queryset(self):
-        return self._apply_ordering(super().get_queryset())
+        qs = super().get_queryset()
+        qs = self._apply_tristate(qs, 'has_recipe', Q(recipe_count__gt=0), Q(recipe_count=0))
+        return self._apply_ordering(qs)
 
     @decorators.action(detail=False, pagination_class=None, methods=['GET'], serializer_class=UnitStatsSerializer, url_path='stats', url_name='stats')
     def stats(self, request):
@@ -1175,18 +1195,6 @@ class FoodViewSet(OrderingMixin, LoggingMixin, TreeMixin, DeleteRelationMixing):
             return get_household_user_ids(self.request.user_space)
         except AttributeError:  # Anonymous users (using share links) don't have shared users
             return []
-
-    def _apply_tristate(self, qs, param, true_q, false_q, distinct=False):
-        value = self.request.query_params.get(param, None)
-        if value is None:
-            return qs
-        if str2bool(value):
-            qs = qs.filter(true_q)
-            if distinct:
-                qs = qs.distinct()
-        else:
-            qs = qs.filter(false_q)
-        return qs
 
     def _inventory_subquery(self, space):
         return InventoryEntry.objects.filter(food=OuterRef('id'), amount__gt=0, space=space)
@@ -2116,11 +2124,16 @@ class RecipePagination(PageNumberPagination):
     OpenApiParameter(name='books_or_not', description=_('Book IDs, repeat for multiple. Exclude recipes with any of the books.'), type=int, many=True),
     OpenApiParameter(name='books_and_not', description=_('Book IDs, repeat for multiple. Exclude recipes with all of the books.'), type=int, many=True),
 
-    OpenApiParameter(name='units', description=_('ID of unit a recipe should have.'), type=int),
+    OpenApiParameter(name='units', description=_('ID of unit a recipe should have. For multiple repeat parameter. Equivalent to units_or'), type=int, many=True),
+    OpenApiParameter(name='units_or', description=_('Unit IDs, repeat for multiple. Return recipes with any of the units'), type=int, many=True),
+    OpenApiParameter(name='units_and', description=_('Unit IDs, repeat for multiple. Return recipes with all of the units.'), type=int, many=True),
+    OpenApiParameter(name='units_or_not', description=_('Unit IDs, repeat for multiple. Exclude recipes with any of the units.'), type=int, many=True),
+    OpenApiParameter(name='units_and_not', description=_('Unit IDs, repeat for multiple. Exclude recipes with all of the units.'), type=int, many=True),
 
     OpenApiParameter(name='rating', description=_('Exact rating of recipe'), type=int),
     OpenApiParameter(name='rating_gte', description=_('Rating a recipe should have or greater.'), type=int),
     OpenApiParameter(name='rating_lte', description=_('Rating a recipe should have or smaller.'), type=int),
+    OpenApiParameter(name='unrated', description=_('If only unrated recipes (never rated by the current user) should be returned. Mutually exclusive with rating. [''true''/''<b>false</b>'']'), type=bool),
 
     OpenApiParameter(name='timescooked', description=_('Filter recipes cooked X times.'), type=int),
     OpenApiParameter(name='timescooked_gte', description=_('Filter recipes cooked X times or more.'), type=int),
@@ -2220,9 +2233,12 @@ class RecipeViewSet(LoggingMixin, viewsets.ModelViewSet, DeleteRelationMixing):
             space=self.request.space).filter(
             Q(private=False) | (Q(private=True) & (Q(created_by=self.request.user) | Q(shared=self.request.user))))
 
-        params = {k: v if len(v) > 1 else v[0] for k, v in self.request.GET.lists()}
-        search = RecipeSearch(self.request, **params)
-        self.queryset = search.get_queryset(self.queryset).prefetch_related('keywords', 'cooklog_set')
+        search = RecipeSearch(self.request, self.request.GET)
+        self.queryset = search.get_queryset(self.queryset).with_rating(
+            self.request.user
+        ).with_last_cooked(
+            self.request.user, self.request.space
+        ).prefetch_related('keywords', 'cooklog_set')
         return self.queryset
 
     def list(self, request, *args, **kwargs):
@@ -2245,6 +2261,46 @@ class RecipeViewSet(LoggingMixin, viewsets.ModelViewSet, DeleteRelationMixing):
         serializer = self.get_serializer(instance)
         headers = self.get_success_headers(serializer.data)
         return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+
+    @extend_schema(responses=RecipeStatsSerializer(many=False))
+    @decorators.action(detail=False, pagination_class=None, methods=['GET'], serializer_class=RecipeStatsSerializer, url_path='stats', url_name='stats')
+    def stats(self, request):
+        """Aggregate counts over the user-visible recipe set (space scoped,
+        private-visibility enforced). Used by the SearchPage stats footer."""
+        user = request.user
+        base_qs = Recipe.objects.filter(space=request.space).filter(
+            Q(private=False) | (Q(private=True) & (Q(created_by=user) | Q(shared=user)))
+        ).distinct()
+
+        new_cutoff = timezone.now() - datetime.timedelta(days=7)
+
+        unrated_sub = CookLog.objects.filter(
+            recipe=OuterRef('pk'), created_by=user, rating__isnull=False, rating__gt=0,
+        )
+        cooked_sub = CookLog.objects.filter(recipe=OuterRef('pk'), created_by=user)
+
+        annotated = base_qs.annotate(
+            _rated=Exists(unrated_sub),
+            _cooked=Exists(cooked_sub),
+        )
+
+        user_space = getattr(request, 'user_space', None)
+        if user_space is not None:
+            household = getattr(user_space, 'household', None)
+            shopping_users = get_household_user_ids(user_space)
+            makenow_ready = base_qs.cookable(household, shopping_users, missing=0).count()
+        else:
+            makenow_ready = 0
+
+        agg = annotated.aggregate(
+            total=Count('pk', distinct=True),
+            new=Count('pk', filter=Q(created_at__gte=new_cutoff), distinct=True),
+            unrated=Count('pk', filter=Q(_rated=False), distinct=True),
+            never_cooked=Count('pk', filter=Q(_cooked=False), distinct=True),
+            private=Count('pk', filter=Q(private=True), distinct=True),
+        )
+        agg['makenow_ready'] = makenow_ready
+        return Response({k: (v or 0) for k, v in agg.items()})
 
     @decorators.action(detail=True, methods=['PUT'], serializer_class=RecipeImageSerializer,
                        parser_classes=[MultiPartParser], )
