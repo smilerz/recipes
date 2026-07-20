@@ -474,6 +474,8 @@ class UserPreference(models.Model, PermissionModelMixin):
     SUPERHERO = 'SUPERHERO'
     TANDOOR = 'TANDOOR'
     TANDOOR_DARK = 'TANDOOR_DARK'
+    CERULEAN = 'CERULEAN'
+    SLATE = 'SLATE'
 
     THEMES = (
         (TANDOOR, 'Tandoor'),
@@ -482,6 +484,8 @@ class UserPreference(models.Model, PermissionModelMixin):
         (FLATLY, 'Flatly'),
         (SUPERHERO, 'Superhero'),
         (TANDOOR_DARK, 'Tandoor Dark (INCOMPLETE)'),
+        (CERULEAN, 'Cerulean'),
+        (SLATE, 'Slate'),
     )
 
     # Default Page
@@ -509,7 +513,7 @@ class UserPreference(models.Model, PermissionModelMixin):
     image = models.ForeignKey("UserFile", on_delete=models.SET_NULL, null=True, blank=True, related_name='user_image')
 
     theme = models.CharField(choices=THEMES, max_length=128, default=TANDOOR)
-    nav_bg_color = models.CharField(max_length=8, default='#ddbf86')
+    nav_bg_color = models.CharField(max_length=8, default='', blank=True)
     nav_show_logo = models.BooleanField(default=True)
     nav_sticky = models.BooleanField(default=STICKY_NAV_PREF_DEFAULT)
     max_owned_spaces = models.IntegerField(default=MAX_OWNED_SPACES_PREF_DEFAULT)
