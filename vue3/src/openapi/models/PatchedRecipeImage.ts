@@ -16,96 +16,92 @@ import { mapValues } from '../runtime';
 /**
  * Serializer for the RecipeImage model (multi-image gallery).
  * @export
- * @interface RecipeImage
+ * @interface PatchedRecipeImage
  */
-export interface RecipeImage {
+export interface PatchedRecipeImage {
     /**
      * 
      * @type {number}
-     * @memberof RecipeImage
+     * @memberof PatchedRecipeImage
      */
     id?: number;
     /**
      * 
      * @type {number}
-     * @memberof RecipeImage
+     * @memberof PatchedRecipeImage
      */
-    recipe: number;
+    recipe?: number;
     /**
      * 
      * @type {string}
-     * @memberof RecipeImage
+     * @memberof PatchedRecipeImage
      */
-    file: string;
+    file?: string;
     /**
      * 
      * @type {any}
-     * @memberof RecipeImage
+     * @memberof PatchedRecipeImage
      */
     cropData?: any | null;
     /**
      * 
      * @type {number}
-     * @memberof RecipeImage
+     * @memberof PatchedRecipeImage
      */
     order?: number;
     /**
      * 
      * @type {boolean}
-     * @memberof RecipeImage
+     * @memberof PatchedRecipeImage
      */
     isPrimary?: boolean;
     /**
      * 
      * @type {number}
-     * @memberof RecipeImage
+     * @memberof PatchedRecipeImage
      */
-    readonly createdBy: number;
+    readonly createdBy?: number;
     /**
      * 
      * @type {Date}
-     * @memberof RecipeImage
+     * @memberof PatchedRecipeImage
      */
-    readonly createdAt: Date;
+    readonly createdAt?: Date;
 }
 
 /**
- * Check if a given object implements the RecipeImage interface.
+ * Check if a given object implements the PatchedRecipeImage interface.
  */
-export function instanceOfRecipeImage(value: object): value is RecipeImage {
-    if (!('recipe' in value) || value['recipe'] === undefined) return false;
-    if (!('file' in value) || value['file'] === undefined) return false;
-    if (!('createdBy' in value) || value['createdBy'] === undefined) return false;
-    if (!('createdAt' in value) || value['createdAt'] === undefined) return false;
+export function instanceOfPatchedRecipeImage(value: object): value is PatchedRecipeImage {
     return true;
 }
 
-export function RecipeImageFromJSON(json: any): RecipeImage {
-    return RecipeImageFromJSONTyped(json, false);
+export function PatchedRecipeImageFromJSON(json: any): PatchedRecipeImage {
+    return PatchedRecipeImageFromJSONTyped(json, false);
 }
 
-export function RecipeImageFromJSONTyped(json: any, ignoreDiscriminator: boolean): RecipeImage {
+export function PatchedRecipeImageFromJSONTyped(json: any, ignoreDiscriminator: boolean): PatchedRecipeImage {
     if (json == null) {
         return json;
     }
     return {
         
         'id': json['id'] == null ? undefined : json['id'],
-        'recipe': json['recipe'],
-        'file': json['file'],
+        'recipe': json['recipe'] == null ? undefined : json['recipe'],
+        'file': json['file'] == null ? undefined : json['file'],
         'cropData': json['crop_data'] == null ? undefined : json['crop_data'],
         'order': json['order'] == null ? undefined : json['order'],
         'isPrimary': json['is_primary'] == null ? undefined : json['is_primary'],
-        'createdBy': json['created_by'],
-        'createdAt': (new Date(json['created_at'])),
+        'createdBy': json['created_by'] == null ? undefined : json['created_by'],
+        'createdAt': json['created_at'] == null ? undefined : (new Date(json['created_at'])),
     };
 }
 
-export function RecipeImageToJSON(json: any): RecipeImage {
-    return RecipeImageToJSONTyped(json, false);
+export function PatchedRecipeImageToJSON(json: any): PatchedRecipeImage {
+    return PatchedRecipeImageToJSONTyped(json, false);
 }
 
-export function RecipeImageToJSONTyped(value?: Omit<RecipeImage, 'created_by'|'created_at'> | null, ignoreDiscriminator: boolean = false): any {
+export function PatchedRecipeImageToJSONTyped(value?: Omit<PatchedRecipeImage, 'created_by'|'created_at'> | null, ignoreDiscriminator: boolean = false): any {
     if (value == null) {
         return value;
     }

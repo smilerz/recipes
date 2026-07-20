@@ -5958,6 +5958,16 @@ paths:
         description: Food IDs, repeat for multiple. Exclude recipes with any of the
           foods.
       - in: query
+        name: has_keywords
+        schema:
+          type: boolean
+        description: Filter recipes that have keywords. [true/false]
+      - in: query
+        name: has_photo
+        schema:
+          type: boolean
+        description: Filter recipes that have a photo. [true/false]
+      - in: query
         name: include_children
         schema:
           type: boolean
@@ -6062,6 +6072,16 @@ paths:
           type: integer
         description: Rating a recipe should have or smaller.
       - in: query
+        name: servings_gte
+        schema:
+          type: integer
+        description: Filter recipes with servings >= value.
+      - in: query
+        name: servings_lte
+        schema:
+          type: integer
+        description: Filter recipes with servings <= value.
+      - in: query
         name: sort_order
         schema:
           type: string
@@ -6081,6 +6101,16 @@ paths:
         schema:
           type: integer
         description: Filter recipes cooked X times or less.
+      - in: query
+        name: total_time_gte
+        schema:
+          type: integer
+        description: Filter recipes with total time (working + waiting) >= value (minutes).
+      - in: query
+        name: total_time_lte
+        schema:
+          type: integer
+        description: Filter recipes with total time (working + waiting) <= value (minutes).
       - in: query
         name: units
         schema:
@@ -6157,6 +6187,26 @@ paths:
           type: string
           format: date
         description: Filter recipes lasts viewed on the given date.
+      - in: query
+        name: waiting_time_gte
+        schema:
+          type: integer
+        description: Filter recipes with waiting time >= value (minutes).
+      - in: query
+        name: waiting_time_lte
+        schema:
+          type: integer
+        description: Filter recipes with waiting time <= value (minutes).
+      - in: query
+        name: working_time_gte
+        schema:
+          type: integer
+        description: Filter recipes with working time >= value (minutes).
+      - in: query
+        name: working_time_lte
+        schema:
+          type: integer
+        description: Filter recipes with working time <= value (minutes).
       tags:
       - api
       security:
@@ -6717,6 +6767,176 @@ paths:
               schema:
                 $ref: '#/components/schemas/RecipeFromSourceResponse'
           description: ''
+  /api/recipe-image/:
+    get:
+      operationId: apiRecipeImageList
+      description: logs request counts to redis cache total/per user/
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      tags:
+      - api
+      security:
+      - ApiKeyAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedRecipeImageList'
+          description: ''
+    post:
+      operationId: apiRecipeImageCreate
+      description: logs request counts to redis cache total/per user/
+      tags:
+      - api
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/RecipeImage'
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RecipeImage'
+        required: true
+      security:
+      - ApiKeyAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RecipeImage'
+          description: ''
+  /api/recipe-image/{id}/:
+    get:
+      operationId: apiRecipeImageRetrieve
+      description: logs request counts to redis cache total/per user/
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this recipe image.
+        required: true
+      tags:
+      - api
+      security:
+      - ApiKeyAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RecipeImage'
+          description: ''
+    put:
+      operationId: apiRecipeImageUpdate
+      description: logs request counts to redis cache total/per user/
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this recipe image.
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/RecipeImage'
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RecipeImage'
+        required: true
+      security:
+      - ApiKeyAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RecipeImage'
+          description: ''
+    patch:
+      operationId: apiRecipeImagePartialUpdate
+      description: logs request counts to redis cache total/per user/
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this recipe image.
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedRecipeImage'
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedRecipeImage'
+      security:
+      - ApiKeyAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RecipeImage'
+          description: ''
+    delete:
+      operationId: apiRecipeImageDestroy
+      description: logs request counts to redis cache total/per user/
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this recipe image.
+        required: true
+      tags:
+      - api
+      security:
+      - ApiKeyAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/recipe-image/from_url/:
+    post:
+      operationId: apiRecipeImageFromUrlCreate
+      description: logs request counts to redis cache total/per user/
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RecipeImage'
+        required: true
+      security:
+      - ApiKeyAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RecipeImage'
+          description: ''
   /api/recipe-import/:
     get:
       operationId: apiRecipeImportList
@@ -7156,33 +7376,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Recipe'
-          description: ''
-  /api/recipe/{id}/image/:
-    put:
-      operationId: apiRecipeImageUpdate
-      description: logs request counts to redis cache total/per user/
-      parameters:
-      - in: path
-        name: id
-        schema:
-          type: integer
-        description: A unique integer value identifying this recipe.
-        required: true
-      tags:
-      - api
-      requestBody:
-        content:
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/RecipeImage'
-      security:
-      - ApiKeyAuth: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RecipeImage'
           description: ''
   /api/recipe/{id}/nulling/:
     get:
@@ -13978,6 +14171,32 @@ components:
         timestamp:
           type: string
           format: date-time
+    PaginatedRecipeImageList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/RecipeImage'
+        timestamp:
+          type: string
+          format: date-time
     PaginatedRecipeImportList:
       type: object
       required:
@@ -15307,7 +15526,10 @@ components:
           nullable: true
     PatchedRecipe:
       type: object
-      description: Adds nested create feature
+      description: |-
+        Expose the derived ``image`` URL + ``image_crop_data`` of a recipe's
+        primary RecipeImage (pattern-014: the legacy ``Recipe.image`` column is no
+        longer read).
       properties:
         id:
           type: integer
@@ -15321,9 +15543,16 @@ components:
           maxLength: 512
         image:
           type: string
-          format: uri
-          readOnly: true
           nullable: true
+          readOnly: true
+        image_crop_data:
+          nullable: true
+          readOnly: true
+        images:
+          type: array
+          items:
+            $ref: '#/components/schemas/RecipeImage'
+          readOnly: true
         keywords:
           type: array
           items:
@@ -15453,6 +15682,34 @@ components:
         recipe_content:
           allOf:
           - $ref: '#/components/schemas/RecipeOverview'
+          readOnly: true
+    PatchedRecipeImage:
+      type: object
+      description: Serializer for the RecipeImage model (multi-image gallery).
+      properties:
+        id:
+          type: integer
+          readOnly: false
+        recipe:
+          type: integer
+        file:
+          type: string
+          format: uri
+        crop_data:
+          nullable: true
+        order:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: -9223372036854775808
+          format: int64
+        is_primary:
+          type: boolean
+        created_by:
+          type: integer
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
           readOnly: true
     PatchedRecipeImport:
       type: object
@@ -16377,7 +16634,10 @@ components:
       - name
     Recipe:
       type: object
-      description: Adds nested create feature
+      description: |-
+        Expose the derived ``image`` URL + ``image_crop_data`` of a recipe's
+        primary RecipeImage (pattern-014: the legacy ``Recipe.image`` column is no
+        longer read).
       properties:
         id:
           type: integer
@@ -16391,9 +16651,16 @@ components:
           maxLength: 512
         image:
           type: string
-          format: uri
-          readOnly: true
           nullable: true
+          readOnly: true
+        image_crop_data:
+          nullable: true
+          readOnly: true
+        images:
+          type: array
+          items:
+            $ref: '#/components/schemas/RecipeImage'
+          readOnly: true
         keywords:
           type: array
           items:
@@ -16482,6 +16749,8 @@ components:
       - created_by
       - food_properties
       - image
+      - image_crop_data
+      - images
       - last_cooked
       - name
       - rating
@@ -16611,7 +16880,10 @@ components:
       - recipe_content
     RecipeFlat:
       type: object
-      description: Adds nested create feature
+      description: |-
+        Expose the derived ``image`` URL + ``image_crop_data`` of a recipe's
+        primary RecipeImage (pattern-014: the legacy ``Recipe.image`` column is no
+        longer read).
       properties:
         id:
           type: integer
@@ -16621,11 +16893,14 @@ components:
           readOnly: true
         image:
           type: string
-          format: uri
-          readOnly: true
           nullable: true
+          readOnly: true
+        image_crop_data:
+          nullable: true
+          readOnly: true
       required:
       - image
+      - image_crop_data
       - name
     RecipeFromSource:
       type: object
@@ -16666,16 +16941,37 @@ components:
           default: []
     RecipeImage:
       type: object
-      description: Adds nested create feature
+      description: Serializer for the RecipeImage model (multi-image gallery).
       properties:
-        image:
+        id:
+          type: integer
+          readOnly: false
+        recipe:
+          type: integer
+        file:
           type: string
           format: uri
+        crop_data:
           nullable: true
-        image_url:
+        order:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: -9223372036854775808
+          format: int64
+        is_primary:
+          type: boolean
+        created_by:
+          type: integer
+          readOnly: true
+        created_at:
           type: string
-          nullable: true
-          maxLength: 4096
+          format: date-time
+          readOnly: true
+      required:
+      - created_at
+      - created_by
+      - file
+      - recipe
     RecipeImport:
       type: object
       description: Adds nested create feature
@@ -16704,7 +17000,10 @@ components:
       - storage
     RecipeOverview:
       type: object
-      description: Adds nested create feature
+      description: |-
+        Expose the derived ``image`` URL + ``image_crop_data`` of a recipe's
+        primary RecipeImage (pattern-014: the legacy ``Recipe.image`` column is no
+        longer read).
       properties:
         id:
           type: integer
@@ -16718,9 +17017,11 @@ components:
           maxLength: 512
         image:
           type: string
-          format: uri
-          readOnly: true
           nullable: true
+          readOnly: true
+        image_crop_data:
+          nullable: true
+          readOnly: true
         keywords:
           type: array
           items:
@@ -16772,6 +17073,7 @@ components:
       - created_at
       - created_by
       - image
+      - image_crop_data
       - internal
       - keywords
       - last_cooked
