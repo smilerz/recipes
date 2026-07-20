@@ -46,6 +46,11 @@ const API_METHODS = [
     'apiIngredientDestroy',
     'apiImportOpenDataRetrieve',
     'apiImportOpenDataCreate',
+    'apiFoodPartialUpdate',
+    'apiInventoryLocationList',
+    'apiInventoryEntryList',
+    'apiInventoryEntryCreate',
+    'apiInventoryEntryDestroy',
 ] as const
 
 function buildApiMock(): Record<string, ReturnType<typeof vi.fn>> {
