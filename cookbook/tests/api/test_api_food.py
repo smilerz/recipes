@@ -10,11 +10,38 @@ from django.urls import reverse
 from django_scopes import scope, scopes_disabled
 from pytest_factoryboy import LazyFixture, register
 
-from cookbook.models import Food, Ingredient, Recipe, ShoppingListEntry, Step, Household, Unit, UserSpace
-from cookbook.tests.factories import (FoodFactory, IngredientFactory, InventoryEntryFactory,
+from cookbook.helper.permission_helper import invalidate_household_cache
+from cookbook.models import Food, Ingredient, InventoryEntry, InventoryLocation, Recipe, ShoppingListEntry, Step, Household, Unit, UserSpace
+from cookbook.tests.factories import (FoodFactory, HouseholdFactory, IngredientFactory, InventoryEntryFactory,
                                       InventoryLocationFactory, RecipeFactory,
                                       ShoppingListEntryFactory, StepFactory,
                                       SupermarketCategoryFactory)
+
+
+def _stock_food(food, user, space, *, amount=1, expires=None):
+    """Put a food on hand for the user's household via inventory (replaces the retired onhand_users).
+
+    Ensures the user's UserSpace has a household, then adds an inventory lot for the food at the
+    household's default location. Pass ``expires``/``amount`` to control the lot. Call inside a
+    ``scopes_disabled()`` block.
+    """
+    us = UserSpace.objects.filter(user=user, space=space).first()
+    if us.household_id is None:
+        us.household = HouseholdFactory(space=space)
+        us.save()
+    location = InventoryLocation.objects.filter(household=us.household).first() \
+        or InventoryLocationFactory(space=space, household=us.household)
+    InventoryEntryFactory(space=space, food=food, inventory_location=location, amount=amount, expires=expires)
+    invalidate_household_cache(us)
+    return us.household
+
+
+def _stock_food_other_household(food, space, *, amount=1, expires=None):
+    """Add an inventory lot for ``food`` in a DIFFERENT household of ``space`` (cross-household
+    isolation setup). Call inside a ``scopes_disabled()`` block."""
+    other_loc = InventoryLocationFactory(space=space, household=HouseholdFactory(space=space))
+    InventoryEntryFactory(space=space, food=food, inventory_location=other_loc, amount=amount, expires=expires)
+
 
 #    ------------------ IMPORTANT -------------------
 #
@@ -388,6 +415,39 @@ def test_merge_shopping_entries(obj_tree_1, u1_s1, space_1):
         assert obj_tree_1.shopping_entries.count() == 1  # now has child's ingredient
 
 
+def test_merge_inventory_entries(obj_tree_1, space_1):
+    """Food.merge_into reassigns inventory lots to the target instead of cascade-deleting them.
+
+    The Open Data importer (open_data_importer.py) merges duplicate foods via this model method,
+    where InventoryEntry.food CASCADE would otherwise silently delete the source's lots.
+    """
+    with scope(space=space_1):
+        child = obj_tree_1.get_descendants()[0]
+        location = InventoryLocationFactory(space=space_1)
+        entry = InventoryEntryFactory(space=space_1, food=child, inventory_location=location, amount=2)
+        assert InventoryEntry.objects.filter(food=child).count() == 1
+
+        child.merge_into(obj_tree_1)
+
+        # the lot survives, reassigned to the target — not cascade-deleted with the source
+        assert InventoryEntry.objects.filter(food=obj_tree_1).count() == 1
+        entry.refresh_from_db()
+        assert entry.food_id == obj_tree_1.id
+
+
+def test_merge_copies_pantry_fields_when_empty(obj_tree_1, space_1):
+    """merge_into carries shelf_life_days/shopping_amount to the target when the target has none."""
+    with scope(space=space_1):
+        child = obj_tree_1.get_descendants()[0]
+        child.shelf_life_days = 14
+        child.save()
+        assert obj_tree_1.shelf_life_days is None
+
+        child.merge_into(obj_tree_1)
+
+        assert Food.objects.get(id=obj_tree_1.id).shelf_life_days == 14
+
+
 def test_merge(u1_s1, obj_tree_1, obj_1, obj_3, space_1):
     with scope(space=space_1):
         # for some reason the 'path' attribute changes between the factory and the test when using both obj_tree and obj
@@ -618,36 +678,96 @@ def test_reset_inherit_no_food_instances(obj_tree_1, space_1, field):
         parent.reset_inheritance(space=space_1)
 
 
-def test_onhand(obj_1, u1_s1, u2_s1, space_1):
-    assert json.loads(u1_s1.get(reverse(DETAIL_URL, args={obj_1.id})).content)['food_onhand'] is False
-    assert json.loads(u2_s1.get(reverse(DETAIL_URL, args={obj_1.id})).content)['food_onhand'] is False
+def test_food_pantry_fields_roundtrip(obj_1, u1_s1, space_1):
+    """shelf_life_days, shopping_amount, and the shopping-pack units round-trip on the food serializer."""
+    with scopes_disabled():
+        Unit.objects.create(name='pack-lb', space=space_1)
+        Unit.objects.create(name='recipe-g', space=space_1)
 
-    u1_s1.patch(
-        reverse(
-            DETAIL_URL,
-            args={obj_1.id}
-        ),
-        {'food_onhand': True},
-        content_type='application/json'
+    r = u1_s1.patch(
+        reverse(DETAIL_URL, args=[obj_1.id]),
+        {
+            'shelf_life_days': 7,
+            'shopping_amount': '5.0',
+            'preferred_shopping_unit': {'name': 'pack-lb'},
+            'preferred_unit': {'name': 'recipe-g'},
+        },
+        content_type='application/json',
     )
-    assert json.loads(u1_s1.get(reverse(DETAIL_URL, args={obj_1.id})).content)['food_onhand'] is True
-    assert json.loads(u2_s1.get(reverse(DETAIL_URL, args={obj_1.id})).content)['food_onhand'] is False
+    assert r.status_code == 200
 
+    body = json.loads(u1_s1.get(reverse(DETAIL_URL, args=[obj_1.id])).content)
+    assert body['shelf_life_days'] == 7
+    assert float(body['shopping_amount']) == 5.0
+    assert body['preferred_shopping_unit']['name'] == 'pack-lb'
+    assert body['preferred_unit']['name'] == 'recipe-g'
+
+
+def test_onhand(obj_1, u1_s1, u2_s1, space_1):
+    """The food_onhand toggle writes household inventory, not onhand_users (P1.3-B)."""
     user1 = auth.get_user(u1_s1)
     user2 = auth.get_user(u2_s1)
 
+    # both users share a household — pantry inventory is household-scoped
     with scopes_disabled():
         household = Household.objects.create(name='test', space=space_1)
-        UserSpace.objects.filter(user=user1).update(household=household)
-        UserSpace.objects.filter(user=user2).update(household=household)
-
+        UserSpace.objects.filter(user__in=[user1, user2], space=space_1).update(household=household)
+        obj_1.onhand_users.add(user1)  # legacy onhand data that the toggle must retire on OFF
     caches['default'].delete(f'household_user_ids_{space_1.id}_{household.id}')
 
+    # user1 marks on-hand -> creates exactly one inventory lot in the household default location
+    r = u1_s1.patch(reverse(DETAIL_URL, args={obj_1.id}), {'food_onhand': True}, content_type='application/json')
+    assert r.status_code == 200
+    with scopes_disabled():
+        assert InventoryEntry.objects.filter(food=obj_1, inventory_location__household=household, amount__gt=0).count() == 1
+
+    # both household members see it — via inventory, not onhand_users
+    assert json.loads(u1_s1.get(reverse(DETAIL_URL, args={obj_1.id})).content)['food_onhand'] is True
     assert json.loads(u2_s1.get(reverse(DETAIL_URL, args={obj_1.id})).content)['food_onhand'] is True
+
+    # idempotent: toggling on again does not add a second lot
+    u1_s1.patch(reverse(DETAIL_URL, args={obj_1.id}), {'food_onhand': True}, content_type='application/json')
+    with scopes_disabled():
+        assert InventoryEntry.objects.filter(food=obj_1, inventory_location__household=household, amount__gt=0).count() == 1
+
+    # user1 marks off-hand -> zeroes the household lots AND clears legacy onhand_users
+    r = u1_s1.patch(reverse(DETAIL_URL, args={obj_1.id}), {'food_onhand': False}, content_type='application/json')
+    assert r.status_code == 200
+    with scopes_disabled():
+        assert not InventoryEntry.objects.filter(food=obj_1, inventory_location__household=household, amount__gt=0).exists()
+        assert not obj_1.onhand_users.filter(id=user1.id).exists()
+    assert json.loads(u1_s1.get(reverse(DETAIL_URL, args={obj_1.id})).content)['food_onhand'] is False
+    assert json.loads(u2_s1.get(reverse(DETAIL_URL, args={obj_1.id})).content)['food_onhand'] is False
+
+
+def test_onhand_requires_household(obj_1, u1_s1, space_1):
+    """Marking a food on-hand with no household fails with a clear message (P1.3-B decision)."""
+    r = u1_s1.patch(reverse(DETAIL_URL, args={obj_1.id}), {'food_onhand': True}, content_type='application/json')
+    assert r.status_code == 400
+    assert 'household' in json.dumps(r.json()).lower()
+    with scopes_disabled():
+        assert not InventoryEntry.objects.filter(food=obj_1).exists()
+
+
+def test_onhand_autofills_expiry_from_shelf_life(u1_s1, space_1):
+    """FR-D1: marking a shelf-life food on-hand auto-dates the created lot (add_food_to_pantry path)."""
+    from datetime import timedelta
+    user = auth.get_user(u1_s1)
+    with scopes_disabled():
+        household = Household.objects.create(name='hh', space=space_1)
+        UserSpace.objects.filter(user=user, space=space_1).update(household=household)
+        invalidate_household_cache(UserSpace.objects.get(user=user, space=space_1))
+        food = FoodFactory(space=space_1, shelf_life_days=5)
+
+    r = u1_s1.patch(reverse(DETAIL_URL, args={food.id}), {'food_onhand': True}, content_type='application/json')
+    assert r.status_code == 200
+    with scopes_disabled():
+        lot = InventoryEntry.objects.get(food=food, inventory_location__household=household, amount__gt=0)
+        assert lot.expires == date.today() + timedelta(days=5)
 
 
 def test_batch_onhand_household(u1_s1, u2_s1, space_1):
-    """batch_update on_hand should propagate to all household members"""
+    """batch_update on_hand writes household inventory, visible to all members (P1.4)."""
     user1 = auth.get_user(u1_s1)
     user2 = auth.get_user(u2_s1)
 
@@ -657,36 +777,65 @@ def test_batch_onhand_household(u1_s1, u2_s1, space_1):
 
         household = Household.objects.create(name='test', space=space_1)
         UserSpace.objects.filter(user__in=[user1, user2], space=space_1).update(household=household)
+    caches['default'].delete(f'household_user_ids_{space_1.id}_{household.id}')
 
-    # batch mark on_hand=True via user1
+    # batch mark on_hand=True via user1 -> one inventory lot per food in the household
     r = u1_s1.put(
         reverse('api:food-batch-update'),
         {'foods': [food1.id, food2.id], 'on_hand': True},
         content_type='application/json',
     )
     assert r.status_code == 200
-
     with scopes_disabled():
-        # both foods should be onhand for BOTH household members
-        assert food1.onhand_users.filter(id=user1.id).exists()
-        assert food1.onhand_users.filter(id=user2.id).exists()
-        assert food2.onhand_users.filter(id=user1.id).exists()
-        assert food2.onhand_users.filter(id=user2.id).exists()
+        for f in (food1, food2):
+            assert InventoryEntry.objects.filter(food=f, inventory_location__household=household, amount__gt=0).count() == 1
 
-    # batch mark on_hand=False via user1
+    # both household members see them on-hand (via inventory)
+    assert json.loads(u1_s1.get(reverse(DETAIL_URL, args={food1.id})).content)['food_onhand'] is True
+    assert json.loads(u2_s1.get(reverse(DETAIL_URL, args={food1.id})).content)['food_onhand'] is True
+
+    # batch mark on_hand=False via user1 -> lots zeroed
     r = u1_s1.put(
         reverse('api:food-batch-update'),
         {'foods': [food1.id, food2.id], 'on_hand': False},
         content_type='application/json',
     )
     assert r.status_code == 200
-
     with scopes_disabled():
-        # both foods should be off-hand for BOTH household members
-        assert not food1.onhand_users.filter(id=user1.id).exists()
-        assert not food1.onhand_users.filter(id=user2.id).exists()
-        assert not food2.onhand_users.filter(id=user1.id).exists()
-        assert not food2.onhand_users.filter(id=user2.id).exists()
+        for f in (food1, food2):
+            assert not InventoryEntry.objects.filter(food=f, inventory_location__household=household, amount__gt=0).exists()
+    assert json.loads(u2_s1.get(reverse(DETAIL_URL, args={food1.id})).content)['food_onhand'] is False
+
+
+def test_batch_onhand_requires_household(u1_s1, space_1):
+    """batch_update on_hand with no household fails with a clear message (P1.4)."""
+    with scopes_disabled():
+        food1 = FoodFactory(space=space_1)
+    r = u1_s1.put(
+        reverse('api:food-batch-update'),
+        {'foods': [food1.id], 'on_hand': True},
+        content_type='application/json',
+    )
+    assert r.status_code == 400
+    assert 'household' in json.dumps(r.json()).lower()
+    with scopes_disabled():
+        assert not InventoryEntry.objects.filter(food=food1).exists()
+
+
+def test_batch_onhand_no_household_does_not_partial_write(u1_s1, space_1, cat_1):
+    """A no-household on_hand batch fails before committing sibling fields — no partial write."""
+    with scopes_disabled():
+        food1 = FoodFactory(space=space_1)
+    r = u1_s1.put(
+        reverse('api:food-batch-update'),
+        {'foods': [food1.id], 'category': cat_1.id, 'on_hand': True},
+        content_type='application/json',
+    )
+    assert r.status_code == 400
+    with scopes_disabled():
+        food1.refresh_from_db()
+        # the category in the same request must NOT have been persisted
+        assert food1.supermarket_category_id is None
 
 
 def test_shopping_status_scoped_to_household(u1_s1, u2_s1, space_1):
@@ -757,15 +906,15 @@ def test_available_substitutes_empty_when_none_onhand(u1_s1, space_1):
 
 
 def test_available_substitutes_only_onhand_returned(u1_s1, space_1):
-    """Only substitutes with onhand_users matching the caller's shared users
-    are returned. Off-hand substitutes are filtered out."""
+    """Only substitutes on hand in the caller's household are returned. Off-hand
+    substitutes are filtered out."""
     user = auth.get_user(u1_s1)
     with scopes_disabled():
         food = FoodFactory(space=space_1)
         onhand_sub = FoodFactory(space=space_1)
-        onhand_sub.onhand_users.add(user)
         offhand_sub = FoodFactory(space=space_1)
         food.substitute.add(onhand_sub, offhand_sub)
+        _stock_food(onhand_sub, user, space_1)
 
     r = json.loads(u1_s1.get(reverse(DETAIL_URL, args=[food.id])).content)
     ids = [s['id'] for s in r['available_substitutes']]
@@ -790,8 +939,8 @@ def test_available_substitutes_empty_on_list_endpoint(u1_s1, space_1):
     with scopes_disabled():
         food = FoodFactory(space=space_1)
         onhand_sub = FoodFactory(space=space_1)
-        onhand_sub.onhand_users.add(user)
         food.substitute.add(onhand_sub)
+        _stock_food(onhand_sub, user, space_1)
 
     r = json.loads(u1_s1.get(reverse(LIST_URL)).content)
     target = next(f for f in r['results'] if f['id'] == food.id)
@@ -816,24 +965,42 @@ def get_stats(client):
 
 # ==================== onhand filter ====================
 
-@pytest.mark.parametrize("filter_value,expected_count", [
-    ('true', 1),
-    ('false', 1),
-])
-def test_filter_onhand(filter_value, expected_count, u1_s1, space_1):
+def test_filter_onhand_inventory(u1_s1, space_1):
+    """?onhand filter matches a food on hand via a household inventory lot; a non-stocked food does not."""
     user = auth.get_user(u1_s1)
     with scopes_disabled():
-        food_onhand = FoodFactory(space=space_1, users_onhand=[user])
-        food_not_onhand = FoodFactory(space=space_1)
+        household = Household.objects.create(name='test', space=space_1)
+        UserSpace.objects.filter(user=user, space=space_1).update(household=household)
+        food_inv = FoodFactory(space=space_1)
+        location = InventoryLocationFactory(space=space_1, household=household)
+        InventoryEntryFactory(space=space_1, food=food_inv, inventory_location=location, amount=1)
+        food_not = FoodFactory(space=space_1)
+    caches['default'].delete(f'household_user_ids_{space_1.id}_{household.id}')
 
-    caches['default'].delete(f'household_user_ids_{space_1.id}_{user.id}')
-    response = get_filter_results(u1_s1, f'?onhand={filter_value}')
-    assert response['count'] == expected_count
+    ids_true = [x['id'] for x in get_filter_results(u1_s1, '?onhand=true')['results']]
+    assert food_inv.id in ids_true
+    assert food_not.id not in ids_true
 
-    if filter_value == 'true':
-        assert food_onhand.id in [x['id'] for x in response['results']]
-    else:
-        assert food_not_onhand.id in [x['id'] for x in response['results']]
+    ids_false = [x['id'] for x in get_filter_results(u1_s1, '?onhand=false')['results']]
+    assert food_inv.id not in ids_false
+    assert food_not.id in ids_false
+
+
+def test_stats_onhand_counts_inventory(u1_s1, space_1):
+    """stats onhand counts a food on hand via a household inventory lot."""
+    user = auth.get_user(u1_s1)
+    with scopes_disabled():
+        household = Household.objects.create(name='test', space=space_1)
+        UserSpace.objects.filter(user=user, space=space_1).update(household=household)
+    caches['default'].delete(f'household_user_ids_{space_1.id}_{household.id}')
+
+    baseline = get_stats(u1_s1)['onhand']
+    with scopes_disabled():
+        food_inv = FoodFactory(space=space_1)
+        location = InventoryLocationFactory(space=space_1, household=household)
+        InventoryEntryFactory(space=space_1, food=food_inv, inventory_location=location, amount=1)
+
+    assert get_stats(u1_s1)['onhand'] == baseline + 1
 
 
 def test_filter_onhand_shared_user(u1_s1, u2_s1, space_1):
@@ -844,7 +1011,8 @@ def test_filter_onhand_shared_user(u1_s1, u2_s1, space_1):
     with scopes_disabled():
         household = Household.objects.create(name='test', space=space_1)
         UserSpace.objects.filter(user__in=[user1, user2], space=space_1).update(household=household)
-        food_onhand_user2 = FoodFactory(space=space_1, users_onhand=[user2])
+        food_onhand_user2 = FoodFactory(space=space_1)
+        _stock_food(food_onhand_user2, user2, space_1)
         FoodFactory(space=space_1)
 
     caches['default'].delete(f'household_user_ids_{space_1.id}_{user1.id}')
@@ -865,8 +1033,10 @@ def test_filter_onhand_no_duplicates(u1_s1, u2_s1, space_1):
     caches['default'].delete(f'household_user_ids_{space_1.id}_{user1.id}')
 
     with scopes_disabled():
-        # food is onhand for both user1 AND user2 (both in shared_users)
-        food = FoodFactory(space=space_1, users_onhand=[user1, user2])
+        # food has multiple household inventory lots — the filter must not duplicate the row
+        food = FoodFactory(space=space_1)
+        _stock_food(food, user1, space_1)
+        _stock_food(food, user1, space_1)
 
     response = get_filter_results(u1_s1, '?onhand=true')
     result_ids = [x['id'] for x in response['results']]
@@ -1070,9 +1240,11 @@ def test_filter_combined(u1_s1, space_1, cat_1):
     """Multiple filters should be AND-combined."""
     user = auth.get_user(u1_s1)
     with scopes_disabled():
-        food_both = FoodFactory(space=space_1, users_onhand=[user])
-        food_onhand_only = FoodFactory(space=space_1, users_onhand=[user])
+        food_both = FoodFactory(space=space_1)
+        food_onhand_only = FoodFactory(space=space_1)
         food_cat_only = FoodFactory(space=space_1)
+        _stock_food(food_both, user, space_1)
+        _stock_food(food_onhand_only, user, space_1)
         food_both.supermarket_category = cat_1
         food_both.save()
         food_cat_only.supermarket_category = cat_1
@@ -1100,7 +1272,8 @@ def test_filter_no_results(u1_s1, space_1):
 def test_filter_case_insensitive(u1_s1, space_1):
     user = auth.get_user(u1_s1)
     with scopes_disabled():
-        FoodFactory(space=space_1, users_onhand=[user])
+        food = FoodFactory(space=space_1)
+        _stock_food(food, user, space_1)
         FoodFactory(space=space_1)
 
     for val in ['True', 'TRUE', 'true', '1']:
@@ -1239,7 +1412,8 @@ def test_filter_onhand_false_shared_user(u1_s1, u2_s1, space_1):
     with scopes_disabled():
         household = Household.objects.create(name='test', space=space_1)
         UserSpace.objects.filter(user__in=[user1, user2], space=space_1).update(household=household)
-        food_onhand_user2 = FoodFactory(space=space_1, users_onhand=[user2])
+        food_onhand_user2 = FoodFactory(space=space_1)
+        _stock_food(food_onhand_user2, user2, space_1)
         food_not_onhand = FoodFactory(space=space_1)
 
     caches['default'].delete(f'household_user_ids_{space_1.id}_{user1.id}')
@@ -1278,7 +1452,8 @@ def test_stats_counts_are_space_wide(u1_s1, space_1):
     baseline = get_stats(u1_s1)
 
     with scopes_disabled():
-        FoodFactory(space=space_1, users_onhand=[user])
+        food_onhand = FoodFactory(space=space_1)
+        _stock_food(food_onhand, user, space_1)
         _food_shopping = FoodFactory(space=space_1)
         ShoppingListEntryFactory(food=_food_shopping, space=space_1, created_by=user, checked=False)
         food_ignored = FoodFactory(space=space_1)
@@ -1334,7 +1509,8 @@ def test_stats_exclude_other_spaces(u1_s1, space_1, space_2):
     baseline = get_stats(u1_s1)
 
     with scopes_disabled():
-        FoodFactory(space=space_1, users_onhand=[user])
+        food_onhand = FoodFactory(space=space_1)
+        _stock_food(food_onhand, user, space_1)
         # Food in another space — should not appear in stats
         other_food = FoodFactory(space=space_2)
         other_food.ignore_shopping = True
@@ -1418,7 +1594,7 @@ def test_filter_has_inventory(filter_value, expected_match, u1_s1, space_1):
     with scopes_disabled():
         food_with = FoodFactory(space=space_1)
         food_without = FoodFactory(space=space_1)
-        InventoryEntryFactory(food=food_with, space=space_1, created_by=user, amount=5)
+        _stock_food(food_with, user, space_1, amount=5)
 
     response = get_filter_results(u1_s1, f'?has_inventory={filter_value}')
     result_ids = [x['id'] for x in response['results']]
@@ -1447,8 +1623,8 @@ def test_filter_has_inventory_no_duplicates(u1_s1, space_1):
     user = auth.get_user(u1_s1)
     with scopes_disabled():
         food = FoodFactory(space=space_1)
-        InventoryEntryFactory(food=food, space=space_1, created_by=user, amount=3)
-        InventoryEntryFactory(food=food, space=space_1, created_by=user, amount=2)
+        _stock_food(food, user, space_1, amount=3)
+        _stock_food(food, user, space_1, amount=2)
 
     response = get_filter_results(u1_s1, '?has_inventory=true')
     result_ids = [x['id'] for x in response['results']]
@@ -1518,10 +1694,8 @@ def test_filter_expired(filter_value, expected_match, u1_s1, space_1):
     with scopes_disabled():
         food_expired = FoodFactory(space=space_1)
         food_not_expired = FoodFactory(space=space_1)
-        InventoryEntryFactory(food=food_expired, space=space_1, created_by=user,
-                              amount=1, expires=today - timedelta(days=1))
-        InventoryEntryFactory(food=food_not_expired, space=space_1, created_by=user,
-                              amount=1, expires=today + timedelta(days=10))
+        _stock_food(food_expired, user, space_1, expires=today - timedelta(days=1))
+        _stock_food(food_not_expired, user, space_1, expires=today + timedelta(days=10))
 
     response = get_filter_results(u1_s1, f'?expired={filter_value}')
     result_ids = [x['id'] for x in response['results']]
@@ -1538,7 +1712,7 @@ def test_filter_expired_ignores_no_expiration(u1_s1, space_1):
     user = auth.get_user(u1_s1)
     with scopes_disabled():
         food = FoodFactory(space=space_1)
-        InventoryEntryFactory(food=food, space=space_1, created_by=user, amount=1, expires=None)
+        _stock_food(food, user, space_1, expires=None)
 
     response = get_filter_results(u1_s1, '?expired=true')
     result_ids = [x['id'] for x in response['results']]
@@ -1554,10 +1728,8 @@ def test_filter_expiring_soon(u1_s1, space_1):
     with scopes_disabled():
         food_soon = FoodFactory(space=space_1)
         food_later = FoodFactory(space=space_1)
-        InventoryEntryFactory(food=food_soon, space=space_1, created_by=user,
-                              amount=1, expires=today + timedelta(days=2))
-        InventoryEntryFactory(food=food_later, space=space_1, created_by=user,
-                              amount=1, expires=today + timedelta(days=10))
+        _stock_food(food_soon, user, space_1, expires=today + timedelta(days=2))
+        _stock_food(food_later, user, space_1, expires=today + timedelta(days=10))
 
     response = get_filter_results(u1_s1, '?expiring_soon=3')
     result_ids = [x['id'] for x in response['results']]
@@ -1572,8 +1744,7 @@ def test_filter_expiring_soon_excludes_already_expired(u1_s1, space_1):
     today = date.today()
     with scopes_disabled():
         food_expired = FoodFactory(space=space_1)
-        InventoryEntryFactory(food=food_expired, space=space_1, created_by=user,
-                              amount=1, expires=today - timedelta(days=1))
+        _stock_food(food_expired, user, space_1, expires=today - timedelta(days=1))
 
     response = get_filter_results(u1_s1, '?expiring_soon=3')
     result_ids = [x['id'] for x in response['results']]
@@ -1588,6 +1759,73 @@ def test_filter_expiring_soon_invalid_value(u1_s1, space_1):
     response = get_filter_results(u1_s1, '?expiring_soon=abc')
     # Should not crash and should return results (no filter applied)
     assert response['count'] >= 1
+
+
+# ============ household scoping (FR-B4) ============
+
+def test_filter_has_inventory_household_scoped(u1_s1, space_1):
+    """has_inventory reads only the requesting user's household — a lot in another household of
+    the same space must not match (FR-B4)."""
+    user = auth.get_user(u1_s1)
+    with scopes_disabled():
+        mine = FoodFactory(space=space_1)
+        theirs = FoodFactory(space=space_1)
+        _stock_food(mine, user, space_1)
+        _stock_food_other_household(theirs, space_1)
+
+    response = get_filter_results(u1_s1, '?has_inventory=true')
+    result_ids = [x['id'] for x in response['results']]
+    assert mine.id in result_ids
+    assert theirs.id not in result_ids
+
+
+def test_filter_expired_household_scoped(u1_s1, space_1):
+    """expired reads only the requesting user's household (FR-B4)."""
+    from datetime import timedelta
+    user = auth.get_user(u1_s1)
+    yesterday = date.today() - timedelta(days=1)
+    with scopes_disabled():
+        mine = FoodFactory(space=space_1)
+        theirs = FoodFactory(space=space_1)
+        _stock_food(mine, user, space_1, expires=yesterday)
+        _stock_food_other_household(theirs, space_1, expires=yesterday)
+
+    response = get_filter_results(u1_s1, '?expired=true')
+    result_ids = [x['id'] for x in response['results']]
+    assert mine.id in result_ids
+    assert theirs.id not in result_ids
+
+
+def test_filter_expiring_soon_household_scoped(u1_s1, space_1):
+    """expiring_soon reads only the requesting user's household (FR-B4)."""
+    from datetime import timedelta
+    user = auth.get_user(u1_s1)
+    soon = date.today() + timedelta(days=2)
+    with scopes_disabled():
+        mine = FoodFactory(space=space_1)
+        theirs = FoodFactory(space=space_1)
+        _stock_food(mine, user, space_1, expires=soon)
+        _stock_food_other_household(theirs, space_1, expires=soon)
+
+    response = get_filter_results(u1_s1, '?expiring_soon=3')
+    result_ids = [x['id'] for x in response['results']]
+    assert mine.id in result_ids
+    assert theirs.id not in result_ids
+
+
+def test_food_list_omits_earliest_expiry_for_perf(u1_s1, space_1):
+    """The flat food list carries in_inventory but leaves earliest_expiry null — the expiry tint
+    is deliberately omitted here for performance (FR-I6), even for a dated on-hand food."""
+    from datetime import timedelta
+    user = auth.get_user(u1_s1)
+    with scopes_disabled():
+        food = FoodFactory(space=space_1)
+        _stock_food(food, user, space_1, expires=date.today() + timedelta(days=2))
+
+    response = get_filter_results(u1_s1, '?has_inventory=true')
+    row = next(x for x in response['results'] if x['id'] == food.id)
+    assert row['in_inventory'] == 'True'  # inventory presence still reported
+    assert row['earliest_expiry'] is None  # but no expiry annotation on the flat list
 
 
 # ==================== inventory stats ====================
@@ -1606,12 +1844,10 @@ def test_stats_inventory_and_expired(u1_s1, space_1):
         food_both = FoodFactory(space=space_1)
         FoodFactory(space=space_1)  # plain food
 
-        InventoryEntryFactory(food=food_inv, space=space_1, created_by=user, amount=1)
-        InventoryEntryFactory(food=food_expired, space=space_1, created_by=user,
-                              amount=1, expires=today - timedelta(days=1))
+        _stock_food(food_inv, user, space_1, amount=1)
+        _stock_food(food_expired, user, space_1, expires=today - timedelta(days=1))
         # food_both has inventory AND is expired
-        InventoryEntryFactory(food=food_both, space=space_1, created_by=user,
-                              amount=1, expires=today - timedelta(days=5))
+        _stock_food(food_both, user, space_1, expires=today - timedelta(days=5))
 
     stats = get_stats(u1_s1)
     assert stats['inventory'] == baseline.get('inventory', 0) + 3  # all 3 foods have inventory
@@ -1627,7 +1863,7 @@ def test_substitute_inventory_shows_true_when_substitute_has_inventory(u1_s1, sp
         food_a = FoodFactory(space=space_1)
         food_b = FoodFactory(space=space_1)
         food_a.substitute.add(food_b)
-        InventoryEntryFactory(food=food_b, space=space_1, created_by=user, amount=3)
+        _stock_food(food_b, user, space_1, amount=3)  # in the caller's household
 
     response = json.loads(u1_s1.get(reverse(DETAIL_URL, args=[food_a.id])).content)
     assert response['substitute_inventory'] is True
@@ -1643,6 +1879,25 @@ def test_substitute_inventory_shows_false_when_substitute_has_no_inventory(u1_s1
 
     response = json.loads(u1_s1.get(reverse(DETAIL_URL, args=[food_a.id])).content)
     assert response['substitute_inventory'] is False
+
+
+def test_substitute_inventory_none_household_returns_false(u1_s1, space_1):
+    """A user with no household never sees substitute inventory — inventory reads are strictly
+    household-scoped (FR-B4), with no space-wide fallback, on BOTH the retrieve and list paths."""
+    user = auth.get_user(u1_s1)
+    with scopes_disabled():
+        UserSpace.objects.filter(user=user, space=space_1).update(household=None)
+        food_a = FoodFactory(space=space_1)
+        food_b = FoodFactory(space=space_1)
+        food_a.substitute.add(food_b)
+        InventoryEntryFactory(food=food_b, space=space_1, amount=3)  # lot lives in a random household
+
+    detail = json.loads(u1_s1.get(reverse(DETAIL_URL, args=[food_a.id])).content)
+    assert detail['substitute_inventory'] is False  # retrieve path (serializer fallback)
+
+    listed = get_filter_results(u1_s1, '')
+    row = next(x for x in listed['results'] if x['id'] == food_a.id)
+    assert row['substitute_inventory'] is False  # list path (_compute_substitute_flags)
 
 
 # ==================== tree_search expansion (E-8) ====================
@@ -1682,7 +1937,7 @@ def test_tree_search_includes_ancestors_of_matched_descendant(u1_s1, space_1):
         middle.move(root, 'first-child')
         leaf.move(Food.objects.get(id=middle.id), 'first-child')
         # leaf is on-hand; ancestors are not
-        Food.objects.get(id=leaf.id).onhand_users.add(user)
+        _stock_food(Food.objects.get(id=leaf.id), user, space_1)
 
     caches['default'].delete(f'household_user_ids_{space_1.id}_{user.id}')
 
@@ -1711,7 +1966,7 @@ def test_tree_search_excludes_unrelated_siblings(u1_s1, space_1):
         leaf_a.move(Food.objects.get(id=branch_a.id), 'first-child')
         leaf_b.move(Food.objects.get(id=branch_b.id), 'first-child')
         # only leaf_a is on-hand
-        Food.objects.get(id=leaf_a.id).onhand_users.add(user)
+        _stock_food(Food.objects.get(id=leaf_a.id), user, space_1)
 
     caches['default'].delete(f'household_user_ids_{space_1.id}_{user.id}')
 
@@ -1780,9 +2035,8 @@ def recipe_with_food(space_1, u1_s1):
     return recipe, food, substitute, household, location
 
 
-@pytest.mark.parametrize("use_inventory", [False, True], ids=["onhand_users", "inventory_entry"])
-def test_food_onhand(recipe_with_food, u1_s1, space_1, use_inventory):
-    """food_onhand should be True when food has onhand_users OR inventory entries."""
+def test_food_onhand(recipe_with_food, u1_s1, space_1):
+    """food_onhand is True when the food has a household inventory lot."""
     recipe, food, _, household, location = recipe_with_food
     user = auth.get_user(u1_s1)
 
@@ -1790,21 +2044,28 @@ def test_food_onhand(recipe_with_food, u1_s1, space_1, use_inventory):
     assert json.loads(response.content)['food_onhand'] is False
 
     with scopes_disabled():
-        if use_inventory:
-            InventoryEntryFactory(
-                food=food, amount=1, inventory_location=location,
-                space=space_1, created_by=user,
-            )
-        else:
-            food.onhand_users.add(user)
+        InventoryEntryFactory(
+            food=food, amount=1, inventory_location=location,
+            space=space_1, created_by=user,
+        )
 
     response = u1_s1.get(reverse(DETAIL_URL, args=[food.id]))
     assert json.loads(response.content)['food_onhand'] is True
 
 
-@pytest.mark.parametrize("use_inventory", [False, True], ids=["onhand_users", "inventory_entry"])
-def test_substitute_onhand(recipe_with_food, u1_s1, space_1, use_inventory):
-    """substitute_onhand should be True when a substitute has onhand_users OR inventory entries."""
+def test_onhand_users_without_inventory_not_available(recipe_with_food, u1_s1, space_1):
+    """Legacy onhand_users no longer confers availability — only household inventory does (P1.7)."""
+    recipe, food, _, household, location = recipe_with_food
+    user = auth.get_user(u1_s1)
+    with scopes_disabled():
+        food.onhand_users.add(user)  # legacy data, no inventory lot
+
+    response = u1_s1.get(reverse(DETAIL_URL, args=[food.id]))
+    assert json.loads(response.content)['food_onhand'] is False
+
+
+def test_substitute_onhand(recipe_with_food, u1_s1, space_1):
+    """substitute_onhand is True when a substitute has a household inventory lot."""
     recipe, food, substitute, household, location = recipe_with_food
     user = auth.get_user(u1_s1)
 
@@ -1812,13 +2073,10 @@ def test_substitute_onhand(recipe_with_food, u1_s1, space_1, use_inventory):
     assert json.loads(response.content)['substitute_onhand'] is False
 
     with scopes_disabled():
-        if use_inventory:
-            InventoryEntryFactory(
-                food=substitute, amount=1, inventory_location=location,
-                space=space_1, created_by=user,
-            )
-        else:
-            substitute.onhand_users.add(user)
+        InventoryEntryFactory(
+            food=substitute, amount=1, inventory_location=location,
+            space=space_1, created_by=user,
+        )
 
     response = u1_s1.get(reverse(DETAIL_URL, args=[food.id]))
     assert json.loads(response.content)['substitute_onhand'] is True

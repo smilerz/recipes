@@ -9,7 +9,8 @@ from django_scopes import scopes_disabled
 
 from cookbook.helper.permission_helper import invalidate_household_cache
 from cookbook.models import Food, Ingredient, ShoppingListEntry, Household, UserSpace
-from cookbook.tests.factories import (MealPlanFactory, RecipeFactory,
+from cookbook.tests.factories import (InventoryEntryFactory, InventoryLocationFactory,
+                                      MealPlanFactory, RecipeFactory,
                                       StepFactory, UserFactory)
 
 if settings.DATABASES['default']['ENGINE'] == 'django.db.backends.postgresql':
@@ -104,6 +105,29 @@ def test_shopping_recipe_method(request, arg, recipe, sle_count, u1_s1, u2_s1, s
         assert r.status_code == 405
         r = c.delete(url)
         assert r.status_code == 405
+
+
+def test_shopping_recipe_excludes_inventory_onhand(u1_s1, space_1):
+    """mealplan_autoexclude_onhand excludes a food on hand via a household inventory lot."""
+    user = auth.get_user(u1_s1)
+    user.userpreference.mealplan_autoadd_shopping = True
+    user.userpreference.mealplan_autoexclude_onhand = True
+    user.userpreference.save()
+
+    with scopes_disabled():
+        household = Household.objects.create(name='test', space=space_1)
+        UserSpace.objects.filter(user=user, space=space_1).update(household=household)
+        for us in UserSpace.objects.filter(space=space_1, household=household):
+            invalidate_household_cache(us)
+        recipe = RecipeFactory(created_by=user, space=space_1)
+        onhand_food = Ingredient.objects.filter(step__recipe=recipe, space=space_1).first().food
+        location = InventoryLocationFactory(space=space_1, household=household)
+        InventoryEntryFactory(space=space_1, food=onhand_food, inventory_location=location, amount=1)
+
+    assert u1_s1.put(reverse(SHOPPING_RECIPE_URL, args={recipe.id})).status_code == 200
+    r = json.loads(u1_s1.get(reverse(SHOPPING_LIST_URL)).content)
+    assert onhand_food.id not in [x['food']['id'] for x in r['results']]
+    assert r['count'] == 9  # 10 default ingredients minus the one excluded as on-hand
 
 
 def test_shopping_recipe_mixed_authors(u1_s1, u2_s1, space_1):
