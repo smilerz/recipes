@@ -8,6 +8,7 @@ models/AiProvider.ts
 models/AuthToken.ts
 models/AutoMealPlan.ts
 models/Automation.ts
+models/AutomationStats.ts
 models/AutomationTypeEnum.ts
 models/BookingTypeEnum.ts
 models/BookmarkletImport.ts
@@ -18,7 +19,6 @@ models/CookLog.ts
 models/CustomFilter.ts
 models/CustomFilterTypeEnum.ts
 models/DefaultPageEnum.ts
-models/DeleteEnum.ts
 models/ExportLog.ts
 models/ExportRequest.ts
 models/FdcQuery.ts
@@ -27,8 +27,8 @@ models/Food.ts
 models/FoodBatchUpdate.ts
 models/FoodInheritField.ts
 models/FoodShopping.ts
-models/FoodShoppingUpdate.ts
 models/FoodSimple.ts
+models/FoodStats.ts
 models/GenericModelReference.ts
 models/Group.ts
 models/Household.ts
@@ -49,6 +49,7 @@ models/InviteLink.ts
 models/Keyword.ts
 models/KeywordLabel.ts
 models/KeywordModeEnum.ts
+models/KeywordStats.ts
 models/Localization.ts
 models/MealPlan.ts
 models/MealType.ts
@@ -183,6 +184,7 @@ models/SyncLog.ts
 models/ThemeEnum.ts
 models/Unit.ts
 models/UnitConversion.ts
+models/UnitStats.ts
 models/User.ts
 models/UserFile.ts
 models/UserFileView.ts

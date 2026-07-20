@@ -599,7 +599,17 @@ paths:
   /api/automation/:
     get:
       operationId: apiAutomationList
-      description: logs request counts to redis cache total/per user/
+      description: |-
+        Applies a validated ``?ordering=`` query param against a per-viewset allow-list.
+
+        Subclasses declare up to three class attributes:
+
+        * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings.
+        * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the
+          column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``).
+        * ``ordering_plain_fields`` — params that order by their own name as-is.
+
+        Any ``ordering`` value not in the union of these is ignored (no ordering applied).
       parameters:
       - in: query
         name: limit
@@ -676,7 +686,17 @@ paths:
           description: ''
     post:
       operationId: apiAutomationCreate
-      description: logs request counts to redis cache total/per user/
+      description: |-
+        Applies a validated ``?ordering=`` query param against a per-viewset allow-list.
+
+        Subclasses declare up to three class attributes:
+
+        * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings.
+        * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the
+          column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``).
+        * ``ordering_plain_fields`` — params that order by their own name as-is.
+
+        Any ``ordering`` value not in the union of these is ignored (no ordering applied).
       tags:
       - api
       requestBody:
@@ -703,7 +723,17 @@ paths:
   /api/automation/{id}/:
     get:
       operationId: apiAutomationRetrieve
-      description: logs request counts to redis cache total/per user/
+      description: |-
+        Applies a validated ``?ordering=`` query param against a per-viewset allow-list.
+
+        Subclasses declare up to three class attributes:
+
+        * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings.
+        * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the
+          column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``).
+        * ``ordering_plain_fields`` — params that order by their own name as-is.
+
+        Any ``ordering`` value not in the union of these is ignored (no ordering applied).
       parameters:
       - in: path
         name: id
@@ -724,7 +754,17 @@ paths:
           description: ''
     put:
       operationId: apiAutomationUpdate
-      description: logs request counts to redis cache total/per user/
+      description: |-
+        Applies a validated ``?ordering=`` query param against a per-viewset allow-list.
+
+        Subclasses declare up to three class attributes:
+
+        * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings.
+        * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the
+          column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``).
+        * ``ordering_plain_fields`` — params that order by their own name as-is.
+
+        Any ``ordering`` value not in the union of these is ignored (no ordering applied).
       parameters:
       - in: path
         name: id
@@ -757,7 +797,17 @@ paths:
           description: ''
     patch:
       operationId: apiAutomationPartialUpdate
-      description: logs request counts to redis cache total/per user/
+      description: |-
+        Applies a validated ``?ordering=`` query param against a per-viewset allow-list.
+
+        Subclasses declare up to three class attributes:
+
+        * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings.
+        * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the
+          column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``).
+        * ``ordering_plain_fields`` — params that order by their own name as-is.
+
+        Any ``ordering`` value not in the union of these is ignored (no ordering applied).
       parameters:
       - in: path
         name: id
@@ -789,7 +839,17 @@ paths:
           description: ''
     delete:
       operationId: apiAutomationDestroy
-      description: logs request counts to redis cache total/per user/
+      description: |-
+        Applies a validated ``?ordering=`` query param against a per-viewset allow-list.
+
+        Subclasses declare up to three class attributes:
+
+        * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings.
+        * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the
+          column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``).
+        * ``ordering_plain_fields`` — params that order by their own name as-is.
+
+        Any ``ordering`` value not in the union of these is ignored (no ordering applied).
       parameters:
       - in: path
         name: id
@@ -804,6 +864,31 @@ paths:
       responses:
         '204':
           description: No response body
+  /api/automation/stats/:
+    get:
+      operationId: apiAutomationStatsRetrieve
+      description: |-
+        Applies a validated ``?ordering=`` query param against a per-viewset allow-list.
+
+        Subclasses declare up to three class attributes:
+
+        * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings.
+        * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the
+          column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``).
+        * ``ordering_plain_fields`` — params that order by their own name as-is.
+
+        Any ``ordering`` value not in the union of these is ignored (no ordering applied).
+      tags:
+      - api
+      security:
+      - ApiKeyAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AutomationStats'
+          description: ''
   /api/bookmarklet-import/:
     get:
       operationId: apiBookmarkletImportList
@@ -1246,7 +1331,17 @@ paths:
   /api/cook-log/:
     get:
       operationId: apiCookLogList
-      description: logs request counts to redis cache total/per user/
+      description: |-
+        Applies a validated ``?ordering=`` query param against a per-viewset allow-list.
+
+        Subclasses declare up to three class attributes:
+
+        * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings.
+        * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the
+          column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``).
+        * ``ordering_plain_fields`` — params that order by their own name as-is.
+
+        Any ``ordering`` value not in the union of these is ignored (no ordering applied).
       parameters:
       - in: query
         name: ordering
@@ -1267,6 +1362,12 @@ paths:
         schema:
           type: integer
       - in: query
+        name: query
+        schema:
+          type: string
+        description: lookup if query string is contained within the recipe name, case
+          insensitive
+      - in: query
         name: recipe
         schema:
           type: integer
@@ -1284,7 +1385,17 @@ paths:
           description: ''
     post:
       operationId: apiCookLogCreate
-      description: logs request counts to redis cache total/per user/
+      description: |-
+        Applies a validated ``?ordering=`` query param against a per-viewset allow-list.
+
+        Subclasses declare up to three class attributes:
+
+        * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings.
+        * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the
+          column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``).
+        * ``ordering_plain_fields`` — params that order by their own name as-is.
+
+        Any ``ordering`` value not in the union of these is ignored (no ordering applied).
       tags:
       - api
       requestBody:
@@ -1311,7 +1422,17 @@ paths:
   /api/cook-log/{id}/:
     get:
       operationId: apiCookLogRetrieve
-      description: logs request counts to redis cache total/per user/
+      description: |-
+        Applies a validated ``?ordering=`` query param against a per-viewset allow-list.
+
+        Subclasses declare up to three class attributes:
+
+        * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings.
+        * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the
+          column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``).
+        * ``ordering_plain_fields`` — params that order by their own name as-is.
+
+        Any ``ordering`` value not in the union of these is ignored (no ordering applied).
       parameters:
       - in: path
         name: id
@@ -1332,7 +1453,17 @@ paths:
           description: ''
     put:
       operationId: apiCookLogUpdate
-      description: logs request counts to redis cache total/per user/
+      description: |-
+        Applies a validated ``?ordering=`` query param against a per-viewset allow-list.
+
+        Subclasses declare up to three class attributes:
+
+        * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings.
+        * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the
+          column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``).
+        * ``ordering_plain_fields`` — params that order by their own name as-is.
+
+        Any ``ordering`` value not in the union of these is ignored (no ordering applied).
       parameters:
       - in: path
         name: id
@@ -1365,7 +1496,17 @@ paths:
           description: ''
     patch:
       operationId: apiCookLogPartialUpdate
-      description: logs request counts to redis cache total/per user/
+      description: |-
+        Applies a validated ``?ordering=`` query param against a per-viewset allow-list.
+
+        Subclasses declare up to three class attributes:
+
+        * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings.
+        * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the
+          column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``).
+        * ``ordering_plain_fields`` — params that order by their own name as-is.
+
+        Any ``ordering`` value not in the union of these is ignored (no ordering applied).
       parameters:
       - in: path
         name: id
@@ -1397,7 +1538,17 @@ paths:
           description: ''
     delete:
       operationId: apiCookLogDestroy
-      description: logs request counts to redis cache total/per user/
+      description: |-
+        Applies a validated ``?ordering=`` query param against a per-viewset allow-list.
+
+        Subclasses declare up to three class attributes:
+
+        * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings.
+        * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the
+          column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``).
+        * ``ordering_plain_fields`` — params that order by their own name as-is.
+
+        Any ``ordering`` value not in the union of these is ignored (no ordering applied).
       parameters:
       - in: path
         name: id
@@ -1415,7 +1566,17 @@ paths:
   /api/custom-filter/:
     get:
       operationId: apiCustomFilterList
-      description: logs request counts to redis cache total/per user/
+      description: |-
+        Applies a validated ``?ordering=`` query param against a per-viewset allow-list.
+
+        Subclasses declare up to three class attributes:
+
+        * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings.
+        * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the
+          column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``).
+        * ``ordering_plain_fields`` — params that order by their own name as-is.
+
+        Any ``ordering`` value not in the union of these is ignored (no ordering applied).
       parameters:
       - in: query
         name: limit
@@ -1485,7 +1646,17 @@ paths:
           description: ''
     post:
       operationId: apiCustomFilterCreate
-      description: logs request counts to redis cache total/per user/
+      description: |-
+        Applies a validated ``?ordering=`` query param against a per-viewset allow-list.
+
+        Subclasses declare up to three class attributes:
+
+        * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings.
+        * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the
+          column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``).
+        * ``ordering_plain_fields`` — params that order by their own name as-is.
+
+        Any ``ordering`` value not in the union of these is ignored (no ordering applied).
       tags:
       - api
       requestBody:
@@ -1512,7 +1683,17 @@ paths:
   /api/custom-filter/{id}/:
     get:
       operationId: apiCustomFilterRetrieve
-      description: logs request counts to redis cache total/per user/
+      description: |-
+        Applies a validated ``?ordering=`` query param against a per-viewset allow-list.
+
+        Subclasses declare up to three class attributes:
+
+        * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings.
+        * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the
+          column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``).
+        * ``ordering_plain_fields`` — params that order by their own name as-is.
+
+        Any ``ordering`` value not in the union of these is ignored (no ordering applied).
       parameters:
       - in: path
         name: id
@@ -1533,7 +1714,17 @@ paths:
           description: ''
     put:
       operationId: apiCustomFilterUpdate
-      description: logs request counts to redis cache total/per user/
+      description: |-
+        Applies a validated ``?ordering=`` query param against a per-viewset allow-list.
+
+        Subclasses declare up to three class attributes:
+
+        * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings.
+        * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the
+          column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``).
+        * ``ordering_plain_fields`` — params that order by their own name as-is.
+
+        Any ``ordering`` value not in the union of these is ignored (no ordering applied).
       parameters:
       - in: path
         name: id
@@ -1566,7 +1757,17 @@ paths:
           description: ''
     patch:
       operationId: apiCustomFilterPartialUpdate
-      description: logs request counts to redis cache total/per user/
+      description: |-
+        Applies a validated ``?ordering=`` query param against a per-viewset allow-list.
+
+        Subclasses declare up to three class attributes:
+
+        * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings.
+        * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the
+          column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``).
+        * ``ordering_plain_fields`` — params that order by their own name as-is.
+
+        Any ``ordering`` value not in the union of these is ignored (no ordering applied).
       parameters:
       - in: path
         name: id
@@ -1598,7 +1799,17 @@ paths:
           description: ''
     delete:
       operationId: apiCustomFilterDestroy
-      description: logs request counts to redis cache total/per user/
+      description: |-
+        Applies a validated ``?ordering=`` query param against a per-viewset allow-list.
+
+        Subclasses declare up to three class attributes:
+
+        * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings.
+        * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the
+          column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``).
+        * ``ordering_plain_fields`` — params that order by their own name as-is.
+
+        Any ``ordering`` value not in the union of these is ignored (no ordering applied).
       parameters:
       - in: path
         name: id
@@ -1845,13 +2056,78 @@ paths:
   /api/food/:
     get:
       operationId: apiFoodList
-      description: logs request counts to redis cache total/per user/
+      description: |-
+        Applies a validated ``?ordering=`` query param against a per-viewset allow-list.
+
+        Subclasses declare up to three class attributes:
+
+        * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings.
+        * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the
+          column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``).
+        * ``ordering_plain_fields`` — params that order by their own name as-is.
+
+        Any ``ordering`` value not in the union of these is ignored (no ordering applied).
       parameters:
       - in: query
-        name: limit
+        name: expired
+        schema:
+          type: boolean
+        description: Filter foods that have (true) / do not have (false) expired inventory.
+      - in: query
+        name: expiring_soon
+        schema:
+          type: integer
+        description: Filter foods with inventory expiring within this many days.
+      - in: query
+        name: has_children
+        schema:
+          type: boolean
+        description: Filter foods that have (true) / do not have (false) child foods.
+      - in: query
+        name: has_inventory
+        schema:
+          type: boolean
+        description: Filter foods that have (true) / do not have (false) inventory
+          on hand.
+      - in: query
+        name: has_recipe
+        schema:
+          type: boolean
+        description: Filter foods that are (true) / are not (false) linked to a recipe.
+      - in: query
+        name: has_substitute
+        schema:
+          type: boolean
+        description: Filter foods that have (true) / do not have (false) substitutes.
+      - in: query
+        name: ignore_shopping
+        schema:
+          type: boolean
+        description: Filter foods with ignore_shopping set to this value.
+      - in: query
+        name: in_shopping_list
+        schema:
+          type: boolean
+        description: Filter foods that are (true) / are not (false) on the shopping
+          list.
+      - in: query
+        name: inventory_location
+        schema:
+          type: integer
+        description: Filter foods with on-hand inventory at this inventory location
+          id.
+      - in: query
+        name: onhand
+        schema:
+          type: boolean
+        description: Filter foods currently on hand for the user/household.
+      - in: query
+        name: ordering
         schema:
           type: string
-        description: limit number of entries to return
+        description: 'Order results by field. Allowed: name, -name, numrecipe, -numrecipe,
+          numchild, -numchild, created_at, -created_at, supermarket_category__name,
+          -supermarket_category__name.'
       - name: page
         required: false
         in: query
@@ -1868,34 +2144,34 @@ paths:
         name: query
         schema:
           type: string
-        description: lookup if query string is contained within the name, case insensitive
-      - in: query
-        name: random
-        schema:
-          type: string
-        description: randomly orders entries (only works together with limit)
+        description: Search foods whose name contains this string (case insensitive).
       - in: query
         name: root
         schema:
           type: integer
-        description: Return first level children of {obj} with ID [int].  Integer
-          0 will return root {obj}s.
+        description: Return only children of the food with this id (tree navigation).
       - in: query
-        name: root_tree
+        name: supermarket_category
         schema:
           type: integer
-        description: Return all items belonging to the tree of the given {obj} id
+        description: Filter foods by supermarket category id.
       - in: query
         name: tree
         schema:
           type: integer
-        description: Return all self and children of {obj} with ID [int].
+        description: Return the food with this id and all of its descendants (tree
+          navigation).
       - in: query
-        name: updated_at
+        name: tree_search
         schema:
-          type: string
-        description: if model has an updated_at timestamp, filter only models updated
-          at or after datetime
+          type: boolean
+        description: When true and a filter is active, expand the result to include
+          ancestors of matches for tree context.
+      - in: query
+        name: used_in_recipes
+        schema:
+          type: boolean
+        description: Filter foods that are (true) / are not (false) used in any recipe.
       tags:
       - api
       security:
@@ -1909,7 +2185,17 @@ paths:
           description: ''
     post:
       operationId: apiFoodCreate
-      description: logs request counts to redis cache total/per user/
+      description: |-
+        Applies a validated ``?ordering=`` query param against a per-viewset allow-list.
+
+        Subclasses declare up to three class attributes:
+
+        * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings.
+        * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the
+          column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``).
+        * ``ordering_plain_fields`` — params that order by their own name as-is.
+
+        Any ``ordering`` value not in the union of these is ignored (no ordering applied).
       tags:
       - api
       requestBody:
@@ -1975,7 +2261,17 @@ paths:
   /api/food/{id}/:
     get:
       operationId: apiFoodRetrieve
-      description: logs request counts to redis cache total/per user/
+      description: |-
+        Applies a validated ``?ordering=`` query param against a per-viewset allow-list.
+
+        Subclasses declare up to three class attributes:
+
+        * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings.
+        * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the
+          column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``).
+        * ``ordering_plain_fields`` — params that order by their own name as-is.
+
+        Any ``ordering`` value not in the union of these is ignored (no ordering applied).
       parameters:
       - in: path
         name: id
@@ -1996,7 +2292,17 @@ paths:
           description: ''
     put:
       operationId: apiFoodUpdate
-      description: logs request counts to redis cache total/per user/
+      description: |-
+        Applies a validated ``?ordering=`` query param against a per-viewset allow-list.
+
+        Subclasses declare up to three class attributes:
+
+        * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings.
+        * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the
+          column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``).
+        * ``ordering_plain_fields`` — params that order by their own name as-is.
+
+        Any ``ordering`` value not in the union of these is ignored (no ordering applied).
       parameters:
       - in: path
         name: id
@@ -2029,7 +2335,17 @@ paths:
           description: ''
     patch:
       operationId: apiFoodPartialUpdate
-      description: logs request counts to redis cache total/per user/
+      description: |-
+        Applies a validated ``?ordering=`` query param against a per-viewset allow-list.
+
+        Subclasses declare up to three class attributes:
+
+        * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings.
+        * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the
+          column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``).
+        * ``ordering_plain_fields`` — params that order by their own name as-is.
+
+        Any ``ordering`` value not in the union of these is ignored (no ordering applied).
       parameters:
       - in: path
         name: id
@@ -2061,7 +2377,17 @@ paths:
           description: ''
     delete:
       operationId: apiFoodDestroy
-      description: logs request counts to redis cache total/per user/
+      description: |-
+        Applies a validated ``?ordering=`` query param against a per-viewset allow-list.
+
+        Subclasses declare up to three class attributes:
+
+        * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings.
+        * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the
+          column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``).
+        * ``ordering_plain_fields`` — params that order by their own name as-is.
+
+        Any ``ordering`` value not in the union of these is ignored (no ordering applied).
       parameters:
       - in: path
         name: id
@@ -2079,7 +2405,17 @@ paths:
   /api/food/{id}/aiproperties/:
     post:
       operationId: apiFoodAipropertiesCreate
-      description: logs request counts to redis cache total/per user/
+      description: |-
+        Applies a validated ``?ordering=`` query param against a per-viewset allow-list.
+
+        Subclasses declare up to three class attributes:
+
+        * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings.
+        * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the
+          column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``).
+        * ``ordering_plain_fields`` — params that order by their own name as-is.
+
+        Any ``ordering`` value not in the union of these is ignored (no ordering applied).
       parameters:
       - in: path
         name: id
@@ -2195,7 +2531,17 @@ paths:
   /api/food/{id}/merge/{target}/:
     put:
       operationId: apiFoodMergeUpdate
-      description: logs request counts to redis cache total/per user/
+      description: |-
+        Applies a validated ``?ordering=`` query param against a per-viewset allow-list.
+
+        Subclasses declare up to three class attributes:
+
+        * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings.
+        * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the
+          column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``).
+        * ``ordering_plain_fields`` — params that order by their own name as-is.
+
+        Any ``ordering`` value not in the union of these is ignored (no ordering applied).
       parameters:
       - in: path
         name: id
@@ -2235,7 +2581,17 @@ paths:
   /api/food/{id}/move/{parent}/:
     put:
       operationId: apiFoodMoveUpdate
-      description: logs request counts to redis cache total/per user/
+      description: |-
+        Applies a validated ``?ordering=`` query param against a per-viewset allow-list.
+
+        Subclasses declare up to three class attributes:
+
+        * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings.
+        * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the
+          column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``).
+        * ``ordering_plain_fields`` — params that order by their own name as-is.
+
+        Any ``ordering`` value not in the union of these is ignored (no ordering applied).
       parameters:
       - in: path
         name: id
@@ -2357,7 +2713,17 @@ paths:
   /api/food/{id}/shopping/:
     put:
       operationId: apiFoodShoppingUpdate
-      description: logs request counts to redis cache total/per user/
+      description: |-
+        Applies a validated ``?ordering=`` query param against a per-viewset allow-list.
+
+        Subclasses declare up to three class attributes:
+
+        * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings.
+        * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the
+          column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``).
+        * ``ordering_plain_fields`` — params that order by their own name as-is.
+
+        Any ``ordering`` value not in the union of these is ignored (no ordering applied).
       parameters:
       - in: path
         name: id
@@ -2371,13 +2737,13 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/FoodShoppingUpdate'
+              $ref: '#/components/schemas/Food'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/FoodShoppingUpdate'
+              $ref: '#/components/schemas/Food'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/FoodShoppingUpdate'
+              $ref: '#/components/schemas/Food'
         required: true
       security:
       - ApiKeyAuth: []
@@ -2386,12 +2752,54 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/FoodShoppingUpdate'
+                $ref: '#/components/schemas/Food'
+          description: ''
+  /api/food/{id}/substitutes/:
+    get:
+      operationId: apiFoodSubstitutesRetrieve
+      description: |-
+        Applies a validated ``?ordering=`` query param against a per-viewset allow-list.
+
+        Subclasses declare up to three class attributes:
+
+        * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings.
+        * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the
+          column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``).
+        * ``ordering_plain_fields`` — params that order by their own name as-is.
+
+        Any ``ordering`` value not in the union of these is ignored (no ordering applied).
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this food.
+        required: true
+      tags:
+      - api
+      security:
+      - ApiKeyAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FoodSimple'
           description: ''
   /api/food/batch_update/:
     put:
       operationId: apiFoodBatchUpdateUpdate
-      description: logs request counts to redis cache total/per user/
+      description: |-
+        Applies a validated ``?ordering=`` query param against a per-viewset allow-list.
+
+        Subclasses declare up to three class attributes:
+
+        * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings.
+        * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the
+          column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``).
+        * ``ordering_plain_fields`` — params that order by their own name as-is.
+
+        Any ``ordering`` value not in the union of these is ignored (no ordering applied).
       tags:
       - api
       requestBody:
@@ -2414,6 +2822,31 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/FoodBatchUpdate'
+          description: ''
+  /api/food/stats/:
+    get:
+      operationId: apiFoodStatsRetrieve
+      description: |-
+        Applies a validated ``?ordering=`` query param against a per-viewset allow-list.
+
+        Subclasses declare up to three class attributes:
+
+        * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings.
+        * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the
+          column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``).
+        * ``ordering_plain_fields`` — params that order by their own name as-is.
+
+        Any ``ordering`` value not in the union of these is ignored (no ordering applied).
+      tags:
+      - api
+      security:
+      - ApiKeyAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FoodStats'
           description: ''
   /api/get_external_file_link/{id}/:
     get:
@@ -3895,7 +4328,17 @@ paths:
   /api/keyword/:
     get:
       operationId: apiKeywordList
-      description: logs request counts to redis cache total/per user/
+      description: |-
+        Applies a validated ``?ordering=`` query param against a per-viewset allow-list.
+
+        Subclasses declare up to three class attributes:
+
+        * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings.
+        * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the
+          column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``).
+        * ``ordering_plain_fields`` — params that order by their own name as-is.
+
+        Any ``ordering`` value not in the union of these is ignored (no ordering applied).
       parameters:
       - in: query
         name: limit
@@ -3965,7 +4408,17 @@ paths:
           description: ''
     post:
       operationId: apiKeywordCreate
-      description: logs request counts to redis cache total/per user/
+      description: |-
+        Applies a validated ``?ordering=`` query param against a per-viewset allow-list.
+
+        Subclasses declare up to three class attributes:
+
+        * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings.
+        * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the
+          column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``).
+        * ``ordering_plain_fields`` — params that order by their own name as-is.
+
+        Any ``ordering`` value not in the union of these is ignored (no ordering applied).
       tags:
       - api
       requestBody:
@@ -3992,7 +4445,17 @@ paths:
   /api/keyword/{id}/:
     get:
       operationId: apiKeywordRetrieve
-      description: logs request counts to redis cache total/per user/
+      description: |-
+        Applies a validated ``?ordering=`` query param against a per-viewset allow-list.
+
+        Subclasses declare up to three class attributes:
+
+        * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings.
+        * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the
+          column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``).
+        * ``ordering_plain_fields`` — params that order by their own name as-is.
+
+        Any ``ordering`` value not in the union of these is ignored (no ordering applied).
       parameters:
       - in: path
         name: id
@@ -4013,7 +4476,17 @@ paths:
           description: ''
     put:
       operationId: apiKeywordUpdate
-      description: logs request counts to redis cache total/per user/
+      description: |-
+        Applies a validated ``?ordering=`` query param against a per-viewset allow-list.
+
+        Subclasses declare up to three class attributes:
+
+        * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings.
+        * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the
+          column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``).
+        * ``ordering_plain_fields`` — params that order by their own name as-is.
+
+        Any ``ordering`` value not in the union of these is ignored (no ordering applied).
       parameters:
       - in: path
         name: id
@@ -4046,7 +4519,17 @@ paths:
           description: ''
     patch:
       operationId: apiKeywordPartialUpdate
-      description: logs request counts to redis cache total/per user/
+      description: |-
+        Applies a validated ``?ordering=`` query param against a per-viewset allow-list.
+
+        Subclasses declare up to three class attributes:
+
+        * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings.
+        * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the
+          column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``).
+        * ``ordering_plain_fields`` — params that order by their own name as-is.
+
+        Any ``ordering`` value not in the union of these is ignored (no ordering applied).
       parameters:
       - in: path
         name: id
@@ -4078,7 +4561,17 @@ paths:
           description: ''
     delete:
       operationId: apiKeywordDestroy
-      description: logs request counts to redis cache total/per user/
+      description: |-
+        Applies a validated ``?ordering=`` query param against a per-viewset allow-list.
+
+        Subclasses declare up to three class attributes:
+
+        * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings.
+        * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the
+          column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``).
+        * ``ordering_plain_fields`` — params that order by their own name as-is.
+
+        Any ``ordering`` value not in the union of these is ignored (no ordering applied).
       parameters:
       - in: path
         name: id
@@ -4137,7 +4630,17 @@ paths:
   /api/keyword/{id}/merge/{target}/:
     put:
       operationId: apiKeywordMergeUpdate
-      description: logs request counts to redis cache total/per user/
+      description: |-
+        Applies a validated ``?ordering=`` query param against a per-viewset allow-list.
+
+        Subclasses declare up to three class attributes:
+
+        * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings.
+        * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the
+          column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``).
+        * ``ordering_plain_fields`` — params that order by their own name as-is.
+
+        Any ``ordering`` value not in the union of these is ignored (no ordering applied).
       parameters:
       - in: path
         name: id
@@ -4177,7 +4680,17 @@ paths:
   /api/keyword/{id}/move/{parent}/:
     put:
       operationId: apiKeywordMoveUpdate
-      description: logs request counts to redis cache total/per user/
+      description: |-
+        Applies a validated ``?ordering=`` query param against a per-viewset allow-list.
+
+        Subclasses declare up to three class attributes:
+
+        * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings.
+        * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the
+          column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``).
+        * ``ordering_plain_fields`` — params that order by their own name as-is.
+
+        Any ``ordering`` value not in the union of these is ignored (no ordering applied).
       parameters:
       - in: path
         name: id
@@ -4295,6 +4808,31 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/PaginatedGenericModelReferenceList'
+          description: ''
+  /api/keyword/stats/:
+    get:
+      operationId: apiKeywordStatsRetrieve
+      description: |-
+        Applies a validated ``?ordering=`` query param against a per-viewset allow-list.
+
+        Subclasses declare up to three class attributes:
+
+        * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings.
+        * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the
+          column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``).
+        * ``ordering_plain_fields`` — params that order by their own name as-is.
+
+        Any ``ordering`` value not in the union of these is ignored (no ordering applied).
+      tags:
+      - api
+      security:
+      - ApiKeyAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/KeywordStats'
           description: ''
   /api/localization/:
     get:
@@ -9446,7 +9984,17 @@ paths:
   /api/unit/:
     get:
       operationId: apiUnitList
-      description: logs request counts to redis cache total/per user/
+      description: |-
+        Applies a validated ``?ordering=`` query param against a per-viewset allow-list.
+
+        Subclasses declare up to three class attributes:
+
+        * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings.
+        * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the
+          column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``).
+        * ``ordering_plain_fields`` — params that order by their own name as-is.
+
+        Any ``ordering`` value not in the union of these is ignored (no ordering applied).
       parameters:
       - in: query
         name: limit
@@ -9500,7 +10048,17 @@ paths:
           description: ''
     post:
       operationId: apiUnitCreate
-      description: logs request counts to redis cache total/per user/
+      description: |-
+        Applies a validated ``?ordering=`` query param against a per-viewset allow-list.
+
+        Subclasses declare up to three class attributes:
+
+        * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings.
+        * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the
+          column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``).
+        * ``ordering_plain_fields`` — params that order by their own name as-is.
+
+        Any ``ordering`` value not in the union of these is ignored (no ordering applied).
       tags:
       - api
       requestBody:
@@ -9695,7 +10253,17 @@ paths:
   /api/unit/{id}/:
     get:
       operationId: apiUnitRetrieve
-      description: logs request counts to redis cache total/per user/
+      description: |-
+        Applies a validated ``?ordering=`` query param against a per-viewset allow-list.
+
+        Subclasses declare up to three class attributes:
+
+        * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings.
+        * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the
+          column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``).
+        * ``ordering_plain_fields`` — params that order by their own name as-is.
+
+        Any ``ordering`` value not in the union of these is ignored (no ordering applied).
       parameters:
       - in: path
         name: id
@@ -9716,7 +10284,17 @@ paths:
           description: ''
     put:
       operationId: apiUnitUpdate
-      description: logs request counts to redis cache total/per user/
+      description: |-
+        Applies a validated ``?ordering=`` query param against a per-viewset allow-list.
+
+        Subclasses declare up to three class attributes:
+
+        * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings.
+        * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the
+          column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``).
+        * ``ordering_plain_fields`` — params that order by their own name as-is.
+
+        Any ``ordering`` value not in the union of these is ignored (no ordering applied).
       parameters:
       - in: path
         name: id
@@ -9749,7 +10327,17 @@ paths:
           description: ''
     patch:
       operationId: apiUnitPartialUpdate
-      description: logs request counts to redis cache total/per user/
+      description: |-
+        Applies a validated ``?ordering=`` query param against a per-viewset allow-list.
+
+        Subclasses declare up to three class attributes:
+
+        * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings.
+        * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the
+          column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``).
+        * ``ordering_plain_fields`` — params that order by their own name as-is.
+
+        Any ``ordering`` value not in the union of these is ignored (no ordering applied).
       parameters:
       - in: path
         name: id
@@ -9781,7 +10369,17 @@ paths:
           description: ''
     delete:
       operationId: apiUnitDestroy
-      description: logs request counts to redis cache total/per user/
+      description: |-
+        Applies a validated ``?ordering=`` query param against a per-viewset allow-list.
+
+        Subclasses declare up to three class attributes:
+
+        * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings.
+        * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the
+          column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``).
+        * ``ordering_plain_fields`` — params that order by their own name as-is.
+
+        Any ``ordering`` value not in the union of these is ignored (no ordering applied).
       parameters:
       - in: path
         name: id
@@ -9840,7 +10438,17 @@ paths:
   /api/unit/{id}/merge/{target}/:
     put:
       operationId: apiUnitMergeUpdate
-      description: logs request counts to redis cache total/per user/
+      description: |-
+        Applies a validated ``?ordering=`` query param against a per-viewset allow-list.
+
+        Subclasses declare up to three class attributes:
+
+        * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings.
+        * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the
+          column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``).
+        * ``ordering_plain_fields`` — params that order by their own name as-is.
+
+        Any ``ordering`` value not in the union of these is ignored (no ordering applied).
       parameters:
       - in: path
         name: id
@@ -9959,6 +10567,31 @@ paths:
               schema:
                 $ref: '#/components/schemas/PaginatedGenericModelReferenceList'
           description: ''
+  /api/unit/stats/:
+    get:
+      operationId: apiUnitStatsRetrieve
+      description: |-
+        Applies a validated ``?ordering=`` query param against a per-viewset allow-list.
+
+        Subclasses declare up to three class attributes:
+
+        * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings.
+        * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the
+          column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``).
+        * ``ordering_plain_fields`` — params that order by their own name as-is.
+
+        Any ``ordering`` value not in the union of these is ignored (no ordering applied).
+      tags:
+      - api
+      security:
+      - ApiKeyAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UnitStats'
+          description: ''
   /api/user/:
     get:
       operationId: apiUserList
@@ -9987,7 +10620,17 @@ paths:
   /api/user-file/:
     get:
       operationId: apiUserFileList
-      description: logs request counts to redis cache total/per user/
+      description: |-
+        Applies a validated ``?ordering=`` query param against a per-viewset allow-list.
+
+        Subclasses declare up to three class attributes:
+
+        * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings.
+        * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the
+          column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``).
+        * ``ordering_plain_fields`` — params that order by their own name as-is.
+
+        Any ``ordering`` value not in the union of these is ignored (no ordering applied).
       parameters:
       - in: query
         name: limit
@@ -10045,7 +10688,17 @@ paths:
           description: ''
     post:
       operationId: apiUserFileCreate
-      description: logs request counts to redis cache total/per user/
+      description: |-
+        Applies a validated ``?ordering=`` query param against a per-viewset allow-list.
+
+        Subclasses declare up to three class attributes:
+
+        * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings.
+        * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the
+          column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``).
+        * ``ordering_plain_fields`` — params that order by their own name as-is.
+
+        Any ``ordering`` value not in the union of these is ignored (no ordering applied).
       tags:
       - api
       requestBody:
@@ -10066,7 +10719,17 @@ paths:
   /api/user-file/{id}/:
     get:
       operationId: apiUserFileRetrieve
-      description: logs request counts to redis cache total/per user/
+      description: |-
+        Applies a validated ``?ordering=`` query param against a per-viewset allow-list.
+
+        Subclasses declare up to three class attributes:
+
+        * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings.
+        * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the
+          column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``).
+        * ``ordering_plain_fields`` — params that order by their own name as-is.
+
+        Any ``ordering`` value not in the union of these is ignored (no ordering applied).
       parameters:
       - in: path
         name: id
@@ -10087,7 +10750,17 @@ paths:
           description: ''
     put:
       operationId: apiUserFileUpdate
-      description: logs request counts to redis cache total/per user/
+      description: |-
+        Applies a validated ``?ordering=`` query param against a per-viewset allow-list.
+
+        Subclasses declare up to three class attributes:
+
+        * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings.
+        * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the
+          column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``).
+        * ``ordering_plain_fields`` — params that order by their own name as-is.
+
+        Any ``ordering`` value not in the union of these is ignored (no ordering applied).
       parameters:
       - in: path
         name: id
@@ -10114,7 +10787,17 @@ paths:
           description: ''
     patch:
       operationId: apiUserFilePartialUpdate
-      description: logs request counts to redis cache total/per user/
+      description: |-
+        Applies a validated ``?ordering=`` query param against a per-viewset allow-list.
+
+        Subclasses declare up to three class attributes:
+
+        * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings.
+        * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the
+          column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``).
+        * ``ordering_plain_fields`` — params that order by their own name as-is.
+
+        Any ``ordering`` value not in the union of these is ignored (no ordering applied).
       parameters:
       - in: path
         name: id
@@ -10140,7 +10823,17 @@ paths:
           description: ''
     delete:
       operationId: apiUserFileDestroy
-      description: logs request counts to redis cache total/per user/
+      description: |-
+        Applies a validated ``?ordering=`` query param against a per-viewset allow-list.
+
+        Subclasses declare up to three class attributes:
+
+        * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings.
+        * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the
+          column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``).
+        * ``ordering_plain_fields`` — params that order by their own name as-is.
+
+        Any ``ordering`` value not in the union of these is ignored (no ordering applied).
       parameters:
       - in: path
         name: id
@@ -10590,7 +11283,17 @@ paths:
   /api/view-log/:
     get:
       operationId: apiViewLogList
-      description: logs request counts to redis cache total/per user/
+      description: |-
+        Applies a validated ``?ordering=`` query param against a per-viewset allow-list.
+
+        Subclasses declare up to three class attributes:
+
+        * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings.
+        * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the
+          column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``).
+        * ``ordering_plain_fields`` — params that order by their own name as-is.
+
+        Any ``ordering`` value not in the union of these is ignored (no ordering applied).
       parameters:
       - in: query
         name: ordering
@@ -10610,6 +11313,12 @@ paths:
         description: Number of results to return per page.
         schema:
           type: integer
+      - in: query
+        name: query
+        schema:
+          type: string
+        description: lookup if query string is contained within the recipe name, case
+          insensitive
       tags:
       - api
       security:
@@ -10623,7 +11332,17 @@ paths:
           description: ''
     post:
       operationId: apiViewLogCreate
-      description: logs request counts to redis cache total/per user/
+      description: |-
+        Applies a validated ``?ordering=`` query param against a per-viewset allow-list.
+
+        Subclasses declare up to three class attributes:
+
+        * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings.
+        * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the
+          column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``).
+        * ``ordering_plain_fields`` — params that order by their own name as-is.
+
+        Any ``ordering`` value not in the union of these is ignored (no ordering applied).
       tags:
       - api
       requestBody:
@@ -10650,7 +11369,17 @@ paths:
   /api/view-log/{id}/:
     get:
       operationId: apiViewLogRetrieve
-      description: logs request counts to redis cache total/per user/
+      description: |-
+        Applies a validated ``?ordering=`` query param against a per-viewset allow-list.
+
+        Subclasses declare up to three class attributes:
+
+        * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings.
+        * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the
+          column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``).
+        * ``ordering_plain_fields`` — params that order by their own name as-is.
+
+        Any ``ordering`` value not in the union of these is ignored (no ordering applied).
       parameters:
       - in: path
         name: id
@@ -10671,7 +11400,17 @@ paths:
           description: ''
     put:
       operationId: apiViewLogUpdate
-      description: logs request counts to redis cache total/per user/
+      description: |-
+        Applies a validated ``?ordering=`` query param against a per-viewset allow-list.
+
+        Subclasses declare up to three class attributes:
+
+        * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings.
+        * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the
+          column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``).
+        * ``ordering_plain_fields`` — params that order by their own name as-is.
+
+        Any ``ordering`` value not in the union of these is ignored (no ordering applied).
       parameters:
       - in: path
         name: id
@@ -10704,7 +11443,17 @@ paths:
           description: ''
     patch:
       operationId: apiViewLogPartialUpdate
-      description: logs request counts to redis cache total/per user/
+      description: |-
+        Applies a validated ``?ordering=`` query param against a per-viewset allow-list.
+
+        Subclasses declare up to three class attributes:
+
+        * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings.
+        * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the
+          column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``).
+        * ``ordering_plain_fields`` — params that order by their own name as-is.
+
+        Any ``ordering`` value not in the union of these is ignored (no ordering applied).
       parameters:
       - in: path
         name: id
@@ -10736,7 +11485,17 @@ paths:
           description: ''
     delete:
       operationId: apiViewLogDestroy
-      description: logs request counts to redis cache total/per user/
+      description: |-
+        Applies a validated ``?ordering=`` query param against a per-viewset allow-list.
+
+        Subclasses declare up to three class attributes:
+
+        * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings.
+        * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the
+          column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``).
+        * ``ordering_plain_fields`` — params that order by their own name as-is.
+
+        Any ``ordering`` value not in the union of these is ignored (no ordering applied).
       parameters:
       - in: path
         name: id
@@ -10987,6 +11746,19 @@ components:
       required:
       - created_by
       - type
+    AutomationStats:
+      type: object
+      properties:
+        enabled:
+          type: integer
+        disabled:
+          type: integer
+        total:
+          type: integer
+      required:
+      - disabled
+      - enabled
+      - total
     AutomationTypeEnum:
       enum:
       - FOOD_ALIAS
@@ -11121,6 +11893,9 @@ components:
           readOnly: false
         recipe:
           type: integer
+        recipe_name:
+          type: string
+          readOnly: true
         servings:
           type: integer
           maximum: 9223372036854775807
@@ -11150,6 +11925,7 @@ components:
       required:
       - created_by
       - recipe
+      - recipe_name
       - updated_at
     CustomFilter:
       type: object
@@ -11199,11 +11975,6 @@ components:
         * `PLAN` - Meal-Plan
         * `BOOKS` - Books
         * `SHOPPING` - Shopping
-    DeleteEnum:
-      enum:
-      - 'true'
-      type: string
-      description: '* `true` - true'
     ExportLog:
       type: object
       properties:
@@ -11389,6 +12160,9 @@ components:
         numchild:
           type: integer
           readOnly: true
+        numrecipe:
+          type: integer
+          readOnly: true
         inherit_fields:
           type: array
           items:
@@ -11432,13 +12206,28 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/ShoppingList'
+        in_inventory:
+          type: string
+          readOnly: true
+        substitute_inventory:
+          type: boolean
+          readOnly: true
+        matched_filter:
+          type: boolean
+          description: None for non-expanded responses, bool when tree_search=true
+            (E-8).
+          readOnly: true
       required:
       - available_substitutes
       - full_name
+      - in_inventory
+      - matched_filter
       - name
       - numchild
+      - numrecipe
       - parent
       - shopping
+      - substitute_inventory
       - substitute_onhand
     FoodBatchUpdate:
       type: object
@@ -11615,33 +12404,6 @@ components:
       - name
       - shopping_lists
       - supermarket_category
-    FoodShoppingUpdate:
-      type: object
-      properties:
-        id:
-          type: integer
-          readOnly: false
-        amount:
-          type: integer
-          writeOnly: true
-          nullable: true
-          description: Amount of food to add to the shopping list
-        unit:
-          type: integer
-          writeOnly: true
-          nullable: true
-          description: ID of unit to use for the shopping list
-        delete:
-          allOf:
-          - $ref: '#/components/schemas/DeleteEnum'
-          writeOnly: true
-          nullable: true
-          description: |-
-            When set to true will delete all food from active shopping lists.
-
-            * `true` - true
-      required:
-      - delete
     FoodSimple:
       type: object
       properties:
@@ -11658,6 +12420,28 @@ components:
           maxLength: 128
       required:
       - name
+    FoodStats:
+      type: object
+      properties:
+        onhand:
+          type: integer
+        shopping:
+          type: integer
+        ignored:
+          type: integer
+        inventory:
+          type: integer
+        expired:
+          type: integer
+        total:
+          type: integer
+      required:
+      - expired
+      - ignored
+      - inventory
+      - onhand
+      - shopping
+      - total
     GenericModelReference:
       type: object
       properties:
@@ -12060,7 +12844,9 @@ components:
         food:
           $ref: '#/components/schemas/Food'
         unit:
-          $ref: '#/components/schemas/Unit'
+          allOf:
+          - $ref: '#/components/schemas/Unit'
+          nullable: true
         amount:
           type: number
           format: double
@@ -12293,6 +13079,9 @@ components:
         numchild:
           type: integer
           readOnly: true
+        numrecipe:
+          type: integer
+          readOnly: true
         created_at:
           type: string
           format: date-time
@@ -12313,6 +13102,7 @@ components:
       - label
       - name
       - numchild
+      - numrecipe
       - parent
       - updated_at
     KeywordLabel:
@@ -12334,6 +13124,19 @@ components:
       description: |-
         * `or` - or
         * `and` - and
+    KeywordStats:
+      type: object
+      properties:
+        with_recipe:
+          type: integer
+        with_children:
+          type: integer
+        total:
+          type: integer
+      required:
+      - total
+      - with_children
+      - with_recipe
     Localization:
       type: object
       properties:
@@ -13716,6 +14519,9 @@ components:
           readOnly: false
         recipe:
           type: integer
+        recipe_name:
+          type: string
+          readOnly: true
         servings:
           type: integer
           maximum: 9223372036854775807
@@ -13894,6 +14700,9 @@ components:
         numchild:
           type: integer
           readOnly: true
+        numrecipe:
+          type: integer
+          readOnly: true
         inherit_fields:
           type: array
           items:
@@ -13937,6 +14746,17 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/ShoppingList'
+        in_inventory:
+          type: string
+          readOnly: true
+        substitute_inventory:
+          type: boolean
+          readOnly: true
+        matched_filter:
+          type: boolean
+          description: None for non-expanded responses, bool when tree_search=true
+            (E-8).
+          readOnly: true
     PatchedHousehold:
       type: object
       description: Adds nested create feature
@@ -14057,7 +14877,9 @@ components:
         food:
           $ref: '#/components/schemas/Food'
         unit:
-          $ref: '#/components/schemas/Unit'
+          allOf:
+          - $ref: '#/components/schemas/Unit'
+          nullable: true
         amount:
           type: number
           format: double
@@ -14230,6 +15052,9 @@ components:
           type: integer
           readOnly: true
         numchild:
+          type: integer
+          readOnly: true
+        numrecipe:
           type: integer
           readOnly: true
         created_at:
@@ -14883,9 +15708,6 @@ components:
           nullable: true
         step_recipe_data:
           readOnly: true
-        numrecipe:
-          type: integer
-          readOnly: true
         show_ingredients_table:
           type: boolean
     PatchedStorage:
@@ -15139,6 +15961,9 @@ components:
           type: string
           nullable: true
           maxLength: 256
+        numrecipe:
+          type: integer
+          readOnly: true
         open_data_slug:
           type: string
           nullable: true
@@ -15372,6 +16197,9 @@ components:
           readOnly: false
         recipe:
           type: integer
+        recipe_name:
+          type: string
+          readOnly: true
         created_by:
           type: integer
           readOnly: true
@@ -15856,9 +16684,6 @@ components:
         new:
           type: boolean
           readOnly: true
-        recent:
-          type: string
-          readOnly: true
       required:
       - created_at
       - created_by
@@ -15869,7 +16694,6 @@ components:
       - name
       - new
       - rating
-      - recent
       - servings
       - servings_text
       - updated_at
@@ -16619,15 +17443,11 @@ components:
           nullable: true
         step_recipe_data:
           readOnly: true
-        numrecipe:
-          type: integer
-          readOnly: true
         show_ingredients_table:
           type: boolean
       required:
       - ingredients
       - instructions_markdown
-      - numrecipe
       - step_recipe_data
     Storage:
       type: object
@@ -16934,12 +17754,16 @@ components:
           type: string
           nullable: true
           maxLength: 256
+        numrecipe:
+          type: integer
+          readOnly: true
         open_data_slug:
           type: string
           nullable: true
           maxLength: 128
       required:
       - name
+      - numrecipe
     UnitConversion:
       type: object
       description: Adds nested create feature
@@ -16974,6 +17798,16 @@ components:
       - converted_amount
       - converted_unit
       - name
+    UnitStats:
+      type: object
+      properties:
+        with_recipe:
+          type: integer
+        total:
+          type: integer
+      required:
+      - total
+      - with_recipe
     User:
       type: object
       description: Adds nested create feature
@@ -17249,6 +18083,9 @@ components:
           readOnly: false
         recipe:
           type: integer
+        recipe_name:
+          type: string
+          readOnly: true
         created_by:
           type: integer
           readOnly: true
@@ -17260,6 +18097,7 @@ components:
       - created_at
       - created_by
       - recipe
+      - recipe_name
   securitySchemes:
     ApiKeyAuth:
       type: apiKey
