@@ -54,7 +54,7 @@ litellm==1.89.3
 thefuzz==0.22.1
 stripe==15.3.0
 frappe-client==0.1.0.dev0
-regex==2026.6.28
+regex==2026.7.10
 
 # Development
 pytest== 9.1.1
