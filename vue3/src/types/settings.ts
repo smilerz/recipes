@@ -19,6 +19,17 @@ export type DeviceSettings = {
     mealplan_displayWeekNumbers: boolean
 
     recipe_mergeStepOverview: boolean,
+    recipe_overviewShowActions: boolean,
+    recipe_stepShowActions: boolean,
+    recipe_overviewShowCheckboxes: boolean,
+    recipe_stepShowCheckboxes: boolean,
+    recipe_overviewExpanded: boolean,
+    recipe_overviewInlineStatus: boolean,
+    recipe_overviewNotesDisplay: 'bubble' | 'inline' | 'truncate',
+    recipe_stepInlineStatus: boolean,
+    recipe_stepNotesDisplay: 'bubble' | 'inline' | 'truncate',
+    recipe_notesTruncateLength: number,
+    recipe_contextMenuColor: 'never' | 'onhand' | 'shopping' | 'substitute',
 
     search_itemsPerPage: number,
     search_viewMode: 'table'|'grid',
