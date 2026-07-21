@@ -39,7 +39,14 @@ const DEFAULT_STUBS: Record<string, any> = {
         template: '<div class="stub-draggable"><slot /></div>',
         props: ['modelValue'],
     },
-    ModelSelect: { template: '<div class="stub-model-select"/>' },
+    // props/emit declared so the ported filter-selector tests can identify the picker by its
+    // `model` and drive its update:modelValue (mirrors the old SectionRow.test stub).
+    ModelSelect: {
+        name: 'ModelSelect',
+        props: ['model', 'modelValue', 'items', 'object'],
+        emits: ['update:modelValue'],
+        template: '<div class="stub-model-select" :data-model="model"/>',
+    },
 }
 
 function mountSettings(sections?: any[], defaultPage = 'HOME') {
@@ -147,5 +154,52 @@ describe('StartPageSettings', () => {
         await flushPromises()
         // Component loaded without error with non-default page
         // (DOM assertion for v-select value is fragile, so just verify mount succeeded)
+    })
+
+    // Per-mode filter-selector coverage, ported from the retired single-use SectionRow component
+    // (its rows were inlined into StartPageSettings). Locks the mode -> selector mapping and the
+    // filter_id sync so inlining them didn't drop the coverage.
+    it('renders a ModelSelect for an entity-filter mode (keyword)', async () => {
+        const { wrapper } = mountSettings([{ mode: 'keyword', enabled: true, min_recipes: 10 }])
+        await flushPromises()
+        expect(wrapper.findAll('.stub-model-select')).toHaveLength(1)
+    })
+
+    it('renders a User ModelSelect (not a v-select) for created_by', async () => {
+        const { wrapper } = mountSettings([{ mode: 'created_by', enabled: true, min_recipes: 10 }])
+        await flushPromises()
+        const selects = wrapper.findAll('.stub-model-select')
+        expect(selects).toHaveLength(1)
+        expect(selects[0].attributes('data-model')).toBe('User')
+    })
+
+    it('renders a v-select (not a ModelSelect) for rating', async () => {
+        const { wrapper } = mountSettings([{ mode: 'rating', enabled: true, min_recipes: 10 }])
+        await flushPromises()
+        expect(wrapper.findAll('.stub-model-select')).toHaveLength(0)
+        expect(wrapper.findAll('.v-select').length).toBeGreaterThan(0)
+    })
+
+    it('renders no filter selector for recent', async () => {
+        const { wrapper } = mountSettings([{ mode: 'recent', enabled: true, min_recipes: 10 }])
+        await flushPromises()
+        expect(wrapper.findAll('.stub-model-select')).toHaveLength(0)
+    })
+
+    it('reconciles filter_id from the picked entity (_filterObj) at save', async () => {
+        // StartPageSettings binds the entity picker to section._filterObj and derives filter_id at
+        // save (save(): `s._filterObj?.id ?? s.filter_id`) — unlike the retired SectionRow, which
+        // synced filter_id on every update. Lock the save-time reconciliation.
+        const { wrapper, store } = mountSettings([{ mode: 'keyword', enabled: true, min_recipes: 10 }])
+        await flushPromises()
+        const ms = wrapper.findComponent('.stub-model-select')
+
+        ms.vm.$emit('update:modelValue', { id: 99, name: 'kw' })   // v-model sets section._filterObj
+        await flushPromises()
+
+        await (wrapper.vm as any).save()
+        await flushPromises()
+        const kw = (store.userSettings.startPageSections as any[]).find((s: any) => s.mode === 'keyword')
+        expect(kw.filter_id).toBe(99)
     })
 })
