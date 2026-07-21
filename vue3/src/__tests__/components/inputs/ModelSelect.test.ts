@@ -184,6 +184,47 @@ describe('ModelSelect — id-array hydration (mode=multiple, object=false)', () 
         expect(wrapper.findComponent({name: 'Multiselect'}).props('aria')).toEqual({'aria-label': 'Unit'})
     })
 
+    it('passes provided :items to Multiselect as its options, bypassing the remote search function', async () => {
+        listSpy.mockClear()
+        const items = [{id: 1, name: 'Fridge'}, {id: 2, name: 'Freezer'}]
+        const wrapper = mountSelect({items})
+        await flushPromises()
+
+        // With a static list, Multiselect receives the array directly (local filtering),
+        // not the async search() function that would hit modelClass.list().
+        expect(wrapper.findComponent({name: 'Multiselect'}).props('options')).toEqual(items)
+    })
+
+    it('falls back to the remote search function when no :items are provided', async () => {
+        const wrapper = mountSelect({})
+        await flushPromises()
+
+        expect(typeof wrapper.findComponent({name: 'Multiselect'}).props('options')).toBe('function')
+    })
+
+    it('skips @vueform refreshOptions on open when static :items are provided (array source has no fn to refresh)', async () => {
+        // refreshOptions() re-invokes the options *function*; with a static array @vueform runs
+        // options.value() on a non-function and throws "options.value is not a function". onOpen
+        // must not call it in the static-items path.
+        const wrapper = mountSelect({items: [{id: 1, name: 'Fridge'}]})
+        await flushPromises()
+        const ms = wrapper.findComponent({name: 'Multiselect'})
+        const spy = vi.spyOn(ms.vm as any, 'refreshOptions').mockImplementation(() => {})
+        ms.vm.$emit('open')
+        await flushPromises()
+        expect(spy).not.toHaveBeenCalled()
+    })
+
+    it('still refreshes options on open when using the remote model source (no :items)', async () => {
+        const wrapper = mountSelect({})
+        await flushPromises()
+        const ms = wrapper.findComponent({name: 'Multiselect'})
+        const spy = vi.spyOn(ms.vm as any, 'refreshOptions').mockImplementation(() => {})
+        ms.vm.$emit('open')
+        await flushPromises()
+        expect(spy).toHaveBeenCalled()
+    })
+
     it('handles retrieve() failure by silently skipping the id (no crash, no unhandled rejection)', async () => {
         retrieveSpy.mockReset()
         retrieveSpy.mockRejectedValue(new Error('boom'))

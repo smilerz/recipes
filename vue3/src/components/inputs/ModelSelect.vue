@@ -18,7 +18,7 @@
             :class="{'model-select--density-compact': props.density == 'compact', 'model-select--density-comfortable': props.density == 'comfortable', 'model-select--density-default': props.density == '', 'model-select--inline': props.inline, 'model-select--outlined': props.variant === 'outlined', 'model-select--underline': props.variant === 'underline'}"
             :resolve-on-load="props.searchOnLoad"
             v-model="multiselectModel"
-            :options="search"
+            :options="props.items ?? search"
             :on-create="createObject"
             :createOption="props.allowCreate"
             :delay="300"
@@ -90,6 +90,10 @@ const emit = defineEmits(['update:modelValue', 'create'])
 const props = withDefaults(defineProps<{
     model: EditorSupportedModels
     id?: string
+    // When provided, these static options replace the remote model fetch — the caller owns the
+    // list (a shared parent fetch or a caller-supplied set) while ModelSelect keeps its styling,
+    // label, and binding. Omit to have ModelSelect fetch/search the model itself.
+    items?: any[]
     limit?: number
     disabled?: boolean
     canClear?: boolean
@@ -109,6 +113,7 @@ const props = withDefaults(defineProps<{
     variant?: 'underline' | 'outlined'
 }>(), {
     id: () => Math.floor(Math.random() * 10000).toString(),
+    items: undefined,
     limit: 25,
     disabled: false,
     canClear: true,
@@ -181,7 +186,12 @@ const multiselect = useTemplateRef(`ref_${props.id}`)
  */
 function onOpen() {
     const ms = multiselect.value as any
-    ms?.refreshOptions?.()
+    // refreshOptions() re-invokes the async options *function* for fresh remote data. With a static
+    // :items array there is no function to call — @vueform would run options.value() on the array
+    // and throw "options.value is not a function" — so skip it in the static path.
+    if (!props.items) {
+        ms?.refreshOptions?.()
+    }
     const dropdown = ms?.dropdown as HTMLElement | undefined
     if (!dropdown || typeof ResizeObserver === 'undefined') {
         return
