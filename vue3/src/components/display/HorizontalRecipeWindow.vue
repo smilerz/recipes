@@ -202,12 +202,52 @@ function loadRecipes() {
                 loading.value = false
             }
             return
+        case 'books':
+            loadBooksSection()
+            return
         default:
-            // keyword, books, food, created_by — entity-based modes
+            // keyword, food, created_by — entity-based modes
             loadEntitySection(requestParameters)
             return
     }
     doRecipeRequest(requestParameters)
+}
+
+/**
+ * Load a `books` section. A RecipeBook can hold manual entries and/or be backed by a saved search
+ * (RecipeBook.filter). The `books` recipe filter only matches manual RecipeBookEntry rows, so a
+ * saved-search-only book would render empty here. Mirror BookViewPage: also pull the filter's
+ * recipes and merge (deduped), so the home preview shows the book's full contents.
+ */
+function loadBooksSection() {
+    if (!props.filterId) {
+        loading.value = false
+        return
+    }
+    api.apiRecipeBookRetrieve({id: props.filterId}).then((book) => {
+        entityName.value = book.name ?? ''
+        // "More" jumps to the filter for a saved-search-backed book (its dynamic content), else
+        // to the book's manual entries.
+        queryParams.value = book.filter ? {filter: book.filter.id!} : {books: book.id!}
+
+        const requests = [api.apiRecipeList({books: [book.id!], pageSize: 16})]
+        if (book.filter) {
+            requests.push(api.apiRecipeList({filter: book.filter.id, pageSize: 16}))
+        }
+        Promise.all(requests).then((results) => {
+            const seen = new Set<number>()
+            const merged: (Recipe | RecipeOverview)[] = []
+            for (const res of results) {
+                for (const rec of res.results) {
+                    if (rec.id != null && !seen.has(rec.id)) {
+                        seen.add(rec.id)
+                        merged.push(rec)
+                    }
+                }
+            }
+            recipes.value = merged.slice(0, 16)
+        }).finally(() => { loading.value = false })
+    }).catch(() => { loading.value = false })
 }
 
 /**
