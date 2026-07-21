@@ -66,16 +66,17 @@
                             :placeholder="t('any_random', {target: modeLabel(section.mode)})"
                         />
                     </div>
-                    <v-select
+                    <model-select
                         v-else-if="section.mode === 'created_by'"
                         v-model="section.filter_id"
-                        :items="availableUsers"
-                        item-title="label"
-                        item-value="value"
+                        model="User"
+                        :items="msAvailableUsers"
+                        :object="false"
                         density="compact"
                         hide-details
+                        can-clear
+                        append-to-body
                         :placeholder="t('any_random', {target: t('User')})"
-                        clearable
                         style="max-width: 280px"
                     />
                     <v-select
@@ -258,6 +259,10 @@ const localSections = ref<LocalSection[]>([])
 const newMode = ref<StartPageSectionMode | null>(null)
 const availableModes = computed(() => ALL_MODES)
 const availableUsers = ref<{value: number, label: string}[]>([])
+// ModelSelect derives option label/value from the User model (displayName/id); reshape the
+// single-fetched {value,label} list to that shape so the created_by picker keeps the shared
+// fetch and the displayName-with-fallback label while binding by id.
+const msAvailableUsers = computed(() => availableUsers.value.map(u => ({id: u.value, displayName: u.label})))
 const confirmReset = ref(false)
 const confirmDelete = ref(false)
 const deleteSectionKey = ref<string | null>(null)

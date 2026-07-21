@@ -37,16 +37,17 @@
                     <v-divider class="mb-3" />
                 </template>
 
-                <v-select
+                <model-select
                     v-model="selectedLocationId"
-                    :items="locationItems"
-                    item-title="label"
-                    item-value="value"
+                    model="InventoryLocation"
+                    :items="msLocationItems"
+                    :object="false"
+                    :can-clear="false"
                     :label="$t('InventoryLocation')"
-                    :aria-label="$t('InventoryLocation')"
                     variant="outlined"
                     density="compact"
                     hide-details
+                    append-to-body
                     class="mb-3"
                 />
 
@@ -152,6 +153,13 @@ const freezerDialog = ref(false)
 
 const selectedLocationIsFreezer = computed(() =>
     locationItems.value.find(l => l.value === selectedLocationId.value)?.isFreezer ?? false)
+
+// ModelSelect derives its option label/value from the InventoryLocation model (name/id). The
+// caller supplies {value,label} items, so reshape them to {id,name} while keeping the id-based
+// v-model binding (selectedLocationId) and the freezer/household lookups against locationItems.
+const msLocationItems = computed(() => locationItems.value.map(l => ({
+    id: l.value, name: l.label, isFreezer: l.isFreezer, household: l.household,
+})))
 
 // FreezerExpiryDialog v-models a JS Date; our field is a date-only ISO string — glue both ways.
 const freezerDate = computed<Date>({
