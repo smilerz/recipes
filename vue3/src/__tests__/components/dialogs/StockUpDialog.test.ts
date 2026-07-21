@@ -35,7 +35,14 @@ function mountDialog() {
         global: {
             plugins: [createPinia(), i18n, vuetify],
             stubs: {
-                ModelSelect: {template: '<div class="model-select-stub" />'},
+                // Declare props + emit so the freezer test can drive the location select's
+                // update:modelValue (the Unit and Location selects are both ModelSelect now,
+                // distinguished by their `model` prop).
+                ModelSelect: {
+                    props: ['modelValue', 'model', 'items'],
+                    emits: ['update:modelValue'],
+                    template: '<div class="model-select-stub" :data-model="model" />',
+                },
                 VClosableCardTitle: {template: '<div class="title-stub" />'},
                 // pulls in UserPreferenceStore/useStorage (no jsdom backing); not under test
                 ClosableHelpAlert: {template: '<div class="help-alert-stub" />'},
@@ -146,8 +153,9 @@ describe('StockUpDialog seeding (D3)', () => {
         expect(row.expires).toBeTruthy()               // shelf-life prefill present
         const seeded = row.expires
 
-        // drive the actual VSelect emit so the @update:model-value binding is load-bearing
-        const locationSelect = wrapper.findComponent({name: 'VSelect'})
+        // drive the location ModelSelect's emit so the @update:model-value binding is load-bearing
+        const locationSelect = wrapper.findAllComponents('.model-select-stub')
+            .find(c => c.props('model') === 'InventoryLocation')!
         locationSelect.vm.$emit('update:modelValue', {id: 9, name: 'Chest freezer', isFreezer: true})
         await flushPromises()
         expect(row.expires).toBeNull()                 // freezer mutes the auto suggestion

@@ -12,7 +12,7 @@
         :editing-object="editingObj">
         <v-card-text>
             <v-form>
-                <v-select :label="$t('Role')" :items="groups" item-value="id" item-title="name" return-object multiple v-model="editingObj.groups"></v-select>
+                <model-select :label="$t('Role')" model="Group" :items="groups" mode="multiple" v-model="editingObj.groups"></model-select>
                 <model-select model="Household" :label="$t('Household')" v-model="editingObj.household" allow-create></model-select>
 
                 <v-spacer class="mt-10"></v-spacer>
