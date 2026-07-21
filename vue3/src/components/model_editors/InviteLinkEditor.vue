@@ -13,7 +13,7 @@
         <v-card-text>
             <v-form :disabled="loading">
                 <v-text-field :label="$t('Email')" v-model="editingObj.email"></v-text-field>
-                <v-select :label="$t('Role')" :items="groups" item-value="id" item-title="name" return-object v-model="editingObj.group"></v-select>
+                <model-select :label="$t('Role')" model="Group" :items="groups" v-model="editingObj.group"></model-select>
                 <model-select model="Household" :label="$t('Household')" v-model="editingObj.household" allow-create></model-select>
                 <v-date-input :label="$t('Valid Until')" v-model="editingObj.validUntil"></v-date-input>
                 <v-textarea :label="$t('Note')" v-model="editingObj.internalNote"></v-textarea>

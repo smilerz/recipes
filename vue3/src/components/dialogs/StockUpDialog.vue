@@ -25,8 +25,8 @@
                                     <model-select :label="$t('Unit')" v-model="row.unit" model="Unit" hide-details density="compact" append-to-body inline></model-select>
                                 </v-col>
                                 <v-col cols="6" sm="3">
-                                    <v-select :label="$t('Location')" v-model="row.location" :items="locations" item-title="name" return-object
-                                              hide-details density="compact" @update:model-value="onRowLocationChange(row)"></v-select>
+                                    <model-select :label="$t('Location')" v-model="row.location" model="InventoryLocation" :items="locations"
+                                                  hide-details density="compact" append-to-body inline @update:model-value="onRowLocationChange(row)"></model-select>
                                 </v-col>
                                 <v-col cols="12" sm="3">
                                     <v-text-field :label="$t('Expires')" v-model="row.expires" type="date" hide-details density="compact">
