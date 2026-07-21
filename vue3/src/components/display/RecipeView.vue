@@ -79,7 +79,7 @@
                         <v-card-text class="flex-grow-1">
                             <div class="d-flex">
                                 <h1 class="flex-column flex-grow-1">{{ recipe.name }}</h1>
-                                <div class="flex-column mb-auto mt-2 float-right" v-if="useUserPreferenceStore().isAuthenticated">
+                                <div class="d-flex align-center mb-auto mt-2" v-if="useUserPreferenceStore().isAuthenticated">
                                     <recipe-context-menu :recipe="recipe" :servings="servings" context="view"></recipe-context-menu>
                                 </div>
                             </div>
