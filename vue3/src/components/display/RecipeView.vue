@@ -147,7 +147,8 @@
         </v-card>
 
         <v-card class="mt-1" v-for="(step, index) in recipe.steps" :key="step.id">
-            <step-view v-model="recipe.steps[index]" :step-number="index+1" :ingredientFactor="ingredientFactor"></step-view>
+            <step-view v-model="recipe.steps[index]" :step-number="index+1" :ingredientFactor="ingredientFactor"
+                       @scale="(factor: number) => {servings = recipe.servings * factor}"></step-view>
         </v-card>
 
         <property-view v-model="recipe" :ingredientFactor="ingredientFactor"></property-view>
