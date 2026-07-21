@@ -108,7 +108,8 @@ describe('AddToShoppingDialog', () => {
 
         const wrapper = mountDialog()
         await flushPromises()
-        ;(wrapper.vm as any).dialog = true
+        // open via v-model (the real path), not a private ref — mirrors how RecipeContextMenu drives it
+        await wrapper.setProps({ modelValue: true })
         await flushPromises()
 
         expect(document.body.innerHTML).toContain('Flour')

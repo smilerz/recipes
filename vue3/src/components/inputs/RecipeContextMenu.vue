@@ -74,7 +74,7 @@
     <model-edit-dialog model="MealPlan" :itemDefaults="{recipe: recipe, servings: recipe.servings}" :close-after-create="false" :close-after-save="false"
                        v-model="mealPlanDialog"></model-edit-dialog>
 
-    <add-to-shopping-dialog v-if="isVisible('shopping')" :recipe="props.recipe" :open="shoppingDialog" @update:open="shoppingDialog = $event"></add-to-shopping-dialog>
+    <add-to-shopping-dialog v-if="isVisible('shopping')" :recipe="props.recipe" v-model="shoppingDialog"></add-to-shopping-dialog>
     <add-to-book-dialog v-if="addToBookDialog" :recipe="props.recipe" v-model="addToBookDialog"></add-to-book-dialog>
     <log-cooking-dialog v-if="logCookingDialog" :recipe="props.recipe" v-model="logCookingDialog"></log-cooking-dialog>
     <use-up-dialog v-if="props.context === 'view'" ref="useUpDialog"></use-up-dialog>
