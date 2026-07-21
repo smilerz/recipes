@@ -91,7 +91,7 @@
                  plain-variant stars: muted when inactive (matches the faint
                  star outlines), primary when selected. -->
             <v-btn
-                :class="['unrated-toggle', {'text-medium-emphasis': !isUnrated}]"
+                :class="['unrated-toggle', {'text-medium-emphasis': !isUnrated, 'rating-muted': hasStarRating}]"
                 icon="fa-solid fa-ban"
                 variant="text"
                 :color="isUnrated ? 'primary' : undefined"
@@ -101,13 +101,14 @@
                 @click="toggleUnrated"
             />
             <v-rating
+                :class="{'text-medium-emphasis': !hasStarRating, 'rating-muted': isUnrated}"
                 :model-value="unratedRatingValue"
                 @update:model-value="onSelectStar"
                 half-increments
                 clearable
                 hover
                 size="small"
-                color="primary"
+                :color="hasStarRating ? 'primary' : undefined"
                 :aria-label="$t('minimum_rating')"
             />
         </div>
@@ -204,6 +205,9 @@ const unratedRatingValue = computed(() => {
 })
 
 const hasRatingFilter = computed(() => isUnrated.value || !!props.getFilter(props.def.key))
+// A minimum-star rating is the active choice (distinct from unrated / nothing selected). Drives the
+// three-state colouring: nothing = grey, active option = primary, inactive option = grey + muted.
+const hasStarRating = computed(() => !!props.getFilter(props.def.key))
 
 function toggleUnrated() {
     const k = props.def.unratedKey
@@ -230,3 +234,12 @@ function clearRatingAndUnrated() {
     if (props.def.unratedKey) props.clearFilter(props.def.unratedKey)
 }
 </script>
+
+<style scoped>
+/* The inactive rating option (whichever of unrated / stars is NOT the active choice) is dimmed on
+   top of its grey (text-medium-emphasis) colour, so it clearly reads as "not in play". Both stay
+   interactive — clicking either switches the active choice (see toggleUnrated / onSelectStar). */
+.rating-muted {
+    opacity: 0.5;
+}
+</style>

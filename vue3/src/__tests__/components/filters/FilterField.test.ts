@@ -64,6 +64,32 @@ describe('FilterField — rating-unrated (unified rating + unrated control)', ()
         expect(wrapper.find('.unrated-toggle').classes().join(' ')).toContain('primary')
     })
 
+    // D06: each rating option has three states — nothing selected = grey (default text); the
+    // active choice = primary; the OTHER (inactive) option while its counterpart is active =
+    // grey + muted (dimmed). So an option only dims when the other one is actually selected.
+    it('greys options by default, colors the active one primary, and mutes the inactive one', () => {
+        // nothing selected → both grey (default text), neither primary, neither muted
+        const none = mountField(RATING_DEF).wrapper
+        expect(none.find('.unrated-toggle').classes()).toContain('text-medium-emphasis')
+        expect(none.find('.unrated-toggle').classes()).not.toContain('rating-muted')
+        expect(none.findComponent(VRating).props('color')).toBeUndefined()
+        expect(none.findComponent(VRating).classes()).toContain('text-medium-emphasis')
+        expect(none.findComponent(VRating).classes()).not.toContain('rating-muted')
+
+        // unrated active → toggle primary/full; stars grey + muted (inactive option)
+        const un = mountField(RATING_DEF, {unrated: '1'}).wrapper
+        expect(un.find('.unrated-toggle').classes()).toContain('text-primary')
+        expect(un.find('.unrated-toggle').classes()).not.toContain('rating-muted')
+        expect(un.findComponent(VRating).props('color')).toBeUndefined()
+        expect(un.findComponent(VRating).classes()).toEqual(expect.arrayContaining(['text-medium-emphasis', 'rating-muted']))
+
+        // a rating active → stars primary/full; toggle grey + muted (inactive option)
+        const rated = mountField(RATING_DEF, {ratingGte: '4'}).wrapper
+        expect(rated.findComponent(VRating).props('color')).toBe('primary')
+        expect(rated.findComponent(VRating).classes()).not.toContain('rating-muted')
+        expect(rated.find('.unrated-toggle').classes()).toEqual(expect.arrayContaining(['text-medium-emphasis', 'rating-muted']))
+    })
+
     it('clicking the 0/unrated toggle while already unrated clears unrated (toggles off)', async () => {
         const {wrapper, setFilter, clearFilter} = mountField(RATING_DEF, {unrated: '1'})
         await wrapper.find('.unrated-toggle').trigger('click')
@@ -85,13 +111,14 @@ describe('FilterField — rating-unrated (unified rating + unrated control)', ()
         expect(wrapper.find('.v-divider').exists()).toBe(false)
     })
 
-    // Item 4: the ban toggle must not render a filled button box (which sat off
-    // the stars' baseline). It stays a text-variant icon — colored primary when
-    // active, muted when not — so it aligns with the plain-variant rating stars.
-    it('keeps the unrated toggle boxless (text variant, no flat fill) even when active', () => {
-        const {wrapper} = mountField(RATING_DEF, {unrated: '1'})
-        const cls = wrapper.find('.unrated-toggle').classes()
-        expect(cls).toContain('v-btn--variant-text')
-        expect(cls).not.toContain('v-btn--variant-flat')
+    // The ban toggle stays a boxless text-variant icon (no filled button box) so it shares the
+    // plain-variant look of the rating stars; its selected/inactive state is carried by color +
+    // the shared rating-muted dimming, not a button fill (see the D06 consistency test above).
+    it('keeps the unrated toggle boxless (text variant, never a filled button)', () => {
+        const active = mountField(RATING_DEF, {unrated: '1'}).wrapper.find('.unrated-toggle').classes()
+        const inactive = mountField(RATING_DEF).wrapper.find('.unrated-toggle').classes()
+        expect(active).toContain('v-btn--variant-text')
+        expect(active).not.toContain('v-btn--variant-flat')
+        expect(inactive).toContain('v-btn--variant-text')
     })
 })
