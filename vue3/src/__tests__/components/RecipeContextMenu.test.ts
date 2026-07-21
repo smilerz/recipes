@@ -80,9 +80,11 @@ function mountMenu(deviceOverrides: Record<string, any> = {}, props: Record<stri
                 RecipeShareDialog: { template: '<div class="stub-share-dialog"/>' },
                 AddToShoppingDialog: defineComponent({
                     name: 'AddToShoppingDialog',
-                    props: { recipe: Object, mealPlan: Object, open: Boolean },
-                    emits: ['update:open'],
-                    template: '<div class="stub-add-shopping" :data-open="open"/>',
+                    // Faithful to the real component: it is v-model controlled (modelValue), NOT an
+                    // `open` prop. A stub with a phantom `open` prop is what masked D10.
+                    props: { recipe: Object, mealPlan: Object, modelValue: Boolean },
+                    emits: ['update:modelValue'],
+                    template: '<div class="stub-add-shopping" :data-open="modelValue"/>',
                 }),
                 AddToBookDialog: { template: '<div class="stub-add-book-dialog"/>' },
                 LogCookingDialog: { template: '<div class="stub-log-cooking-dialog"/>' },
@@ -221,16 +223,16 @@ describe('use up (view context only)', () => {
     })
 })
 
-describe('shopping dialog isolation (E-shopping)', () => {
-    it('clicking Add to Shopping sets open=true on AddToShoppingDialog — not activator="parent"', async () => {
+describe('shopping dialog isolation (E-shopping / D10)', () => {
+    it('clicking Add to Shopping opens AddToShoppingDialog via v-model (D10: menu item was a no-op)', async () => {
         const w = mountMenu({}, { context: 'card' })
 
-        // Dialog stub must be mounted (always in DOM, controlled by prop)
+        // Dialog stub must be mounted (always in DOM, controlled by v-model)
         const stubs = w.findAllComponents({ name: 'AddToShoppingDialog' })
         expect(stubs.length, 'AddToShoppingDialog must be mounted').toBeGreaterThan(0)
 
-        // Before click: open should be false/undefined
-        expect(stubs[0].props('open'), 'dialog should not be open before click').toBeFalsy()
+        // Before click: closed
+        expect(stubs[0].props('modelValue'), 'dialog should be closed before click').toBeFalsy()
 
         // Click the "Add to Shopping" list item
         const items = w.findAll('.v-list-item, li')
@@ -239,7 +241,7 @@ describe('shopping dialog isolation (E-shopping)', () => {
         await shoppingItem!.trigger('click')
         await w.vm.$nextTick()
 
-        // After click, open prop should be true
-        expect(stubs[0].props('open'), 'AddToShoppingDialog should receive open=true after click').toBe(true)
+        // After click the dialog must actually open (v-model = true)
+        expect(stubs[0].props('modelValue'), 'AddToShoppingDialog should open (modelValue=true) after click').toBe(true)
     })
 })

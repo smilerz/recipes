@@ -1,5 +1,5 @@
 <template>
-    <v-dialog activator="parent" max-width="600px" v-model="dialog">
+    <v-dialog max-width="600px" v-model="dialog">
         <v-card :loading="loading">
             <v-closable-card-title :title="$t('Add_Servings_to_Shopping', {servings: servings})" v-model="dialog"></v-closable-card-title>
             <v-card-text>
@@ -56,7 +56,9 @@ const props = defineProps({
     mealPlan: {type: Object as PropType<MealPlan>, required: false},
 })
 
-const dialog = ref(false)
+// v-model controlled by the opener (e.g. RecipeContextMenu's "Add to Shopping" item). Previously a
+// private ref + activator="parent", which the menu could not drive — clicking it was a no-op (D10).
+const dialog = defineModel<boolean>({default: false})
 const loading = ref(false)
 const panel = ref(0)
 
