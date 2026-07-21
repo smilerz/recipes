@@ -63,6 +63,7 @@
                             hide-details
                             search-on-load
                             can-clear
+                            append-to-body
                             :placeholder="t('any_random', {target: modeLabel(section.mode)})"
                         />
                     </div>
