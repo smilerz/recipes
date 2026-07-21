@@ -81,23 +81,25 @@
                     </template>
                 </ModelListToolbar>
 
+                <!-- Active-filter chips live OUTSIDE the collapsible input panel so an active filter
+                     is always surfaced and removable, even when the filter inputs are collapsed (D02). -->
+                <ModelListFilterChips
+                    v-if="activeFilterCount > 0 && !selectMode"
+                    :filter-defs="filterDefs"
+                    :get-filter="getFilter"
+                    :set-filter="setFilter"
+                    :clear-filter="clearFilter"
+                    :clear-all-filters="clearAllFilters"
+                    :active-filter-count="activeFilterCount"
+                    @open-filters="openSettingsPanel('filters')"
+                />
+
                 <v-expand-transition>
                 <div v-show="!filtersCollapsed && !selectMode">
                     <closable-help-alert
                         v-if="savedFilterModified"
                         :text="$t('saved_filter_override_hint')"
                         class="mt-1"
-                    />
-
-                    <ModelListFilterChips
-                        v-if="activeFilterCount > 0"
-                        :filter-defs="filterDefs"
-                        :get-filter="getFilter"
-                        :set-filter="setFilter"
-                        :clear-filter="clearFilter"
-                        :clear-all-filters="clearAllFilters"
-                        :active-filter-count="activeFilterCount"
-                        @open-filters="openSettingsPanel('filters')"
                     />
 
                     <v-row v-if="inlineGroups.length > 0" density="compact" class="mt-2">

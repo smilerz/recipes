@@ -589,4 +589,16 @@ describe('SearchPage (Phase 3 rewrite)', () => {
             wrapper.unmount()
         })
     })
+
+    describe('active-filter chips (D02)', () => {
+        it('shows the active-filter chips even when the filter inputs are collapsed by default', async () => {
+            // filtersCollapsed defaults to true; the chips must still be visible so an active filter
+            // is always surfaced (and removable), not hidden inside the collapsed input panel.
+            const {wrapper} = await mountSearchPage({keywords: '1,2'})
+            const chips = wrapper.find('.stub-filter-chips')
+            expect(chips.exists()).toBe(true)      // rendered because activeFilterCount > 0
+            expect(chips.isVisible()).toBe(true)   // and NOT hidden by the collapsed v-show
+            wrapper.unmount()
+        })
+    })
 })
