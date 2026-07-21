@@ -73,7 +73,7 @@ describe('RecipeView', () => {
                     KeywordsComponent: { template: '<div class="stub-keywords"/>' },
                     RecipeImage: { template: '<div class="stub-recipe-image"/>' },
                     ExternalRecipeViewer: { template: '<div class="stub-external-viewer"/>' },
-                    StepView: { template: '<div class="stub-step-view"/>' },
+                    StepView: { props: ['ingredientFactor'], emits: ['scale'], template: '<div class="stub-step-view" :data-factor="ingredientFactor"/>' },
                     PropertyView: { template: '<div class="stub-property-view"/>' },
                     PrivateRecipeBadge: { template: '<div class="stub-private-badge"/>' },
                     ModelSelect: { template: '<div class="stub-model-select"/>' },
@@ -121,6 +121,23 @@ describe('RecipeView', () => {
         const wrapper = mountRecipeView(recipe)
         await flushPromises()
         expect(wrapper.findAll('.stub-step-view').length).toBe(2)
+    })
+
+    // D03: scaling by ingredient from a per-step view must re-scale the recipe. RecipeView handled
+    // @scale on StepsOverview but not on StepView, so step-view scaling was silently dropped.
+    it('scales the recipe when a step view emits @scale (D03)', async () => {
+        const recipe = makeRecipe({ id: 1, servings: 4, steps: [makeStep({ ingredients: [makeIngredient()] })] })
+        const wrapper = mountRecipeView(recipe)
+        await flushPromises()
+
+        const stepView = wrapper.findComponent('.stub-step-view')
+        expect(stepView.attributes('data-factor')).toBe('1') // base factor (servings 4 / recipe 4)
+
+        stepView.vm.$emit('scale', 2) // e.g. doubling an ingredient's amount
+        await flushPromises()
+
+        // servings -> 4 * 2 = 8, so ingredientFactor -> 2
+        expect(stepView.attributes('data-factor')).toBe('2')
     })
 
     it('renders keywords when present', async () => {
