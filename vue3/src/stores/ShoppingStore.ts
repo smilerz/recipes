@@ -352,18 +352,11 @@ export const useShoppingStore = defineStore(_STORE_ID, () => {
         const api = new ApiApi()
         return api.apiShoppingListEntryDestroy({id: object.id!}).then((r) => {
             globalEntriesMap.value.delete(object.id!)
-            let categoryName = getEntryCategoryKey(object)
-
-            entriesByGroup.value.forEach(category => {
-                if (category.name == categoryName) {
-                    category.foods.get(object.food!.id!)?.entries.delete(object.id!)
-                    if (category.foods.get(object.food!.id!)?.entries.size == 0) {
-                        category.foods.delete(object.food!.id!)
-                        triggerRef(entriesByGroup)
-                    }
-
-                }
-            })
+            // Rebuild the display from the (now-updated) source. The previous in-place surgery
+            // mutated the entriesByGroup shallowRef without reassigning its value or calling
+            // triggerRef in the multi-entry case, so the deleted row stayed on screen until a
+            // refresh (D01). updateEntriesStructure() reassigns the value, which always re-renders.
+            updateEntriesStructure()
 
             if (undo) {
                 registerChange("DESTROY", [object])

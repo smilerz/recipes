@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
+import { watch, nextTick } from 'vue'
 import { setActivePinia, createPinia } from 'pinia'
-import { makeShoppingListEntry } from '@/__tests__/factories'
+import { makeShoppingListEntry, makeFoodShopping } from '@/__tests__/factories'
 import { apiMock, resetApiMock } from '@/__tests__/api-mock'
 
 vi.mock('@/openapi', async (importOriginal) => ({
@@ -111,6 +112,30 @@ describe('ShoppingStore', () => {
             await store.deleteObject(entry, false)
 
             expect(store.entries.has(10)).toBe(false)
+        })
+
+        // D01: deleting an entry must NOTIFY the displayed structure (entriesByGroup) so the row
+        // leaves the screen — not just mutate it in place on a shallowRef (no re-render). The
+        // reproducible case: a food with several entries; deleting one takes the size>0 path, which
+        // never calls triggerRef, so the display never updates until a full refresh.
+        it('notifies entriesByGroup reactivity when deleting one of a food\'s entries (D01)', async () => {
+            const store = useShoppingStore()
+            const food = makeFoodShopping({ id: 5 })
+            const e10 = makeShoppingListEntry({ id: 10, food })
+            const e11 = makeShoppingListEntry({ id: 11, food })
+            store.entries.set(10, e10)
+            store.entries.set(11, e11)
+            store.updateEntriesStructure()
+
+            let fired = 0
+            const stop = watch(() => store.entriesByGroup, () => { fired++ })
+
+            apiMock.apiShoppingListEntryDestroy.mockResolvedValue(undefined)
+            await store.deleteObject(e10, false)
+            await nextTick()
+            stop()
+
+            expect(fired).toBeGreaterThan(0)
         })
     })
 
