@@ -43,7 +43,9 @@ const DEFAULT_STUBS: Record<string, any> = {
     // `model` and drive its update:modelValue (mirrors the old SectionRow.test stub).
     ModelSelect: {
         name: 'ModelSelect',
-        props: ['model', 'modelValue', 'items', 'object'],
+        // appendToBody typed Boolean so the bare `append-to-body` attribute coerces to true (mirrors
+        // the real ModelSelect prop); the rest are untyped pass-throughs.
+        props: {model: null, modelValue: null, items: null, object: null, appendToBody: Boolean},
         emits: ['update:modelValue'],
         template: '<div class="stub-model-select" :data-model="model"/>',
     },
@@ -171,6 +173,14 @@ describe('StartPageSettings', () => {
         const selects = wrapper.findAll('.stub-model-select')
         expect(selects).toHaveLength(1)
         expect(selects[0].attributes('data-model')).toBe('User')
+    })
+
+    it('appends the entity picker dropdown to body so the section card cannot clip it (D05)', async () => {
+        // Regression lock for D05: without append-to-body the @vueform dropdown renders in-tree and
+        // the section card's overflow clips it.
+        const { wrapper } = mountSettings([{ mode: 'keyword', enabled: true, min_recipes: 10 }])
+        await flushPromises()
+        expect(wrapper.findComponent('.stub-model-select').props('appendToBody')).toBe(true)
     })
 
     it('renders a v-select (not a ModelSelect) for rating', async () => {
