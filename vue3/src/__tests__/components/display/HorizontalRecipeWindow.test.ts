@@ -129,3 +129,49 @@ describe('HorizontalRecipeWindow — cards pinned to one column width (no stretc
         expect(maxW).toBeLessThan(40)
     })
 })
+
+// D04: a home-page `books` section whose RecipeBook is backed by a saved search
+// (RecipeBook.filter) must include the filter's recipes. The backend `books` filter
+// only matches manual RecipeBookEntry rows, so a filter-only book was empty here.
+describe('HorizontalRecipeWindow — books section backed by a saved search (D04)', () => {
+    beforeEach(() => {
+        resetApiMock()
+    })
+
+    async function mountBooks() {
+        // book has a saved-search filter but NO manual entries
+        apiMock.apiRecipeBookRetrieve = vi.fn().mockResolvedValue({ id: 5, name: 'Saved Book', filter: { id: 9, name: 'F' } })
+        apiMock.apiRecipeList = vi.fn().mockImplementation((params: any) => {
+            if (params.filter === 9) {
+                return Promise.resolve({ count: 1, results: [{ id: 100, name: 'FilterRecipe' }] })
+            }
+            return Promise.resolve({ count: 0, results: [] }) // no manual RecipeBookEntry recipes
+        })
+
+        const pinia = createPinia()
+        const i18n = createI18n({ legacy: false, locale: 'en', messages: { en: {} }, missingWarn: false, fallbackWarn: false })
+        const router: Router = createRouter({
+            history: createMemoryHistory(),
+            routes: [
+                { path: '/', component: { template: '<div/>' } },
+                { path: '/advanced-search', name: 'SearchPage', component: { template: '<div/>' } },
+            ],
+        })
+
+        const wrapper = mount(HorizontalRecipeWindow, {
+            props: { mode: 'books', filterId: 5 },
+            global: {
+                plugins: [pinia, i18n, router],
+                stubs: { RecipeCard: { template: '<div class="stub-card"/>' } },
+            },
+        })
+        await flushPromises()
+        return { wrapper }
+    }
+
+    it('renders the book filter\'s recipes when the book has no manual entries', async () => {
+        const { wrapper } = await mountBooks()
+        expect((wrapper.vm as any).recipes.map((r: any) => r.id)).toContain(100)
+        expect(wrapper.findAll('.stub-card').length).toBeGreaterThan(0)
+    })
+})
