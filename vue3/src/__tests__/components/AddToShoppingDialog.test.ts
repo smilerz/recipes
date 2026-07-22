@@ -56,6 +56,8 @@ describe('AddToShoppingDialog', () => {
                 stubs: {
                     ModelSelect: { template: '<div class="stub-model-select"/>' },
                     VClosableCardTitle: { template: '<div class="stub-title"/>' },
+                    // Mirror the real indicator: renders a jar only when in-inventory is truthy.
+                    PantryJarIndicator: { props: ['inInventory', 'earliestExpiry'], template: '<span class="stub-jar" v-if="inInventory"/>' },
                 },
             },
         })
@@ -113,5 +115,30 @@ describe('AddToShoppingDialog', () => {
         await flushPromises()
 
         expect(document.body.innerHTML).toContain('Flour')
+    })
+
+    // D11 Phase 1: the dialog already auto-unchecks on-hand ingredients silently — make that
+    // visible with a pantry jar on the on-hand rows so the pre-uncheck is explained (and still
+    // overridable via the row checkbox).
+    it('shows a pantry jar on on-hand ingredients and pre-unchecks them', async () => {
+        const onHand = makeIngredient({ food: makeFood({ name: 'Flour', foodOnhand: true, inInventory: 'True', earliestExpiry: null }) })
+        const needed = makeIngredient({ food: makeFood({ id: 2, name: 'Sugar', foodOnhand: false, inInventory: 'False', earliestExpiry: null }) })
+        const recipe = makeRecipe({ id: 1, servings: 4, steps: [makeStep({ ingredients: [onHand, needed] })] })
+        apiMock.apiRecipeRetrieve.mockResolvedValue(recipe)
+        apiMock.apiRecipeRelatedList.mockResolvedValue([])
+
+        const wrapper = mountDialog()
+        await flushPromises()
+        await wrapper.setProps({ modelValue: true })
+        await flushPromises()
+
+        // exactly one jar — on the on-hand food (Flour), not the needed one (Sugar)
+        expect(document.body.querySelectorAll('.stub-jar').length).toBe(1)
+
+        const entries = (wrapper.vm as any).dialogRecipes[0].entries
+        const flour = entries.find((e: any) => e.food?.name === 'Flour')
+        const sugar = entries.find((e: any) => e.food?.name === 'Sugar')
+        expect(flour.checked).toBe(false)   // on-hand → pre-unchecked
+        expect(sugar.checked).toBe(true)    // needed → checked
     })
 })

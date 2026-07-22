@@ -21,6 +21,10 @@
                                     </td>
                                     <td>
                                         <template v-if="e.food"> {{ ingredientToFoodString(e.ingredient, ingredientFactor) }}</template>
+                                        <!-- Surface why an on-hand row is pre-unchecked: the pantry jar signals it's
+                                             already stocked (with expiry tint). The row stays overridable (D11 P1). -->
+                                        <pantry-jar-indicator :in-inventory="parseBooleanAnnotation(e.food?.inInventory)"
+                                                              :earliest-expiry="e.food?.earliestExpiry" size="x-small" class="ml-1"></pantry-jar-indicator>
                                     </td>
                                 </tr>
                                 </tbody>
@@ -46,8 +50,9 @@ import {ErrorMessageType, PreparedMessage, useMessageStore} from "@/stores/Messa
 import {ShoppingDialogRecipe, ShoppingDialogRecipeEntry} from "@/types/Shopping";
 import {calculateFoodAmount} from "@/utils/number_utils";
 import {useUserPreferenceStore} from "@/stores/UserPreferenceStore";
-import {ingredientToUnitString, ingredientToFoodString} from "@/utils/model_utils.ts";
+import {ingredientToUnitString, ingredientToFoodString, parseBooleanAnnotation} from "@/utils/model_utils.ts";
 import ModelSelect from "@/components/inputs/ModelSelect.vue";
+import PantryJarIndicator from "@/components/display/PantryJarIndicator.vue";
 
 const emit = defineEmits(['created'])
 
