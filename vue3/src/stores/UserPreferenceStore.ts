@@ -267,6 +267,7 @@ export const useUserPreferenceStore = defineStore('user_preference_store', () =>
 
             mealplan_displayPeriod: 'week',
             mealplan_displayPeriodCount: 3,
+            mealplan_shopping_skipPreview: false,
             mealplan_startingDayOfWeek: 1,
             mealplan_displayWeekNumbers: true,
 
