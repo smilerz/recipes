@@ -16,6 +16,9 @@ export type DeviceSettings = {
 
     mealplan_displayPeriod: string
     mealplan_displayPeriodCount: number
+    // Browser-remembered fast-path: skip the editable add-to-shopping preview and add directly
+    // when a meal plan opts into shopping (D11 P2a). Off = show the preview.
+    mealplan_shopping_skipPreview: boolean
     mealplan_startingDayOfWeek: number
     mealplan_displayWeekNumbers: boolean
 

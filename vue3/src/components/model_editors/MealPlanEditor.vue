@@ -2,7 +2,7 @@
     <model-editor-base
         :loading="loading"
         :dialog="dialog"
-        @save="saveObject().then((obj:MealPlan) => { useMealPlanStore().plans.set(obj.id, obj);})"
+        @save="onSave()"
         @delete="useMealPlanStore().plans.delete(editingObj.id); deleteObject()"
         @close="emit('close'); editingObjChanged = false"
         :is-update="isUpdate()"
@@ -37,6 +37,12 @@
                                 </v-btn>
 
                                 <v-checkbox :label="$t('AddToShopping')" v-model="editingObj.addshopping" hide-details v-if="editingObj.recipe && !isUpdate()"></v-checkbox>
+
+                                <!-- Editable preview opened after a new plan is created (D11 P2a). Fresh-mounted
+                                     per open so it reloads the recipe; the browser-remembered fast-path skips it. -->
+                                <add-to-shopping-dialog v-if="shoppingPreviewOpen && previewPlan" v-model="shoppingPreviewOpen"
+                                                        :recipe="previewPlan.recipe" :meal-plan="previewPlan" :show-skip-preview="true"
+                                                        @created="editingObj.shopping = true"></add-to-shopping-dialog>
                             </v-col>
                             <v-col cols="12" md="6">
                                 <v-text-field :label="$t('Title')" v-model="editingObj.title"></v-text-field>
@@ -128,6 +134,7 @@ import ClosableHelpAlert from "@/components/display/ClosableHelpAlert.vue";
 import {useMealPlanStore} from "@/stores/MealPlanStore";
 import AddToShoppingDialog from "@/components/dialogs/AddToShoppingDialog.vue";
 import ShoppingListView from "@/components/display/ShoppingListView.vue";
+import {resolveMealplanShoppingAction} from "@/utils/mealplan_shopping";
 
 const props = defineProps({
     item: {type: {} as PropType<MealPlan>, required: false, default: null},
@@ -160,6 +167,28 @@ watch([() => props.item, () => props.itemId], () => {
 
 // object specific data (for selects/display)
 const tab = ref('plan')
+
+// D11 P2a: a new plan's "add to shopping" intent opens an editable preview (default) instead of
+// the silent backend auto-add; the browser-remembered fast-path skips straight to the silent add.
+const deviceSettings = useUserPreferenceStore().deviceSettings
+const shoppingPreviewOpen = ref(false)
+const previewPlan = ref<MealPlan | undefined>(undefined)
+
+function onSave() {
+    const wantsShopping = !isUpdate() && !!editingObj.value.recipe && !!editingObj.value.addshopping
+    const action = resolveMealplanShoppingAction(wantsShopping, deviceSettings.mealplan_shopping_skipPreview)
+    // Only the fast path lets the backend auto-add; otherwise the preview commits the entries.
+    editingObj.value.addshopping = action.addshopping
+    return saveObject().then((obj: MealPlan | undefined) => {
+        if (!obj?.id) return obj  // save failed (e.g. validation error) — saveObject already surfaced it
+        useMealPlanStore().plans.set(obj.id, obj)
+        if (action.openPreview && obj.recipe) {
+            previewPlan.value = obj
+            shoppingPreviewOpen.value = true
+        }
+        return obj
+    })
+}
 
 const dateRangeValue = ref([] as Date[])
 const timePickerMenu = ref(false)

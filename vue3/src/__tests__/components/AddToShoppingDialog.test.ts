@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { flushPromises, mount } from '@vue/test-utils'
-import { createPinia, type PiniaPlugin } from 'pinia'
+import { createPinia, setActivePinia, type PiniaPlugin } from 'pinia'
+import { useUserPreferenceStore } from '@/stores/UserPreferenceStore'
 import { createI18n } from 'vue-i18n'
 import { createRouter, createMemoryHistory } from 'vue-router'
 import { apiMock, resetApiMock } from '@/__tests__/api-mock'
@@ -34,7 +35,7 @@ describe('AddToShoppingDialog', () => {
         apiMock.apiShoppingListEntryBulkCreate = vi.fn()
     })
 
-    function mountDialog(recipe = makeRecipe({ id: 1, name: 'Cookies', servings: 4 })) {
+    function mountDialog(recipe = makeRecipe({ id: 1, name: 'Cookies', servings: 4 }), extraProps: Record<string, any> = {}) {
         const prePopulate: PiniaPlugin = ({ store }) => {
             if (store.$id === 'user_preference_store') {
                 store.userSettings = makeUserPreference() as any
@@ -42,6 +43,7 @@ describe('AddToShoppingDialog', () => {
         }
         const pinia = createPinia()
         pinia.use(prePopulate)
+        setActivePinia(pinia)
 
         const i18n = createI18n({ legacy: false, locale: 'en', messages: { en: {} }, missingWarn: false, fallbackWarn: false })
         const router = createRouter({
@@ -50,7 +52,7 @@ describe('AddToShoppingDialog', () => {
         })
 
         return mount(AddToShoppingDialog, {
-            props: { recipe },
+            props: { recipe, ...extraProps },
             global: {
                 plugins: [pinia, i18n, router],
                 stubs: {
@@ -140,5 +142,35 @@ describe('AddToShoppingDialog', () => {
         const sugar = entries.find((e: any) => e.food?.name === 'Sugar')
         expect(flour.checked).toBe(false)   // on-hand → pre-unchecked
         expect(sugar.checked).toBe(true)    // needed → checked
+    })
+
+    // D11 P2a: when the dialog is the meal-plan auto-add preview (showSkipPreview), it offers a
+    // browser-remembered "skip preview next time" toggle bound to the device setting.
+    it('does not show the skip-preview toggle by default', async () => {
+        apiMock.apiRecipeRetrieve.mockResolvedValue(makeRecipe({ id: 1, steps: [makeStep({ ingredients: [makeIngredient()] })], servings: 4 }))
+        apiMock.apiRecipeRelatedList.mockResolvedValue([])
+        const wrapper = mountDialog()
+        await flushPromises()
+        await wrapper.setProps({ modelValue: true })
+        await flushPromises()
+        expect(document.body.querySelector('.skip-preview-toggle')).toBeNull()
+    })
+
+    it('shows the skip-preview toggle when showSkipPreview is set and writes the device setting', async () => {
+        apiMock.apiRecipeRetrieve.mockResolvedValue(makeRecipe({ id: 1, steps: [makeStep({ ingredients: [makeIngredient()] })], servings: 4 }))
+        apiMock.apiRecipeRelatedList.mockResolvedValue([])
+        const wrapper = mountDialog(undefined, { showSkipPreview: true })
+        await flushPromises()
+        await wrapper.setProps({ modelValue: true })
+        await flushPromises()
+
+        const store = useUserPreferenceStore()
+        expect(store.deviceSettings.mealplan_shopping_skipPreview).toBe(false)
+
+        const toggle = document.body.querySelector('.skip-preview-toggle input') as HTMLInputElement
+        expect(toggle).not.toBeNull()
+        toggle.click()
+        await flushPromises()
+        expect(store.deviceSettings.mealplan_shopping_skipPreview).toBe(true)
     })
 })
