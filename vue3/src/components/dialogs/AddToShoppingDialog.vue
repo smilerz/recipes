@@ -35,7 +35,13 @@
                 <v-number-input v-model="servings" class="mt-3" control-variant="split" :label="$t('Servings')" :precision="2" :disabled="loading"></v-number-input>
             </v-card-text>
             <v-card-actions>
-                <v-btn class="float-right" prepend-icon="$create" color="create" @click="createShoppingListRecipe()" :disabled="loading">{{ $t('Add_to_Shopping') }}</v-btn>
+                <!-- Meal-plan auto-add preview only: opt into the browser-remembered fast path
+                     that skips this preview next time (D11 P2a). -->
+                <v-checkbox v-if="props.showSkipPreview" class="skip-preview-toggle"
+                            v-model="deviceSettings.mealplan_shopping_skipPreview"
+                            :label="$t('SkipPreviewNextTime')" density="compact" hide-details></v-checkbox>
+                <v-spacer></v-spacer>
+                <v-btn prepend-icon="$create" color="create" @click="createShoppingListRecipe()" :disabled="loading">{{ $t('Add_to_Shopping') }}</v-btn>
             </v-card-actions>
         </v-card>
     </v-dialog>
@@ -59,7 +65,11 @@ const emit = defineEmits(['created'])
 const props = defineProps({
     recipe: {type: Object as PropType<Recipe | RecipeFlat | RecipeOverview>, required: true},
     mealPlan: {type: Object as PropType<MealPlan>, required: false},
+    // When opened as the meal-plan auto-add preview, show the "skip preview next time" toggle (D11 P2a).
+    showSkipPreview: {type: Boolean, default: false},
 })
+
+const deviceSettings = useUserPreferenceStore().deviceSettings
 
 // v-model controlled by the opener (e.g. RecipeContextMenu's "Add to Shopping" item). Previously a
 // private ref + activator="parent", which the menu could not drive — clicking it was a no-op (D10).
