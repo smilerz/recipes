@@ -175,3 +175,53 @@ describe('HorizontalRecipeWindow — books section backed by a saved search (D04
         expect(wrapper.findAll('.stub-card').length).toBeGreaterThan(0)
     })
 })
+
+// D09: sample sections (rating/keyword/books/food/saved_search/created_by) take a per-section
+// `randomize` toggle, ON by default (undefined → on), so the home preview shows a random slice
+// instead of a fixed one. When on, the recipe fetch carries random=true.
+describe('HorizontalRecipeWindow — randomize (D09)', () => {
+    beforeEach(() => {
+        resetApiMock()
+    })
+
+    async function mountMode(props: Record<string, unknown>) {
+        apiMock.apiRecipeList = vi.fn().mockResolvedValue({ count: 1, results: [{ id: 1, name: 'R' }] })
+        apiMock.apiRecipeBookRetrieve = vi.fn().mockResolvedValue({ id: 5, name: 'Book', filter: null })
+        const pinia = createPinia()
+        const i18n = createI18n({ legacy: false, locale: 'en', messages: { en: {} }, missingWarn: false, fallbackWarn: false })
+        const router: Router = createRouter({
+            history: createMemoryHistory(),
+            routes: [
+                { path: '/', component: { template: '<div/>' } },
+                { path: '/advanced-search', name: 'SearchPage', component: { template: '<div/>' } },
+            ],
+        })
+        const wrapper = mount(HorizontalRecipeWindow, {
+            props,
+            global: { plugins: [pinia, i18n, router], stubs: { RecipeCard: { template: '<div class="stub-card"/>' } } },
+        })
+        await flushPromises()
+        return { wrapper }
+    }
+
+    it('adds random=true to a rating section fetch by default (randomize undefined → on)', async () => {
+        await mountMode({ mode: 'rating' })
+        const call = apiMock.apiRecipeList.mock.calls.find((c: any[]) => c[0]?.rating != null)
+        expect(call, 'rating fetch should have happened').toBeTruthy()
+        expect(call![0].random).toBe('true')
+    })
+
+    it('omits random from the rating fetch when randomize is off', async () => {
+        await mountMode({ mode: 'rating', randomize: false })
+        const call = apiMock.apiRecipeList.mock.calls.find((c: any[]) => c[0]?.rating != null)
+        expect(call, 'rating fetch should have happened').toBeTruthy()
+        expect(call![0].random).toBeUndefined()
+    })
+
+    it('adds random=true to a books section fetch by default', async () => {
+        await mountMode({ mode: 'books', filterId: 5 })
+        const call = apiMock.apiRecipeList.mock.calls.find((c: any[]) => Array.isArray(c[0]?.books))
+        expect(call, 'books fetch should have happened').toBeTruthy()
+        expect(call![0].random).toBe('true')
+    })
+})

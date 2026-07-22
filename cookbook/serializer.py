@@ -558,7 +558,7 @@ class UserPreferenceSerializer(WritableNestedModelSerializer):
         return Food.objects.filter(depth__gt=0, space=space).exists()
 
     def validate_start_page_sections(self, value):
-        ALLOWED_KEYS = {"mode", "enabled", "min_recipes", "filter_id"}
+        ALLOWED_KEYS = {"mode", "enabled", "min_recipes", "filter_id", "randomize"}
 
         if not isinstance(value, list):
             raise ValidationError("Must be a list")
@@ -581,6 +581,8 @@ class UserPreferenceSerializer(WritableNestedModelSerializer):
             if "filter_id" in entry:
                 if not isinstance(entry["filter_id"], int) or entry["filter_id"] < 1:
                     raise ValidationError("filter_id must be a positive integer")
+            if "randomize" in entry and not isinstance(entry["randomize"], bool):
+                raise ValidationError("randomize must be boolean")
         return value
 
     def update(self, instance, validated_data):

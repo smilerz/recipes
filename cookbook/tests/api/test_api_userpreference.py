@@ -267,6 +267,26 @@ def test_sections_enabled_must_be_boolean(u1_s1):
     assert r.status_code == 400
 
 
+# D09: sample sections carry an optional per-section `randomize` flag (default on client-side).
+def test_sections_randomize_accepted(u1_s1):
+    r = u1_s1.patch(
+        reverse(DETAIL_URL, args={auth.get_user(u1_s1).id}),
+        {'start_page_sections': [{"mode": "rating", "enabled": True, "randomize": False}]},
+        content_type='application/json'
+    )
+    assert r.status_code == 200
+    assert json.loads(r.content)['start_page_sections'][0]['randomize'] is False
+
+
+def test_sections_randomize_must_be_boolean(u1_s1):
+    r = u1_s1.patch(
+        reverse(DETAIL_URL, args={auth.get_user(u1_s1).id}),
+        {'start_page_sections': [{"mode": "rating", "enabled": True, "randomize": "yes"}]},
+        content_type='application/json'
+    )
+    assert r.status_code == 400
+
+
 def test_sections_min_recipes_must_be_non_negative_int(u1_s1):
     r = u1_s1.patch(
         reverse(DETAIL_URL, args={auth.get_user(u1_s1).id}),
