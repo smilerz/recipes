@@ -192,6 +192,27 @@ describe('RecipeContextMenu', () => {
             expect(text).toContain('Edit Photo')
         })
     })
+
+    // D13: card_visibleMenuItems is a CARD decluttering preference and must not gate the
+    // recipe-view menu. The view is the canonical full menu, so an item trimmed from cards
+    // still shows on the recipe view (and stays hidden on the card).
+    describe('view menu ignores the card visibility list (D13)', () => {
+        it('shows items on the recipe view even when the card list excludes them', () => {
+            const w = mountMenu({ card_visibleMenuItems: ['edit'] }, { context: 'view' })
+            const text = w.text()
+            expect(text).toContain('Share')
+            expect(text).toContain('Add to Plan')
+            expect(text).toContain('Duplicate')
+        })
+
+        it('still hides those items on a card when the card list excludes them', () => {
+            const w = mountMenu({ card_visibleMenuItems: ['edit'] }, { context: 'card' })
+            const text = w.text()
+            expect(text).toContain('Edit')
+            expect(text).not.toContain('Share')
+            expect(text).not.toContain('Add to Plan')
+        })
+    })
 })
 
 describe('use up (view context only)', () => {

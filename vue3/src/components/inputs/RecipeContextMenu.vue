@@ -143,6 +143,11 @@ const exportLoading = ref(false)
 const useUpDialog = ref<InstanceType<typeof UseUpDialog> | null>(null)
 
 function isVisible(key: string): boolean {
+    // card_visibleMenuItems is a card-only decluttering preference. The recipe view is the
+    // canonical menu and always shows its full applicable set, so trimming cards can never
+    // hide (or strand) an action on the recipe page. Card-only items (cooklog/photo) keep
+    // their own context guard in the template. (D13)
+    if (props.context === 'view') return true
     return deviceSettings.card_visibleMenuItems.includes(key)
 }
 
