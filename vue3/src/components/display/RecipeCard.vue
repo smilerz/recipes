@@ -1,7 +1,9 @@
 <template>
     <template v-if="!props.loading">
 
-        <router-link :to="dest" :target="linkTarget">
+        <component :is="props.disableLink ? 'div' : 'router-link'"
+                   :to="props.disableLink ? undefined : dest"
+                   :target="props.disableLink ? undefined : linkTarget">
             <recipe-image :style="{height: props.height}" :recipe="recipe" rounded="lg" class="mr-3 ml-3" :disable-lightbox="true">
                 <template #overlay>
                     <span v-if="deviceSettings.card_showRating && recipe.rating != null"
@@ -21,10 +23,10 @@
                     </span>
                 </template>
             </recipe-image>
-        </router-link>
+        </component>
         <div class="ml-3">
             <div class="d-flex ">
-                <div class="flex-grow-1 cursor-pointer" @click="openRecipe()">
+                <div class="flex-grow-1" :class="{'cursor-pointer': !props.disableLink}" @click="!props.disableLink && openRecipe()">
                     <p class="font-weight-bold mt-1">{{ recipe.name }}</p>
                 </div>
                 <div class="mt-1">
@@ -83,6 +85,10 @@ const props = defineProps({
     height: {type: String, required: false, default: '15vh'},
     linkTarget: {type: String, required: false, default: ''},
     showMenu: {type: Boolean, default: true, required: false},
+    // Drop the built-in whole-card navigation (image link + title click). The book
+    // card reuses RecipeCard purely as the settings-driven display and supplies its
+    // own "Open" button instead (D08).
+    disableLink: {type: Boolean, default: false, required: false},
     servings: {type: Number, required: false},
 })
 

@@ -248,4 +248,27 @@ describe('RecipeCard display settings', () => {
             expect(emitted![0][0]).toMatchObject({id: 7, image: '/media/new.jpg'})
         })
     })
+
+    // D08: RecipeCard doubles as the book-card display (settings-driven visuals reused),
+    // but the book supplies its own navigation (an "Open" button), so it must be able to
+    // switch RecipeCard's built-in whole-card link off. disableLink drops the router-link
+    // around the image and the title's click-to-open — the display renders, nothing navigates.
+    describe('disableLink', () => {
+        it('wraps the image in a navigation link by default', () => {
+            const w = mountRecipeCard()
+            expect(w.find('a').exists()).toBe(true)
+        })
+
+        it('renders no navigation link when disableLink is set', () => {
+            const w = mountRecipeCard({ disableLink: true })
+            expect(w.find('a').exists()).toBe(false)
+        })
+
+        it('does not navigate on title click when disableLink is set', async () => {
+            const w = mountRecipeCard({ disableLink: true })
+            const push = vi.spyOn(w.vm.$router, 'push')
+            await w.find('.font-weight-bold').trigger('click')
+            expect(push).not.toHaveBeenCalled()
+        })
+    })
 })
