@@ -14,7 +14,7 @@
         <v-card-text class="pa-0">
             <v-tabs v-model="tab" :disabled="loading" grow>
                 <v-tab prepend-icon="$mealplan" value="plan">{{ $t('Meal_Plan') }}</v-tab>
-                <v-tab prepend-icon="$shopping" value="shopping" :disabled="!isUpdate()">{{ $t('Shopping_list') }}</v-tab>
+                <v-tab prepend-icon="$shopping" value="shopping">{{ $t('Shopping_list') }}</v-tab>
             </v-tabs>
         </v-card-text>
 
@@ -105,7 +105,10 @@
                 <v-tabs-window-item value="shopping">
                     <closable-help-alert class="mb-2" :text="$t('MealPlanShoppingHelp')"></closable-help-alert>
 
-                    <shopping-list-view :meal-plan-id="editingObj.id"></shopping-list-view>
+                    <!-- Only mount the list once the plan has an id (a new plan is auto-persisted on
+                         tab open, see the tab watcher) so it never scopes to an undefined mealplan. -->
+                    <shopping-list-view v-if="editingObj.id" :meal-plan-id="editingObj.id"></shopping-list-view>
+                    <div v-else class="d-flex justify-center pa-4"><v-progress-circular indeterminate></v-progress-circular></div>
 
                 </v-tabs-window-item>
             </v-tabs-window>
@@ -221,11 +224,22 @@ function applyTimeToEditingDates() {
 /**
  * update shopping list when switching to shopping tab
  */
-watch(() => tab.value, (newVal, oldVal) => {
-    if (newVal == 'shopping') {
-        useShoppingStore().selectedMealPlan = editingObj.value.id
-        useShoppingStore().updateEntriesStructure()
+watch(() => tab.value, async (newVal) => {
+    if (newVal !== 'shopping') return
+    // The shopping list scopes to a saved plan, so persist a new plan first (D11 P2b). Going to
+    // the tab means managing shopping directly — don't silently auto-add. On save failure (e.g.
+    // missing meal type) fall back to the plan tab; saveObject already surfaced the field error.
+    if (!editingObj.value.id) {
+        editingObj.value.addshopping = false
+        const obj = await saveObject()
+        if (!obj?.id) {
+            tab.value = 'plan'
+            return
+        }
+        useMealPlanStore().plans.set(obj.id, obj)
     }
+    useShoppingStore().selectedMealPlan = editingObj.value.id
+    useShoppingStore().updateEntriesStructure()
 })
 
 onMounted(() => {
