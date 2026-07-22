@@ -591,6 +591,7 @@
   "QuickActionsDescription_N": "Select up to {n} actions to show inline next to the menu.",
   "QuickEntry": "Quick Entry",
   "Random": "Random",
+  "Randomize": "Randomize",
   "random_book": "Random recipe book",
   "random_food": "Random food",
   "any_random": "Any {target} (random)",

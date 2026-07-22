@@ -92,6 +92,16 @@
                         clearable
                         style="max-width: 280px"
                     />
+
+                    <v-switch
+                        v-if="RANDOMIZABLE_MODES.has(section.mode)"
+                        v-model="section.randomize"
+                        :label="$t('Randomize')"
+                        density="compact"
+                        hide-details
+                        color="primary"
+                        class="flex-grow-0"
+                    />
                 </div>
 
                 <v-btn
@@ -252,6 +262,10 @@ const MODEL_FOR_MODE: Record<string, string> = {
     saved_search: 'CustomFilter',
 }
 
+// Modes whose recipe order is arbitrary, so the per-section randomize toggle applies (D09).
+// recent/new are date-ordered and `random` is already random, so they get no toggle.
+const RANDOMIZABLE_MODES = new Set<StartPageSectionMode>(['rating', 'keyword', 'books', 'food', 'saved_search', 'created_by'])
+
 // --- State ---
 
 const defaultPage = ref('HOME')
@@ -293,7 +307,8 @@ function modeDescription(mode: StartPageSectionMode): string {
 }
 
 function toLocalSection(s: StartPageSection): LocalSection {
-    return {...s, _key: makeKey(), _filterObj: null}
+    // Normalise randomize to a concrete boolean for the switch: undefined means on (D09).
+    return {...s, randomize: s.randomize ?? true, _key: makeKey(), _filterObj: null}
 }
 
 // --- Actions (local only, no auto-save) ---
@@ -346,6 +361,8 @@ async function save() {
             if (filterId && typeof filterId === 'number') {
                 out.filter_id = filterId
             }
+
+            if (RANDOMIZABLE_MODES.has(s.mode)) out.randomize = s.randomize !== false
 
             serialized.push(out)
         }

@@ -74,4 +74,9 @@ export interface StartPageSection {
     enabled: boolean
     min_recipes?: number
     filter_id?: number
+    // Show a random slice of the section's recipes rather than a fixed one (D09). Undefined is
+    // treated as ON — the scroller prop defaults to true — so existing sections randomize by
+    // default. Only meaningful for the sample modes (rating/keyword/books/food/saved_search/
+    // created_by); ignored for recent/new/random.
+    randomize?: boolean
 }
