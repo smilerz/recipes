@@ -1,11 +1,16 @@
 <template>
     <v-card :loading="loading">
-        <v-card-title>{{ props.recipeOverview.name }}</v-card-title>
-        <recipe-image height="25vh" :recipe="props.recipeOverview"></recipe-image>
+        <!-- Reuse RecipeCard as the settings-driven display (image + overlays + title +
+             keywords, all honouring the card_* device settings — D08). The book supplies
+             its own navigation and has no context menu, so the built-in whole-card link
+             and menu are switched off; the "Open" button below is the sole nav. -->
+        <recipe-card
+            :recipe="props.recipeOverview"
+            :disable-link="true"
+            :show-menu="false"
+            height="25vh"
+        ></recipe-card>
         <v-card-subtitle>{{ props.recipeOverview.description }}</v-card-subtitle>
-        <v-card-text>
-            <keywords-bar :keywords="props.recipeOverview.keywords"></keywords-bar>
-        </v-card-text>
         <ingredients-table :ingredient-factor="1" v-model="ingredients" :show-checkbox="false"></ingredients-table>
         <v-card-actions>
             <v-btn :to="{name: 'RecipeViewPage', params: {id: props.recipeOverview.id}}">{{$t('Open')}}</v-btn>
@@ -15,14 +20,13 @@
 
 <script setup lang="ts">
 
-import RecipeImage from "@/components/display/RecipeImage.vue";
+import RecipeCard from "@/components/display/RecipeCard.vue";
 import {ApiApi, Ingredient, Recipe, RecipeOverview} from "@/openapi";
 import {onMounted, PropType, ref} from "vue";
 import {ErrorMessageType, useMessageStore} from "@/stores/MessageStore";
 import IngredientsTable from "@/components/display/IngredientsTable.vue";
 import {getRecipeIngredients} from "@/utils/model_utils";
 import {useI18n} from "vue-i18n";
-import KeywordsBar from "@/components/display/KeywordsBar.vue";
 
 const props = defineProps({
     recipeOverview: {type: {} as PropType<RecipeOverview>, required: true}

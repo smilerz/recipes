@@ -6,6 +6,7 @@ from django.urls import reverse
 from django_scopes import scopes_disabled
 
 from cookbook.models import RecipeBook, RecipeBookEntry
+from cookbook.tests.factories import CookLogFactory
 
 LIST_URL = 'api:recipebookentry-list'
 DETAIL_URL = 'api:recipebookentry-detail'
@@ -101,6 +102,22 @@ def test_add_duplicate(u1_s1, obj_1):
         content_type='application/json'
     )
     assert r.status_code == 400
+
+
+# D08: book cards read rating + last_cooked off the recipe payload, but those are per-user
+# queryset annotations (with_rating / with_last_cooked). The bare recipe FK the entry
+# serializer used carried neither, so card_showRating / card_showLastCooked could never
+# render on a book. The entry viewset must annotate the recipe it serializes.
+def test_recipe_content_includes_rating_and_last_cooked(u1_s1, obj_1, space_1):
+    user = auth.get_user(u1_s1)
+    with scopes_disabled():
+        CookLogFactory.create(recipe=obj_1.recipe, created_by=user, rating=4, space=space_1)
+
+    r = u1_s1.get(reverse(LIST_URL))
+    assert r.status_code == 200
+    content = json.loads(r.content)['results'][0]['recipe_content']
+    assert float(content['rating']) == 4.0
+    assert content['last_cooked'] is not None
 
 
 def test_delete(u1_s1, u1_s2, obj_1):

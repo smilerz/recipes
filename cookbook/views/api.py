@@ -1951,6 +1951,14 @@ class RecipeBookEntryViewSet(LoggingMixin, viewsets.ModelViewSet):
             Q(book__created_by=self.request.user) | Q(book__shared=self.request.user)).filter(
             book__space=self.request.space).distinct()
 
+        # Annotate the serialized recipe with the per-user rating / last-cooked so book cards
+        # honour card_showRating / card_showLastCooked (D08). Annotations survive the prefetch,
+        # so obj.recipe carries them without an extra query per entry.
+        queryset = queryset.prefetch_related(Prefetch(
+            'recipe',
+            queryset=Recipe.objects.with_rating(self.request.user).with_last_cooked(
+                self.request.user, self.request.space)))
+
         recipe_id = self.request.query_params.get('recipe', None)
         if recipe_id is not None:
             queryset = queryset.filter(recipe__pk=recipe_id)
