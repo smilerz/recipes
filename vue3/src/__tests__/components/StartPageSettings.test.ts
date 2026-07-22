@@ -151,6 +151,24 @@ describe('StartPageSettings', () => {
         expect(kwSection.filter_id).toBe(42)
     })
 
+    // D09: sample sections carry a per-section randomize toggle (default on). save() must
+    // serialize it so the choice round-trips; a section stored without it defaults to on.
+    it('save serializes the randomize toggle for sample modes (default on)', async () => {
+        const { wrapper, store } = mountSettings([
+            { mode: 'meal_plan', enabled: true },
+            { mode: 'keyword', enabled: true, min_recipes: 10, randomize: false },
+            { mode: 'rating', enabled: true, min_recipes: 10 }, // omitted → defaults on
+        ])
+        await flushPromises()
+
+        await (wrapper.vm as any).save()
+        await flushPromises()
+
+        const saved = store.userSettings.startPageSections as any[]
+        expect(saved.find((s: any) => s.mode === 'keyword').randomize).toBe(false)
+        expect(saved.find((s: any) => s.mode === 'rating').randomize).toBe(true)
+    })
+
     it('sets defaultPage from store', async () => {
         mountSettings([], 'SEARCH')
         await flushPromises()

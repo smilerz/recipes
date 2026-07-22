@@ -76,11 +76,24 @@ const ENTITY_MODES: Partial<Record<StartPageSectionMode, EntityConfig>> = {
     created_by: {retrieve: (api, id) => api.apiUserRetrieve({id}), param: 'createdby'},
 }
 
-const props = defineProps<{
+const props = withDefaults(defineProps<{
     mode: StartPageSectionMode
     skeletons?: number
     filterId?: number
-}>()
+    // Per-section "randomize" toggle (D09). Defaults ON, so a section shows a random slice of
+    // its recipes rather than a fixed one. (Vue casts an absent Boolean prop to false, so the
+    // default is set explicitly here — a section whose stored `randomize` is undefined stays on.)
+    // Only meaningful for the sample modes below; recent/new are date-ordered and `random` is
+    // always random.
+    randomize?: boolean
+}>(), {
+    randomize: true,
+})
+
+// Modes whose recipe order is arbitrary, so a random sample is useful. `recent`/`new`
+// (date-ordered) and `random` (already random) are excluded.
+const RANDOMIZABLE_MODES = new Set<StartPageSectionMode>(['rating', 'keyword', 'food', 'books', 'saved_search', 'created_by'])
+const useRandom = computed(() => props.randomize && RANDOMIZABLE_MODES.has(props.mode))
 
 const {t} = useI18n()
 const router = useRouter()
@@ -148,7 +161,8 @@ function loadEntitySection(requestParameters: ApiRecipeListRequest) {
                 const user = r[Math.floor(Math.random() * r.length)]
                 entityName.value = t('CreatedBy') + ' ' + user.displayName
                 requestParameters.createdby = user.id
-                requestParameters.random = "true"
+                // recipe-order randomness is applied centrally via useRandom (D09); the random
+                // USER pick above stays regardless so the section still rotates whom it features.
                 queryParams.value = {createdby: user.id!}
                 doRecipeRequest(requestParameters)
             } else {
@@ -162,6 +176,12 @@ function loadEntitySection(requestParameters: ApiRecipeListRequest) {
 
 function loadRecipes() {
     const requestParameters = {pageSize: 16} as ApiRecipeListRequest
+
+    // Randomize the sample for the applicable modes (D09). `books` builds its own requests in
+    // loadBooksSection, so it applies the flag there; the rest flow through requestParameters.
+    if (useRandom.value) {
+        requestParameters.random = 'true'
+    }
 
     switch (props.mode) {
         case 'recent':
@@ -230,9 +250,10 @@ function loadBooksSection() {
         // to the book's manual entries.
         queryParams.value = book.filter ? {filter: book.filter.id!} : {books: book.id!}
 
-        const requests = [api.apiRecipeList({books: [book.id!], pageSize: 16})]
+        const randomFlag = useRandom.value ? {random: 'true'} : {}
+        const requests = [api.apiRecipeList({books: [book.id!], pageSize: 16, ...randomFlag})]
         if (book.filter) {
-            requests.push(api.apiRecipeList({filter: book.filter.id, pageSize: 16}))
+            requests.push(api.apiRecipeList({filter: book.filter.id, pageSize: 16, ...randomFlag}))
         }
         Promise.all(requests).then((results) => {
             const seen = new Set<number>()

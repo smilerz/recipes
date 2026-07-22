@@ -44,6 +44,7 @@
                     :mode="section.mode"
                     :skeletons="section.mode === 'rating' ? 2 : 4"
                     :filter-id="section.filter_id"
+                    :randomize="section.randomize"
                 />
             </template>
 
