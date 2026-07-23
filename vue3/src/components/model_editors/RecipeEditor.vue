@@ -250,7 +250,6 @@ function initializeEditor() {
             editingObj.value.internal = true //TODO make database default after v2
         },
         itemDefaults: props.itemDefaults,
-        onAfterSave: () => {}
     })
 }
 

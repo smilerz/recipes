@@ -1812,16 +1812,6 @@ class CookLogSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError('Rating must be between 1 and 5.')
         return value
 
-    def validate_rating(self, value):
-        # Vuetify's clearable v-rating emits 0 on clear; normalize to NULL so the DB
-        # invariant is "rating is NULL (unrated) or 1-5". The search layer already
-        # treats ?rating=0 as "unrated" for backwards compatibility.
-        if value == 0:
-            return None
-        if value is not None and not (1 <= value <= 5):
-            raise serializers.ValidationError('Rating must be between 1 and 5.')
-        return value
-
     def create(self, validated_data):
         validated_data['created_by'] = self.context['request'].user
         validated_data['space'] = self.context['request'].space
