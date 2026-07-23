@@ -159,15 +159,18 @@ export function useStartPageSections() {
 
     async function resolveFilterObjects() {
         const api = new ApiApi()
+        const retrievers: Partial<Record<StartPageSectionMode, (id: number) => Promise<any>>> = {
+            keyword: (id) => api.apiKeywordRetrieve({id}),
+            books: (id) => api.apiRecipeBookRetrieve({id}),
+            food: (id) => api.apiFoodRetrieve({id}),
+            saved_search: (id) => api.apiCustomFilterRetrieve({id}),
+        }
         const pending = localSections.value
-            .filter(s => s.filter_id && MODEL_FOR_MODE[s.mode])
+            .filter(s => s.filter_id && retrievers[s.mode])
             .map(async (section) => {
-                const method = `api${MODEL_FOR_MODE[section.mode]}Retrieve` as keyof typeof api
-                if (typeof api[method] === 'function') {
-                    try {
-                        section._filterObj = await (api[method] as Function)({id: section.filter_id})
-                    } catch { /* item may have been deleted */ }
-                }
+                try {
+                    section._filterObj = await retrievers[section.mode]!(section.filter_id as number)
+                } catch { /* item may have been deleted */ }
             })
         await Promise.all(pending)
     }
