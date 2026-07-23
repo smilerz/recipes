@@ -11,25 +11,41 @@
                     {{ $t('NoRecentPurchases') }}
                 </div>
                 <template v-else>
-                    <closable-help-alert :text="$t('StockUpHelp')"></closable-help-alert>
-                    <v-card v-for="row in rows" :key="`${row.food.id}-${row.unit?.id ?? 'none'}`" border class="mb-2">
+                    <closable-help-alert :title="$t('StockUp')" :text="$t('StockUpHelp')"></closable-help-alert>
+                    <div class="d-flex justify-end mb-1">
+                        <v-btn variant="text" size="small" class="text-none" append-icon="fa-solid fa-caret-down">
+                            {{ $t('Select') }}
+                            <v-menu activator="parent" close-on-content-click>
+                                <v-list density="compact">
+                                    <v-list-item @click="setAllChecked(true)">{{ $t('SelectAll') }}</v-list-item>
+                                    <v-list-item @click="setAllChecked(false)">{{ $t('SelectNone') }}</v-list-item>
+                                </v-list>
+                            </v-menu>
+                        </v-btn>
+                    </div>
+                    <template v-for="group in groupedRows" :key="group.key">
+                        <div v-if="group.label" class="text-caption text-medium-emphasis mt-2 mb-1 px-1">{{ group.label }}</div>
+                        <v-card v-for="row in group.rows" :key="`${row.food.id}-${row.unit?.id ?? 'none'}`" border class="mb-2">
                         <v-card-text class="pb-1">
-                            <v-checkbox v-model="row.checked" :label="row.food.name" hide-details density="compact"></v-checkbox>
+                            <div class="d-flex align-center">
+                                <v-checkbox v-model="row.checked" :label="row.food.name" hide-details density="compact"></v-checkbox>
+                                <pantry-jar-indicator :in-inventory="parseBooleanAnnotation(row.food.inInventory)" :earliest-expiry="row.food.earliestExpiry" class="ms-2"></pantry-jar-indicator>
+                            </div>
                         </v-card-text>
-                        <v-card-text v-if="row.checked" class="pt-0">
+                        <v-card-text class="pt-0" :class="{'text-medium-emphasis': !row.checked}">
                             <v-row density="compact" align="center">
                                 <v-col cols="12" sm="3">
-                                    <v-number-input :label="$t('Amount')" v-model="row.amount" :precision="2" :min="0" control-variant="hidden" hide-details density="compact"></v-number-input>
+                                    <v-number-input :label="$t('Amount')" v-model="row.amount" :precision="2" :min="0" control-variant="hidden" hide-details density="compact" :disabled="!row.checked"></v-number-input>
                                 </v-col>
                                 <v-col cols="6" sm="3">
-                                    <model-select :label="$t('Unit')" v-model="row.unit" model="Unit" hide-details density="compact" append-to-body inline></model-select>
+                                    <model-select :label="$t('Unit')" v-model="row.unit" model="Unit" hide-details density="compact" append-to-body inline :disabled="!row.checked"></model-select>
                                 </v-col>
                                 <v-col cols="6" sm="3">
                                     <model-select :label="$t('Location')" v-model="row.location" model="InventoryLocation" :items="locations"
-                                                  hide-details density="compact" append-to-body inline @update:model-value="onRowLocationChange(row)"></model-select>
+                                                  hide-details density="compact" append-to-body inline :disabled="!row.checked" @update:model-value="onRowLocationChange(row)"></model-select>
                                 </v-col>
                                 <v-col cols="12" sm="3">
-                                    <v-text-field :label="$t('Expires')" v-model="row.expires" type="date" hide-details density="compact">
+                                    <v-text-field :label="$t('Expires')" v-model="row.expires" type="date" hide-details density="compact" :disabled="!row.checked">
                                         <template #append-inner v-if="row.location?.isFreezer">
                                             <v-btn icon="fa-solid fa-snowflake" size="small" density="compact" variant="plain"
                                                    data-test="freezer-expiry-btn" :title="$t('Freezer')" :aria-label="$t('Freezer')" @click.stop="openFreezerPrefill(row)"></v-btn>
@@ -38,7 +54,8 @@
                                 </v-col>
                             </v-row>
                         </v-card-text>
-                    </v-card>
+                        </v-card>
+                    </template>
                     <freezer-expiry-dialog v-model="freezerDialog" v-model:date="freezerDate"></freezer-expiry-dialog>
                 </template>
             </v-card-text>
@@ -60,22 +77,25 @@ import {computed, ref} from "vue";
 import {useDisplay} from "vuetify";
 import {useI18n} from "vue-i18n";
 import {DateTime} from "luxon";
-import {ApiApi, Food, InventoryLocation, Unit} from "@/openapi";
+import {ApiApi, FoodShopping, InventoryLocation, Unit} from "@/openapi";
+import {parseBooleanAnnotation} from "@/utils/model_utils";
 import ModelSelect from "@/components/inputs/ModelSelect.vue";
 import VClosableCardTitle from "@/components/dialogs/VClosableCardTitle.vue";
 import FreezerExpiryDialog from "@/components/dialogs/FreezerExpiryDialog.vue";
 import ClosableHelpAlert from "@/components/display/ClosableHelpAlert.vue";
+import PantryJarIndicator from "@/components/display/PantryJarIndicator.vue";
 import {stockUpItemsFromRows, stockUpRowsFromEntries} from "@/utils/pantry_utils.ts";
 import {ErrorMessageType, MessageType, useMessageStore} from "@/stores/MessageStore.ts";
 
 interface Row {
-    food: Food
+    food: FoodShopping
     checked: boolean
     amount: number
     unit: Unit | null
     expires: string | null // YYYY-MM-DD for the native date input
     seedExpires: string | null // the shelf-life auto-suggestion this row opened with
     location: InventoryLocation | null
+    completedAt: Date | null // shop date, drives the date-group headers
 }
 
 const {t} = useI18n()
@@ -89,6 +109,26 @@ const rows = ref<Row[]>([])
 const locations = ref<InventoryLocation[]>([])
 
 const checkedCount = computed(() => rows.value.filter(r => r.checked).length)
+
+// rows arrive already sorted by shop date (newest first) then food name; cluster the contiguous
+// same-day rows into groups so the template can show one date header per shopping day.
+const groupedRows = computed(() => {
+    const groups: {key: string, label: string, rows: Row[]}[] = []
+    for (const row of rows.value) {
+        const key = row.completedAt ? DateTime.fromJSDate(row.completedAt).toISODate()! : ''
+        const last = groups[groups.length - 1]
+        if (last && last.key === key) {
+            last.rows.push(row)
+        } else {
+            groups.push({key, label: row.completedAt ? DateTime.fromJSDate(row.completedAt).toLocaleString(DateTime.DATE_MED) : '', rows: [row]})
+        }
+    }
+    return groups
+})
+
+function setAllChecked(value: boolean) {
+    for (const r of rows.value) r.checked = value
+}
 
 // One shared FreezerExpiryDialog targets whichever row's snowflake was tapped; it v-models a JS
 // Date while the row field is a date-only ISO string — glue both ways.
@@ -143,19 +183,20 @@ async function open() {
         locations.value = (locationList.results ?? []).sort((a, b) => (a.id ?? 0) - (b.id ?? 0))
         const defaultLocation = locations.value[0] ?? null
         const entries = (checked.results ?? []).filter(e => e.food?.id != null)
-        const foodIds = [...new Set(entries.map(e => e.food!.id!))]
-        const foods = await Promise.all(foodIds.map(id => api.apiFoodRetrieve({id})))
-        const foodById = new Map(foods.map(f => [f.id!, f]))
+        // the nested food now carries pack + shelf life + in_inventory, so seed straight from the
+        // list response — no per-food refetch (was an N+1 that made the dialog slow to open)
+        const foodById = new Map(entries.map(e => [e.food!.id!, e.food!]))
         rows.value = stockUpRowsFromEntries(entries, id => foodById.get(id)).map(seed => {
             const iso = seed.expires ? DateTime.fromJSDate(seed.expires).toISODate() : null
             const row: Row = {
                 food: seed.food,
-                checked: true,
+                checked: seed.checked, // in-pantry foods seed unchecked (bought but not run out)
                 amount: seed.amount,
                 unit: seed.unit,
                 expires: iso,
                 seedExpires: iso,
                 location: defaultLocation,
+                completedAt: seed.completedAt,
             }
             onRowLocationChange(row) // a freezer default location mutes the suggestion immediately
             return row

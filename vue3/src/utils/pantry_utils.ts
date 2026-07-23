@@ -100,6 +100,7 @@ export interface StockUpEntrySeed {
     food?: {id?: number | null} | null
     amount?: number | null
     unit?: Unit | null
+    completedAt?: Date | null
 }
 
 export interface StockUpRowSeed<F = unknown> {
@@ -107,6 +108,10 @@ export interface StockUpRowSeed<F = unknown> {
     amount: number
     unit: Unit | null
     expires: Date | null
+    /** false when the food is already on hand — a purchase you hadn't run out of seeds unchecked. */
+    checked: boolean
+    /** the day this was shopped (completed_at); drives date grouping. */
+    completedAt: Date | null
 }
 
 /**
@@ -115,12 +120,13 @@ export interface StockUpRowSeed<F = unknown> {
  * unit-less); an information-free entry falls back to the food's pack via stockUpRowFromFood;
  * rows aggregate by (food, unit) — same unit sums, different units stay separate rows.
  */
-export function stockUpRowsFromEntries<F extends {shoppingAmount?: number | null, preferredShoppingUnit?: Unit | null, shelfLifeDays?: number | null}>(
+export function stockUpRowsFromEntries<F extends {name?: string | null, inInventory?: string | null, earliestExpiry?: Date | string | null, shoppingAmount?: number | null, preferredShoppingUnit?: Unit | null, shelfLifeDays?: number | null}>(
     entries: StockUpEntrySeed[],
     getFood: (id: number) => F | undefined,
     now: Date = new Date(),
 ): StockUpRowSeed<F>[] {
-    const byFoodUnit = new Map<string, StockUpRowSeed<F>>()
+    // key by shop-day too: one trip's items aggregate together, the same food on another day stays apart
+    const byDateFoodUnit = new Map<string, StockUpRowSeed<F>>()
     for (const entry of entries) {
         const foodId = entry.food?.id
         if (foodId == null) continue
@@ -134,15 +140,25 @@ export function stockUpRowsFromEntries<F extends {shoppingAmount?: number | null
         const amount = hasEntryInfo ? (entryAmount ?? 1) : pack.amount
         const unit = hasEntryInfo ? entryUnit : pack.unit
 
-        const key = `${foodId}:${unit?.id ?? 'none'}`
-        const existing = byFoodUnit.get(key)
+        const completedAt = entry.completedAt ?? null
+        const dateKey = completedAt ? DateTime.fromJSDate(completedAt).toISODate() : ''
+        const key = `${dateKey}:${foodId}:${unit?.id ?? 'none'}`
+        const existing = byDateFoodUnit.get(key)
         if (existing) {
             existing.amount += amount
         } else {
-            byFoodUnit.set(key, {food, amount, unit, expires: pack.expires})
+            // seed unchecked only when a FRESH lot is already on hand; absent / expiring / expired → checked (restock)
+            const fresh = pantryJarState(parseBooleanAnnotation(food.inInventory), food.earliestExpiry ? new Date(food.earliestExpiry) : null, now).state === 'in-stock'
+            byDateFoodUnit.set(key, {food, amount, unit, expires: pack.expires, checked: !fresh, completedAt})
         }
     }
-    return [...byFoodUnit.values()]
+    // most recent shop date first, alphabetical by food within a date; undated rows sort last
+    return [...byDateFoodUnit.values()].sort((a, b) => {
+        const da = a.completedAt ? DateTime.fromJSDate(a.completedAt).toISODate()! : ''
+        const db = b.completedAt ? DateTime.fromJSDate(b.completedAt).toISODate()! : ''
+        if (da !== db) return db.localeCompare(da)
+        return (a.food.name ?? '').localeCompare(b.food.name ?? '')
+    })
 }
 
 export interface StockUpRow {

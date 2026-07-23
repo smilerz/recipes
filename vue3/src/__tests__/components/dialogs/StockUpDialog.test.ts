@@ -71,12 +71,14 @@ describe('StockUpDialog seeding (D3)', () => {
         apiMock.apiShoppingListEntryList.mockResolvedValue({results: [
             {food: {id: 1, name: 'Milk'}, amount: 2, unit: L, checked: true},
         ]})
-        apiMock.apiFoodRetrieve.mockResolvedValue({id: 1, name: 'Milk'})
         apiMock.apiInventoryEntryStockUpCreate.mockResolvedValue({created: 1})
 
         const wrapper = mountDialog()
         void (wrapper.vm as any).open()
         await flushPromises()
+
+        // seeded straight from the nested food — no per-food refetch (perf: no N+1)
+        expect(apiMock.apiFoodRetrieve).not.toHaveBeenCalled()
 
         clickConfirm()
         await flushPromises()
@@ -91,7 +93,6 @@ describe('StockUpDialog seeding (D3)', () => {
             {food: {id: 1, name: 'Milk'}, amount: 1, unit: L, checked: true},
             {food: {id: 1, name: 'Milk'}, amount: 2, unit: CUP, checked: true},
         ]})
-        apiMock.apiFoodRetrieve.mockResolvedValue({id: 1, name: 'Milk'})
         apiMock.apiInventoryEntryStockUpCreate.mockResolvedValue({created: 2})
 
         const wrapper = mountDialog()
@@ -112,13 +113,9 @@ describe('StockUpDialog seeding (D3)', () => {
 
     it('SU-03: information-free entry posts the pack; no pack means amount 1 with null unit', async () => {
         apiMock.apiShoppingListEntryList.mockResolvedValue({results: [
-            {food: {id: 2, name: 'Potatoes'}, amount: 0, unit: null, checked: true},
+            {food: {id: 2, name: 'Potatoes', shoppingAmount: 5, preferredShoppingUnit: {id: 7, name: 'bag'}}, amount: 0, unit: null, checked: true},
             {food: {id: 3, name: 'Basil'}, amount: 0, unit: null, checked: true},
         ]})
-        apiMock.apiFoodRetrieve.mockImplementation(({id}: {id: number}) => Promise.resolve(
-            id === 2 ? {id: 2, name: 'Potatoes', shoppingAmount: 5, preferredShoppingUnit: {id: 7, name: 'bag'}}
-                     : {id: 3, name: 'Basil'},
-        ))
         apiMock.apiInventoryEntryStockUpCreate.mockResolvedValue({created: 2})
 
         const wrapper = mountDialog()
@@ -129,9 +126,10 @@ describe('StockUpDialog seeding (D3)', () => {
         await flushPromises()
 
         const {items} = apiMock.apiInventoryEntryStockUpCreate.mock.calls[0][0].stockUp
+        // rows sort alphabetically by food within a shop day, so Basil precedes Potatoes
         expect(items).toEqual([
-            expect.objectContaining({food: 2, amount: 5, unit: 7}),
             expect.objectContaining({food: 3, amount: 1, unit: null}),
+            expect.objectContaining({food: 2, amount: 5, unit: 7}),
         ])
     })
 
@@ -141,9 +139,8 @@ describe('StockUpDialog seeding (D3)', () => {
             {id: 9, name: 'Chest freezer', isFreezer: true},
         ]})
         apiMock.apiShoppingListEntryList.mockResolvedValue({results: [
-            {food: {id: 3, name: 'Basil'}, amount: 1, unit: null, checked: true},
+            {food: {id: 3, name: 'Basil', shelfLifeDays: 7}, amount: 1, unit: null, checked: true},
         ]})
-        apiMock.apiFoodRetrieve.mockResolvedValue({id: 3, name: 'Basil', shelfLifeDays: 7})
 
         const wrapper = mountDialog()
         void (wrapper.vm as any).open()
