@@ -66,7 +66,7 @@ import {VDataTableUpdateOptions} from "@/vuetify";
 import {useModelEditorFunctions} from "@/composables/useModelEditorFunctions";
 import ModelEditorBase from "@/components/model_editors/ModelEditorBase.vue";
 import ModelSelect from "@/components/inputs/ModelSelect.vue";
-import {ErrorMessageType, MessageType, PreparedMessage, useMessageStore} from "@/stores/MessageStore";
+import {ErrorMessageType, MessageType, useMessageStore} from "@/stores/MessageStore";
 import {useUserPreferenceStore} from "@/stores/UserPreferenceStore";
 import {useI18n} from "vue-i18n";
 
@@ -158,11 +158,33 @@ function addRecipeToBook() {
 function removeRecipeFromBook(recipeBookEntry: RecipeBookEntry) {
     let api = new ApiApi()
 
+    // Capture what's needed to recreate the entry before deleting, so the removal is undoable
+    // (no confirm dialog — one-tap delete with an Undo toast instead).
+    const book = recipeBookEntry.book
+    const recipe = recipeBookEntry.recipe
+    const index = recipeBookEntries.value.findIndex(rBE => rBE.id! == recipeBookEntry.id!)
+
     api.apiRecipeBookEntryDestroy({id: recipeBookEntry.id!}).then((r) => {
-        recipeBookEntries.value.splice(recipeBookEntries.value.findIndex(rBE => rBE.id! == recipeBookEntry.id!), 1)
-        useMessageStore().addPreparedMessage(PreparedMessage.DELETE_SUCCESS)
+        recipeBookEntries.value.splice(index, 1)
+        useMessageStore().addMessage(MessageType.SUCCESS, {title: t('Removed'), text: ''}, 6000, {}, {
+            label: t('Undo'),
+            callback: () => restoreRecipeToBook(book, recipe, index),
+        })
     }).catch(err => {
         useMessageStore().addError(ErrorMessageType.DELETE_ERROR, err)
+    })
+}
+
+/**
+ * undo a removeRecipeFromBook by recreating the entry and putting it back at its original position
+ */
+function restoreRecipeToBook(book: number, recipe: number, index: number) {
+    let api = new ApiApi()
+
+    api.apiRecipeBookEntryCreate({recipeBookEntry: {book, recipe}}).then(r => {
+        recipeBookEntries.value.splice(Math.min(index, recipeBookEntries.value.length), 0, r)
+    }).catch(err => {
+        useMessageStore().addError(ErrorMessageType.CREATE_ERROR, err)
     })
 }
 
