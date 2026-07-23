@@ -186,13 +186,8 @@ const props = withDefaults(defineProps<{
     setFilter: (key: string, value: FilterValue) => void
     clearFilter: (key: string) => void
     compact?: boolean
-    /** When the field renders inside a temporary drawer, avoid teleporting
-     *  the dropdown to document.body so clicks on options don't register as
-     *  outside-drawer and dismiss the panel (E-2). */
-    inDrawer?: boolean
 }>(), {
     compact: false,
-    inDrawer: false,
 })
 
 const wrapClass = computed(() => props.compact ? 'mt-1' : 'px-4 py-1')

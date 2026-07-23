@@ -84,49 +84,31 @@ describe('FilterPanel', () => {
         })
     })
 
-    // E-2: opening a filter dropdown rendered inside a temporary drawer must
-    // not cause the drawer to dismiss. The fix keeps the multiselect dropdown
-    // inside the drawer's DOM instead of teleporting to document.body.
-    describe('inDrawer prop (E-2)', () => {
-        it('model-select dropdowns are body-teleported when outside a drawer', () => {
+    // Filter dropdowns always body-teleport (append-to-body) so the drawer's
+    // overflow-y: auto can't clip them. A prior inline attempt (fe6cca553) was
+    // reverted because it clipped dropdowns to 1-2 visible rows.
+    describe('dropdown teleporting', () => {
+        it('model-select dropdowns are body-teleported', () => {
             const wrapper = mountPanel([
                 {key: 'created_by', labelKey: 'CreatedBy', type: 'model-select', modelName: 'User' as any},
             ])
             expect(wrapper.find('.model-select-stub').attributes('data-append-to-body')).toBe('true')
         })
 
-        // Reverted fe6cca553: keeping dropdowns inline caused the drawer's
-        // overflow-y: auto to clip them to 1-2 visible rows. Always teleport
-        // to body so the dropdown escapes the clip. The temporary-drawer
-        // close-on-click case is a separate concern handled outside the
-        // multiselect's appendToBody flag.
-        it('model-select dropdowns body-teleport even when inside a drawer', () => {
-            const wrapper = mountPanel(
-                [{key: 'created_by', labelKey: 'CreatedBy', type: 'model-select', modelName: 'User' as any}],
-                {},
-                {inDrawer: true},
-            )
-            expect(wrapper.find('.model-select-stub').attributes('data-append-to-body')).toBe('true')
-        })
-
-        it('tag-select dropdowns body-teleport even when inside a drawer', () => {
+        it('tag-select dropdowns are body-teleported', () => {
             const wrapper = mountPanel(
                 [{key: 'keywords_or', labelKey: 'Keywords', type: 'tag-select' as any, modelName: 'Keyword' as any}],
-                {},
-                {inDrawer: true},
             )
             expect(wrapper.find('.model-select-stub').attributes('data-append-to-body')).toBe('true')
         })
 
-        it('tag-group (RecipeTagFilterGroup) dropdowns body-teleport even when inside a drawer', () => {
+        it('tag-group (RecipeTagFilterGroup) dropdowns are body-teleported', () => {
             const wrapper = mountPanel(
                 [{
                     key: 'keywords', labelKey: 'Keywords', type: 'tag-group' as any,
                     modelName: 'Keyword' as any,
                     variantKeys: ['keywords', 'keywordsAnd', 'keywordsOrNot', 'keywordsAndNot'] as any,
                 }],
-                {},
-                {inDrawer: true},
             )
             const stubs = wrapper.findAll('.model-select-stub')
             expect(stubs.length).toBeGreaterThan(0)

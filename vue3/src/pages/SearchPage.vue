@@ -284,7 +284,6 @@
                     :clear-filter="clearFilter"
                     :clear-all-filters="clearAllFilters"
                     :active-filter-count="activeFilterCount"
-                    :in-drawer="true"
                 />
             </template>
 
@@ -548,10 +547,6 @@ const filtersCollapsed = ref(true)
 const settingsPanelOpen = ref(false)
 const settingsActiveTab = ref<'settings' | 'filters'>('filters')
 
-// Unrated-only toggle — writable computed over the shared `rating` slot.
-// Setting it true writes rating=0 (the backend sentinel) and clears any
-// rating_gte / rating_lte siblings.
-
 const selectedCustomFilter = ref<CustomFilter | null>(null)
 const filterSnapshot = ref('')
 const dialog = ref(false)
@@ -564,8 +559,6 @@ const includeSort = ref(false)
 // `search` keys not recognized by the serde (legacy/removed/foreign), preserved
 // verbatim across an edit so nothing is silently dropped.
 const unknownStash = ref<Record<string, unknown>>({})
-
-// Batch action dialogs
 
 // AbortController for in-flight searches
 let abortController = new AbortController()
