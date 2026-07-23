@@ -7,6 +7,7 @@ from gettext import gettext as _
 from django.db import transaction
 
 from cookbook.helper.ingredient_parser import IngredientParser
+from cookbook.helper.inventory_helper import import_food_onhand
 from cookbook.helper.recipe_url_import import parse_time
 from cookbook.integration.integration import Integration
 from cookbook.models import Ingredient, Keyword, Recipe, Step, Food, Unit, SupermarketCategory, PropertyType, Property, MealType, MealPlan, CookLog, ShoppingListEntry
@@ -68,7 +69,7 @@ class Mealie1(Integration):
 
                 food = Food.objects.create(**food)
                 if f['on_hand']:
-                    food.onhand_users.add(self.request.user)
+                    import_food_onhand(food, self.request)
                 foods_dict[f['id']] = food.pk
 
         self.import_log.msg += f"Importing {len(mealie_database["ingredient_units"])} units...\n"
