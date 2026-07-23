@@ -296,4 +296,22 @@ def test_entry_food_carries_household_inventory(u1_s1, space_1):
     assert row['food']['earliest_expiry'] == (today + timedelta(days=5)).isoformat()
 
 
+def test_entry_food_carries_pack_and_shelf_life(u1_s1, space_1):
+    """Shopping-entry nested food carries the pack (shopping_amount + preferred_shopping_unit) and
+    shelf_life_days so the stock-up dialog can seed rows from the list response — no per-food refetch."""
+    from cookbook.models import Unit
+
+    user = auth.get_user(u1_s1)
+    with scopes_disabled():
+        unit = Unit.objects.create(name='bag', space=space_1)
+        food = FoodFactory(space=space_1, shopping_amount=5, shelf_life_days=7, preferred_shopping_unit=unit)
+        ShoppingListEntryFactory(food=food, space=space_1, created_by=user, checked=False)
+
+    results = json.loads(u1_s1.get(reverse(LIST_URL)).content)['results']
+    row = next(r for r in results if r['food']['id'] == food.id)
+    assert float(row['food']['shopping_amount']) == 5
+    assert row['food']['shelf_life_days'] == 7
+    assert row['food']['preferred_shopping_unit']['id'] == unit.id
+
+
 # TODO test auto onhand

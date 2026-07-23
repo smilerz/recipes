@@ -1688,6 +1688,9 @@ class ShoppingListRecipeSerializer(serializers.ModelSerializer):
 class FoodShoppingSerializer(serializers.ModelSerializer):
     supermarket_category = SupermarketCategorySerializer(read_only=True)
     shopping_lists = ShoppingListSerializer(read_only=True, many=True)
+    # pack + shelf life so the stock-up dialog can seed rows straight from the list response,
+    # without an N+1 per-food refetch (FR-F3, DEC-1).
+    preferred_shopping_unit = UnitSerializer(allow_null=True, required=False)
     # Household-scoped inventory annotations for the shopping-row pantry jar (FR-H2), mirroring
     # FoodSerializer but via SerializerMethodField so the write/create response — where the food
     # is unannotated — degrades to 'False'/null instead of raising.
@@ -1732,7 +1735,8 @@ class FoodShoppingSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Food
-        fields = ('id', 'name', 'plural_name', 'supermarket_category', 'shopping_lists', 'in_inventory', 'earliest_expiry')
+        fields = ('id', 'name', 'plural_name', 'supermarket_category', 'shopping_lists', 'in_inventory', 'earliest_expiry',
+                  'shopping_amount', 'shelf_life_days', 'preferred_shopping_unit')
 
 
 class ShoppingListEntrySerializer(WritableNestedModelSerializer):

@@ -27,6 +27,13 @@ import {
     SupermarketCategoryToJSON,
     SupermarketCategoryToJSONTyped,
 } from './SupermarketCategory';
+import type { Unit } from './Unit';
+import {
+    UnitFromJSON,
+    UnitFromJSONTyped,
+    UnitToJSON,
+    UnitToJSONTyped,
+} from './Unit';
 
 /**
  * 
@@ -76,6 +83,24 @@ export interface FoodShopping {
      * @memberof FoodShopping
      */
     readonly earliestExpiry: Date | null;
+    /**
+     * 
+     * @type {number}
+     * @memberof FoodShopping
+     */
+    shoppingAmount?: number | null;
+    /**
+     * 
+     * @type {number}
+     * @memberof FoodShopping
+     */
+    shelfLifeDays?: number | null;
+    /**
+     * 
+     * @type {Unit}
+     * @memberof FoodShopping
+     */
+    preferredShoppingUnit?: Unit | null;
 }
 
 /**
@@ -107,6 +132,9 @@ export function FoodShoppingFromJSONTyped(json: any, ignoreDiscriminator: boolea
         'shoppingLists': ((json['shopping_lists'] as Array<any>).map(ShoppingListFromJSON)),
         'inInventory': json['in_inventory'],
         'earliestExpiry': (json['earliest_expiry'] == null ? null : new Date(json['earliest_expiry'])),
+        'shoppingAmount': json['shopping_amount'] == null ? undefined : json['shopping_amount'],
+        'shelfLifeDays': json['shelf_life_days'] == null ? undefined : json['shelf_life_days'],
+        'preferredShoppingUnit': json['preferred_shopping_unit'] == null ? undefined : UnitFromJSON(json['preferred_shopping_unit']),
     };
 }
 
@@ -124,6 +152,9 @@ export function FoodShoppingToJSONTyped(value?: Omit<FoodShopping, 'supermarket_
         'id': value['id'],
         'name': value['name'],
         'plural_name': value['pluralName'],
+        'shopping_amount': value['shoppingAmount'],
+        'shelf_life_days': value['shelfLifeDays'],
+        'preferred_shopping_unit': UnitToJSON(value['preferredShoppingUnit']),
     };
 }
 
