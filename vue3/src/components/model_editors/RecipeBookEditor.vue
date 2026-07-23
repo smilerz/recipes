@@ -158,8 +158,7 @@ function addRecipeToBook() {
 function removeRecipeFromBook(recipeBookEntry: RecipeBookEntry) {
     let api = new ApiApi()
 
-    // Capture what's needed to recreate the entry before deleting, so the removal is undoable
-    // (no confirm dialog — one-tap delete with an Undo toast instead).
+    // capture for undo before deleting
     const book = recipeBookEntry.book
     const recipe = recipeBookEntry.recipe
     const index = recipeBookEntries.value.findIndex(rBE => rBE.id! == recipeBookEntry.id!)
