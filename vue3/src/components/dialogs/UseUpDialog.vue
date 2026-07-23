@@ -11,7 +11,7 @@
                     {{ scoped ? $t('NoRecipePantryItems') : $t('NoPantryEntries') }}
                 </div>
                 <template v-else>
-                    <div class="text-medium-emphasis text-body-2 mb-3">{{ $t('UseUpHelp') }}</div>
+                    <closable-help-alert :title="$t('UseUp')" :text="$t('UseUpHelp')"></closable-help-alert>
 
                     <template v-for="section in sections" :key="section.key">
                         <div v-if="section.header" class="text-overline text-medium-emphasis mt-1 mb-1">{{ section.header }}</div>
@@ -68,6 +68,7 @@ import {useI18n} from "vue-i18n";
 import {ApiApi, Food, Unit} from "@/openapi";
 import VClosableCardTitle from "@/components/dialogs/VClosableCardTitle.vue";
 import ModelSelect from "@/components/inputs/ModelSelect.vue";
+import ClosableHelpAlert from "@/components/display/ClosableHelpAlert.vue";
 import {
     distinctRecentRecipes,
     foodRecipeUsageMap,

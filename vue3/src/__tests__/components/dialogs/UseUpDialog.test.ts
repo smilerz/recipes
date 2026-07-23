@@ -43,6 +43,8 @@ function mountDialog() {
             stubs: {
                 ModelSelect: {template: '<div class="model-select-stub" />'},
                 VClosableCardTitle: {template: '<div class="title-stub" />'},
+                // pulls in UserPreferenceStore/useStorage (no jsdom backing); not under test
+                ClosableHelpAlert: {template: '<div class="help-alert-stub" />'},
             },
         },
     })
