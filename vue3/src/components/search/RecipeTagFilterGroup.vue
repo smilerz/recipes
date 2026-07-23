@@ -137,16 +137,11 @@ const props = withDefaults(defineProps<{
     expandable?: boolean
     /** Override the default model-name placeholder in the multiselect */
     selectPlaceholder?: string
-    /** Pass true when this group is rendered inside a temporary drawer so
-     *  multiselect dropdowns stay inside the drawer's DOM and don't trigger
-     *  outside-click close (E-2 partial fix scope extension). */
-    inDrawer?: boolean
 }>(), {
     compact: false,
     showToggles: true,
     expandable: true,
     selectPlaceholder: undefined,
-    inDrawer: false,
 })
 
 function parseIds(raw: string | undefined): number[] {

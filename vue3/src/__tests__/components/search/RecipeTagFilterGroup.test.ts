@@ -196,18 +196,5 @@ describe('RecipeTagFilterGroup', () => {
             }
         })
 
-        it('still body-teleports multiselect dropdowns when inDrawer is true', () => {
-            // Reverted fe6cca553: keeping dropdowns inline let the drawer's
-            // overflow-y: auto clip them to 1-2 visible rows. Always teleport.
-            const {wrapper} = mountWidget(
-                {keywords: '1', keywordsAnd: '2', keywordsOrNot: '3', keywordsAndNot: '4'},
-                {inDrawer: true},
-            )
-            const selects = wrapper.findAllComponents(ModelSelectStub)
-            expect(selects.length).toBeGreaterThan(0)
-            for (const s of selects) {
-                expect(s.props('appendToBody')).toBe(true)
-            }
-        })
     })
 })

@@ -21,7 +21,6 @@
                         :show-toggles="def.showToggles !== false"
                         :expandable="def.expandable !== false"
                         :select-placeholder="def.selectPlaceholder"
-                        :in-drawer="inDrawer"
                         class="mx-2 my-1"
                     />
                     <div v-else-if="def.type === 'tag-select' && def.modelName" class="px-4 py-1" @click.stop>
@@ -45,7 +44,6 @@
                         :get-filter="getFilter"
                         :set-filter="setFilter"
                         :clear-filter="clearFilter"
-                        :in-drawer="inDrawer"
                     />
                 </template>
             </component>
@@ -61,19 +59,14 @@ import ModelSelect from '@/components/inputs/ModelSelect.vue'
 import RecipeTagFilterGroup from '@/components/search/RecipeTagFilterGroup.vue'
 import FilterField from '@/components/filters/FilterField.vue'
 
-const props = withDefaults(defineProps<{
+const props = defineProps<{
     groupedFilterDefs: Map<string, FilterDef[]>
     getFilter: (key: string) => string | undefined
     setFilter: (key: string, value: FilterValue) => void
     clearFilter: (key: string) => void
     clearAllFilters: () => void
     activeFilterCount: number
-    /** Pass true when the panel is inside a temporary drawer so dropdowns
-     *  stay inside the drawer's DOM and don't trigger outside-click close. */
-    inDrawer?: boolean
-}>(), {
-    inDrawer: false,
-})
+}>()
 
 const visibleGroupedDefs = computed(() => {
     const filtered = new Map<string, FilterDef[]>()
