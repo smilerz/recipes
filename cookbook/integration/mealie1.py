@@ -6,8 +6,9 @@ from gettext import gettext as _
 
 from django.db import transaction
 
+from cookbook.helper.food_availability_helper import request_household
 from cookbook.helper.ingredient_parser import IngredientParser
-from cookbook.helper.inventory_helper import import_food_onhand
+from cookbook.helper.inventory_helper import add_food_to_pantry
 from cookbook.helper.recipe_url_import import parse_time
 from cookbook.integration.integration import Integration
 from cookbook.models import Ingredient, Keyword, Recipe, Step, Food, Unit, SupermarketCategory, PropertyType, Property, MealType, MealPlan, CookLog, ShoppingListEntry
@@ -68,8 +69,8 @@ class Mealie1(Integration):
                     food['supermarket_category_id'] = supermarket_categories_dict[f['label_id']]
 
                 food = Food.objects.create(**food)
-                if f['on_hand']:
-                    import_food_onhand(food, self.request)
+                if f['on_hand'] and (household := request_household(self.request)):
+                    add_food_to_pantry(food, self.request.user, self.request.space, household)
                 foods_dict[f['id']] = food.pk
 
         self.import_log.msg += f"Importing {len(mealie_database["ingredient_units"])} units...\n"

@@ -4,7 +4,6 @@ from decimal import Decimal
 from django.db import transaction
 from django.utils import timezone
 
-from cookbook.helper.food_availability_helper import request_household
 from cookbook.models import InventoryEntry, InventoryLocation, InventoryLog
 
 DEFAULT_LOCATION_NAME = 'Pantry'
@@ -69,16 +68,6 @@ def finalize_new_inventory_entry(entry):
             new_inventory_location=entry.inventory_location,
         )
     return entry
-
-
-def import_food_onhand(food, request):
-    """Mark an imported food as on-hand via household inventory, replacing the retired
-    ``onhand_users`` M2M (P1.7). Adds one lot at the household's default location; no-op when the
-    importing user has no household (nothing to stock — never crashes the import).
-    """
-    household = request_household(request)
-    if household:
-        add_food_to_pantry(food, request.user, request.space, household)
 
 
 def add_food_to_pantry(food, user, space, household, amount=1, unit=None, expires=None, location=None):
