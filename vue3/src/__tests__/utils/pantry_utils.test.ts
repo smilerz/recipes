@@ -171,6 +171,53 @@ describe('stockUpRowsFromEntries (DEC-1: entry -> pack -> blank)', () => {
     })
 })
 
+describe('stockUpRowsFromEntries — shop-date grouping, sort, pantry-aware checked', () => {
+    let prevZone: any
+    beforeEach(() => { prevZone = Settings.defaultZone; Settings.defaultZone = 'America/Chicago' })
+    afterEach(() => { Settings.defaultZone = prevZone })
+
+    const foods: Record<number, any> = {
+        1: {id: 1, name: 'Salt', inInventory: 'True'},                                                     // in pantry, fresh
+        2: {id: 2, name: 'Apples', inInventory: 'False'},                                                  // not in pantry
+        3: {id: 3, name: 'Bread', inInventory: 'True', earliestExpiry: new Date('2026-07-10T00:00:00Z')},  // in pantry, EXPIRED (NOW=07-15)
+        4: {id: 4, name: 'Cream', inInventory: 'True', earliestExpiry: new Date('2026-07-16T00:00:00Z')},  // in pantry, expiring SOON
+    }
+    const getFood = (id: number) => foods[id]
+    const at = (iso: string) => new Date(iso + 'T12:00:00Z')  // midday UTC -> unambiguous calendar day in Chicago
+    const entry = (foodId: number, completedAt: Date, over: any = {}) =>
+        ({food: {id: foodId}, amount: 1, unit: null, completedAt, ...over})
+
+    it('seeds fresh in-pantry unchecked; not-in-pantry or expiring/expired checked', () => {
+        const rows = stockUpRowsFromEntries(
+            [entry(1, at('2026-07-14')), entry(2, at('2026-07-14')), entry(3, at('2026-07-14')), entry(4, at('2026-07-14'))],
+            getFood, NOW)
+        expect(rows.find(r => (r.food as any).id === 1)!.checked).toBe(false)  // Salt: in pantry, fresh → unchecked
+        expect(rows.find(r => (r.food as any).id === 2)!.checked).toBe(true)   // Apples: not in pantry → checked
+        expect(rows.find(r => (r.food as any).id === 3)!.checked).toBe(true)   // Bread: in pantry but EXPIRED → restock
+        expect(rows.find(r => (r.food as any).id === 4)!.checked).toBe(true)   // Cream: in pantry but SOON → restock
+    })
+
+    it('groups by shop date (most recent first), alphabetical by food within a date', () => {
+        const rows = stockUpRowsFromEntries([
+            entry(3, at('2026-07-13')),  // Bread — older trip
+            entry(1, at('2026-07-14')),  // Salt  — newer trip
+            entry(2, at('2026-07-14')),  // Apples— newer trip
+        ], getFood, NOW)
+        expect(rows.map(r => (r.food as any).name)).toEqual(['Apples', 'Salt', 'Bread'])
+    })
+
+    it('carries the shop date on each row', () => {
+        const d = at('2026-07-14')
+        const rows = stockUpRowsFromEntries([entry(2, d)], getFood, NOW)
+        expect(rows[0].completedAt).toEqual(d)
+    })
+
+    it('keeps the same food bought on different dates as separate dated rows', () => {
+        const rows = stockUpRowsFromEntries([entry(2, at('2026-07-14')), entry(2, at('2026-07-13'))], getFood, NOW)
+        expect(rows).toHaveLength(2)
+    })
+})
+
 // DEFECT-01 class, write side: the generated client serializes date-only fields via
 // `toISOString().substring(0,10)`, so the Date handed to it MUST be UTC midnight. A local-midnight
 // Date (new Date(iso + 'T00:00:00')) posts the PREVIOUS day for any UTC-ahead viewer.
