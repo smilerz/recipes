@@ -19,17 +19,6 @@ export function cropPosition(cropData: Record<string, number> | null | undefined
 }
 
 /**
- * Computes CSS background styles that zoom into the crop region of an image.
- * The image is scaled so the crop region fills the container (cover behavior),
- * then positioned so the crop region is centered in the container.
- *
- * Uses background-size with a single percentage value (width-based, height auto)
- * to maintain the image's natural aspect ratio while zooming in.
- *
- * Returns a CSS style object suitable for use with :style binding on a div
- * that has overflow: hidden and fixed dimensions.
- */
-/**
  * Computes CSS background styles for displaying the cropped region of an image.
  *
  * Behavior:

@@ -154,9 +154,6 @@ class SearchParams:
         def _str_or_none(val):
             return str(val) if val is not None else None
 
-        def _str_or_none(val):
-            return str(val) if val is not None else None
-
         return cls(
             query=query_raw.strip() if query_raw else None,
             rating=_str_or_none(_s(params, 'rating')),
