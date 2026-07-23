@@ -71,7 +71,6 @@ type EntityConfig = {
 
 const ENTITY_MODES: Partial<Record<StartPageSectionMode, EntityConfig>> = {
     keyword: {retrieve: (api, id) => api.apiKeywordRetrieve({id}), param: 'keywords'},
-    books: {retrieve: (api, id) => api.apiRecipeBookRetrieve({id}), param: 'books'},
     food: {retrieve: (api, id) => api.apiFoodRetrieve({id}), param: 'foods'},
     created_by: {retrieve: (api, id) => api.apiUserRetrieve({id}), param: 'createdby'},
 }
