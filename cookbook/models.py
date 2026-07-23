@@ -778,6 +778,10 @@ class Food(ExportModelOperationsMixin('food'), TreeModel, PermissionModelMixin):
     supermarket_category = models.ForeignKey(SupermarketCategory, null=True, blank=True, on_delete=models.SET_NULL)  # inherited field
     shopping_lists = models.ManyToManyField("ShoppingList", blank=True)
     ignore_shopping = models.BooleanField(default=False)  # inherited field
+    # DEPRECATED — retired P1.7, replaced by household InventoryEntry (pantry). Nothing reads it;
+    # nothing writes it except set_food_onhand() which drains it on toggle so it empties over the
+    # deprecation window. Do NOT add new usage. Scheduled for removal (drop column) no earlier than
+    # 2.8.0 — two full minor releases out. See PANTRY_REQUIREMENTS.md "onhand decommission".
     onhand_users = models.ManyToManyField(User, blank=True)
     description = models.TextField(default='', blank=True)
     inherit_fields = models.ManyToManyField(FoodInheritField, blank=True)

@@ -1313,7 +1313,7 @@ class FoodViewSet(OrderingMixin, LoggingMixin, TreeMixin, DeleteRelationMixing):
         qs = annotate_food_inventory(qs, self._household, timezone.localdate())
 
         return qs \
-            .prefetch_related('onhand_users', 'inherit_fields', 'child_inherit_fields', 'substitute') \
+            .prefetch_related('inherit_fields', 'child_inherit_fields', 'substitute') \
             .select_related('recipe', 'supermarket_category')
 
     def _apply_list_filters(self, qs):
@@ -2150,7 +2150,6 @@ class IngredientViewSet(LoggingMixin, viewsets.ModelViewSet):
                                                   'food__properties__property_type',
                                                   'food__inherit_fields',
                                                   'food__supermarket_category',
-                                                  'food__onhand_users',
                                                   'food__substitute',
                                                   'food__child_inherit_fields',
                                                   Prefetch('unit__unit_conversion_base_relation', queryset=unit_conversion_qs),
@@ -2332,7 +2331,6 @@ class RecipeViewSet(LoggingMixin, viewsets.ModelViewSet, DeleteRelationMixing):
                                                                'steps__ingredients__food__properties__property_type',
                                                                'steps__ingredients__food__inherit_fields',
                                                                'steps__ingredients__food__supermarket_category',
-                                                               'steps__ingredients__food__onhand_users',
                                                                'steps__ingredients__food__substitute',
                                                                'steps__ingredients__food__child_inherit_fields',
                                                                'steps__ingredients__unit',
