@@ -667,6 +667,16 @@ class DeleteRelationMixing:
             return []
 
 
+class ProtectedDestroyMixin:
+    """Return a clean 403 instead of an unhandled 500 when a protected FK blocks deletion."""
+
+    def destroy(self, request, *args, **kwargs):
+        try:
+            return super().destroy(request, *args, **kwargs)
+        except ProtectedError as e:
+            return Response({'error': True, 'msg': e.args[0]}, status=status.HTTP_403_FORBIDDEN)
+
+
 @extend_schema_view(list=extend_schema(parameters=[
     OpenApiParameter(name='filter_list', description='User IDs, repeat for multiple', type=str, many=True),
 ]))
@@ -715,7 +725,8 @@ class SpaceViewSet(LoggingMixin, viewsets.ModelViewSet):
         return Response(self.serializer_class(self.request.space, many=False, context={'request': self.request}).data)
 
 
-class HouseholdViewSet(LoggingMixin, viewsets.ModelViewSet):
+# destroy() 403s (not 500s) when a protected FK — InventoryLocation/UserSpace.household — blocks deletion
+class HouseholdViewSet(ProtectedDestroyMixin, LoggingMixin, viewsets.ModelViewSet):
     queryset = Household.objects
     serializer_class = HouseholdSerializer
     permission_classes = [CustomIsSpaceOwner & CustomTokenHasReadWriteScope]
@@ -723,15 +734,6 @@ class HouseholdViewSet(LoggingMixin, viewsets.ModelViewSet):
 
     def get_queryset(self):
         return self.queryset.filter(space=self.request.space)
-
-    def destroy(self, request, *args, **kwargs):
-        # a Household referenced by a protected FK (InventoryLocation/UserSpace.household)
-        # cannot be deleted; return a clean 4xx instead of an unhandled ProtectedError 500
-        try:
-            return super().destroy(request, *args, **kwargs)
-        except ProtectedError as e:
-            content = {'error': True, 'msg': e.args[0]}
-            return Response(content, status=status.HTTP_403_FORBIDDEN)
 
 
 @extend_schema_view(list=extend_schema(parameters=[
@@ -854,7 +856,8 @@ class AiLogViewSet(LoggingMixin, viewsets.ModelViewSet):
         return self.queryset.filter(space=self.request.space)
 
 
-class StorageViewSet(LoggingMixin, viewsets.ModelViewSet, DeleteRelationMixing):
+# destroy() 403s (not 500s) when a protected FK — Sync/Recipe/RecipeImport.storage — blocks deletion
+class StorageViewSet(ProtectedDestroyMixin, LoggingMixin, viewsets.ModelViewSet, DeleteRelationMixing):
     queryset = Storage.objects
     serializer_class = StorageSerializer
     permission_classes = [CustomIsAdmin & CustomTokenHasReadWriteScope]
@@ -862,15 +865,6 @@ class StorageViewSet(LoggingMixin, viewsets.ModelViewSet, DeleteRelationMixing):
 
     def get_queryset(self):
         return self.queryset.filter(space=self.request.space)
-
-    def destroy(self, request, *args, **kwargs):
-        # a Storage referenced by a protected FK (Sync/Recipe/RecipeImport.storage)
-        # cannot be deleted; return a clean 4xx instead of an unhandled ProtectedError 500
-        try:
-            return super().destroy(request, *args, **kwargs)
-        except ProtectedError as e:
-            content = {'error': True, 'msg': e.args[0]}
-            return Response(content, status=status.HTTP_403_FORBIDDEN)
 
 
 class InventoryLocationViewSet(LoggingMixin, viewsets.ModelViewSet, DeleteRelationMixing):
@@ -2563,7 +2557,8 @@ class BookmarkletImportViewSet(LoggingMixin, viewsets.ModelViewSet):
         description='Order results by field. Allowed: name, -name, file_size_kb, -file_size_kb, created_at, -created_at. Ignored when query is active.'
     ),
 ]))
-class UserFileViewSet(LoggingMixin, StandardFilterModelViewSet, DeleteRelationMixing):
+# destroy() 403s (not 500s) when a protected FK — e.g. Step.file — blocks deletion
+class UserFileViewSet(ProtectedDestroyMixin, LoggingMixin, StandardFilterModelViewSet, DeleteRelationMixing):
     queryset = UserFile.objects
     serializer_class = UserFileSerializer
     permission_classes = [CustomIsUser & CustomTokenHasReadWriteScope]
@@ -2586,15 +2581,6 @@ class UserFileViewSet(LoggingMixin, StandardFilterModelViewSet, DeleteRelationMi
     def get_queryset(self):
         self.queryset = self.queryset.filter(space=self.request.space).all()
         return self._apply_ordering(super().get_queryset())
-
-    def destroy(self, request, *args, **kwargs):
-        # a UserFile referenced by a protected FK (e.g. Step.file) cannot be
-        # deleted; return a clean 4xx instead of an unhandled ProtectedError 500
-        try:
-            return super().destroy(request, *args, **kwargs)
-        except ProtectedError as e:
-            content = {'error': True, 'msg': e.args[0]}
-            return Response(content, status=status.HTTP_403_FORBIDDEN)
 
 
 @extend_schema_view(list=extend_schema(parameters=[
