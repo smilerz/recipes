@@ -66,6 +66,7 @@ import type CropperType from "cropperjs"
 import {ErrorMessageType, useMessageStore} from "@/stores/MessageStore"
 import {useI18n} from "vue-i18n"
 import CropImage from "@/components/display/CropImage.vue"
+import {snapCropEdges} from "@/utils/image_crop"
 
 const previewContexts = [
     {label: 'Card', ratio: 16 / 9, previewWidth: 120, previewHeight: 68},
@@ -357,11 +358,16 @@ function extractCropData(): Record<string, number> | null {
     // at the source; clamping here would silently drop legitimate
     // overflow values back to image bounds.
     const round = (v: number) => Math.round(v * 100) / 100
-    return {
+    // Per-edge magnetic snap: an imprecise drag to -1% reads as a clean 0, while a deliberate large
+    // overshoot (square crop of a wide image) is left alone (item 10 overflow preserved).
+    const snapped = snapCropEdges({
         x: round(((selection.x - bounds.x) / bounds.w) * 100),
         y: round(((selection.y - bounds.y) / bounds.h) * 100),
         width: round((selection.width / bounds.w) * 100),
         height: round((selection.height / bounds.h) * 100),
+    })
+    return {
+        ...snapped,
         ...(fitToFrame.value ? {fit: 1} : {}),
     }
 }

@@ -62,7 +62,9 @@ const innerStyle = computed(() => {
 .crop-image {
     position: relative;
     overflow: hidden;
-    background-color: rgb(var(--v-theme-surface));
+    /* Overflow crops (square of a non-square image) leave padding bars on one axis; keep them
+       transparent so the card/container shows through rather than a filled surface box. */
+    background-color: transparent;
 }
 
 .crop-image-fit-frame {
