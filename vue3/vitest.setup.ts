@@ -1,5 +1,5 @@
 import { vi, afterEach } from 'vitest'
-import { config } from '@vue/test-utils'
+import { config, enableAutoUnmount } from '@vue/test-utils'
 import { createVuetify } from 'vuetify'
 import * as vuetifyComponents from 'vuetify/components'
 import * as vuetifyDirectives from 'vuetify/directives'
@@ -38,6 +38,12 @@ const errorTrackerPlugin = {
 }
 
 config.global.plugins = [...(config.global.plugins ?? []), testVuetify, errorTrackerPlugin]
+
+// Unmount every mounted wrapper after each test. Most tests never call wrapper.unmount(), so
+// components with lingering timers survive to global teardown — notably VImg's load-poll setTimeout
+// (VImg.js: onBeforeUnmount -> clearTimeout(timer)), which otherwise fires after jsdom is gone and
+// crashes the run with "window is not defined" (~1/3 of runs, all tests actually passing).
+enableAutoUnmount(afterEach)
 
 afterEach(() => {
     if (vueErrors.length > 0) {
