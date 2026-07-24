@@ -21,28 +21,35 @@ vi.mock('@/stores/MessageStore', () => ({
     ErrorMessageType: {CREATE_ERROR: 'CREATE_ERROR', UPDATE_ERROR: 'UPDATE_ERROR', DELETE_ERROR: 'DELETE_ERROR'},
     PreparedMessage: {CREATE_SUCCESS: 'CREATE_SUCCESS', UPDATE_SUCCESS: 'UPDATE_SUCCESS'},
 }))
-const {patchRecipeImageMock} = vi.hoisted(() => ({patchRecipeImageMock: vi.fn()}))
+const {patchRecipeImageMock, scrapeSourceImagesMock, createRecipeImageFromUrlMock} = vi.hoisted(() => ({
+    patchRecipeImageMock: vi.fn(),
+    scrapeSourceImagesMock: vi.fn(),
+    createRecipeImageFromUrlMock: vi.fn(),
+}))
 vi.mock('@/composables/useFileApi', () => ({
     useFileApi: () => ({
         createRecipeImage: vi.fn().mockResolvedValue({}),
         updateRecipeImageCropData: vi.fn().mockResolvedValue({}),
         deleteRecipeImage: vi.fn().mockResolvedValue({}),
         patchRecipeImage: patchRecipeImageMock,
+        scrapeSourceImages: scrapeSourceImagesMock,
+        createRecipeImageFromUrl: createRecipeImageFromUrlMock,
     }),
 }))
 
 import RecipeImageEditor from '@/components/inputs/RecipeImageEditor.vue'
 
-function mountEditor(images: any[] = []) {
+function mountEditor(images: any[] = [], sourceUrl?: string | null) {
     const i18n = createI18n({legacy: false, locale: 'en', messages: {en: {Crop: 'Crop'}}, missingWarn: false, fallbackWarn: false})
     const vuetify = createVuetify({components: vuetifyComponents, directives: vuetifyDirectives})
     return mount(RecipeImageEditor, {
-        props: {recipeId: 1, images} as any,
+        props: {recipeId: 1, images, sourceUrl} as any,
         global: {
             plugins: [createPinia(), i18n, vuetify],
             stubs: {
                 VueDraggable: {template: '<div class="stub-draggable"><slot/></div>', props: ['modelValue']},
                 ImageEditor: {template: '<div class="stub-image-editor"/>'},
+                SourceImagePicker: {template: '<div class="stub-source-picker"/>', props: ['images', 'modelValue', 'showCoverBadge']},
             },
         },
     })
@@ -104,5 +111,50 @@ describe('RecipeImageEditor', () => {
 
         expect(patchRecipeImageMock).toHaveBeenCalledWith(10, {order: 0})
         expect(patchRecipeImageMock).toHaveBeenCalledWith(11, {order: 1})
+    })
+})
+
+describe('RecipeImageEditor — import from source', () => {
+    beforeEach(() => {
+        setActivePinia(createPinia())
+        scrapeSourceImagesMock.mockReset()
+        createRecipeImageFromUrlMock.mockReset()
+    })
+
+    it('offers source import only when the recipe has a sourceUrl', () => {
+        expect((mountEditor([], undefined).vm as any).canImportFromSource).toBe(false)
+        expect((mountEditor([], 'http://example.com/r').vm as any).canImportFromSource).toBe(true)
+    })
+
+    it('scrapes the source and hides images already in the gallery', async () => {
+        scrapeSourceImagesMock.mockResolvedValue([
+            'http://x/1.jpg', 'http://x/2.jpg', 'http://x/3.jpg',
+        ])
+        const w = mountEditor([{id: 1, file: 'http://x/2.jpg', isPrimary: true, order: 0}], 'http://source')
+
+        await (w.vm as any).openSourceImport()
+        await flushPromises()
+
+        expect(scrapeSourceImagesMock).toHaveBeenCalledWith('http://source')
+        // 2.jpg is already in the gallery -> deduped out
+        expect((w.vm as any).sourceImages).toEqual(['http://x/1.jpg', 'http://x/3.jpg'])
+    })
+
+    it('creates a RecipeImage per selected source image and appends them to the gallery', async () => {
+        createRecipeImageFromUrlMock
+            .mockResolvedValueOnce({id: 10, file: 'http://x/1.jpg', isPrimary: false, order: 1})
+            .mockResolvedValueOnce({id: 11, file: 'http://x/3.jpg', isPrimary: false, order: 2})
+        const images = [{id: 1, file: 'http://x/2.jpg', isPrimary: true, order: 0}]
+        const w = mountEditor(images, 'http://source')
+
+        ;(w.vm as any).selectedSourceImages = ['http://x/1.jpg', 'http://x/3.jpg']
+        await (w.vm as any).importSelectedSourceImages()
+        await flushPromises()
+
+        expect(createRecipeImageFromUrlMock).toHaveBeenCalledTimes(2)
+        expect(createRecipeImageFromUrlMock.mock.calls[0]).toEqual([1, 'http://x/1.jpg'])
+        expect(createRecipeImageFromUrlMock.mock.calls[1]).toEqual([1, 'http://x/3.jpg'])
+        // appended (existing primary untouched)
+        expect(images.map((i) => i.id)).toEqual([1, 10, 11])
     })
 })
