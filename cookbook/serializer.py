@@ -1297,11 +1297,25 @@ class RecipeImageSerializer(serializers.ModelSerializer):
         unknown = set(value.keys()) - allowed
         if unknown:
             raise ValidationError(_('Unknown crop_data fields: %(fields)s') % {'fields': ', '.join(sorted(unknown))})
+        # A square crop of a non-square image legitimately extends past the edges: negative offsets
+        # and sizes > 100% are valid (a square covering a wide image's full width is taller than the
+        # image). So x/y/width/height are NOT clamped to [0,100]. Reject only genuinely-invalid
+        # numbers (non-number, NaN, inf, non-positive size); clamp extreme magnitudes as an
+        # abuse guard rather than erroring on them.
         for field in ('x', 'y', 'width', 'height'):
             if field in value:
                 v = value[field]
-                if not isinstance(v, (int, float)) or v < 0 or v > 100:
-                    raise ValidationError(_('crop_data %(field)s must be a number between 0 and 100.') % {'field': field})
+                if isinstance(v, bool) or not isinstance(v, (int, float)) or v != v or v in (float('inf'), float('-inf')):
+                    raise ValidationError(_('crop_data %(field)s must be a number.') % {'field': field})
+        for field in ('width', 'height'):
+            if field in value and value[field] <= 0:
+                raise ValidationError(_('crop_data %(field)s must be greater than 0.') % {'field': field})
+        for field in ('x', 'y'):
+            if field in value:
+                value[field] = max(-1000, min(1000, value[field]))
+        for field in ('width', 'height'):
+            if field in value:
+                value[field] = min(2000, value[field])
         if 'rotate' in value and value['rotate'] not in (0, 90, 180, 270):
             raise ValidationError(_('crop_data rotate must be 0, 90, 180, or 270.'))
 
