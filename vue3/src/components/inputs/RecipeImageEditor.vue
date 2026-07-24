@@ -33,7 +33,7 @@
         <!-- Upload dialog -->
         <v-dialog v-model="showUpload" max-width="1000" scrollable>
             <v-card>
-                <v-card-title>{{ $t('add_image') }}</v-card-title>
+                <v-closable-card-title v-model="showUpload" :title="$t('add_image')" @close="uploadEditorRef?.reset()" />
                 <v-card-text>
                     <image-editor ref="uploadEditorRef" @file-selected="onNonImageFile" />
                 </v-card-text>
@@ -47,7 +47,7 @@
         <!-- Import from source dialog -->
         <v-dialog v-model="showSourceImport" max-width="1000" scrollable>
             <v-card :loading="sourceLoading">
-                <v-card-title>{{ $t('ImportFromSource') }}</v-card-title>
+                <v-closable-card-title v-model="showSourceImport" :title="$t('ImportFromSource')" />
                 <v-card-text>
                     <div v-if="!sourceLoading && sourceImages.length === 0" class="text-center text-disabled pa-4">
                         {{ $t('NoNewImages') }}
@@ -65,7 +65,7 @@
         <!-- Crop dialog -->
         <v-dialog v-model="cropDialog" max-width="1000" scrollable>
             <v-card>
-                <v-card-title>{{ $t('Crop') }}</v-card-title>
+                <v-closable-card-title v-model="cropDialog" :title="$t('Crop')" />
                 <v-card-text>
                     <image-editor
                         ref="cropEditorRef"
@@ -91,6 +91,7 @@ import {cropPosition, cropPreviewStyle} from "@/utils/image_crop"
 import {ErrorMessageType, PreparedMessage, useMessageStore} from "@/stores/MessageStore"
 import ImageEditor from "@/components/inputs/ImageEditor.vue"
 import SourceImagePicker from "@/components/inputs/SourceImagePicker.vue"
+import VClosableCardTitle from "@/components/dialogs/VClosableCardTitle.vue"
 
 const props = defineProps<{
     recipeId: number
