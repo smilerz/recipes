@@ -124,3 +124,18 @@ export function shouldFitFrame(
 ): boolean {
     return !forceCrop && !!cropData?.['fit']
 }
+
+/**
+ * Per-edge magnetic snap: any crop edge within `threshold`% of the image edge snaps flush to it,
+ * independently. A small accidental overshoot (x = -1) snaps to 0; a deliberate large overshoot
+ * (a square crop of a wide image, y = -150) is left untouched. Snapping resizes toward the bound,
+ * holding the opposite edge fixed.
+ */
+export function snapCropEdges<T extends {x: number, y: number, width: number, height: number}>(crop: T, threshold = 1.5): T {
+    let {x, y, width, height} = crop
+    if (Math.abs(x) <= threshold) { width += x; x = 0 }               // left  -> 0
+    if (Math.abs(x + width - 100) <= threshold) { width = 100 - x }   // right -> 100
+    if (Math.abs(y) <= threshold) { height += y; y = 0 }              // top   -> 0
+    if (Math.abs(y + height - 100) <= threshold) { height = 100 - y } // bottom-> 100
+    return {...crop, x, y, width, height}
+}

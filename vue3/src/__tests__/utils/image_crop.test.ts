@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { cropPosition, cropPreviewStyle, shouldFitFrame } from '@/utils/image_crop'
+import { cropPosition, cropPreviewStyle, shouldFitFrame, snapCropEdges } from '@/utils/image_crop'
 
 describe('cropPosition', () => {
     it('returns undefined for null', () => {
@@ -185,5 +185,32 @@ describe('shouldFitFrame', () => {
 
     it('returns false when forceCrop=true (caller already cropping)', () => {
         expect(shouldFitFrame({ x: 0, y: 0, width: 50, height: 50, fit: 1 }, true)).toBe(false)
+    })
+})
+
+describe('snapCropEdges (per-edge magnetic snap)', () => {
+    it('snaps a small edge overshoot to the bound but leaves a deliberate large overshoot alone', () => {
+        // left edge at -1% (accidental) snaps to 0; top edge at -150% (deliberate, square-of-wide) is kept
+        const r = snapCropEdges({ x: -1, y: -150, width: 50, height: 400 }, 1.5)
+        expect(r.x).toBe(0)          // left snapped
+        expect(r.width).toBe(49)     // right edge held fixed (49), so width shrinks by the 1%
+        expect(r.y).toBe(-150)       // deliberate overshoot untouched
+        expect(r.height).toBe(400)
+    })
+
+    it('does not snap an overshoot beyond the threshold', () => {
+        const r = snapCropEdges({ x: -5, y: 0, width: 50, height: 50 }, 1.5)
+        expect(r.x).toBe(-5)
+    })
+
+    it('snaps the right/bottom edges to 100 when within threshold', () => {
+        const r = snapCropEdges({ x: 0, y: 0, width: 99, height: 99 }, 1.5)
+        expect(r.width).toBe(100)    // right edge 99 -> 100
+        expect(r.height).toBe(100)   // bottom edge 99 -> 100
+    })
+
+    it('leaves an in-bounds crop untouched', () => {
+        const r = snapCropEdges({ x: 20, y: 20, width: 50, height: 50 }, 1.5)
+        expect(r).toEqual({ x: 20, y: 20, width: 50, height: 50 })
     })
 })
