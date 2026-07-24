@@ -304,3 +304,37 @@ def test_from_url_forbidden_on_inaccessible_private_recipe(u2_s1, img_1, recipe_
     assert r.status_code == 404
 
 
+
+
+# --- crop_data: a square crop of a non-square image legitimately extends past the edges ---
+
+def test_crop_data_allows_out_of_bounds_square_crop(u1_s1, img_1):
+    """Negative offsets and sizes >100% are valid (square crop of a wide image needs the full
+    width -> the square extends above/below the image). Must be accepted, not 400'd."""
+    crop = {'x': -50, 'y': -150, 'width': 100, 'height': 400}
+    r = u1_s1.patch(reverse(DETAIL_URL, args=[img_1.id]),
+                    {'crop_data': crop}, content_type='application/json')
+    assert r.status_code == 200, r.content
+    assert json.loads(r.content)['crop_data'] == crop
+
+
+def test_crop_data_rejects_zero_or_negative_size(u1_s1, img_1):
+    for bad in ({'width': 0, 'height': 50}, {'width': 50, 'height': -10}):
+        r = u1_s1.patch(reverse(DETAIL_URL, args=[img_1.id]),
+                        {'crop_data': bad}, content_type='application/json')
+        assert r.status_code == 400, (bad, r.content)
+
+
+def test_crop_data_rejects_non_number(u1_s1, img_1):
+    r = u1_s1.patch(reverse(DETAIL_URL, args=[img_1.id]),
+                    {'crop_data': {'x': 'left', 'width': 50, 'height': 50}},
+                    content_type='application/json')
+    assert r.status_code == 400, r.content
+
+
+def test_crop_data_clamps_abuse_magnitude(u1_s1, img_1):
+    r = u1_s1.patch(reverse(DETAIL_URL, args=[img_1.id]),
+                    {'crop_data': {'x': 999999, 'width': 50, 'height': 50}},
+                    content_type='application/json')
+    assert r.status_code == 200, r.content
+    assert json.loads(r.content)['crop_data']['x'] == 1000  # clamped to the abuse-guard cap
