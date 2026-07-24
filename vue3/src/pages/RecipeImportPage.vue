@@ -221,19 +221,7 @@
                                     </v-col>
                                     <v-col cols="12" md="6">
                                         <h2 class="text-h5">{{ $t('Available') }}</h2>
-                                        <v-row density="compact">
-                                            <v-col cols="4" v-for="i in importResponse.images" :key="i">
-                                                <v-card :variant="selectedImages.includes(i) ? 'outlined' : 'flat'"
-                                                        :color="selectedImages.includes(i) ? 'primary' : undefined"
-                                                        @click="toggleImage(i)" style="cursor: pointer; position: relative;">
-                                                    <v-img max-height="10vh" cover aspect-ratio="1" :src="i"></v-img>
-                                                    <v-chip v-if="selectedImages.includes(i)" size="x-small" color="primary" variant="flat"
-                                                            class="ma-1" style="position: absolute; top: 0; left: 0;">
-                                                        {{ selectedImages.indexOf(i) === 0 ? $t('Cover') : selectedImages.indexOf(i) + 1 }}
-                                                    </v-chip>
-                                                </v-card>
-                                            </v-col>
-                                        </v-row>
+                                        <source-image-picker :images="importResponse.images || []" v-model="selectedImages" show-cover-badge />
                                     </v-col>
                                 </v-row>
                                 <v-stepper-actions>
@@ -596,6 +584,7 @@ import {VueDraggable} from "vue-draggable-plus";
 import VClosableCardTitle from "@/components/dialogs/VClosableCardTitle.vue";
 import {useFileApi} from "@/composables/useFileApi";
 import ModelSelect from "@/components/inputs/ModelSelect.vue";
+import SourceImagePicker from "@/components/inputs/SourceImagePicker.vue";
 import {useDisplay} from "vuetify";
 import {useUrlSearchParams} from "@vueuse/core";
 import {INTEGRATIONS} from "@/utils/integration_utils";
@@ -709,12 +698,6 @@ const selectedImages = ref<string[]>([])
 watch(() => importResponse.value?.recipe?.imageUrl, (url) => {
     selectedImages.value = url ? [url] : []
 })
-
-function toggleImage(url: string) {
-    const i = selectedImages.value.indexOf(url)
-    if (i >= 0) selectedImages.value.splice(i, 1)
-    else selectedImages.value.push(url)
-}
 const keywordSelect = ref<null | SourceImportKeyword>(null)
 const editingIngredient = ref({} as SourceImportIngredient)
 
