@@ -216,14 +216,22 @@
                             <v-stepper-window-item value="image_chooser">
                                 <v-row>
                                     <v-col cols="12" md="6">
-                                        <h2 class="text-h5">{{ $t('Selected') }}</h2>
-                                        <v-img max-height="30vh" :src="importResponse.recipe.imageUrl"></v-img>
+                                        <h2 class="text-h5">{{ $t('Cover') }}</h2>
+                                        <v-img max-height="30vh" :src="selectedImages[0]"></v-img>
                                     </v-col>
                                     <v-col cols="12" md="6">
                                         <h2 class="text-h5">{{ $t('Available') }}</h2>
                                         <v-row density="compact">
-                                            <v-col cols="4" v-for="i in importResponse.images">
-                                                <v-img max-height="10vh" cover aspect-ratio="1" :src="i" @click="importResponse.recipe.imageUrl = i"></v-img>
+                                            <v-col cols="4" v-for="i in importResponse.images" :key="i">
+                                                <v-card :variant="selectedImages.includes(i) ? 'outlined' : 'flat'"
+                                                        :color="selectedImages.includes(i) ? 'primary' : undefined"
+                                                        @click="toggleImage(i)" style="cursor: pointer; position: relative;">
+                                                    <v-img max-height="10vh" cover aspect-ratio="1" :src="i"></v-img>
+                                                    <v-chip v-if="selectedImages.includes(i)" size="x-small" color="primary" variant="flat"
+                                                            class="ma-1" style="position: absolute; top: 0; left: 0;">
+                                                        {{ selectedImages.indexOf(i) === 0 ? $t('Cover') : selectedImages.indexOf(i) + 1 }}
+                                                    </v-chip>
+                                                </v-card>
                                             </v-col>
                                         </v-row>
                                     </v-col>
@@ -375,7 +383,20 @@
                                     <v-card-title>{{ importResponse.recipe.name }}</v-card-title>
                                     <v-row>
                                         <v-col cols="12" md="6">
-                                            <v-img v-if="importResponse.recipe.imageUrl" :src="importResponse.recipe.imageUrl"></v-img>
+                                            <template v-if="selectedImages.length">
+                                                <v-img :src="selectedImages[0]"></v-img>
+                                                <v-row v-if="selectedImages.length > 1" density="compact" class="mt-2">
+                                                    <v-col cols="3" v-for="i in selectedImages" :key="i">
+                                                        <v-card :variant="i === selectedImages[0] ? 'outlined' : 'flat'"
+                                                                :color="i === selectedImages[0] ? 'primary' : undefined" style="position: relative;">
+                                                            <v-img max-height="8vh" cover aspect-ratio="1" :src="i"></v-img>
+                                                            <v-chip v-if="i === selectedImages[0]" size="x-small" color="primary" variant="flat"
+                                                                    class="ma-1" style="position: absolute; top: 0; left: 0;">{{ $t('Cover') }}</v-chip>
+                                                        </v-card>
+                                                    </v-col>
+                                                </v-row>
+                                            </template>
+                                            <v-img v-else-if="importResponse.recipe.imageUrl" :src="importResponse.recipe.imageUrl"></v-img>
                                         </v-col>
                                         <v-col cols="12" md="6">
                                             <v-text-field :label="$t('Name')" v-model="importResponse.recipe.name" :rules="[['maxLength',128]]"></v-text-field>
@@ -554,7 +575,7 @@
 <script lang="ts" setup>
 
 import {useI18n} from "vue-i18n";
-import {computed, onMounted, ref} from "vue";
+import {computed, onMounted, ref, watch} from "vue";
 import {
     AccessToken,
     AiProvider,
@@ -681,6 +702,19 @@ const editAfterImport = ref(false)
 const bookmarkletToken = ref("")
 
 const importResponse = ref({} as RecipeFromSourceResponse)
+// Images the user picked to import, in selection order; the first becomes the recipe's primary.
+const selectedImages = ref<string[]>([])
+// Pre-select the scraped primary when a source loads; the user adds/removes from the grid. Only
+// imageUrl (set by the scrape) drives this — toggleImage never writes imageUrl, so there's no loop.
+watch(() => importResponse.value?.recipe?.imageUrl, (url) => {
+    selectedImages.value = url ? [url] : []
+})
+
+function toggleImage(url: string) {
+    const i = selectedImages.value.indexOf(url)
+    if (i >= 0) selectedImages.value.splice(i, 1)
+    else selectedImages.value.push(url)
+}
 const keywordSelect = ref<null | SourceImportKeyword>(null)
 const editingIngredient = ref({} as SourceImportIngredient)
 
@@ -823,11 +857,15 @@ function createRecipeFromImport() {
                     router.push({name: 'RecipeViewPage', params: {id: recipe.id}})
                 }
             }
-            // Attach the scraped image if present, then navigate whether or not
-            // the image import succeeded.
+            // Import each selected image; the first-created becomes primary (the backend flags the
+            // first image on a recipe). Fall back to the single scraped imageUrl when nothing was
+            // multi-selected. Navigate whether or not the image import succeeded.
             const imageUrl = importResponse.value.recipe?.imageUrl
-            if (imageUrl) {
-                createRecipeImageFromUrl(recipe.id!, imageUrl).then(navigate).catch(navigate)
+            const urls = selectedImages.value.length ? selectedImages.value : (imageUrl ? [imageUrl] : [])
+            if (urls.length) {
+                // sequential so the backend sees "no primary yet" for the first URL only -> first = default
+                urls.reduce((chain, url) => chain.then(() => createRecipeImageFromUrl(recipe.id!, url)), Promise.resolve() as Promise<unknown>)
+                    .then(navigate).catch(navigate)
             } else {
                 navigate()
             }
@@ -980,7 +1018,7 @@ function resetImporter() {
 }
 
 // Exposed for testing the post-import image-attach flow.
-defineExpose({createRecipeFromImport, importFromUrlList, importResponse, editAfterImport})
+defineExpose({createRecipeFromImport, importFromUrlList, importResponse, selectedImages, editAfterImport})
 
 </script>
 

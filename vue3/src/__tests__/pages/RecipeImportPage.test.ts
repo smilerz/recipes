@@ -82,4 +82,18 @@ describe('RecipeImportPage — post-import image attach (C3)', () => {
         expect(createRecipeImageFromUrlMock).not.toHaveBeenCalled()
         expect(push).toHaveBeenCalledWith(expect.objectContaining({name: 'RecipeViewPage'}))
     })
+
+    it('creates a RecipeImage for each selected image, first one first (becomes primary)', async () => {
+        const {wrapper, push} = mountPage()
+        ;(wrapper.vm as any).importResponse = {recipe: {keywords: []}}
+        ;(wrapper.vm as any).selectedImages = ['http://example.com/1.jpg', 'http://example.com/2.jpg']
+        ;(wrapper.vm as any).createRecipeFromImport()
+        await flushPromises()
+
+        // one create per selected URL, in selection order — the first-created is primary (backend auto)
+        expect(createRecipeImageFromUrlMock).toHaveBeenCalledTimes(2)
+        expect(createRecipeImageFromUrlMock.mock.calls[0]).toEqual([123, 'http://example.com/1.jpg'])
+        expect(createRecipeImageFromUrlMock.mock.calls[1]).toEqual([123, 'http://example.com/2.jpg'])
+        expect(push).toHaveBeenCalledWith(expect.objectContaining({name: 'RecipeViewPage'}))
+    })
 })
