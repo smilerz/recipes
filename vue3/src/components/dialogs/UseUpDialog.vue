@@ -23,9 +23,6 @@
                             <v-card-text class="useup-grid">
                                 <div class="overflow-hidden">
                                     <div class="font-weight-medium text-truncate">{{ row.food.name }}</div>
-                                    <div class="text-caption text-medium-emphasis text-truncate" v-if="row.usedIn?.length">
-                                        {{ $t('UsedIn', {recipes: row.usedIn.join(', ')}) }}
-                                    </div>
                                     <div class="text-caption text-medium-emphasis">
                                         {{ $t('InStock') }}: {{ row.original }} {{ row.unit?.name || '' }}
                                         <span v-if="rowChanged(row)" class="text-warning">
@@ -39,7 +36,7 @@
                                                 control-variant="stacked" hide-details density="compact"></v-number-input>
                                 <model-select :label="$t('Unit')" :placeholder="row.unit?.name || undefined" v-model="row.newUnit"
                                               model="Unit" hide-details density="compact" append-to-body inline></model-select>
-                                <v-btn icon="fa-solid fa-check" variant="text" size="small" data-test="consumed-btn"
+                                <v-btn icon="fa-solid fa-minus" variant="text" size="small" data-test="consumed-btn"
                                        :color="row.amount === 0 && row.original !== 0 ? 'warning' : undefined"
                                        :title="$t('Consumed')" :aria-label="$t('Consumed')"
                                        @click="toggleConsumed(row)"></v-btn>
@@ -71,9 +68,8 @@ import ModelSelect from "@/components/inputs/ModelSelect.vue";
 import ClosableHelpAlert from "@/components/display/ClosableHelpAlert.vue";
 import {
     distinctRecentRecipes,
-    foodRecipeUsageMap,
     groupInventoryByFoodUnit,
-    partitionUseUpRows,
+    groupUseUpRowsByRecipe,
     recipeFoodIds,
     useUpItemsFromRows,
 } from "@/utils/pantry_utils.ts";
@@ -86,7 +82,7 @@ interface Row {
     newUnit: Unit | null
     amount: number
     original: number
-    usedIn?: string[]
+    recipe?: string  // the recently-cooked recipe this row is grouped under
 }
 
 /** How many recent recipes to seed the "Recently cooked" section from (DEC-7). */
@@ -111,28 +107,30 @@ function rowChanged(row: Row): boolean {
 
 const changedCount = computed(() => rows.value.filter(rowChanged).length)
 
-const recentRows = computed(() => rows.value.filter(r => r.usedIn?.length))
-const otherRows = computed(() => rows.value.filter(r => !r.usedIn?.length))
+// recipe names (most-recent first) that seeded groups this open; drives the section order
+const recipeOrder = ref<string[]>([])
 
 /**
- * Ordered render sections (DEC-7): the recently-cooked foods first, then the rest of the pantry —
- * shown inline when there are no recents (the graceful floor), or behind a "Show whole pantry"
- * expander when recents exist.
+ * Ordered render sections: one section per recently-cooked recipe (its on-hand ingredients under the
+ * recipe name), then the rest of the pantry — shown inline when there are no recents (the graceful
+ * floor), or behind a "Show whole pantry" expander when recents exist.
  */
 const sections = computed(() => {
     const out: Array<{key: string, header: string, rows: Row[], expandable: number}> = []
-    if (recentRows.value.length) {
-        out.push({key: 'recent', header: t('RecentlyCooked'), rows: recentRows.value, expandable: 0})
+    for (const recipe of recipeOrder.value) {
+        const groupRows = rows.value.filter(r => r.recipe === recipe)
+        if (groupRows.length) out.push({key: `recipe:${recipe}`, header: recipe, rows: groupRows, expandable: 0})
     }
-    if (otherRows.value.length) {
-        if (!recentRows.value.length) {
-            out.push({key: 'all', header: '', rows: otherRows.value, expandable: 0})
+    const other = rows.value.filter(r => !r.recipe)
+    if (other.length) {
+        if (!recipeOrder.value.length) {
+            out.push({key: 'all', header: '', rows: other, expandable: 0})
         } else {
             out.push({
                 key: 'rest',
                 header: '',
-                rows: showAll.value ? otherRows.value : [],
-                expandable: showAll.value ? 0 : otherRows.value.length,
+                rows: showAll.value ? other : [],
+                expandable: showAll.value ? 0 : other.length,
             })
         }
     }
@@ -168,11 +166,12 @@ async function open(opts?: {foodIds?: number[], title?: string}) {
             return
         }
 
-        const usage = await recentUsageMap(api)
-        const {recent, other} = partitionUseUpRows(grouped, usage)
+        const orderedRecipes = await recentRecipes(api)
+        const {groups, other} = groupUseUpRowsByRecipe(grouped, orderedRecipes)
+        recipeOrder.value = groups.map(g => g.recipe)
         rows.value = [
-            ...recent.map(g => ({...g, newUnit: null})),
-            ...other.map(g => ({...g, newUnit: null, usedIn: undefined})),
+            ...groups.flatMap(g => g.rows.map(gr => ({...gr, newUnit: null, recipe: g.recipe}))),
+            ...other.map(gr => ({...gr, newUnit: null, recipe: undefined})),
         ]
     } catch (err) {
         useMessageStore().addError(ErrorMessageType.FETCH_ERROR, err)
@@ -181,12 +180,12 @@ async function open(opts?: {foodIds?: number[], title?: string}) {
     }
 }
 
-/** Build the food-id → recent-recipe-names map from the CookLog (best-effort; empty on failure). */
-async function recentUsageMap(api: ApiApi): Promise<Map<number, string[]>> {
+/** Recently-cooked recipes (most-recent first) with their food ids, from the CookLog (best-effort). */
+async function recentRecipes(api: ApiApi): Promise<Array<{name: string, foodIds: number[]}>> {
     try {
         const cooks = await api.apiCookLogList({ordering: '-created_at', pageSize: 25})
         const recipes = distinctRecentRecipes(cooks.results ?? [], RECENT_RECIPE_LIMIT)
-        const detailed = await Promise.all(recipes.map(async r => {
+        return await Promise.all(recipes.map(async r => {
             try {
                 const full = await api.apiRecipeRetrieve({id: r.id})
                 return {name: r.name, foodIds: recipeFoodIds(full)}
@@ -194,12 +193,11 @@ async function recentUsageMap(api: ApiApi): Promise<Map<number, string[]>> {
                 return {name: r.name, foodIds: []}
             }
         }))
-        return foodRecipeUsageMap(detailed)
     } catch (err) {
         // Recents is an enhancement — degrade to the plain whole-pantry list, but leave a trace so
         // a persistently-broken CookLog fetch is debuggable rather than silently invisible.
         console.warn('Use-up: could not load recent cooks; showing the whole pantry.', err)
-        return new Map()
+        return []
     }
 }
 

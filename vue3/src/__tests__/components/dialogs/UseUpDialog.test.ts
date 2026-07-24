@@ -194,9 +194,9 @@ describe('UseUpDialog (food,unit) rows + consumed + DEC-8', () => {
         expect(apiMock.apiCookLogList).not.toHaveBeenCalled()
     })
 
-    it('UU-09: default open seeds recently-cooked foods first with a used-in label', async () => {
+    it('UU-09: default open groups recently-cooked foods under the recipe; the rest go behind the expander', async () => {
         apiMock.apiInventoryEntryList.mockResolvedValue({results: [
-            {food: MILK, unit: GAL, amount: 1},    // recently cooked
+            {food: MILK, unit: GAL, amount: 1},    // used in Pancakes
             {food: BUTTER, unit: null, amount: 1}, // not cooked -> behind the expander
         ]})
         apiMock.apiCookLogList.mockResolvedValue({results: [{recipe: 10, recipeName: 'Pancakes'}]})
@@ -206,15 +206,21 @@ describe('UseUpDialog (food,unit) rows + consumed + DEC-8', () => {
         void (wrapper.vm as any).open()
         await flushPromises()
 
-        expect((wrapper.vm as any).recentRows.map((r: any) => r.food.id)).toEqual([1])
-        expect((wrapper.vm as any).recentRows[0].usedIn).toEqual(['Pancakes'])
-        expect((wrapper.vm as any).otherRows.map((r: any) => r.food.id)).toEqual([2])
+        expect((wrapper.vm as any).recipeOrder).toEqual(['Pancakes'])
+        expect((wrapper.vm as any).rows.find((r: any) => r.food.id === 1).recipe).toBe('Pancakes')
+        expect((wrapper.vm as any).rows.find((r: any) => r.food.id === 2).recipe).toBeUndefined()
+        const sections = (wrapper.vm as any).sections
+        expect(sections.find((s: any) => s.header === 'Pancakes').rows.map((r: any) => r.food.id)).toEqual([1])
+        expect(sections.find((s: any) => s.key === 'rest').expandable).toBe(1)  // BUTTER hidden until "show whole pantry"
     })
 
     it('UU-10: an empty CookLog shows the whole pantry directly (graceful floor)', async () => {
         const wrapper = await openWith([{food: MILK, unit: GAL, amount: 1}, {food: BUTTER, unit: null, amount: 1}])
-        expect((wrapper.vm as any).recentRows).toHaveLength(0)
-        expect((wrapper.vm as any).otherRows).toHaveLength(2)
+        expect((wrapper.vm as any).recipeOrder).toHaveLength(0)
+        const sections = (wrapper.vm as any).sections
+        expect(sections).toHaveLength(1)
+        expect(sections[0].key).toBe('all')
+        expect(sections[0].rows).toHaveLength(2)
     })
 
     it('UU-11: recipe-scoped empty state is "none of this recipe\'s ingredients" not "pantry empty"', async () => {

@@ -314,6 +314,45 @@ export function partitionUseUpRows<R extends {food: {id?: number | null}}>(
     return {recent, other}
 }
 
+/**
+ * Group use-up rows under the recipe that used each food, most-recent recipe first. A food used in
+ * several recent recipes is placed under the most-recent one only (no duplicate rows); rows whose
+ * food isn't in any recent recipe fall through to `other`. Rows sort by food name within a group.
+ */
+export function groupUseUpRowsByRecipe<R extends {food: {id?: number | null, name?: string | null}}>(
+    rows: R[],
+    orderedRecipes: Array<{name: string, foodIds: number[]}>,
+): {groups: Array<{recipe: string, rows: R[]}>, other: R[]} {
+    const rowsByFood = new Map<number, R[]>()
+    for (const r of rows) {
+        const id = r.food.id
+        if (id == null) continue
+        const arr = rowsByFood.get(id) ?? []
+        arr.push(r)
+        rowsByFood.set(id, arr)
+    }
+    const assigned = new Set<number>()
+    const groups: Array<{recipe: string, rows: R[]}> = []
+    for (const recipe of orderedRecipes) {
+        if (!recipe.name) continue
+        const groupRows: R[] = []
+        for (const foodId of recipe.foodIds) {
+            if (assigned.has(foodId)) continue
+            const frows = rowsByFood.get(foodId)
+            if (frows?.length) {
+                groupRows.push(...frows)
+                assigned.add(foodId)
+            }
+        }
+        if (groupRows.length) {
+            groupRows.sort((a, b) => (a.food.name ?? '').localeCompare(b.food.name ?? ''))
+            groups.push({recipe: recipe.name, rows: groupRows})
+        }
+    }
+    const other = rows.filter(r => r.food.id == null || !assigned.has(r.food.id))
+    return {groups, other}
+}
+
 export interface RecipePantryRow<F = unknown> {
     food: F
     amount: number
