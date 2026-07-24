@@ -1,6 +1,6 @@
 import {describe, it, expect, beforeEach, afterEach} from 'vitest'
 import {DateTime, Settings} from 'luxon'
-import {expiryStatus, expiryColor, expiryDateLabel, pantryGroup, EXPIRING_SOON_DAYS, shelfLifeToDays, shelfLifeFromDays, isoDateToApiDate, stockUpRowFromFood, stockUpRowsFromEntries, stockUpItemsFromRows, useUpItemsFromRows, groupInventoryByFoodUnit, distinctRecentRecipes, foodRecipeUsageMap, recipeFoodIds, recipePantryRows, partitionUseUpRows, pantryJarState} from '@/utils/pantry_utils'
+import {expiryStatus, expiryColor, expiryDateLabel, pantryGroup, EXPIRING_SOON_DAYS, shelfLifeToDays, shelfLifeFromDays, isoDateToApiDate, stockUpRowFromFood, stockUpRowsFromEntries, stockUpItemsFromRows, useUpItemsFromRows, groupInventoryByFoodUnit, distinctRecentRecipes, foodRecipeUsageMap, recipeFoodIds, recipePantryRows, partitionUseUpRows, groupUseUpRowsByRecipe, pantryJarState} from '@/utils/pantry_utils'
 
 const NOW = new Date('2026-07-15T12:00:00')
 const day = (iso: string) => new Date(iso)
@@ -444,5 +444,42 @@ describe('partitionUseUpRows', () => {
         const {recent, other} = partitionUseUpRows([row(1), row(2)], new Map())
         expect(recent).toHaveLength(0)
         expect(other).toHaveLength(2)
+    })
+})
+
+describe('groupUseUpRowsByRecipe', () => {
+    const row = (id: number, name = `f${id}`) => ({food: {id, name}})
+
+    it('groups rows under the recipe that used the food, most-recent recipe first', () => {
+        const {groups, other} = groupUseUpRowsByRecipe(
+            [row(1), row(2), row(3)],
+            [{name: 'Cake', foodIds: [1, 2]}, {name: 'Soup', foodIds: [3]}])
+        expect(groups.map(g => g.recipe)).toEqual(['Cake', 'Soup'])
+        expect(groups[0].rows.map(r => r.food.id)).toEqual([1, 2])
+        expect(groups[1].rows.map(r => r.food.id)).toEqual([3])
+        expect(other).toHaveLength(0)
+    })
+
+    it('assigns a food used in two recipes to the most-recent (first) one only', () => {
+        const {groups} = groupUseUpRowsByRecipe(
+            [row(1)],
+            [{name: 'Newer', foodIds: [1]}, {name: 'Older', foodIds: [1]}])
+        expect(groups.map(g => g.recipe)).toEqual(['Newer'])  // Older ends up empty -> dropped
+    })
+
+    it('puts foods not used in any recent recipe into other', () => {
+        const {groups, other} = groupUseUpRowsByRecipe([row(1), row(9)], [{name: 'Cake', foodIds: [1]}])
+        expect(groups[0].rows.map(r => r.food.id)).toEqual([1])
+        expect(other.map(r => r.food.id)).toEqual([9])
+    })
+
+    it('keeps all rows of a multi-unit food together in its recipe group', () => {
+        const {groups} = groupUseUpRowsByRecipe([row(1), row(1)], [{name: 'Cake', foodIds: [1]}])
+        expect(groups[0].rows).toHaveLength(2)
+    })
+
+    it('skips nameless recipes', () => {
+        const {groups} = groupUseUpRowsByRecipe([row(1)], [{name: '', foodIds: [1]}])
+        expect(groups).toHaveLength(0)
     })
 })
