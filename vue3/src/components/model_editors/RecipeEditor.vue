@@ -28,7 +28,7 @@
                         <v-text-field :label="$t('Name')" v-model="editingObj.name"></v-text-field>
                         <v-textarea :label="$t('Description')" v-model="editingObj.description" clearable counter="512" maxlength="512" rows="2" auto-grow></v-textarea>
 
-                        <recipe-image-editor v-if="isUpdate()" :recipe-id="editingObj.id!" v-model:images="editingObj.images" />
+                        <recipe-image-editor v-if="isUpdate()" :recipe-id="editingObj.id!" :source-url="editingObj.sourceUrl" v-model:images="editingObj.images" />
 
                         <v-label>{{ $t('Keywords') }}</v-label>
                         <model-select mode="tags" v-model="editingObj.keywords" model="Keyword" allow-create></model-select>

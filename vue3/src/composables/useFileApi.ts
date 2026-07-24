@@ -158,6 +158,21 @@ export function useFileApi() {
     }
 
     /**
+     * scrapes a source page and returns the image URLs it offers (empty array if none/failed to parse)
+     */
+    function scrapeSourceImages(url: string): Promise<string[]> {
+        fileApiLoading.value = true
+        return fetch(getDjangoUrl('api/recipe-from-source/'), {
+            method: 'POST',
+            headers: {'X-CSRFToken': getCookie('csrftoken'), 'Content-Type': 'application/json'},
+            body: JSON.stringify({url}),
+        }).then(r => {
+            if (r.ok) return r.json().then(j => RecipeFromSourceResponseFromJSON(j).images ?? [])
+            throw new ResponseError(r)
+        }).finally(() => { fileApiLoading.value = false })
+    }
+
+    /**
      * uploads the given file to the image recognition endpoint
      * @param file file object to upload
      * @param text text to import
@@ -225,5 +240,5 @@ export function useFileApi() {
         })
     }
 
-    return {fileApiLoading, createOrUpdateUserFile, updateUserFileCropData, createRecipeImage, createRecipeImageFromUrl, patchRecipeImage, updateRecipeImageCropData, deleteRecipeImage, doAiImport, doAppImport}
+    return {fileApiLoading, createOrUpdateUserFile, updateUserFileCropData, createRecipeImage, createRecipeImageFromUrl, scrapeSourceImages, patchRecipeImage, updateRecipeImageCropData, deleteRecipeImage, doAiImport, doAppImport}
 }

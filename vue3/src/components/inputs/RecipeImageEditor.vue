@@ -3,6 +3,7 @@
         <div class="d-flex align-center mb-2">
             <span class="text-subtitle-1">{{ $t('Images') }}</span>
             <v-spacer />
+            <v-btn v-if="canImportFromSource" size="small" prepend-icon="fa-solid fa-globe" variant="text" @click="openSourceImport">{{ $t('ImportFromSource') }}</v-btn>
             <v-btn size="small" prepend-icon="$create" variant="text" @click="showUpload = true">{{ $t('add_image') }}</v-btn>
         </div>
 
@@ -43,6 +44,24 @@
             </v-card>
         </v-dialog>
 
+        <!-- Import from source dialog -->
+        <v-dialog v-model="showSourceImport" max-width="1000" scrollable>
+            <v-card :loading="sourceLoading">
+                <v-card-title>{{ $t('ImportFromSource') }}</v-card-title>
+                <v-card-text>
+                    <div v-if="!sourceLoading && sourceImages.length === 0" class="text-center text-disabled pa-4">
+                        {{ $t('NoNewImages') }}
+                    </div>
+                    <source-image-picker v-else :images="sourceImages" v-model="selectedSourceImages" />
+                </v-card-text>
+                <v-card-actions>
+                    <v-btn color="save" prepend-icon="$save" @click="importSelectedSourceImages"
+                           :loading="sourceLoading" :disabled="selectedSourceImages.length === 0">{{ $t('Save') }}</v-btn>
+                    <v-btn @click="showSourceImport = false">{{ $t('Cancel') }}</v-btn>
+                </v-card-actions>
+            </v-card>
+        </v-dialog>
+
         <!-- Crop dialog -->
         <v-dialog v-model="cropDialog" max-width="1000" scrollable>
             <v-card>
@@ -64,21 +83,23 @@
 </template>
 
 <script setup lang="ts">
-import {ref} from "vue"
+import {computed, ref} from "vue"
 import {VueDraggable} from "vue-draggable-plus"
 import type {RecipeImage as RecipeImageType} from "@/openapi"
 import {useFileApi} from "@/composables/useFileApi"
 import {cropPosition, cropPreviewStyle} from "@/utils/image_crop"
 import {ErrorMessageType, PreparedMessage, useMessageStore} from "@/stores/MessageStore"
 import ImageEditor from "@/components/inputs/ImageEditor.vue"
+import SourceImagePicker from "@/components/inputs/SourceImagePicker.vue"
 
 const props = defineProps<{
     recipeId: number
+    sourceUrl?: string | null
 }>()
 
 const localImages = defineModel<RecipeImageType[]>('images', {default: () => []})
 
-const {createRecipeImage, updateRecipeImageCropData, deleteRecipeImage, patchRecipeImage} = useFileApi()
+const {createRecipeImage, createRecipeImageFromUrl, scrapeSourceImages, updateRecipeImageCropData, deleteRecipeImage, patchRecipeImage} = useFileApi()
 
 const uploading = ref(false)
 const showUpload = ref(false)
@@ -94,6 +115,51 @@ const cropImageIndex = ref(-1)
 function imageUrl(img: RecipeImageType): string {
     if (typeof img.file === 'string') return img.file
     return ''
+}
+
+// Import-from-source state: only offered when the recipe was imported from a URL.
+const canImportFromSource = computed(() => !!props.sourceUrl)
+const showSourceImport = ref(false)
+const sourceLoading = ref(false)
+const sourceImages = ref<string[]>([])
+const selectedSourceImages = ref<string[]>([])
+
+async function openSourceImport() {
+    if (!props.sourceUrl) return
+    showSourceImport.value = true
+    sourceLoading.value = true
+    selectedSourceImages.value = []
+    sourceImages.value = []
+    try {
+        const scraped = await scrapeSourceImages(props.sourceUrl)
+        // hide images already in the gallery so the same URL can't be added twice
+        const existing = new Set(localImages.value.map((img) => imageUrl(img)))
+        sourceImages.value = scraped.filter((url) => !existing.has(url))
+    } catch (err: any) {
+        useMessageStore().addError(ErrorMessageType.FETCH_ERROR, err)
+        showSourceImport.value = false
+    } finally {
+        sourceLoading.value = false
+    }
+}
+
+async function importSelectedSourceImages() {
+    if (selectedSourceImages.value.length === 0) return
+    sourceLoading.value = true
+    try {
+        // sequential; each returned image already comes back non-primary (the recipe has a
+        // primary), so the existing cover is untouched and additions simply append.
+        for (const url of selectedSourceImages.value) {
+            const result = await createRecipeImageFromUrl(props.recipeId, url)
+            localImages.value.push(result)
+        }
+        showSourceImport.value = false
+        useMessageStore().addPreparedMessage(PreparedMessage.CREATE_SUCCESS)
+    } catch (err: any) {
+        useMessageStore().addError(ErrorMessageType.CREATE_ERROR, err)
+    } finally {
+        sourceLoading.value = false
+    }
 }
 
 function imageName(img: RecipeImageType): string {
@@ -202,8 +268,8 @@ function onReorder() {
     })
 }
 
-// Exposed for testing the primary/reorder API calls.
-defineExpose({setPrimary, onReorder})
+// Exposed for testing the primary/reorder API calls and the source-import flow.
+defineExpose({setPrimary, onReorder, canImportFromSource, openSourceImport, importSelectedSourceImages, sourceImages, selectedSourceImages})
 </script>
 
 <style scoped>
