@@ -66,9 +66,12 @@
                                         {{ $t(item.model) }}
                                     </template>
                                     <template #item.name="{item}">
-                                        <div data-test="relation-name" class="relation-name cursor-pointer"
-                                             :class="{ 'relation-name--expanded': isRelationNameExpanded(item) }"
-                                             @click="toggleRelationName(item)">{{ item.name }}</div>
+                                        <div class="d-flex align-center cursor-pointer" @click="toggleRelationName(item)">
+                                            <span data-test="relation-name" class="relation-name"
+                                                  :class="{ 'relation-name--expanded': isRelationNameExpanded(item) }">{{ item.name }}</span>
+                                            <v-icon class="relation-name-toggle-icon" size="x-small"
+                                                    :icon="isRelationNameExpanded(item) ? 'fa-solid fa-chevron-up' : 'fa-solid fa-chevron-down'"></v-icon>
+                                        </div>
                                     </template>
                                     <template #item.actions="{item}">
                                         <v-btn icon="$delete" variant="plain" size="small" target="_blank"
@@ -105,9 +108,12 @@
                                         {{ $t(item.model) }}
                                     </template>
                                     <template #item.name="{item}">
-                                        <div data-test="relation-name" class="relation-name cursor-pointer"
-                                             :class="{ 'relation-name--expanded': isRelationNameExpanded(item) }"
-                                             @click="toggleRelationName(item)">{{ item.name }}</div>
+                                        <div class="d-flex align-center cursor-pointer" @click="toggleRelationName(item)">
+                                            <span data-test="relation-name" class="relation-name"
+                                                  :class="{ 'relation-name--expanded': isRelationNameExpanded(item) }">{{ item.name }}</span>
+                                            <v-icon class="relation-name-toggle-icon" size="x-small"
+                                                    :icon="isRelationNameExpanded(item) ? 'fa-solid fa-chevron-up' : 'fa-solid fa-chevron-down'"></v-icon>
+                                        </div>
                                     </template>
                                     <template #item.actions="{item}">
                                         <v-btn icon="$delete" variant="plain" size="small" target="_blank"
@@ -144,9 +150,12 @@
                                         {{ $t(item.model) }}
                                     </template>
                                     <template #item.name="{item}">
-                                        <div data-test="relation-name" class="relation-name cursor-pointer"
-                                             :class="{ 'relation-name--expanded': isRelationNameExpanded(item) }"
-                                             @click="toggleRelationName(item)">{{ item.name }}</div>
+                                        <div class="d-flex align-center cursor-pointer" @click="toggleRelationName(item)">
+                                            <span data-test="relation-name" class="relation-name"
+                                                  :class="{ 'relation-name--expanded': isRelationNameExpanded(item) }">{{ item.name }}</span>
+                                            <v-icon class="relation-name-toggle-icon" size="x-small"
+                                                    :icon="isRelationNameExpanded(item) ? 'fa-solid fa-chevron-up' : 'fa-solid fa-chevron-down'"></v-icon>
+                                        </div>
                                     </template>
                                     <template #item.actions="{item}">
                                         <v-btn icon="$delete" variant="plain" size="small" target="_blank"
@@ -449,19 +458,33 @@ function deleteRelated(model: EditorSupportedModels, id: number) {
 
 <style scoped>
 /* Relation Name column: full text on wide screens; on a phone, truncate to keep the
-   table (incl. the Actions column) on screen, with click-to-expand to the full wrapped text. */
+   table (incl. the Actions column) on screen, with click-to-expand to the full wrapped text.
+   The chevron icon is the only visual signal on touch devices that truncated text is
+   tappable - cursor:pointer alone is invisible on touch (no hover state to reveal it). */
+.relation-name-toggle-icon {
+    display: none;
+}
+
 @media (max-width: 600px) {
     .relation-name {
-        max-width: 90px;
+        display: inline-block;
+        max-width: 70px;
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
+        vertical-align: middle;
     }
 
     .relation-name.relation-name--expanded {
         white-space: normal;
         overflow: visible;
         word-break: break-word;
+    }
+
+    .relation-name-toggle-icon {
+        display: inline-block;
+        margin-left: 4px;
+        opacity: 0.6;
     }
 }
 </style>
