@@ -239,7 +239,7 @@
 
 import {computed, onBeforeMount, onMounted, PropType, ref} from "vue";
 import {DateTime} from "luxon";
-import {EditorSupportedModels, GenericModel, getGenericModelFromString} from "@/types/Models.ts";
+import {canRouteToModel, EditorSupportedModels, GenericModel, getGenericModelFromString} from "@/types/Models.ts";
 import {useTitle} from "@vueuse/core";
 import {useI18n} from "vue-i18n";
 import {ApiApi, GenericModelReference} from "@/openapi";
@@ -358,11 +358,18 @@ function loadObject() {
 
 /**
  * delete the selected object and redirect to model list if successfull
+ * (or back to wherever the user came from, if the model has no list route -
+ * e.g. RecipeBook, which is excluded from DATABASE_MODELS in favor of /books -
+ * pushing to a guarded route the user can't reach would land them on the app's 404)
  */
 function deleteObject() {
     deleteLoading.value = true
     genericModel.value.destroy(Number(props.id)).then(() => {
-        router.push({name: 'ModelListPage', params: {model: props.model}})
+        if (canRouteToModel(props.model, 'list')) {
+            router.push({name: 'ModelListPage', params: {model: props.model}})
+        } else {
+            router.back()
+        }
     }).catch(err => {
         useMessageStore().addError(ErrorMessageType.DELETE_ERROR, err)
     }).finally(() => {

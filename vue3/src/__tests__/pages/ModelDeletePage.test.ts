@@ -65,8 +65,10 @@ import { ResponseError } from '@/openapi'
 describe('ModelDeletePage', () => {
     beforeEach(() => {
         resetApiMock()
+        mockGenericModel.model.name = 'Food'
         mockGenericModel.model.disableDelete = false
         mockGenericModel.model.isAdvancedDelete = true
+        mockGenericModel.model.isMerge = true
         mockRetrieve.mockReset().mockResolvedValue(makeFood({ id: 1, name: 'Butter' }))
         mockDestroy.mockReset().mockResolvedValue(undefined)
         mockGetDeleteProtecting.mockReset().mockResolvedValue({ results: [], count: 0 })
@@ -130,6 +132,35 @@ describe('ModelDeletePage', () => {
         // v-tooltip (eager) teleports its content to document.body, outside the wrapper's own tree.
         // The test i18n stub echoes translation keys rather than resolving them.
         expect(document.body.textContent).toContain('DeleteNotSupportedForModel')
+    })
+
+    it('redirects to the model list after a successful delete when the model has a list route', async () => {
+        mockGenericModel.model.name = 'Food'
+        const wrapper = mountPage(ModelDeletePage, { props: { model: 'Food', id: '1' } })
+        await flushPromises()
+        const pushSpy = vi.spyOn(wrapper.vm.$router, 'push')
+        const backSpy = vi.spyOn(wrapper.vm.$router, 'back')
+
+        await wrapper.find('[data-test="model-delete-button"]').trigger('click')
+        await flushPromises()
+
+        expect(pushSpy).toHaveBeenCalledWith({ name: 'ModelListPage', params: { model: 'Food' } })
+        expect(backSpy).not.toHaveBeenCalled()
+    })
+
+    it('goes back instead of the guarded list route when the model has no list route (e.g. RecipeBook)', async () => {
+        mockGenericModel.model.name = 'RecipeBook'
+        mockGenericModel.model.isMerge = false
+        const wrapper = mountPage(ModelDeletePage, { props: { model: 'RecipeBook', id: '44' } })
+        await flushPromises()
+        const pushSpy = vi.spyOn(wrapper.vm.$router, 'push')
+        const backSpy = vi.spyOn(wrapper.vm.$router, 'back')
+
+        await wrapper.find('[data-test="model-delete-button"]').trigger('click')
+        await flushPromises()
+
+        expect(backSpy).toHaveBeenCalled()
+        expect(pushSpy).not.toHaveBeenCalledWith({ name: 'ModelListPage', params: { model: 'RecipeBook' } })
     })
 
     it('explains why the delete button is disabled when blocked by protecting relations', async () => {
