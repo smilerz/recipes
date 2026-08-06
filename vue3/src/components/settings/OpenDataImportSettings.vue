@@ -1,11 +1,17 @@
 <template>
     <p class="text-h4">{{ $t('Open_Data_Import') }}</p>
     <v-divider></v-divider>
-    <p class="text-subtitle-1">{{ $t('Data_Import_Info') }} <a href="https://github.com/TandoorRecipes/open-tandoor-data" target="_blank" rel="noreferrer nofollow">{{ $t('Learn_More') }}</a></p>
 
-    <v-select :items="metadata.versions" :label="$t('Language')" class="mt-4" v-model="requestData.selectedVersion" :loading="loading"></v-select>
+    <v-alert v-if="permissionDenied" data-test="open-data-permission-denied" type="warning" variant="tonal" class="mt-4">
+        {{ $t('OpenDataImportPermissionDenied') }}
+    </v-alert>
 
-    <v-row v-if="requestData.selectedVersion">
+    <template v-else>
+        <p class="text-subtitle-1">{{ $t('Data_Import_Info') }} <a href="https://github.com/TandoorRecipes/open-tandoor-data" target="_blank" rel="noreferrer nofollow">{{ $t('Learn_More') }}</a></p>
+
+        <v-select :items="metadata.versions" :label="$t('Language')" class="mt-4" v-model="requestData.selectedVersion" :loading="loading"></v-select>
+
+        <v-row v-if="requestData.selectedVersion">
         <v-col>
             <v-checkbox :label="$t('Update_Existing_Data')" v-model="requestData.updateExisting" hide-details></v-checkbox>
             <v-checkbox :label="$t('Use_Metric')" v-model="requestData.useMetric" hide-details></v-checkbox>
@@ -40,7 +46,7 @@
             <v-btn @click="importOpenData()" class="mt-2 float-right" color="success" :loading="loading">{{ $t('Import') }}</v-btn>
         </v-col>
     </v-row>
-
+    </template>
 
 </template>
 
@@ -50,7 +56,10 @@ import {ApiApi, ImportOpenData, ImportOpenDataMetaData, ImportOpenDataResponse} 
 import {ErrorMessageType, useMessageStore} from "@/stores/MessageStore.ts";
 import {onMounted, ref} from "vue";
 
+const messageStore = useMessageStore()
+
 let loading = ref(false)
+let permissionDenied = ref(false)
 let metadata = ref({} as ImportOpenDataMetaData)
 let requestData = ref({useMetric: true, updateExisting: true} as ImportOpenData)
 let responseData = ref({} as ImportOpenDataResponse)
@@ -83,7 +92,11 @@ function loadMetadata() {
         }
 
     }).catch(err => {
-        useMessageStore().addError(ErrorMessageType.FETCH_ERROR, err)
+        if (err.response?.status == 403) {
+            permissionDenied.value = true
+        } else {
+            messageStore.addError(ErrorMessageType.FETCH_ERROR, err)
+        }
     }).finally(() => {
         loading.value = false
     })
@@ -103,7 +116,7 @@ function importOpenData() {
     api.apiImportOpenDataCreate({importOpenData: requestData.value}).then(r => {
         responseData.value = r
     }).catch(err => {
-        useMessageStore().addError(ErrorMessageType.FETCH_ERROR, err)
+        messageStore.addError(ErrorMessageType.FETCH_ERROR, err)
     }).finally(() => {
         loading.value = false
     })
