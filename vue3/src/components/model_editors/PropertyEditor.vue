@@ -12,7 +12,7 @@
     :editing-object="editingObj">
         <v-card-text>
             <v-form>
-                <v-number-input :step="10" v-model="editingObj.propertyAmount" control-variant="stacked" :precision="2">
+                <v-number-input :label="$t('Amount')" :step="10" v-model="editingObj.propertyAmount" control-variant="stacked" :precision="2">
                     <template #append-inner v-if="editingObj.propertyType">
                         <v-chip class="me-4">{{ editingObj.propertyType.unit }}</v-chip>
                     </template>
