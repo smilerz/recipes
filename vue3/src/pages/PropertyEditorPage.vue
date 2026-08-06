@@ -114,21 +114,21 @@
                 <v-card prepend-icon="fa-solid fa-calculator" :title="$t('Calculator')">
                     <v-card-text>
                         <v-row density="compact">
-                            <v-col cols="3">
+                            <v-col cols="12" md="3">
                                 <v-text-field type="number" v-model="calculatorFromNumerator">
                                     <template #append>
                                         <i class="fa-solid fa-divide"></i>
                                     </template>
                                 </v-text-field>
                             </v-col>
-                            <v-col cols="3">
+                            <v-col cols="12" md="3">
                                 <v-text-field type="number" v-model="calculatorFromDenominator">
                                     <template #append>
                                         <i class="fa-solid fa-equals"></i>
                                     </template>
                                 </v-text-field>
                             </v-col>
-                            <v-col cols="3">
+                            <v-col cols="12" md="3">
                                 <v-text-field type="number" v-model="calculatorToNumerator">
                                     <template #append>
                                         <i class="fa-solid fa-divide"></i>
@@ -138,7 +138,7 @@
                                     </template>
                                 </v-text-field>
                             </v-col>
-                            <v-col cols="3">
+                            <v-col cols="12" md="3">
                                 <v-text-field type="number" v-model="calculatorToDenominator"></v-text-field>
                             </v-col>
                         </v-row>
