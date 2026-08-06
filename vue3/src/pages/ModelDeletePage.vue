@@ -197,10 +197,17 @@
                         {{ $t('delete_confirmation', {source: `${$t(genericModel.model.localizationKey)} ${deleteLabel}`}) }}
                     </v-card-text>
                     <v-card-actions>
-                        <v-btn color="delete" prepend-icon="$delete" data-test="model-delete-button" :disabled="protectingObjectsCount > 0 || genericModel.model.disableDelete" @click="deleteObject()" :loading="deleteLoading">{{
-                                $t('Delete')
-                            }}
-                        </v-btn>
+                        <v-tooltip location="top" eager :disabled="!(protectingObjectsCount > 0 || genericModel.model.disableDelete)">
+                            <template v-slot:activator="{ props: tooltipProps }">
+                                <span v-bind="tooltipProps">
+                                    <v-btn color="delete" prepend-icon="$delete" data-test="model-delete-button" :disabled="protectingObjectsCount > 0 || genericModel.model.disableDelete" @click="deleteObject()" :loading="deleteLoading">{{
+                                            $t('Delete')
+                                        }}
+                                    </v-btn>
+                                </span>
+                            </template>
+                            {{ protectingObjectsCount > 0 ? $t('DeleteBlockedByRelations') : $t('DeleteNotSupportedForModel') }}
+                        </v-tooltip>
                     </v-card-actions>
 
                 </v-card>

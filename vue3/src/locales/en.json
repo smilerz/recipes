@@ -176,6 +176,8 @@
   "DelayFor": "Delay for {hours} hours",
   "DelayUntil": "Delay Until",
   "Delete": "Delete",
+  "DeleteBlockedByRelations": "Cannot delete: other objects depend on this one (see Blocking above)",
+  "DeleteNotSupportedForModel": "Deleting is not supported for this type of object",
   "DeleteConfirmQuestion": "Are you sure you want to delete this object?",
   "DeleteShoppingConfirm": "Are you sure that you want to remove all {food} from the shopping list?",
   "DeleteSomething": "Delete {item}",

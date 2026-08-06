@@ -122,6 +122,25 @@ describe('ModelDeletePage', () => {
         expect(btn.classes()).toContain('v-btn--disabled')
     })
 
+    it('explains why the delete button is disabled for a disableDelete model', async () => {
+        mockGenericModel.model.disableDelete = true
+        mountPage(ModelDeletePage, { props: { model: 'Space', id: '1' } })
+        await flushPromises()
+
+        // v-tooltip (eager) teleports its content to document.body, outside the wrapper's own tree.
+        // The test i18n stub echoes translation keys rather than resolving them.
+        expect(document.body.textContent).toContain('DeleteNotSupportedForModel')
+    })
+
+    it('explains why the delete button is disabled when blocked by protecting relations', async () => {
+        mockGetDeleteProtecting.mockResolvedValue({ results: [makeGenericModelReference()], count: 1 })
+        mountPage(ModelDeletePage, { props: { model: 'Food', id: '1' } })
+        await flushPromises()
+
+        expect(document.body.textContent).toContain('DeleteBlockedByRelations')
+    })
+
+
     it('does not load delete-relationships for non-advanced-delete models', async () => {
         // Space/User/Group/FoodInheritField have no apiXProtectingList endpoints;
         // calling them throws "this.api[...] is not a function" on mount.
