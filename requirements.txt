@@ -2,7 +2,7 @@ Django==5.2.15
 cryptography===50.0.0
 django-annoying==0.10.8
 django-cleanup==9.0.0
-django-crispy-forms==2.6
+django-crispy-forms==2.7
 crispy-bootstrap4==2026.2
 djangorestframework==3.17.1
 drf-spectacular==0.30.0
@@ -52,7 +52,7 @@ python3-saml==1.16.0
 django-vite==3.1.0
 litellm==1.94.0
 thefuzz==0.22.1
-stripe==15.3.1
+stripe==15.4.0
 frappe-client==0.1.0.dev0
 regex==2026.7.19
 
