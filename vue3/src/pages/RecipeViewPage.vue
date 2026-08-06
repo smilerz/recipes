@@ -27,7 +27,7 @@ import {ApiApi, ApiRecipeRetrieveRequest, Recipe, ViewLog} from "@/openapi";
 import RecipeView from "@/components/display/RecipeView.vue";
 import {useDisplay} from "vuetify";
 import {useTitle, useUrlSearchParams} from "@vueuse/core";
-import {ErrorMessageType, PreparedMessage, useMessageStore} from "@/stores/MessageStore";
+import {ErrorMessageType, useMessageStore} from "@/stores/MessageStore";
 import {useUserPreferenceStore} from "@/stores/UserPreferenceStore";
 import ImportTandoorDialog from "@/components/dialogs/ImportTandoorDialog.vue";
 
@@ -89,8 +89,10 @@ function refreshData(recipeId: string) {
         if (err.response.status == 403) {
             // TODO maybe redirect to login if fails with 403? or conflict with group/sapce system?
         } else if (err.response.status == 404) {
+            // no toast here: the not-found card below already communicates this
+            // permanently, and on mobile the transient toast covers the card's
+            // recovery button for several seconds, genuinely blocking pointer input
             loadError.value = 'notfound'
-            messageStore.addPreparedMessage(PreparedMessage.NOT_FOUND)
         } else {
             loadError.value = 'error'
             messageStore.addError(ErrorMessageType.FETCH_ERROR, err)

@@ -23,6 +23,7 @@ vi.mock('@vueuse/router', () => ({
 }))
 
 import RecipeViewPage from '@/pages/RecipeViewPage.vue'
+import { useMessageStore } from '@/stores/MessageStore'
 
 describe('RecipeViewPage', () => {
     beforeEach(() => {
@@ -93,5 +94,15 @@ describe('RecipeViewPage', () => {
         // perpetual skeleton) is not
         expect(wrapper.find('[data-test="recipe-not-found"]').exists()).toBe(true)
         expect(wrapper.find('.stub-recipe-view').exists()).toBe(false)
+    })
+
+    it('does not queue a redundant NOT_FOUND toast on a 404 - the not-found card already communicates it permanently, and a transient toast blocks the recovery button on mobile', async () => {
+        apiMock.apiRecipeRetrieve.mockRejectedValue({ response: { status: 404 } })
+
+        const wrapper = mountRecipePage('999999')
+        await flushPromises()
+
+        const messageStore = useMessageStore((wrapper.vm as any).$pinia)
+        expect(messageStore.snackbarQueue).toEqual([])
     })
 })
