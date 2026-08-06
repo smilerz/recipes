@@ -10,7 +10,7 @@
                 <div class="flex-column" v-if="detailedItems">
                     <recipe-image :height="itemHeight" :width="itemHeight" :recipe="mealPlan.recipe"></recipe-image>
                 </div>
-                <div class="flex-column flex-grow-0 pa-1">
+                <div class="flex-column flex-grow-0 pa-1 title-wrap">
                     <span class="font-light" :class="{'three-line-text': detailedItems,'one-line-text': !detailedItems,}">
                        <i class="fas fa-shopping-cart fa-xs float-left" v-if="mealPlan.shopping"/>
                         {{ itemTitle }}
@@ -64,6 +64,10 @@ const itemTitle = computed(() => {
 </script>
 
 <style scoped>
+
+.title-wrap {
+    min-width: 0;
+}
 
 .two-line-text {
     display: -webkit-box;
