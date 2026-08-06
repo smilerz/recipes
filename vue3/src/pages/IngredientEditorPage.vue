@@ -99,7 +99,7 @@
                 disable-sort
             >
                 <template v-slot:header.action="{ column }">
-                    <v-btn size="small" color="save" @click="updateAllIngredients()">
+                    <v-btn size="small" color="save" data-test="save-all-button" :disabled="!hasChanges" @click="updateAllIngredients()">
                         <v-icon icon="$save"></v-icon>
                     </v-btn>
                 </template>
@@ -156,7 +156,7 @@
 import ModelSelect from "@/components/inputs/ModelSelect.vue";
 import ClosableHelpAlert from "@/components/display/ClosableHelpAlert.vue";
 import {ApiApi, ApiIngredientListRequest, Food, Ingredient, Unit} from "@/openapi";
-import {onMounted, ref} from "vue";
+import {computed, onMounted, ref} from "vue";
 import {useI18n} from "vue-i18n";
 import {ErrorMessageType, useMessageStore} from "@/stores/MessageStore";
 import {useUrlSearchParams} from "@vueuse/core";
@@ -190,6 +190,8 @@ const selectedFood = ref<null | Food>(null)
 const selectedUnit = ref<null | Unit>(null)
 
 const deleteConfirmDialog = ref(false)
+
+const hasChanges = computed(() => items.value.some(i => i.changed))
 
 onMounted(() => {
     getAndLoadParameters()

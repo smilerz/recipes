@@ -40,6 +40,10 @@ const API_METHODS = [
     'apiFoodRetrieve',
     'apiFoodCreate',
     'apiFoodDestroy',
+    'apiUnitRetrieve',
+    'apiIngredientList',
+    'apiIngredientUpdate',
+    'apiIngredientDestroy',
 ] as const
 
 function buildApiMock(): Record<string, ReturnType<typeof vi.fn>> {
