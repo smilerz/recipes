@@ -2,7 +2,7 @@
     <v-container >
         <v-row>
             <v-col cols="12" md="6" offset-md="3">
-                <v-text-field>
+                <v-text-field v-model="query" :label="$t('Search')" clearable>
                     <template #append>
                         <v-btn icon color="create">
                             <v-icon icon="$create"></v-icon>
@@ -42,10 +42,11 @@
 <script setup lang="ts">
 
 
-import {onMounted, ref} from "vue";
+import {onMounted, ref, watch} from "vue";
 import {ApiApi, RecipeBook, RecipeBookEntry} from "@/openapi";
 import {ErrorMessageType, useMessageStore} from "@/stores/MessageStore";
 import ModelEditDialog from "@/components/dialogs/ModelEditDialog.vue";
+import {useDebouncedSearch} from "@/composables/useDebouncedSearch";
 
 const loading = ref(false)
 
@@ -54,14 +55,20 @@ const viewingBookEntries = ref([] as RecipeBookEntry[])
 
 const books = ref([] as RecipeBook[])
 
+const {inputValue: query, debouncedValue: debouncedQuery, signal} = useDebouncedSearch()
+
 onMounted(() => {
+    loadBooks()
+})
+
+watch(debouncedQuery, () => {
     loadBooks()
 })
 
 function loadBooks() {
     const api = new ApiApi()
     loading.value = true
-    api.apiRecipeBookList().then(r => {
+    api.apiRecipeBookList({query: debouncedQuery.value}, {signal: signal.value}).then(r => {
         books.value = r.results
     }).catch(err => {
         useMessageStore().addError(ErrorMessageType.FETCH_ERROR)

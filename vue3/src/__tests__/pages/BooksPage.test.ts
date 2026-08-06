@@ -1,8 +1,9 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest'
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { flushPromises } from '@vue/test-utils'
 import { apiMock, resetApiMock } from '@/__tests__/api-mock'
 import { makeRecipeBook, makeUser } from '@/__tests__/factories'
 import { mountPage } from '@/__tests__/pages/page-mount-helper'
+import { SEARCH_DEBOUNCE_MS } from '@/utils/utils'
 
 vi.mock('@/openapi', () => ({
     ApiApi: class { constructor() { return apiMock } },
@@ -60,5 +61,28 @@ describe('BooksPage', () => {
         await flushPromises()
 
         expect(wrapper.text()).not.toContain('Favorites')
+    })
+
+    describe('search', () => {
+        beforeEach(() => {
+            vi.useFakeTimers()
+        })
+        afterEach(() => {
+            vi.useRealTimers()
+        })
+
+        it('re-fetches with the typed query after the debounce', async () => {
+            apiMock.apiRecipeBookList.mockResolvedValue({ results: [], count: 0 })
+            const wrapper = mountPage(BooksPage)
+            await flushPromises()
+            expect(apiMock.apiRecipeBookList).toHaveBeenCalledTimes(1)
+
+            await wrapper.find('input').setValue('Weeknight')
+            vi.advanceTimersByTime(SEARCH_DEBOUNCE_MS + 10)
+            await flushPromises()
+
+            const lastCall = apiMock.apiRecipeBookList.mock.calls.at(-1)
+            expect(lastCall?.[0]).toEqual(expect.objectContaining({ query: 'Weeknight' }))
+        })
     })
 })
