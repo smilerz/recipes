@@ -613,7 +613,7 @@ registerModel(TShoppingListEntry)
 
 export const TPropertyType = {
     name: 'PropertyType',
-    localizationKey: 'Property',
+    localizationKey: 'PropertyType',
     localizationKeyDescription: 'PropertyTypeHelp',
     icon: 'fa-solid fa-database',
 
