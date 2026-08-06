@@ -149,6 +149,10 @@ export function useModelEditorFunctions<T>(modelName: EditorSupportedModels, emi
             }).catch((err: any) => {
                 if (err instanceof ResponseError && err.response.status == 404) {
                     useMessageStore().addPreparedMessage(PreparedMessage.NOT_FOUND)
+                    // the requested id doesn't exist - fall back to the same "new item" initialization
+                    // used when no id is given at all, so editingObj isn't left as an uninitialized {}
+                    newItemFunction()
+                    title.value = editingObjName()
                 } else {
                     useMessageStore().addError(ErrorMessageType.FETCH_ERROR, err)
                 }

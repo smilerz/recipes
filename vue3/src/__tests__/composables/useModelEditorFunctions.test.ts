@@ -117,6 +117,20 @@ describe('useModelEditorFunctions', () => {
             expect(composable.editingObj.value.name).toBe('Cheese')
             expect(composable.loading.value).toBe(false)
         })
+
+        it('applies item defaults on a 404 (missing id) instead of leaving editingObj empty', async () => {
+            const { ResponseError } = await import('@/openapi')
+            apiMock.apiFoodRetrieve.mockRejectedValue(new (ResponseError as any)({ status: 404 }))
+
+            const { composable } = mountWithComposable()
+
+            await composable.setupState(null, 999, {
+                itemDefaults: { name: 'Default' } as Food,
+            })
+
+            expect(composable.editingObj.value.name).toBe('Default')
+            expect(composable.loading.value).toBe(false)
+        })
     })
 
     describe('isUpdate', () => {
