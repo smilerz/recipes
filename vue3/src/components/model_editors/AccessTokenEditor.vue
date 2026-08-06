@@ -14,7 +14,7 @@
             <v-form :disabled="loading">
                 <v-row>
                     <v-col cols="10">
-                        <v-text-field label="Token" v-model="editingObj.token" disabled></v-text-field>
+                        <v-text-field label="Token" v-model="editingObj.token" :title="editingObj.token" class="token-field" disabled></v-text-field>
                     </v-col>
                     <v-col cols="2">
                         <btn-copy :copy-value="editingObj.token" class="me-1"></btn-copy>
@@ -78,5 +78,7 @@ function initializeEditor(){
 </script>
 
 <style scoped>
-
+.token-field :deep(input) {
+    text-overflow: ellipsis;
+}
 </style>
