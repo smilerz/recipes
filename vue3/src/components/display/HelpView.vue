@@ -10,22 +10,22 @@
                 <!--                    <v-text-field density="compact" variant="outlined" class="pt-2 pb-2" :label="$t('Search')" hide-details clearable></v-text-field>-->
                 <!--                </v-list-item>-->
                 <!--                <v-divider></v-divider>-->
-                <v-list-item link :title="$t('Start')" @click="window = 'start'" prepend-icon="fa-solid fa-house"></v-list-item>
-                <v-list-item link :title="$t('Space')" @click="window = 'space'" prepend-icon="fa-solid fa-database"></v-list-item>
-                <v-list-item link :title="$t('Recipes')" @click="window = 'recipes'" prepend-icon="$recipes"></v-list-item>
-                <v-list-item link :title="$t('Import')" @click="window = 'import'" prepend-icon="$import"></v-list-item>
-                <v-list-item link :title="$t('AI')" @click="window = 'ai'" prepend-icon="$ai"></v-list-item>
-                <v-list-item link :title="$t('Unit')" @click="window = 'unit'" prepend-icon="fa-solid fa-scale-balanced"></v-list-item>
-                <v-list-item link :title="$t('Food')" @click="window = 'food'" prepend-icon="fa-solid fa-carrot"></v-list-item>
-                <v-list-item link :title="$t('Keyword')" @click="window = 'keyword'" prepend-icon="fa-solid fa-tags"></v-list-item>
-                <v-list-item link :title="$t('Recipe Structure')" @click="window = 'recipe_structure'" prepend-icon="fa-solid fa-diagram-project"></v-list-item>
-                <v-list-item link :title="$t('Properties')" @click="window = 'properties'" prepend-icon="fa-solid fa-database"></v-list-item>
-                <v-list-item link :title="$t('Search')" @click="window = 'recipe_search'" prepend-icon="$search"></v-list-item>
-                <v-list-item link :title="$t('SavedSearch')" @click="window = 'search_filter'" prepend-icon="fa-solid fa-sd-card"></v-list-item>
-                <v-list-item link :title="$t('Books')" @click="window = 'books'" prepend-icon="$books"></v-list-item>
-                <v-list-item link :title="$t('Shopping')" @click="window = 'shopping'" prepend-icon="$shopping"></v-list-item>
-                <v-list-item link :title="$t('Meal_Plan')" @click="window = 'meal_plan'" prepend-icon="$mealplan"></v-list-item>
-                <v-list-item link :title="$t('Translations')" @click="window = 'translations'" prepend-icon="fa-solid fa-language"></v-list-item>
+                <v-list-item link :title="$t('Start')" :active="window === 'start'" active-class="font-weight-bold" @click="window = 'start'" prepend-icon="fa-solid fa-house"></v-list-item>
+                <v-list-item link :title="$t('Space')" :active="window === 'space'" active-class="font-weight-bold" @click="window = 'space'" prepend-icon="fa-solid fa-database"></v-list-item>
+                <v-list-item link :title="$t('Recipes')" :active="window === 'recipes'" active-class="font-weight-bold" @click="window = 'recipes'" prepend-icon="$recipes"></v-list-item>
+                <v-list-item link :title="$t('Import')" :active="window === 'import'" active-class="font-weight-bold" @click="window = 'import'" prepend-icon="$import"></v-list-item>
+                <v-list-item link :title="$t('AI')" :active="window === 'ai'" active-class="font-weight-bold" @click="window = 'ai'" prepend-icon="$ai"></v-list-item>
+                <v-list-item link :title="$t('Unit')" :active="window === 'unit'" active-class="font-weight-bold" @click="window = 'unit'" prepend-icon="fa-solid fa-scale-balanced"></v-list-item>
+                <v-list-item link :title="$t('Food')" :active="window === 'food'" active-class="font-weight-bold" @click="window = 'food'" prepend-icon="fa-solid fa-carrot"></v-list-item>
+                <v-list-item link :title="$t('Keyword')" :active="window === 'keyword'" active-class="font-weight-bold" @click="window = 'keyword'" prepend-icon="fa-solid fa-tags"></v-list-item>
+                <v-list-item link :title="$t('Recipe Structure')" :active="window === 'recipe_structure'" active-class="font-weight-bold" @click="window = 'recipe_structure'" prepend-icon="fa-solid fa-diagram-project"></v-list-item>
+                <v-list-item link :title="$t('Properties')" :active="window === 'properties'" active-class="font-weight-bold" @click="window = 'properties'" prepend-icon="fa-solid fa-database"></v-list-item>
+                <v-list-item link :title="$t('Search')" :active="window === 'recipe_search'" active-class="font-weight-bold" @click="window = 'recipe_search'" prepend-icon="$search"></v-list-item>
+                <v-list-item link :title="$t('SavedSearch')" :active="window === 'search_filter'" active-class="font-weight-bold" @click="window = 'search_filter'" prepend-icon="fa-solid fa-sd-card"></v-list-item>
+                <v-list-item link :title="$t('Books')" :active="window === 'books'" active-class="font-weight-bold" @click="window = 'books'" prepend-icon="$books"></v-list-item>
+                <v-list-item link :title="$t('Shopping')" :active="window === 'shopping'" active-class="font-weight-bold" @click="window = 'shopping'" prepend-icon="$shopping"></v-list-item>
+                <v-list-item link :title="$t('Meal_Plan')" :active="window === 'meal_plan'" active-class="font-weight-bold" @click="window = 'meal_plan'" prepend-icon="$mealplan"></v-list-item>
+                <v-list-item link :title="$t('Translations')" :active="window === 'translations'" active-class="font-weight-bold" @click="window = 'translations'" prepend-icon="fa-solid fa-language"></v-list-item>
             </v-list>
 
         </v-navigation-drawer>
