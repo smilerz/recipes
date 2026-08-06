@@ -128,7 +128,7 @@
                                   @update:modelValue="item.changed = true"></model-select>
                 </template>
                 <template v-slot:item.note="{ item }">
-                    <v-text-field v-model="item.note" :label="$t('Note')" density="compact" hide-details @update:modelValue="item.changed = true"></v-text-field>
+                    <v-text-field v-model="item.note" :title="item.note" class="note-input" :label="$t('Note')" density="compact" hide-details @update:modelValue="item.changed = true"></v-text-field>
                 </template>
 
                 <template v-slot:item.action="{ item }">
@@ -354,5 +354,7 @@ function deleteUnit() {
 </script>
 
 <style scoped>
-
+.note-input :deep(input) {
+    text-overflow: ellipsis;
+}
 </style>
