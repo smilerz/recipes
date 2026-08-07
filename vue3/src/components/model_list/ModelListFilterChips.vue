@@ -76,9 +76,17 @@ function fetchName(modelName: string, idStr: string): void {
     const gm = getGenericModelFromString(modelName as any, t)
     if (!gm) return
     inFlight.add(cacheKey)
-    gm.retrieve(id).then((obj: any) => {
-        const label = gm.model.itemLabel ?? 'name'
-        nameCache.set(cacheKey, obj[label] ?? idStr)
+    const label = gm.model.itemLabel ?? 'name'
+    // GET /api/user/{id}/ (detail-retrieve) is restricted to self-only, even for
+    // same-space admins (see cookbook.helper.permission_helper.CustomUserPermission,
+    // enforced by cookbook/tests/api/test_api_user.py::test_user_retrieve). The list
+    // endpoint is open to any space member and supports id filtering, so use that
+    // instead of retrieve() for this one model to resolve the "Created by" chip label.
+    const lookup = modelName === 'User'
+        ? gm.list({filterList: [idStr]}).then((r: any) => r.results[0])
+        : gm.retrieve(id)
+    lookup.then((obj: any) => {
+        nameCache.set(cacheKey, obj?.[label] ?? idStr)
     }).catch(() => {
         nameCache.set(cacheKey, idStr)
     }).finally(() => {

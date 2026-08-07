@@ -47,6 +47,27 @@ def test_list_filter(u1_s1, u2_s1, u1_s2, u2_s2):
     assert len(response) == 0
 
 
+def test_list_filter_repeated_query_param(u1_s1, u2_s1, u1_s2, u2_s2):
+    # feat-advanced-search-tc60: the OpenAPI-generated frontend client serializes an
+    # array param as REPEATED keys (?filter_list=1&filter_list=2), not the JSON-array-
+    # string shape (?filter_list=[1,2]) the hand-built query above uses. A single
+    # repeated value (?filter_list=1) previously json.loads()'d to the bare int 1 ->
+    # pk__in=1 raised an uncaught TypeError (500), not the caught ValueError.
+    obj_u2_s1 = auth.get_user(u2_s1)
+    obj_u2_s2 = auth.get_user(u2_s2)
+
+    r = u1_s1.get(f'{reverse(LIST_URL)}?filter_list={obj_u2_s1.pk}')
+    assert r.status_code == 200
+    response = json.loads(r.content)
+    assert len(response) == 1
+    assert response[0]['id'] == obj_u2_s1.pk
+
+    r = u1_s1.get(f'{reverse(LIST_URL)}?filter_list={obj_u2_s1.pk}&filter_list={obj_u2_s2.pk}')
+    assert r.status_code == 200
+    response = json.loads(r.content)
+    assert len(response) == 1  # obj_u2_s2 is in a different space
+
+
 def test_list_space(u1_s1, u2_s1, u1_s2, space_2):
     assert len(json.loads(u1_s1.get(reverse(LIST_URL)).content)) == 2
     assert len(json.loads(u1_s2.get(reverse(LIST_URL)).content)) == 1

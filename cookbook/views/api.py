@@ -731,12 +731,19 @@ class UserViewSet(LoggingMixin, viewsets.ModelViewSet):
 
     def get_queryset(self):
         queryset = self.queryset.filter(userspace__space=self.request.space)
-        try:
-            filter_list = self.request.query_params.get('filter_list', None)
-            if filter_list is not None:
-                queryset = queryset.filter(pk__in=json.loads(filter_list))
-        except ValueError:
-            raise APIException('Parameter filter_list incorrectly formatted')
+        # Accepts two shapes: a single JSON-array-string param (?filter_list=[1,2],
+        # used by hand-built URLs) or repeated query keys (?filter_list=1&filter_list=2,
+        # what the generated frontend client sends for an array param).
+        filter_list = self.request.query_params.getlist('filter_list')
+        if filter_list:
+            try:
+                if len(filter_list) == 1 and filter_list[0].startswith('['):
+                    ids = json.loads(filter_list[0])
+                else:
+                    ids = [int(x) for x in filter_list]
+            except (ValueError, TypeError):
+                raise APIException('Parameter filter_list incorrectly formatted')
+            queryset = queryset.filter(pk__in=ids)
 
         return queryset
 

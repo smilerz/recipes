@@ -10,12 +10,14 @@ import {createI18n} from 'vue-i18n'
 // Default to a never-resolving promise so tests that don't care about name
 // resolution see the loading state (count fallback) without crashing.
 const retrieveSpy = vi.fn(() => new Promise(() => {}))
+const listSpy = vi.fn(() => new Promise(() => {}))
 vi.mock('@/types/Models', async (importOriginal) => {
     const orig = await importOriginal<any>()
     return {
         ...orig,
         getGenericModelFromString: () => ({
             retrieve: retrieveSpy,
+            list: listSpy,
             model: {itemLabel: 'name'},
         }),
     }
@@ -122,6 +124,46 @@ describe('ModelListFilterChips', () => {
             // Inside one instance, retrieve is called exactly once for id 5.
             expect(retrieveSpy).toHaveBeenCalledTimes(1)
             wrapper.unmount()
+        })
+    })
+
+    describe('model-select User name resolution (defect #18)', () => {
+        // GET /api/user/{id}/ is restricted to self-only (even for same-space admins),
+        // so a 'Created by' chip resolving its label via retrieve() always 403s and
+        // falls back to the raw id. Must use list({filterList:[id]}) instead, which
+        // is open to any space member.
+        it('resolves the createdby chip label via list(), not retrieve()', async () => {
+            retrieveSpy.mockReset()
+            listSpy.mockReset()
+            listSpy.mockResolvedValueOnce({count: 1, results: [{id: 1, name: 'smilerz'}], next: null})
+
+            const wrapper = mountChips(
+                [{key: 'createdby', labelKey: 'CreatedBy', type: 'model-select', modelName: 'User' as any}],
+                {createdby: '1'},
+            )
+            await flushPromises()
+            await flushPromises()
+
+            expect(listSpy).toHaveBeenCalledWith({filterList: ['1']})
+            expect(retrieveSpy).not.toHaveBeenCalled()
+            const chip = wrapper.find('.v-chip')
+            expect(chip.text()).toContain('smilerz')
+        })
+
+        it('falls back to the raw id if the list lookup fails, without erroring', async () => {
+            retrieveSpy.mockReset()
+            listSpy.mockReset()
+            listSpy.mockRejectedValueOnce(new Error('boom'))
+
+            const wrapper = mountChips(
+                [{key: 'createdby', labelKey: 'CreatedBy', type: 'model-select', modelName: 'User' as any}],
+                {createdby: '1'},
+            )
+            await flushPromises()
+            await flushPromises()
+
+            const chip = wrapper.find('.v-chip')
+            expect(chip.text()).toContain('1')
         })
     })
 })
