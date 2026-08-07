@@ -1006,5 +1006,11 @@ defineExpose({createRecipeFromImport, importFromUrlList, importResponse, selecte
 </script>
 
 <style scoped>
-
+/* The stepper header doesn't fit all 6 steps on mobile viewports and has no
+   built-in overflow handling, silently clipping the later steps (Steps, Save)
+   with no way to reach them. Scroll instead of clip. */
+:deep(.v-stepper-header) {
+    overflow-x: auto;
+    flex-wrap: nowrap;
+}
 </style>
