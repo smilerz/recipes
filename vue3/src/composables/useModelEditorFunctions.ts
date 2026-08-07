@@ -1,5 +1,5 @@
 import {ErrorMessageType, PreparedMessage, useMessageStore} from "@/stores/MessageStore";
-import {onBeforeMount, onMounted, ref, shallowRef, watch} from "vue";
+import {onBeforeMount, onBeforeUnmount, onMounted, ref, shallowRef, watch} from "vue";
 import {EditorSupportedModels, GenericModel, getGenericModelFromString} from "@/types/Models";
 import {useI18n} from "vue-i18n";
 import {ResponseError} from "@/openapi";
@@ -49,6 +49,15 @@ export function useModelEditorFunctions<T>(modelName: EditorSupportedModels, emi
 
     onMounted(() => {
         setupPageLeaveWarning()
+    })
+
+    // Without this, closing/unmounting the editor (e.g. a create dialog dismissed
+    // before any edit) leaves window.onbeforeunload set forever - a global side
+    // effect closed over this instance's editingObjChanged, orphaned once the
+    // editor itself is gone. The next unrelated hard navigation then gets an
+    // unexplained "leave site?" prompt with no editing UI on screen to explain it.
+    onBeforeUnmount(() => {
+        window.onbeforeunload = null
     })
 
     /**

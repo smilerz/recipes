@@ -176,6 +176,24 @@ describe('useModelEditorFunctions', () => {
         })
     })
 
+    describe('page-leave warning cleanup', () => {
+        // feat-list-food-tc69: a double-click on the "+" create button opens then
+        // immediately re-closes the dialog (see ModelListCreateButton's own fix),
+        // but the editor's onMounted() unconditionally sets window.onbeforeunload
+        // with no corresponding teardown. Once the editor unmounts, that handler
+        // (closed over the now-destroyed instance's editingObjChanged ref) is
+        // orphaned - the next hard navigation gets an unexplained "leave site?"
+        // prompt even though no editing UI is on screen anymore.
+        it('clears window.onbeforeunload when the editor unmounts', () => {
+            const { wrapper } = mountWithComposable()
+            expect(typeof window.onbeforeunload).toBe('function')
+
+            wrapper.unmount()
+
+            expect(window.onbeforeunload).toBeNull()
+        })
+    })
+
     describe('deleteObject', () => {
         it('calls destroy and emits delete', async () => {
             apiMock.apiFoodDestroy.mockResolvedValue(undefined)
