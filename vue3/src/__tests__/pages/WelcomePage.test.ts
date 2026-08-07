@@ -89,4 +89,36 @@ describe('WelcomePage', () => {
         await flushPromises()
         expect(wrapper.text()).toContain('testuser')
     })
+
+    // feat-welcome-tc07/tc08/tc09/tc10: clicking step-1 "Next" with no fields
+    // changed unconditionally PATCHed /api/space/{id}/, which 403s for non-admin
+    // accounts and logs a console error on every normal wizard interaction - even
+    // when there was nothing to save. Only PATCH when the space name actually changed.
+    it('does not PATCH the space when clicking Next with the name unchanged', async () => {
+        apiMock.apiSpaceCurrentRetrieve.mockResolvedValue(makeSpace({ name: 'My Space' }))
+        apiMock.apiUserPreferencePartialUpdate.mockResolvedValue(makeUserPreference())
+        const wrapper = mountWelcome()
+        await flushPromises()
+
+        const nextButton = wrapper.findAll('button').find(b => b.text() === 'Next')
+        await nextButton!.trigger('click')
+        await flushPromises()
+
+        expect(apiMock.apiSpacePartialUpdate).not.toHaveBeenCalled()
+    })
+
+    it('PATCHes the space when the name was changed', async () => {
+        apiMock.apiSpaceCurrentRetrieve.mockResolvedValue(makeSpace({ name: 'My Space' }))
+        apiMock.apiSpacePartialUpdate.mockResolvedValue(makeSpace({ name: 'New Name' }))
+        apiMock.apiUserPreferencePartialUpdate.mockResolvedValue(makeUserPreference())
+        const wrapper = mountWelcome()
+        await flushPromises()
+
+        await wrapper.find('input[type="text"]').setValue('New Name')
+        const nextButton = wrapper.findAll('button').find(b => b.text() === 'Next')
+        await nextButton!.trigger('click')
+        await flushPromises()
+
+        expect(apiMock.apiSpacePartialUpdate).toHaveBeenCalled()
+    })
 })

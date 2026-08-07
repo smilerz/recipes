@@ -183,6 +183,7 @@ const router = useRouter()
 const space = ref<undefined | Space>(undefined)
 const stepper = ref("1")
 const loading = ref(false)
+let originalSpaceName: string | undefined = undefined
 
 onMounted(() => {
     loadSpace()
@@ -213,6 +214,7 @@ function loadSpace() {
 
     api.apiSpaceCurrentRetrieve().then(r => {
         space.value = r
+        originalSpaceName = r.name
     }).catch(err => {
         useMessageStore().addError(ErrorMessageType.FETCH_ERROR, err)
     })
@@ -225,7 +227,9 @@ function updateSpaceAndUserSettings() {
     let promises = [] as Promise<any>[]
     loading.value = true
 
-    promises.push(updateSpace())
+    if (space.value && space.value.name !== originalSpaceName) {
+        promises.push(updateSpace())
+    }
     promises.push(useUserPreferenceStore().updateUserSettings(true))
 
     Promise.allSettled(promises).then(r => {
