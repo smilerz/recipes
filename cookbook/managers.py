@@ -144,7 +144,7 @@ class RecipeQuerySet(models.QuerySet):
         return self.filter(created_by__id=user_id)
 
     def by_internal(self, internal):
-        if not internal:
+        if internal is None:
             return self
         return self.filter(internal=internal)
 

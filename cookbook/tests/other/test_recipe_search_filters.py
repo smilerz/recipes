@@ -725,6 +725,21 @@ class TestInternalFilter:
         results = do_search(req, space_1)
         assert results.count() == 13
 
+    def test_internal_false(self, search_recipes, u1_s1, space_1, make_search_request):
+        # feat-advanced-search-tc62: by_internal() used `if not internal: return self`,
+        # which treats internal=False (explicit "exclude internal" / show-external-only)
+        # identically to internal=None (no filter set) - both are falsy in Python. The
+        # exclude direction was completely inert; only internal=True ever filtered.
+        s = search_recipes
+        s.r1.internal = True
+        s.r1.save()
+        req = make_search_request(u1_s1)
+        results = do_search(req, space_1, internal='false')
+        ids = set(results.values_list('id', flat=True))
+        assert s.r1.id not in ids
+        assert s.r2.id in ids
+        assert results.count() == 12
+
 
 # ========================== CREATED BY FILTER ==========================
 
