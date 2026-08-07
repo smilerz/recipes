@@ -69,4 +69,25 @@ describe('RecipeActivity (E-10)', () => {
         expect(w.emitted('cookLogSaved')).toBeTruthy()
         w.unmount()
     })
+
+    // feat-recipe-id-tc93: a rapid double-click on Create fired two apiCookLogCreate
+    // requests (confirmed via API oracle: 2 duplicate CookLog rows from one double-click)
+    // because the button had no guard against a second call while the first was still
+    // in flight.
+    it('does not fire a second create while the first is still in flight', async () => {
+        let resolveCreate!: (v: any) => void
+        apiMock.apiCookLogCreate.mockImplementation(() => new Promise(resolve => { resolveCreate = resolve }))
+        const w = mountActivity()
+        await flushPromises()
+
+        ;(w.vm as any).saveCookLog()
+        ;(w.vm as any).saveCookLog()
+        await flushPromises()
+
+        expect(apiMock.apiCookLogCreate).toHaveBeenCalledTimes(1)
+
+        resolveCreate({id: 1, rating: 5, createdBy: {id: 1, displayName: 'x'}})
+        await flushPromises()
+        w.unmount()
+    })
 })

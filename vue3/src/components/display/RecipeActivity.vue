@@ -19,7 +19,7 @@
             </v-row>
         </v-card-text>
         <v-card-actions>
-            <v-btn color="create" prepend-icon="$create" @click="saveCookLog()">{{ $t('Create') }}</v-btn>
+            <v-btn color="create" prepend-icon="$create" :disabled="saving" :loading="saving" @click="saveCookLog()">{{ $t('Create') }}</v-btn>
         </v-card-actions>
     </v-card>
 
@@ -94,6 +94,7 @@ const newCookLog = ref({} as CookLog);
 
 const cookLogs = ref([] as CookLog[])
 const loading = ref(false)
+const saving = ref(false)
 
 onMounted(() => {
     recLoadCookLog(props.recipe.id)
@@ -136,6 +137,8 @@ function resetForm() {
  * create new cook log in database
  */
 function saveCookLog() {
+    if (saving.value) return
+    saving.value = true
     const api = new ApiApi()
 
     api.apiCookLogCreate({cookLog: newCookLog.value}).then(r => {
@@ -144,6 +147,8 @@ function saveCookLog() {
         emit('cookLogSaved', r)
     }).catch(err => {
         useMessageStore().addError(ErrorMessageType.CREATE_ERROR, err)
+    }).finally(() => {
+        saving.value = false
     })
 }
 
