@@ -11,7 +11,7 @@
                 :color="stat.color"
                 :prepend-icon="stat.icon"
                 size="small"
-                variant="tonal"
+                variant="flat"
                 label
                 :role="stat.filter ? 'button' : undefined"
                 :style="stat.filter ? {cursor: 'pointer'} : undefined"
