@@ -627,12 +627,22 @@ watch(() => props.model, (newValue, oldValue) => {
     }
 })
 
-// Skip the first invocation — it fires when the model is set in onBeforeMount
-// (treeActive flips false→true), which is initialisation, not a user-driven change.
-// Every subsequent firing is a real filter/ordering/tree toggle and should reset to page 1.
-let filterWatchInitialized = false
-watch([ordering, filterParams, treeActive], () => {
-    if (!filterWatchInitialized) { filterWatchInitialized = true; return }
+// ordering/filterParams never change spuriously during init, so every firing here
+// is a real user-driven change and must reset to page 1 — no skip-first guard.
+watch([ordering, filterParams], () => {
+    clearTreeState()
+    loadItems({page: 1})
+})
+
+// treeActive's own watcher DOES need a skip-first guard: it flips false→true when
+// the model is set in onBeforeMount, which is initialisation, not a user toggle.
+// This must stay a SEPARATE watcher from ordering/filterParams above — a shared
+// guard previously ate whichever of the three changed first, including the user's
+// own first filter/ordering interaction whenever treeActive never flips at all
+// (tree view off, the default), silently no-opping it.
+let treeActiveInitialized = false
+watch(treeActive, () => {
+    if (!treeActiveInitialized) { treeActiveInitialized = true; return }
     clearTreeState()
     loadItems({page: 1})
 })

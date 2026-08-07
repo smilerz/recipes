@@ -114,6 +114,31 @@ describe('ModelListPage', () => {
         ).not.toContain(1)
     })
 
+    it('feat-list-food-tc34-tc44: the very first filter/ordering change ever is not swallowed by the shared skip-first guard', async () => {
+        // Bug: watch([ordering, filterParams, treeActive]) unconditionally skips its
+        // very first firing, on the assumption there's always an init-caused
+        // treeActive false->true flip to absorb it harmlessly (see FOOD-01 above).
+        // That assumption only holds when tree view is enabled. With tree view OFF
+        // (the default — treeActive never changes), the watcher's first-ever firing
+        // IS the user's own first filter/ordering interaction, and the guard eats it:
+        // URL/chip update, but no fetch. A second, differing interaction then works
+        // normally because the flag is already consumed.
+        mountPage(ModelListPage, { props: { model: 'Food' } })
+        await flushPromises()
+
+        mockList.mockClear()
+        // '-name' (not 'name') so it actually suspends tree mode and is sent as
+        // effectiveOrdering — 'name' alone is treated as tree-compatible and suppressed.
+        routeQueryRefs['ordering'].value = '-name'
+        await flushPromises()
+
+        const calls = mockList.mock.calls.map((c: any[]) => c[0]?.ordering)
+        expect(
+            calls,
+            `list() was never called after the first-ever ordering change — calls: ${JSON.stringify(calls)}`
+        ).toContain('-name')
+    })
+
     it('R09-2: searching while on page>1 reloads at page 1, never requesting the stale page', async () => {
         // On page 2, entering a query must reset to page 1 before the request fires.
         // Bug: the desktop table re-fetched on :search change with the stale page,
