@@ -143,7 +143,9 @@ class SearchParams:
         _s = cls._scalar
 
         sort_order = _s(params, 'sort_order')
-        if sort_order == 'random':
+        if sort_order in ('random', '-random'):
+            # random ordering has no meaningful direction; the frontend's sort-toggle
+            # can still emit the descending form '-random'
             random = True
             sort_order = None
         else:

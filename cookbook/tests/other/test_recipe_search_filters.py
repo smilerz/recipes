@@ -1221,3 +1221,12 @@ class TestSortOrders:
         req = make_search_request(u1_s1)
         results = do_search(req, space_1, sort_order='random')
         assert results.count() == 13
+
+    def test_sort_random_descending(self, search_recipes, u1_s1, space_1, make_search_request):
+        """sort_order=-random raised a FieldError (HTTP 500) because only the exact
+        string 'random' was translated to random ordering; '-random' (the descending
+        toggle state) fell through and was passed to order_by() as a literal field
+        name. Random has no meaningful direction, so both must behave identically."""
+        req = make_search_request(u1_s1)
+        results = do_search(req, space_1, sort_order='-random')
+        assert results.count() == 13
