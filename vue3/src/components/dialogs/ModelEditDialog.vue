@@ -1,5 +1,5 @@
 <template>
-    <v-dialog max-width="1400" :activator="dialogActivator" v-model="dialog" :persistent="editingObjChangedState">
+    <v-dialog max-width="1400" :activator="dialogActivator" v-model="dialog" :persistent="editingObjChangedState || props.persistent">
         <component :is="editorComponent" :item="props.item" :item-id="props.itemId" @create="createEvent" @save="saveEvent" @delete="deleteEvent" dialog @close="dialog = false; " @changed-state="(state:boolean) => {editingObjChangedState = state}" :itemDefaults="props.itemDefaults"></component>
     </v-dialog>
 </template>
@@ -26,6 +26,11 @@ const props = defineProps({
     closeAfterCreate: {default: true},
     closeAfterSave: {default: true},
     closeAfterDelete: {default: true},
+    // OR'd with the internal editingObjChangedState-driven persistence. Lets a caller
+    // force persistent (ignore click-outside/escape) independent of form-dirty state -
+    // e.g. briefly after opening, so a rapid double-click's second click landing on the
+    // scrim (which renders over the activator almost instantly) doesn't close the dialog.
+    persistent: {type: Boolean, default: false},
 })
 
 const editorComponent = shallowRef(getGenericModelFromString(props.model, t).model.editorComponent)
