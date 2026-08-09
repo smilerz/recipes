@@ -56,9 +56,16 @@
                             <v-chip v-if="item.expires" size="small" label class="me-2" :color="expiryColor(expiryStatus(item.expires, now))">
                                 {{ expiryDateLabel(item.expires) }}
                             </v-chip>
-                            <v-btn icon="fa-solid fa-clock-rotate-left" variant="text" size="small" :title="t('History')" @click="openLog(item)"></v-btn>
-                            <v-btn icon="fa-solid fa-minus" variant="text" size="small" :title="t('Remove')" @click="openBooking('remove', item)"></v-btn>
-                            <v-btn icon="fa-solid fa-arrow-right" variant="text" size="small" :title="t('Move')" @click="openBooking('move', item)"></v-btn>
+                            <v-btn icon="$menu" variant="text" size="small" :aria-label="t('Actions')">
+                                <v-icon icon="$menu"></v-icon>
+                                <v-menu activator="parent">
+                                    <v-list density="compact">
+                                        <v-list-item :title="t('History')" prepend-icon="fa-solid fa-clock-rotate-left" @click="openLog(item)"></v-list-item>
+                                        <v-list-item :title="t('Remove')" prepend-icon="fa-solid fa-minus" @click="openBooking('remove', item)"></v-list-item>
+                                        <v-list-item :title="t('Move')" prepend-icon="fa-solid fa-arrow-right" @click="openBooking('move', item)"></v-list-item>
+                                    </v-list>
+                                </v-menu>
+                            </v-btn>
                         </template>
                     </v-list-item>
                 </v-list>
