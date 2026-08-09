@@ -1,5 +1,5 @@
 <template>
-    <v-dialog max-width="600px" activator="parent" v-model="dialog">
+    <v-dialog max-width="600px" v-model="dialog">
         <v-card>
             <v-closable-card-title :title="$t('Share')" :sub-title="recipe.name" v-model="dialog"></v-closable-card-title>
             <v-card-text>
@@ -33,7 +33,10 @@ const props = defineProps({
 
 const {t} = useI18n()
 
-const dialog = ref(false)
+// v-model controlled, NOT a private ref + activator="parent" - nested inside the Actions
+// v-menu, its own activator click couldn't coordinate with close-on-content-click (#14: the
+// Actions menu never closed when Share opened).
+const dialog = defineModel<boolean>({default: false})
 const loading = ref(false)
 const shareLink = ref({} as ShareLink)
 

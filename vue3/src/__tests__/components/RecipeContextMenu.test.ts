@@ -77,7 +77,15 @@ function mountMenu(deviceOverrides: Record<string, any> = {}, props: Record<stri
             stubs: {
                 'v-menu': { template: '<div class="stub-v-menu"><slot /></div>' },
                 ModelEditDialog: { template: '<div class="stub-model-edit-dialog"/>' },
-                RecipeShareDialog: { template: '<div class="stub-share-dialog"/>' },
+                RecipeShareDialog: defineComponent({
+                    name: 'RecipeShareDialog',
+                    // Faithful to the real component: it is v-model controlled (modelValue), NOT
+                    // its own internal activator="parent" toggle, which the outer Actions v-menu's
+                    // close-on-content-click could not coordinate with (#14: menu never closed).
+                    props: { recipe: Object, modelValue: Boolean },
+                    emits: ['update:modelValue'],
+                    template: '<div class="stub-share-dialog" :data-open="modelValue"/>',
+                }),
                 AddToShoppingDialog: defineComponent({
                     name: 'AddToShoppingDialog',
                     // Faithful to the real component: it is v-model controlled (modelValue), NOT an
@@ -264,5 +272,23 @@ describe('shopping dialog isolation (E-shopping / D10)', () => {
 
         // After click the dialog must actually open (v-model = true)
         expect(stubs[0].props('modelValue'), 'AddToShoppingDialog should open (modelValue=true) after click').toBe(true)
+    })
+})
+
+describe('share dialog isolation (#14)', () => {
+    it('clicking Share opens RecipeShareDialog via v-model (menu item was activator="parent" nested inside the closing Actions menu)', async () => {
+        const w = mountMenu({}, { context: 'card' })
+
+        const stubs = w.findAllComponents({ name: 'RecipeShareDialog' })
+        expect(stubs.length, 'RecipeShareDialog must be mounted').toBeGreaterThan(0)
+        expect(stubs[0].props('modelValue'), 'dialog should be closed before click').toBeFalsy()
+
+        const items = w.findAll('.v-list-item, li')
+        const shareItem = items.find(el => el.text().includes('Share'))
+        expect(shareItem, 'Share list item must exist').toBeDefined()
+        await shareItem!.trigger('click')
+        await w.vm.$nextTick()
+
+        expect(stubs[0].props('modelValue'), 'RecipeShareDialog should open (modelValue=true) after click').toBe(true)
     })
 })

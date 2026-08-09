@@ -36,9 +36,8 @@
                     {{ $t('Property_Editor') }}
                 </v-list-item>
                 <v-list-item v-if="isVisible('share')"
-                             prepend-icon="fa-solid fa-share-nodes" link>
+                             prepend-icon="fa-solid fa-share-nodes" link @click="shareDialog = true">
                     {{ $t('Share') }}
-                    <recipe-share-dialog :recipe="props.recipe"></recipe-share-dialog>
                 </v-list-item>
                 <v-list-item v-if="isVisible('export')"
                              prepend-icon="fa-solid fa-file-export" @click="exportRecipe()" :disabled="exportLoading">
@@ -75,6 +74,7 @@
                        v-model="mealPlanDialog"></model-edit-dialog>
 
     <add-to-shopping-dialog v-if="isVisible('shopping')" :recipe="props.recipe" v-model="shoppingDialog"></add-to-shopping-dialog>
+    <recipe-share-dialog v-if="isVisible('share')" :recipe="props.recipe" v-model="shareDialog"></recipe-share-dialog>
     <add-to-book-dialog v-if="addToBookDialog" :recipe="props.recipe" v-model="addToBookDialog"></add-to-book-dialog>
     <log-cooking-dialog v-if="logCookingDialog" :recipe="props.recipe" v-model="logCookingDialog"></log-cooking-dialog>
     <use-up-dialog v-if="props.context === 'view'" ref="useUpDialog"></use-up-dialog>
@@ -133,6 +133,7 @@ const emit = defineEmits<{
 
 const mealPlanDialog = ref(false)
 const shoppingDialog = ref(false)
+const shareDialog = ref(false)
 const addToBookDialog = ref(false)
 const logCookingDialog = ref(false)
 const deleteDialog = ref(false)
