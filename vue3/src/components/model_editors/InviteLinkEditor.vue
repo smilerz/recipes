@@ -15,7 +15,11 @@
                 <v-text-field :label="$t('Email')" v-model="editingObj.email"></v-text-field>
                 <v-select :label="$t('Role')" :items="groups" item-value="id" item-title="name" return-object v-model="editingObj.group"></v-select>
                 <model-select model="Household" v-model="editingObj.household" allow-create></model-select>
-                <v-date-input :label="$t('Valid Until')" v-model="editingObj.validUntil"></v-date-input>
+                <v-date-input :label="$t('Valid Until')" v-model="editingObj.validUntil">
+                    <template #append-inner>
+                        <v-btn variant="plain" icon="fa-solid fa-calendar-xmark" @click="editingObj.validUntil = new Date('01-01-1970')"></v-btn>
+                    </template>
+                </v-date-input>
                 <v-textarea :label="$t('Note')" v-model="editingObj.internalNote"></v-textarea>
                 <v-checkbox :label="$t('Reusable')" v-model="editingObj.reusable"></v-checkbox>
                 <v-text-field :label="$t('Link')" readonly :model-value="inviteLinkUrl(editingObj)" v-if="isUpdate()">
