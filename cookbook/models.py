@@ -528,6 +528,9 @@ class UserPreference(models.Model, PermissionModelMixin):
     mealplan_autoadd_shopping = models.BooleanField(default=False)
     mealplan_autoexclude_onhand = models.BooleanField(default=True)
     mealplan_autoinclude_related = models.BooleanField(default=True)
+    # DEPRECATED (retired FR-H3 → manual "+pantry" chip on checked-off shopping rows) — do not use.
+    # Checkoff no longer auto-marks food on-hand; see test_checkoff_does_not_set_onhand. Drop no
+    # earlier than 2.8.0.
     shopping_add_onhand = models.BooleanField(default=False)
     filter_to_supermarket = models.BooleanField(default=False)
     left_handed = models.BooleanField(default=False)
