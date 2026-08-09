@@ -100,7 +100,7 @@ export const vuetifyOptions = {
                 colors: {
                     background: '#f2f7fb', surface: '#ffffff',
                     tandoor: '#2fa4e7', primary: '#2fa4e7', secondary: '#317eac',
-                    success: '#73a839', info: '#033c73', warning: '#dd5600', error: '#c71c22',
+                    success: '#73a839', 'on-success': '#000000', info: '#033c73', warning: '#dd5600', error: '#c71c22',
                     save: '#73a839', create: '#73a839', edit: '#033c73', delete: '#c71c22', cancel: '#dd5600',
                     recipeImagePlaceholderBg: '#ffffff',
                 },
@@ -110,7 +110,7 @@ export const vuetifyOptions = {
                 colors: {
                     background: '#ecf0f1', surface: '#ffffff',
                     tandoor: '#2c3e50', primary: '#2c3e50', secondary: '#18bc9c',
-                    success: '#18bc9c', info: '#3498db', warning: '#f39c12', error: '#e74c3c',
+                    success: '#18bc9c', 'on-success': '#000000', info: '#3498db', warning: '#f39c12', error: '#e74c3c',
                     save: '#18bc9c', create: '#18bc9c', edit: '#3498db', delete: '#e74c3c', cancel: '#f39c12',
                     recipeImagePlaceholderBg: '#ffffff',
                 },
@@ -120,7 +120,7 @@ export const vuetifyOptions = {
                 colors: {
                     background: '#222222', surface: '#2b2b2b',
                     tandoor: '#375a7f', primary: '#375a7f', secondary: '#00bc8c',
-                    success: '#00bc8c', info: '#3498db', warning: '#f39c12', error: '#e74c3c',
+                    success: '#00bc8c', 'on-success': '#000000', info: '#3498db', warning: '#f39c12', error: '#e74c3c',
                     save: '#00bc8c', create: '#00bc8c', edit: '#3498db', delete: '#e74c3c', cancel: '#f39c12',
                     recipeImagePlaceholderBg: '#2b2b2b',
                 },
@@ -130,7 +130,7 @@ export const vuetifyOptions = {
                 colors: {
                     background: '#272b30', surface: '#2e3338',
                     tandoor: '#7a8288', primary: '#7a8288', secondary: '#5bc0de',
-                    success: '#62c462', info: '#5bc0de', warning: '#f89406', error: '#ee5f5b',
+                    success: '#62c462', 'on-success': '#000000', info: '#5bc0de', warning: '#f89406', error: '#ee5f5b',
                     save: '#62c462', create: '#62c462', edit: '#5bc0de', delete: '#ee5f5b', cancel: '#f89406',
                     recipeImagePlaceholderBg: '#2e3338',
                 },
