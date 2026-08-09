@@ -77,7 +77,7 @@
                     </v-card-text>
                     <v-card-actions>
                         <v-btn color="warning" prepend-icon="$reset" @click="resetForm()">{{ $t('Reset') }}</v-btn>
-                        <v-btn color="create" prepend-icon="$save" @click="save()">{{ $t('Save') }}</v-btn>
+                        <v-btn color="create" prepend-icon="$save" :disabled="formLoading" :loading="formLoading" @click="save()">{{ $t('Save') }}</v-btn>
                     </v-card-actions>
                 </v-card>
             </v-col>
@@ -286,6 +286,7 @@ onMounted(() => {
  * save form depending on selected booking mode
  */
 function save() {
+    if (formLoading.value) return
     if (bookingMode.value == 'add') {
         addInventory()
     } else if (bookingMode.value == 'remove') {
