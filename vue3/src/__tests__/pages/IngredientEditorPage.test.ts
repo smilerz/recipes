@@ -4,7 +4,8 @@ import { apiMock, resetApiMock } from '@/__tests__/api-mock'
 import { makeFood, makeIngredient } from '@/__tests__/factories'
 import { mountPage } from '@/__tests__/pages/page-mount-helper'
 
-vi.mock('@/openapi', () => ({
+vi.mock('@/openapi', async (importOriginal) => ({
+    ...(await importOriginal<typeof import('@/openapi')>()),
     ApiApi: class { constructor() { return apiMock } },
 }))
 
