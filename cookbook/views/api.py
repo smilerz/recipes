@@ -1580,8 +1580,14 @@ class AutoPlanViewSet(LoggingMixin, mixins.CreateModelMixin, viewsets.GenericVie
                 )
             recipes = list(recipes.order_by('?')[:days])
 
+            meal_type = MealType.objects.get(pk=serializer.validated_data['meal_type_id'], space=request.space)
+
             for i in range(0, days):
                 day = start_date + datetime.timedelta(i)
+
+                if meal_type.time:
+                    day = datetime.datetime.combine(day, meal_type.time)
+
                 recipe = recipes[i % len(recipes)]
                 args = {
                     'recipe_id': recipe['id'],
