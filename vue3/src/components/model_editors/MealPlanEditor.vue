@@ -309,7 +309,9 @@ function initializeEditor() {
  */
 // TODO properly hook into beforeSave hook if i ever implement one for model editors
 function updateDate() {
-    if (dateRangeValue.value != null) {
+    // v-date-input emits an empty array (not null) when cleared - `!= null` alone let an
+    // empty array through, corrupting fromDate to undefined and crashing Save (#21).
+    if (dateRangeValue.value != null && dateRangeValue.value.length > 0) {
         editingObj.value.fromDate = dateRangeValue.value[0]
         if (dateRangeValue.value[dateRangeValue.value.length - 1] > editingObj.value.fromDate) {
             editingObj.value.toDate = dateRangeValue.value[dateRangeValue.value.length - 1]
