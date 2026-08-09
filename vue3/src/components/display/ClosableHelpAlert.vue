@@ -6,7 +6,7 @@
             <v-icon icon="$help" size="small" class="me-2"></v-icon>
             <span class="text-subtitle-2 font-weight-bold">{{ props.title }}</span>
         </div>
-        <p>
+        <p class="close-clearance">
         {{ props.text}}
             <v-btn color="success" class="float-right" v-if="props.actionText && !props.actionLink" @click="emit('click')">{{ actionText}}</v-btn>
             <v-btn v-if="props.actionLink" icon="$help" variant="plain" size="small" class="float-right" @click="emit('click')" :aria-label="props.actionText" />
@@ -70,5 +70,11 @@ function closeAlert() {
     top: 6px;
     inset-inline-end: 6px;
     margin: 0;
+}
+
+/* reserve space so the first line of text doesn't render under the
+ * absolutely-positioned close button above */
+.close-clearance {
+    padding-inline-end: 28px;
 }
 </style>
