@@ -11,11 +11,23 @@ on:
 jobs:
     build:
         runs-on: ubuntu-latest
+        # Experimental matrix entries (e.g. python 3.14) are allowed to fail
+        # without failing the CI run or blocking merges.
+        continue-on-error: ${{ matrix.experimental || false }}
         strategy:
+            fail-fast: false
             max-parallel: 4
             matrix:
-                python-version: ["3.12"]
-                node-version: ["22"]
+                python-version: ["3.13"]
+                node-version: ["24", "25"]
+                include:
+                    # Forward-looking canary: 3.14 is not viable until litellm drops
+                    # its Requires-Python <3.14 cap (and any other <3.14 deps follow).
+                    # Non-blocking — build (3.14, 24) is NOT a required status check;
+                    # when it flips green, 3.14 is ready to adopt.
+                    - python-version: "3.14"
+                      node-version: "24"
+                      experimental: true
         steps:
             - uses: actions/checkout@v6
             - uses: awalsh128/cache-apt-pkgs-action@v1.6.0
