@@ -1,17 +1,18 @@
 <template>
     <v-card-title class="pb-1 pt-1 pl-1 pr-1">
-        <v-row no-gutters align="center">
-            <v-col cols="10" md="11" class="text-truncate pt-0 pb-0 pl-2">
+        <div class="d-flex align-center">
+            <!-- flex-grow + min-width:0 lets the title use all space up to the close button's
+                 actual width, instead of a fixed 10/2-column split that reserved far more room
+                 for the button than it needs and truncated the title prematurely -->
+            <div class="flex-grow-1 text-truncate pl-2" style="min-width: 0;">
                 <slot name="content">
                     <i :class="props.icon" v-if="props.icon != ''"></i>
                     {{ props.title }}
                     <v-card-subtitle class="pa-0" v-if="props.subTitle != ''">{{ props.subTitle }}</v-card-subtitle>
                 </slot>
-            </v-col>
-            <v-col cols="2" md="1">
-                <v-btn class="float-right pr-2" icon="$close" variant="plain" @click="model = false; emit('close')" v-if="!props.hideClose"></v-btn>
-            </v-col>
-        </v-row>
+            </div>
+            <v-btn class="flex-shrink-0" icon="$close" variant="plain" @click="model = false; emit('close')" v-if="!props.hideClose"></v-btn>
+        </div>
     </v-card-title>
 </template>
 
