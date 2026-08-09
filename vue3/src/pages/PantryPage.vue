@@ -7,7 +7,7 @@
             <!-- Desktop: actions in the header append. On mobile the 3 full-size buttons overflow
                  the row (collapsing the title), so they move to a wrapping row below (see v-card-text). -->
             <template v-if="!mobile" #append>
-                <v-btn v-for="a in headerActions" :key="a.key" :prepend-icon="a.icon"
+                <v-btn v-for="a in headerActions" :key="a.key" :prepend-icon="a.icon" :color="a.color"
                        variant="tonal" class="me-2" v-bind="a.to ? {to: a.to} : {}" @click="a.action?.()">
                     {{ $t(a.labelKey) }}
                 </v-btn>
@@ -15,7 +15,7 @@
 
             <v-card-text>
                 <div v-if="mobile" class="d-flex flex-wrap ga-2 mb-4">
-                    <v-btn v-for="a in headerActions" :key="a.key" :prepend-icon="a.icon"
+                    <v-btn v-for="a in headerActions" :key="a.key" :prepend-icon="a.icon" :color="a.color"
                            variant="tonal" size="small" v-bind="a.to ? {to: a.to} : {}" @click="a.action?.()">
                         {{ $t(a.labelKey) }}
                     </v-btn>
@@ -62,7 +62,7 @@ const useUpDialog = ref<InstanceType<typeof UseUpDialog> | null>(null)
 const headerActions = [
     {key: 'stock', labelKey: 'StockUp', icon: '$pantry', action: () => stockUpDialog.value?.open()},
     {key: 'use', labelKey: 'UseUp', icon: '$pantry', action: () => useUpDialog.value?.open()},
-    {key: 'booking', labelKey: 'InventoryBooking', icon: 'fa-solid fa-boxes-stacked fa-fw', to: {name: 'InventoryBookingPage'}},
+    {key: 'booking', labelKey: 'InventoryBooking', icon: 'fa-solid fa-boxes-stacked fa-fw', color: 'create', to: {name: 'InventoryBookingPage'}},
 ] as const
 
 onMounted(() => {
