@@ -2489,7 +2489,7 @@ class AutomationViewSet(LoggingMixin, StandardFilterModelViewSet):
     OpenApiParameter(name='internal_note', description=_('Text field to store data that gets carried over to the UserSpace created from the InviteLink'), type=str),
     OpenApiParameter(name='unused', description=_('Only return InviteLinks that have not been used yet.'), type=bool),
 ]))
-class InviteLinkViewSet(LoggingMixin, StandardFilterModelViewSet):
+class InviteLinkViewSet(LoggingMixin, StandardFilterModelViewSet, DeleteRelationMixing):
     queryset = InviteLink.objects
     serializer_class = InviteLinkSerializer
     permission_classes = [CustomIsSpaceOwner & CustomIsAdmin & CustomTokenHasReadWriteScope]
