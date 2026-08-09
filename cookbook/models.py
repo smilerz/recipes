@@ -532,6 +532,10 @@ class UserPreference(models.Model, PermissionModelMixin):
     # Checkoff no longer auto-marks food on-hand; see test_checkoff_does_not_set_onhand. Drop no
     # earlier than 2.8.0.
     shopping_add_onhand = models.BooleanField(default=False)
+    # DEPRECATED (never implemented, upstream or here — write-only field with no read-side
+    # consumer) — do not use. shopping_show_selected_supermarket_only (device setting) already
+    # covers "filter shopping list to the selected supermarket's categories". Drop no earlier
+    # than 2.8.0.
     filter_to_supermarket = models.BooleanField(default=False)
     left_handed = models.BooleanField(default=False)
     show_step_ingredients = models.BooleanField(default=True)
