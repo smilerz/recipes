@@ -78,7 +78,7 @@ export interface PatchedShoppingListEntry {
      * @type {FoodShopping}
      * @memberof PatchedShoppingListEntry
      */
-    food?: FoodShopping | null;
+    food?: FoodShopping;
     /**
      * 
      * @type {Unit}

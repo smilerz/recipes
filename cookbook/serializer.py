@@ -1740,7 +1740,9 @@ class FoodShoppingSerializer(serializers.ModelSerializer):
 
 
 class ShoppingListEntrySerializer(WritableNestedModelSerializer):
-    food = FoodShoppingSerializer(allow_null=True)
+    # food is a required (non-nullable) FK on the model - allow_null=True here let a
+    # cleared food pass serializer validation and hit an uncaught IntegrityError (#22).
+    food = FoodShoppingSerializer()
     unit = UnitSerializer(allow_null=True, required=False)
     shopping_lists = ShoppingListSerializer(many=True, required=False)
     list_recipe_data = ShoppingListRecipeSerializer(source='list_recipe', read_only=True)

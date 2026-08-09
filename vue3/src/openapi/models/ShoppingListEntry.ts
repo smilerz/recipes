@@ -78,7 +78,7 @@ export interface ShoppingListEntry {
      * @type {FoodShopping}
      * @memberof ShoppingListEntry
      */
-    food: FoodShopping | null;
+    food: FoodShopping;
     /**
      * 
      * @type {Unit}

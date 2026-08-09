@@ -87,6 +87,15 @@ def test_update(arg, request, sle):
         assert response['amount'] == new_val
 
 
+def test_clear_required_food_returns_400_not_500(u1_s1, sle):
+    """food is a required (non-nullable) FK on the model, but the serializer field declares
+    allow_null=True - clearing it passed serializer validation and hit an IntegrityError
+    (uncaught -> 500) instead of a clean 400 (#22)."""
+    r = u1_s1.patch(reverse(DETAIL_URL, args={sle[0].id}), {'food': None},
+                     content_type='application/json')
+    assert r.status_code == 400
+
+
 @pytest.mark.parametrize("arg", [
     ['a_u', 403],
     ['g1_s1', 201],
