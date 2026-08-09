@@ -13,6 +13,37 @@
         disable-sort
     >
 
+        <!-- mobile: the 4-5 column table doesn't fit narrow viewports without clipping
+             (#39) - collapse header + each row into a single stacked cell instead -->
+        <template v-if="mobile" #headers>
+            <tr><th class="pa-0" :colspan="tableHeaders.length"></th></tr>
+        </template>
+
+        <template v-if="mobile" #item="{item}">
+            <tr>
+                <td :colspan="tableHeaders.length" class="py-2">
+                    <div class="d-flex justify-space-between align-center">
+                        <div>
+                            <v-chip label size="small" color="success" v-if="item.bookingType == 'add'">{{ $t('Added') }}</v-chip>
+                            <v-chip label size="small" color="error" v-else-if="item.bookingType == 'remove'">{{ $t('Removed') }}</v-chip>
+                            <v-chip label size="small" color="info" v-else>{{ $t('Moved') }}</v-chip>
+                            <div class="text-caption text-medium-emphasis mt-1">{{ DateTime.fromJSDate(item.createdAt).toLocaleString(DateTime.DATE_MED) }}</div>
+                        </div>
+                        <div class="text-end">
+                            <div>
+                                <template v-if="item.oldAmount != item.newAmount">{{ $n(item.oldAmount) }} <i class="fa-solid fa-arrow-right"></i> {{ $n(item.newAmount) }}</template>
+                                <template v-else>{{ $n(item.newAmount) }}</template>
+                            </div>
+                            <div class="text-caption text-medium-emphasis">
+                                <template v-if="item.oldInventoryLocation.id != item.newInventoryLocation.id">{{ item.oldInventoryLocation.name }} <i class="fa-solid fa-arrow-right"></i> {{ item.newInventoryLocation.name }}</template>
+                                <template v-else>{{ item.newInventoryLocation.name }}</template>
+                            </div>
+                        </div>
+                    </div>
+                </td>
+            </tr>
+        </template>
+
         <template #item.bookingType="{item}">
             <v-chip label color="success" v-if="item.bookingType == 'add'">{{ $t('Added') }}</v-chip>
             <v-chip label color="error" v-else-if="item.bookingType == 'remove'">{{ $t('Removed') }}</v-chip>
@@ -54,8 +85,10 @@ import {ingredientToString} from "@/utils/model_utils.ts";
 import {VDataTableUpdateOptions} from "@/vuetify.ts";
 import {ErrorMessageType, useMessageStore} from "@/stores/MessageStore.ts";
 import {useI18n} from "vue-i18n";
+import {useDisplay} from "vuetify";
 
 const {t} = useI18n()
+const {mobile} = useDisplay()
 
 const props = defineProps({
     inventoryEntry: {type: {} as PropType<InventoryEntry>, required: false},
