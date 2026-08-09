@@ -2,6 +2,7 @@ import json
 
 from django.contrib import auth
 from django.core.files.uploadedfile import SimpleUploadedFile
+from django.test.client import BOUNDARY, MULTIPART_CONTENT, encode_multipart
 from django.urls import reverse
 
 from cookbook.models import Step, UserFile
@@ -39,6 +40,46 @@ def test_ordering_file_size_kb(u1_s1, space_1):
     desc = json.loads(u1_s1.get(f'{reverse(LIST_URL)}?ordering=-file_size_kb').content)
     ids_desc = [r['id'] for r in desc['results']]
     assert ids_desc.index(large.id) < ids_desc.index(small.id)
+
+
+def test_crop_data_write_and_read(u1_s1, space_1):
+    """crop_data is writable via PATCH and readable back (#42 restoration:
+    Food/avatar image crop-position support dropped during a chain rebaseline).
+    UserFileViewSet only accepts multipart (file uploads), so crop_data goes
+    over the wire as a JSON-encoded string, same as a real upload form."""
+    user = auth.get_user(u1_s1)
+    uf = UserFile.objects.create(name='cropped', file=_make_file('c.txt'), created_by=user, space=space_1)
+
+    body = encode_multipart(BOUNDARY, {'crop_data': json.dumps({'x': 10, 'y': 20, 'width': 50, 'height': 50})})
+    r = u1_s1.patch(reverse(DETAIL_URL, args=[uf.id]), body, content_type=MULTIPART_CONTENT)
+    assert r.status_code == 200
+    assert json.loads(r.content)['crop_data'] == {'x': 10, 'y': 20, 'width': 50, 'height': 50}
+
+    assert json.loads(u1_s1.get(reverse(DETAIL_URL, args=[uf.id])).content)['crop_data'] == {'x': 10, 'y': 20, 'width': 50, 'height': 50}
+
+
+def test_crop_data_update_via_json_patch(u1_s1, space_1):
+    """The recrop editor (updateUserFileCropData in useFileApi.ts) sends a plain
+    JSON PATCH with only crop_data - no file, so it can't go through multipart.
+    UserFileViewSet only accepted MultiPartParser, so this path 415'd for every
+    UserFileField consumer (avatar recrop, space logo recrop, food image recrop),
+    not just food images (#42)."""
+    user = auth.get_user(u1_s1)
+    uf = UserFile.objects.create(name='cropped', file=_make_file('c.txt'), created_by=user, space=space_1)
+
+    r = u1_s1.patch(reverse(DETAIL_URL, args=[uf.id]), {'crop_data': {'x': 5, 'y': 5, 'width': 90, 'height': 90}},
+                     content_type='application/json')
+    assert r.status_code == 200
+    assert json.loads(r.content)['crop_data'] == {'x': 5, 'y': 5, 'width': 90, 'height': 90}
+
+
+def test_crop_data_rejects_unknown_fields(u1_s1, space_1):
+    user = auth.get_user(u1_s1)
+    uf = UserFile.objects.create(name='cropped', file=_make_file('c.txt'), created_by=user, space=space_1)
+
+    body = encode_multipart(BOUNDARY, {'crop_data': json.dumps({'bogus': 1})})
+    r = u1_s1.patch(reverse(DETAIL_URL, args=[uf.id]), body, content_type=MULTIPART_CONTENT)
+    assert r.status_code == 400
 
 
 def test_delete_userfile_referenced_by_step_is_blocked(u1_s1, space_1):

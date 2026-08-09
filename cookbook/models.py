@@ -777,6 +777,7 @@ class Food(ExportModelOperationsMixin('food'), TreeModel, PermissionModelMixin):
     name = models.CharField(max_length=128, validators=[MinLengthValidator(1)])
     plural_name = models.CharField(max_length=128, null=True, blank=True, default=None)
     recipe = models.ForeignKey('Recipe', null=True, blank=True, on_delete=models.SET_NULL)
+    food_image = models.ForeignKey('UserFile', null=True, blank=True, on_delete=models.SET_NULL, related_name='foods')
     url = models.CharField(max_length=1024, blank=True, null=True, default='')
     supermarket_category = models.ForeignKey(SupermarketCategory, null=True, blank=True, on_delete=models.SET_NULL)  # inherited field
     shopping_lists = models.ManyToManyField("ShoppingList", blank=True)
@@ -1687,6 +1688,7 @@ class SearchPreference(models.Model, PermissionModelMixin):
 class UserFile(ExportModelOperationsMixin('user_files'), models.Model, PermissionModelMixin):
     name = models.CharField(max_length=128)
     file = models.FileField(upload_to='files/')
+    crop_data = models.JSONField(null=True, blank=True)
     file_size_kb = models.IntegerField(default=0, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     created_by = models.ForeignKey(User, on_delete=models.CASCADE)

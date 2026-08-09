@@ -3045,7 +3045,9 @@ class UserFileViewSet(ProtectedDestroyMixin, OrderingMixin, LoggingMixin, Standa
     serializer_class = UserFileSerializer
     permission_classes = [CustomIsUser & CustomTokenHasReadWriteScope]
     pagination_class = DefaultPagination
-    parser_classes = [MultiPartParser]
+    # JSONParser alongside MultiPartParser (matches RecipeImageViewSet): crop-only
+    # updates (no file) come from updateUserFileCropData() as a plain JSON PATCH.
+    parser_classes = [MultiPartParser, JSONParser]
 
     ordering_lower_fields = {'name': Lower('name').asc(), '-name': Lower('name').desc()}
     ordering_plain_fields = {'file_size_kb', '-file_size_kb', 'created_at', '-created_at'}

@@ -261,6 +261,7 @@ class UserFileSerializer(serializers.ModelSerializer):
     file = serializers.FileField(write_only=True, required=False)
     file_download = serializers.SerializerMethodField('get_download_link')
     preview = serializers.SerializerMethodField('get_preview_link')
+    crop_data = serializers.JSONField(required=False, allow_null=True)
 
     @extend_schema_field(serializers.CharField(read_only=True))
     def get_download_link(self, obj):
@@ -299,9 +300,28 @@ class UserFileSerializer(serializers.ModelSerializer):
                 print('is not allowed')
                 raise ValidationError(_('The given file type is not allowed.'))
 
+    def check_crop_data(self, validated_data):
+        if 'crop_data' not in validated_data or validated_data['crop_data'] is None:
+            return
+        value = validated_data['crop_data']
+        if not isinstance(value, dict):
+            raise ValidationError(_('crop_data must be a JSON object.'))
+        allowed = {'x', 'y', 'width', 'height', 'rotate', 'fit'}
+        unknown = set(value.keys()) - allowed
+        if unknown:
+            raise ValidationError(_('Unknown crop_data fields: %(fields)s') % {'fields': ', '.join(sorted(unknown))})
+        for field in ('x', 'y', 'width', 'height'):
+            if field in value:
+                v = value[field]
+                if not isinstance(v, (int, float)) or v < 0 or v > 100:
+                    raise ValidationError(_('crop_data %(field)s must be a number between 0 and 100.') % {'field': field})
+        if 'rotate' in value and value['rotate'] not in (0, 90, 180, 270):
+            raise ValidationError(_('crop_data rotate must be 0, 90, 180, or 270.'))
+
     def create(self, validated_data):
         self.check_file_limit(validated_data)
         self.check_file_type(validated_data)
+        self.check_crop_data(validated_data)
         validated_data['created_by'] = self.context['request'].user
         validated_data['space'] = self.context['request'].space
         return super().create(validated_data)
@@ -309,11 +329,12 @@ class UserFileSerializer(serializers.ModelSerializer):
     def update(self, instance, validated_data):
         self.check_file_limit(validated_data)
         self.check_file_type(validated_data)
+        self.check_crop_data(validated_data)
         return super().update(instance, validated_data)
 
     class Meta:
         model = UserFile
-        fields = ('id', 'name', 'file', 'file_download', 'preview', 'file_size_kb', 'created_by', 'created_at')
+        fields = ('id', 'name', 'file', 'file_download', 'preview', 'file_size_kb', 'crop_data', 'created_by', 'created_at')
         read_only_fields = ('id', 'file_download', 'preview', 'file_size_kb', 'created_by', 'created_at')
         extra_kwargs = {"file": {"required": False, }}
 
@@ -344,8 +365,8 @@ class UserFileViewSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = UserFile
-        fields = ('id', 'name', 'file_download', 'preview', 'file_size_kb', 'created_by', 'created_at')
-        read_only_fields = ('id', 'file', 'file_download', 'file_size_kb', 'preview', 'created_by', 'created_at')
+        fields = ('id', 'name', 'file_download', 'preview', 'file_size_kb', 'crop_data', 'created_by', 'created_at')
+        read_only_fields = ('id', 'file', 'file_download', 'file_size_kb', 'preview', 'crop_data', 'created_by', 'created_at')
 
 
 class AiProviderSerializer(serializers.ModelSerializer):
@@ -919,6 +940,7 @@ class FoodSerializer(UniqueFieldsMixin, WritableNestedModelSerializer, RecipeCou
     preferred_unit = UnitSerializer(allow_null=True, required=False)
     preferred_shopping_unit = UnitSerializer(allow_null=True, required=False)
     properties_food_amount = CustomDecimalField(required=False)
+    food_image = UserFileViewSerializer(required=False, allow_null=True)
 
     recipe_filter = 'steps__ingredients__food'
 
@@ -1112,7 +1134,7 @@ class FoodSerializer(UniqueFieldsMixin, WritableNestedModelSerializer, RecipeCou
         model = Food
         fields = (
             'id', 'name', 'plural_name', 'description', 'shopping', 'recipe', 'url', 'properties', 'properties_food_amount', 'properties_food_unit', 'fdc_id',
-            'food_onhand', 'supermarket_category', 'parent', 'numchild', 'numrecipe', 'inherit_fields', 'full_name', 'ignore_shopping',
+            'food_onhand', 'supermarket_category', 'food_image', 'parent', 'numchild', 'numrecipe', 'inherit_fields', 'full_name', 'ignore_shopping',
             'substitute', 'substitute_siblings', 'substitute_children', 'substitute_onhand', 'available_substitutes', 'child_inherit_fields', 'open_data_slug', 'shopping_lists',
             'in_inventory', 'earliest_expiry', 'substitute_inventory', 'matched_filter',
             'preferred_unit', 'preferred_shopping_unit', 'shelf_life_days', 'shopping_amount',
@@ -1696,6 +1718,7 @@ class FoodShoppingSerializer(serializers.ModelSerializer):
     # is unannotated — degrades to 'False'/null instead of raising.
     in_inventory = serializers.SerializerMethodField('get_in_inventory')
     earliest_expiry = serializers.SerializerMethodField('get_earliest_expiry')
+    food_image = UserFileViewSerializer(read_only=True, allow_null=True)
 
     @extend_schema_field(serializers.CharField(allow_null=True))
     def get_in_inventory(self, obj):
@@ -1736,7 +1759,7 @@ class FoodShoppingSerializer(serializers.ModelSerializer):
     class Meta:
         model = Food
         fields = ('id', 'name', 'plural_name', 'supermarket_category', 'shopping_lists', 'in_inventory', 'earliest_expiry',
-                  'shopping_amount', 'shelf_life_days', 'preferred_shopping_unit')
+                  'shopping_amount', 'shelf_life_days', 'preferred_shopping_unit', 'food_image')
 
 
 class ShoppingListEntrySerializer(WritableNestedModelSerializer):

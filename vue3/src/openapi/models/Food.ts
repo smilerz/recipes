@@ -13,6 +13,13 @@
  */
 
 import { mapValues } from '../runtime';
+import type { UserFileView } from './UserFileView';
+import {
+    UserFileViewFromJSON,
+    UserFileViewFromJSONTyped,
+    UserFileViewToJSON,
+    UserFileViewToJSONTyped,
+} from './UserFileView';
 import type { ShoppingList } from './ShoppingList';
 import {
     ShoppingListFromJSON,
@@ -181,6 +188,12 @@ export interface Food {
      * @memberof Food
      */
     supermarketCategory?: SupermarketCategory | null;
+    /**
+     * 
+     * @type {UserFileView}
+     * @memberof Food
+     */
+    foodImage?: UserFileView | null;
     /**
      * 
      * @type {number}
@@ -358,6 +371,7 @@ export function FoodFromJSONTyped(json: any, ignoreDiscriminator: boolean): Food
         'fdcId': json['fdc_id'] == null ? undefined : json['fdc_id'],
         'foodOnhand': json['food_onhand'] == null ? undefined : json['food_onhand'],
         'supermarketCategory': json['supermarket_category'] == null ? undefined : SupermarketCategoryFromJSON(json['supermarket_category']),
+        'foodImage': json['food_image'] == null ? undefined : UserFileViewFromJSON(json['food_image']),
         'parent': json['parent'],
         'numchild': json['numchild'],
         'numrecipe': json['numrecipe'],
@@ -406,6 +420,7 @@ export function FoodToJSONTyped(value?: Omit<Food, 'shopping'|'parent'|'numchild
         'fdc_id': value['fdcId'],
         'food_onhand': value['foodOnhand'],
         'supermarket_category': SupermarketCategoryToJSON(value['supermarketCategory']),
+        'food_image': UserFileViewToJSON(value['foodImage']),
         'inherit_fields': value['inheritFields'] == null ? undefined : ((value['inheritFields'] as Array<any>).map(FoodInheritFieldToJSON)),
         'ignore_shopping': value['ignoreShopping'],
         'substitute': value['substitute'] == null ? undefined : ((value['substitute'] as Array<any>).map(FoodSimpleToJSON)),

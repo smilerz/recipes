@@ -8,7 +8,7 @@ from django.utils import timezone
 from django_scopes import scopes_disabled
 
 from cookbook.helper.permission_helper import invalidate_household_cache
-from cookbook.models import InventoryEntry, ShoppingListEntry, Household, UserSpace
+from cookbook.models import InventoryEntry, ShoppingListEntry, Household, UserSpace, UserFile
 from cookbook.tests.factories import FoodFactory, ShoppingListEntryFactory
 
 LIST_URL = 'api:shoppinglistentry-list'
@@ -85,6 +85,22 @@ def test_update(arg, request, sle):
     if r.status_code == 200:
         response = json.loads(r.content)
         assert response['amount'] == new_val
+
+
+def test_entry_food_carries_food_image(u1_s1, space_1):
+    """Shopping-entry nested food surfaces food_image so the row can show a
+    thumbnail (#42 restoration: dropped during a chain rebaseline)."""
+    user = auth.get_user(u1_s1)
+    with scopes_disabled():
+        from django.core.files.uploadedfile import SimpleUploadedFile
+        uf = UserFile.objects.create(name='food_photo', file=SimpleUploadedFile('f.txt', b'x'), created_by=user, space=space_1)
+        food = FoodFactory(space=space_1, food_image=uf)
+        ShoppingListEntryFactory(food=food, space=space_1, created_by=user, checked=False)
+
+    r = u1_s1.get(reverse(LIST_URL))
+    results = json.loads(r.content)['results']
+    row = next(res for res in results if res['food']['id'] == food.id)
+    assert row['food']['food_image']['id'] == uf.id
 
 
 def test_clear_required_food_returns_400_not_500(u1_s1, sle):

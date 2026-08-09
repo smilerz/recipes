@@ -59,6 +59,12 @@ export interface UserFileView {
     readonly fileSizeKb: number;
     /**
      * 
+     * @type {any}
+     * @memberof UserFileView
+     */
+    readonly cropData: any | null;
+    /**
+     * 
      * @type {User}
      * @memberof UserFileView
      */
@@ -79,6 +85,7 @@ export function instanceOfUserFileView(value: object): value is UserFileView {
     if (!('fileDownload' in value) || value['fileDownload'] === undefined) return false;
     if (!('preview' in value) || value['preview'] === undefined) return false;
     if (!('fileSizeKb' in value) || value['fileSizeKb'] === undefined) return false;
+    if (!('cropData' in value) || value['cropData'] === undefined) return false;
     if (!('createdBy' in value) || value['createdBy'] === undefined) return false;
     if (!('createdAt' in value) || value['createdAt'] === undefined) return false;
     return true;
@@ -99,6 +106,7 @@ export function UserFileViewFromJSONTyped(json: any, ignoreDiscriminator: boolea
         'fileDownload': json['file_download'],
         'preview': json['preview'],
         'fileSizeKb': json['file_size_kb'],
+        'cropData': json['crop_data'],
         'createdBy': UserFromJSON(json['created_by']),
         'createdAt': (new Date(json['created_at'])),
     };
@@ -108,7 +116,7 @@ export function UserFileViewToJSON(json: any): UserFileView {
     return UserFileViewToJSONTyped(json, false);
 }
 
-export function UserFileViewToJSONTyped(value?: Omit<UserFileView, 'file_download'|'preview'|'file_size_kb'|'created_by'|'created_at'> | null, ignoreDiscriminator: boolean = false): any {
+export function UserFileViewToJSONTyped(value?: Omit<UserFileView, 'file_download'|'preview'|'file_size_kb'|'crop_data'|'created_by'|'created_at'> | null, ignoreDiscriminator: boolean = false): any {
     if (value == null) {
         return value;
     }

@@ -13,6 +13,13 @@
  */
 
 import { mapValues } from '../runtime';
+import type { UserFileView } from './UserFileView';
+import {
+    UserFileViewFromJSON,
+    UserFileViewFromJSONTyped,
+    UserFileViewToJSON,
+    UserFileViewToJSONTyped,
+} from './UserFileView';
 import type { ShoppingList } from './ShoppingList';
 import {
     ShoppingListFromJSON,
@@ -101,6 +108,12 @@ export interface FoodShopping {
      * @memberof FoodShopping
      */
     preferredShoppingUnit?: Unit | null;
+    /**
+     * 
+     * @type {UserFileView}
+     * @memberof FoodShopping
+     */
+    readonly foodImage: UserFileView | null;
 }
 
 /**
@@ -112,6 +125,7 @@ export function instanceOfFoodShopping(value: object): value is FoodShopping {
     if (!('shoppingLists' in value) || value['shoppingLists'] === undefined) return false;
     if (!('inInventory' in value) || value['inInventory'] === undefined) return false;
     if (!('earliestExpiry' in value) || value['earliestExpiry'] === undefined) return false;
+    if (!('foodImage' in value) || value['foodImage'] === undefined) return false;
     return true;
 }
 
@@ -135,6 +149,7 @@ export function FoodShoppingFromJSONTyped(json: any, ignoreDiscriminator: boolea
         'shoppingAmount': json['shopping_amount'] == null ? undefined : json['shopping_amount'],
         'shelfLifeDays': json['shelf_life_days'] == null ? undefined : json['shelf_life_days'],
         'preferredShoppingUnit': json['preferred_shopping_unit'] == null ? undefined : UnitFromJSON(json['preferred_shopping_unit']),
+        'foodImage': UserFileViewFromJSON(json['food_image']),
     };
 }
 
@@ -142,7 +157,7 @@ export function FoodShoppingToJSON(json: any): FoodShopping {
     return FoodShoppingToJSONTyped(json, false);
 }
 
-export function FoodShoppingToJSONTyped(value?: Omit<FoodShopping, 'supermarket_category'|'shopping_lists'|'in_inventory'|'earliest_expiry'> | null, ignoreDiscriminator: boolean = false): any {
+export function FoodShoppingToJSONTyped(value?: Omit<FoodShopping, 'supermarket_category'|'shopping_lists'|'in_inventory'|'earliest_expiry'|'food_image'> | null, ignoreDiscriminator: boolean = false): any {
     if (value == null) {
         return value;
     }

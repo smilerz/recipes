@@ -11,7 +11,7 @@ from django_scopes import scope, scopes_disabled
 from pytest_factoryboy import LazyFixture, register
 
 from cookbook.helper.permission_helper import invalidate_household_cache
-from cookbook.models import Food, Ingredient, InventoryEntry, InventoryLocation, Recipe, ShoppingListEntry, Step, Household, Unit, UserSpace
+from cookbook.models import Food, Ingredient, InventoryEntry, InventoryLocation, Recipe, ShoppingListEntry, Step, Household, Unit, UserSpace, UserFile
 from cookbook.tests.factories import (FoodFactory, HouseholdFactory, IngredientFactory, InventoryEntryFactory,
                                       InventoryLocationFactory, RecipeFactory,
                                       ShoppingListEntryFactory, StepFactory,
@@ -215,6 +215,23 @@ def test_update(arg, request, obj_1):
     assert r.status_code == arg[1]
     if r.status_code == 200:
         assert response['name'] == 'new'
+
+
+def test_food_image_set_and_read(u1_s1, obj_1, space_1):
+    """food_image (#42 restoration: dropped during a chain rebaseline) is
+    writable via a nested {id} write and read back with a preview link."""
+    from django.core.files.uploadedfile import SimpleUploadedFile
+    user = auth.get_user(u1_s1)
+    with scopes_disabled():
+        uf = UserFile.objects.create(name='food_photo', file=SimpleUploadedFile('f.txt', b'x'), created_by=user, space=space_1)
+
+    r = u1_s1.patch(reverse(DETAIL_URL, args={obj_1.id}), {'food_image': {'id': uf.id}}, content_type='application/json')
+    assert r.status_code == 200
+    assert json.loads(r.content)['food_image']['id'] == uf.id
+
+    fetched = json.loads(u1_s1.get(reverse(DETAIL_URL, args={obj_1.id})).content)
+    assert fetched['food_image']['id'] == uf.id
+    assert 'preview' in fetched['food_image']
 
 
 @pytest.mark.parametrize("arg", [

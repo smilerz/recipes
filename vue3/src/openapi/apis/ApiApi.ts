@@ -2262,6 +2262,7 @@ export interface ApiUserFileCreateRequest {
     createdAt: Date;
     id?: number;
     file?: string;
+    cropData?: any | null;
 }
 
 export interface ApiUserFileDestroyRequest {
@@ -2293,6 +2294,7 @@ export interface ApiUserFilePartialUpdateRequest {
     fileDownload?: string;
     preview?: string;
     fileSizeKb?: number;
+    cropData?: any | null;
     createdBy?: User;
     createdAt?: Date;
 }
@@ -2318,6 +2320,7 @@ export interface ApiUserFileUpdateRequest {
     createdAt: Date;
     id2?: number;
     file?: string;
+    cropData?: any | null;
 }
 
 export interface ApiUserListRequest {
@@ -18286,6 +18289,10 @@ export class ApiApi extends runtime.BaseAPI {
             formParams.append('file_size_kb', requestParameters['fileSizeKb'] as any);
         }
 
+        if (requestParameters['cropData'] != null) {
+            formParams.append('crop_data', new Blob([JSON.stringify(anyToJSON(requestParameters['cropData']))], { type: "application/json", }));
+                    }
+
         if (requestParameters['createdBy'] != null) {
             formParams.append('created_by', new Blob([JSON.stringify(UserToJSON(requestParameters['createdBy']))], { type: "application/json", }));
                     }
@@ -18527,6 +18534,10 @@ export class ApiApi extends runtime.BaseAPI {
             formParams.append('file_size_kb', requestParameters['fileSizeKb'] as any);
         }
 
+        if (requestParameters['cropData'] != null) {
+            formParams.append('crop_data', new Blob([JSON.stringify(anyToJSON(requestParameters['cropData']))], { type: "application/json", }));
+                    }
+
         if (requestParameters['createdBy'] != null) {
             formParams.append('created_by', new Blob([JSON.stringify(UserToJSON(requestParameters['createdBy']))], { type: "application/json", }));
                     }
@@ -18750,6 +18761,10 @@ export class ApiApi extends runtime.BaseAPI {
         if (requestParameters['fileSizeKb'] != null) {
             formParams.append('file_size_kb', requestParameters['fileSizeKb'] as any);
         }
+
+        if (requestParameters['cropData'] != null) {
+            formParams.append('crop_data', new Blob([JSON.stringify(anyToJSON(requestParameters['cropData']))], { type: "application/json", }));
+                    }
 
         if (requestParameters['createdBy'] != null) {
             formParams.append('created_by', new Blob([JSON.stringify(UserToJSON(requestParameters['createdBy']))], { type: "application/json", }));
