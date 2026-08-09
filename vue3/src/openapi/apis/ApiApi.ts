@@ -1767,8 +1767,12 @@ export interface ApiShoppingListEntryUpdateRequest {
 }
 
 export interface ApiShoppingListListRequest {
+    limit?: string;
     page?: number;
     pageSize?: number;
+    query?: string;
+    random?: string;
+    updatedAt?: string;
 }
 
 export interface ApiShoppingListNullingListRequest {
@@ -6357,7 +6361,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * logs request counts to redis cache total/per user/
+     * Return a clean 403 instead of an unhandled 500 when a protected FK blocks deletion.
      */
     async apiHouseholdCreateRaw(requestParameters: ApiHouseholdCreateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Household>> {
         if (requestParameters['household'] == null) {
@@ -6392,7 +6396,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * logs request counts to redis cache total/per user/
+     * Return a clean 403 instead of an unhandled 500 when a protected FK blocks deletion.
      */
     async apiHouseholdCreate(requestParameters: ApiHouseholdCreateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Household> {
         const response = await this.apiHouseholdCreateRaw(requestParameters, initOverrides);
@@ -6400,7 +6404,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * logs request counts to redis cache total/per user/
+     * Return a clean 403 instead of an unhandled 500 when a protected FK blocks deletion.
      */
     async apiHouseholdDestroyRaw(requestParameters: ApiHouseholdDestroyRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
         if (requestParameters['id'] == null) {
@@ -6433,14 +6437,14 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * logs request counts to redis cache total/per user/
+     * Return a clean 403 instead of an unhandled 500 when a protected FK blocks deletion.
      */
     async apiHouseholdDestroy(requestParameters: ApiHouseholdDestroyRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
         await this.apiHouseholdDestroyRaw(requestParameters, initOverrides);
     }
 
     /**
-     * logs request counts to redis cache total/per user/
+     * Return a clean 403 instead of an unhandled 500 when a protected FK blocks deletion.
      */
     async apiHouseholdListRaw(requestParameters: ApiHouseholdListRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PaginatedHouseholdList>> {
         const queryParameters: any = {};
@@ -6473,7 +6477,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * logs request counts to redis cache total/per user/
+     * Return a clean 403 instead of an unhandled 500 when a protected FK blocks deletion.
      */
     async apiHouseholdList(requestParameters: ApiHouseholdListRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PaginatedHouseholdList> {
         const response = await this.apiHouseholdListRaw(requestParameters, initOverrides);
@@ -6481,7 +6485,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * logs request counts to redis cache total/per user/
+     * Return a clean 403 instead of an unhandled 500 when a protected FK blocks deletion.
      */
     async apiHouseholdPartialUpdateRaw(requestParameters: ApiHouseholdPartialUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Household>> {
         if (requestParameters['id'] == null) {
@@ -6517,7 +6521,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * logs request counts to redis cache total/per user/
+     * Return a clean 403 instead of an unhandled 500 when a protected FK blocks deletion.
      */
     async apiHouseholdPartialUpdate(requestParameters: ApiHouseholdPartialUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Household> {
         const response = await this.apiHouseholdPartialUpdateRaw(requestParameters, initOverrides);
@@ -6525,7 +6529,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * logs request counts to redis cache total/per user/
+     * Return a clean 403 instead of an unhandled 500 when a protected FK blocks deletion.
      */
     async apiHouseholdRetrieveRaw(requestParameters: ApiHouseholdRetrieveRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Household>> {
         if (requestParameters['id'] == null) {
@@ -6558,7 +6562,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * logs request counts to redis cache total/per user/
+     * Return a clean 403 instead of an unhandled 500 when a protected FK blocks deletion.
      */
     async apiHouseholdRetrieve(requestParameters: ApiHouseholdRetrieveRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Household> {
         const response = await this.apiHouseholdRetrieveRaw(requestParameters, initOverrides);
@@ -6566,7 +6570,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * logs request counts to redis cache total/per user/
+     * Return a clean 403 instead of an unhandled 500 when a protected FK blocks deletion.
      */
     async apiHouseholdUpdateRaw(requestParameters: ApiHouseholdUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Household>> {
         if (requestParameters['id'] == null) {
@@ -6609,7 +6613,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * logs request counts to redis cache total/per user/
+     * Return a clean 403 instead of an unhandled 500 when a protected FK blocks deletion.
      */
     async apiHouseholdUpdate(requestParameters: ApiHouseholdUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Household> {
         const response = await this.apiHouseholdUpdateRaw(requestParameters, initOverrides);
@@ -13912,12 +13916,28 @@ export class ApiApi extends runtime.BaseAPI {
     async apiShoppingListListRaw(requestParameters: ApiShoppingListListRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PaginatedShoppingListList>> {
         const queryParameters: any = {};
 
+        if (requestParameters['limit'] != null) {
+            queryParameters['limit'] = requestParameters['limit'];
+        }
+
         if (requestParameters['page'] != null) {
             queryParameters['page'] = requestParameters['page'];
         }
 
         if (requestParameters['pageSize'] != null) {
             queryParameters['page_size'] = requestParameters['pageSize'];
+        }
+
+        if (requestParameters['query'] != null) {
+            queryParameters['query'] = requestParameters['query'];
+        }
+
+        if (requestParameters['random'] != null) {
+            queryParameters['random'] = requestParameters['random'];
+        }
+
+        if (requestParameters['updatedAt'] != null) {
+            queryParameters['updated_at'] = requestParameters['updatedAt'];
         }
 
         const headerParameters: runtime.HTTPHeaders = {};
@@ -15058,7 +15078,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * logs request counts to redis cache total/per user/
+     * Return a clean 403 instead of an unhandled 500 when a protected FK blocks deletion.
      */
     async apiStorageCreateRaw(requestParameters: ApiStorageCreateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Storage>> {
         if (requestParameters['storage'] == null) {
@@ -15093,7 +15113,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * logs request counts to redis cache total/per user/
+     * Return a clean 403 instead of an unhandled 500 when a protected FK blocks deletion.
      */
     async apiStorageCreate(requestParameters: ApiStorageCreateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Storage> {
         const response = await this.apiStorageCreateRaw(requestParameters, initOverrides);
@@ -15101,7 +15121,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * logs request counts to redis cache total/per user/
+     * Return a clean 403 instead of an unhandled 500 when a protected FK blocks deletion.
      */
     async apiStorageDestroyRaw(requestParameters: ApiStorageDestroyRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
         if (requestParameters['id'] == null) {
@@ -15134,14 +15154,14 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * logs request counts to redis cache total/per user/
+     * Return a clean 403 instead of an unhandled 500 when a protected FK blocks deletion.
      */
     async apiStorageDestroy(requestParameters: ApiStorageDestroyRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
         await this.apiStorageDestroyRaw(requestParameters, initOverrides);
     }
 
     /**
-     * logs request counts to redis cache total/per user/
+     * Return a clean 403 instead of an unhandled 500 when a protected FK blocks deletion.
      */
     async apiStorageListRaw(requestParameters: ApiStorageListRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PaginatedStorageList>> {
         const queryParameters: any = {};
@@ -15174,7 +15194,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * logs request counts to redis cache total/per user/
+     * Return a clean 403 instead of an unhandled 500 when a protected FK blocks deletion.
      */
     async apiStorageList(requestParameters: ApiStorageListRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PaginatedStorageList> {
         const response = await this.apiStorageListRaw(requestParameters, initOverrides);
@@ -15235,7 +15255,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * logs request counts to redis cache total/per user/
+     * Return a clean 403 instead of an unhandled 500 when a protected FK blocks deletion.
      */
     async apiStoragePartialUpdateRaw(requestParameters: ApiStoragePartialUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Storage>> {
         if (requestParameters['id'] == null) {
@@ -15271,7 +15291,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * logs request counts to redis cache total/per user/
+     * Return a clean 403 instead of an unhandled 500 when a protected FK blocks deletion.
      */
     async apiStoragePartialUpdate(requestParameters: ApiStoragePartialUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Storage> {
         const response = await this.apiStoragePartialUpdateRaw(requestParameters, initOverrides);
@@ -15332,7 +15352,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * logs request counts to redis cache total/per user/
+     * Return a clean 403 instead of an unhandled 500 when a protected FK blocks deletion.
      */
     async apiStorageRetrieveRaw(requestParameters: ApiStorageRetrieveRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Storage>> {
         if (requestParameters['id'] == null) {
@@ -15365,7 +15385,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * logs request counts to redis cache total/per user/
+     * Return a clean 403 instead of an unhandled 500 when a protected FK blocks deletion.
      */
     async apiStorageRetrieve(requestParameters: ApiStorageRetrieveRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Storage> {
         const response = await this.apiStorageRetrieveRaw(requestParameters, initOverrides);
@@ -15373,7 +15393,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * logs request counts to redis cache total/per user/
+     * Return a clean 403 instead of an unhandled 500 when a protected FK blocks deletion.
      */
     async apiStorageUpdateRaw(requestParameters: ApiStorageUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Storage>> {
         if (requestParameters['id'] == null) {
@@ -15416,7 +15436,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * logs request counts to redis cache total/per user/
+     * Return a clean 403 instead of an unhandled 500 when a protected FK blocks deletion.
      */
     async apiStorageUpdate(requestParameters: ApiStorageUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Storage> {
         const response = await this.apiStorageUpdateRaw(requestParameters, initOverrides);
@@ -18077,7 +18097,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
+     * Return a clean 403 instead of an unhandled 500 when a protected FK blocks deletion.
      */
     async apiUserFileCreateRaw(requestParameters: ApiUserFileCreateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<UserFile>> {
         if (requestParameters['name'] == null) {
@@ -18191,7 +18211,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
+     * Return a clean 403 instead of an unhandled 500 when a protected FK blocks deletion.
      */
     async apiUserFileCreate(requestParameters: ApiUserFileCreateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<UserFile> {
         const response = await this.apiUserFileCreateRaw(requestParameters, initOverrides);
@@ -18199,7 +18219,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
+     * Return a clean 403 instead of an unhandled 500 when a protected FK blocks deletion.
      */
     async apiUserFileDestroyRaw(requestParameters: ApiUserFileDestroyRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
         if (requestParameters['id'] == null) {
@@ -18232,14 +18252,14 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
+     * Return a clean 403 instead of an unhandled 500 when a protected FK blocks deletion.
      */
     async apiUserFileDestroy(requestParameters: ApiUserFileDestroyRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
         await this.apiUserFileDestroyRaw(requestParameters, initOverrides);
     }
 
     /**
-     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
+     * Return a clean 403 instead of an unhandled 500 when a protected FK blocks deletion.
      */
     async apiUserFileListRaw(requestParameters: ApiUserFileListRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PaginatedUserFileList>> {
         const queryParameters: any = {};
@@ -18292,7 +18312,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
+     * Return a clean 403 instead of an unhandled 500 when a protected FK blocks deletion.
      */
     async apiUserFileList(requestParameters: ApiUserFileListRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PaginatedUserFileList> {
         const response = await this.apiUserFileListRaw(requestParameters, initOverrides);
@@ -18353,7 +18373,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
+     * Return a clean 403 instead of an unhandled 500 when a protected FK blocks deletion.
      */
     async apiUserFilePartialUpdateRaw(requestParameters: ApiUserFilePartialUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<UserFile>> {
         if (requestParameters['id'] == null) {
@@ -18433,7 +18453,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
+     * Return a clean 403 instead of an unhandled 500 when a protected FK blocks deletion.
      */
     async apiUserFilePartialUpdate(requestParameters: ApiUserFilePartialUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<UserFile> {
         const response = await this.apiUserFilePartialUpdateRaw(requestParameters, initOverrides);
@@ -18494,7 +18514,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
+     * Return a clean 403 instead of an unhandled 500 when a protected FK blocks deletion.
      */
     async apiUserFileRetrieveRaw(requestParameters: ApiUserFileRetrieveRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<UserFile>> {
         if (requestParameters['id'] == null) {
@@ -18527,7 +18547,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
+     * Return a clean 403 instead of an unhandled 500 when a protected FK blocks deletion.
      */
     async apiUserFileRetrieve(requestParameters: ApiUserFileRetrieveRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<UserFile> {
         const response = await this.apiUserFileRetrieveRaw(requestParameters, initOverrides);
@@ -18535,7 +18555,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
+     * Return a clean 403 instead of an unhandled 500 when a protected FK blocks deletion.
      */
     async apiUserFileUpdateRaw(requestParameters: ApiUserFileUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<UserFile>> {
         if (requestParameters['id'] == null) {
@@ -18657,7 +18677,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
+     * Return a clean 403 instead of an unhandled 500 when a protected FK blocks deletion.
      */
     async apiUserFileUpdate(requestParameters: ApiUserFileUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<UserFile> {
         const response = await this.apiUserFileUpdateRaw(requestParameters, initOverrides);

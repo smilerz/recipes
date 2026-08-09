@@ -2683,15 +2683,15 @@ class ShoppingListRecipeViewSet(LoggingMixin, viewsets.ModelViewSet):
             return Response(serializer.errors, 400)
 
 
-class ShoppingListViewSet(LoggingMixin, viewsets.ModelViewSet, DeleteRelationMixing):
+class ShoppingListViewSet(LoggingMixin, StandardFilterModelViewSet, DeleteRelationMixing):
     queryset = ShoppingList.objects
     serializer_class = ShoppingListSerializer
     permission_classes = [CustomIsUser & CustomTokenHasReadWriteScope]
     pagination_class = DefaultPagination
 
     def get_queryset(self):
-        queryset = self.queryset.filter(space=self.request.space).all()
-        return queryset
+        self.queryset = self.queryset.filter(space=self.request.space).all()
+        return super().get_queryset()
 
 
 @extend_schema_view(
