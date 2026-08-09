@@ -564,6 +564,9 @@ class Household(models.Model, PermissionModelMixin):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
+    class Meta:
+        ordering = ('pk',)
+
 
 class UserSpace(models.Model, PermissionModelMixin):
     user = models.ForeignKey(User, on_delete=models.CASCADE)

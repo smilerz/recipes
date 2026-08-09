@@ -787,7 +787,11 @@ class SpaceViewSet(LoggingMixin, viewsets.ModelViewSet):
 class HouseholdViewSet(ProtectedDestroyMixin, LoggingMixin, viewsets.ModelViewSet):
     queryset = Household.objects
     serializer_class = HouseholdSerializer
-    permission_classes = [CustomIsSpaceOwner & CustomTokenHasReadWriteScope]
+    # Owner-only for writes (household management); any 'user'-tier+ space member can
+    # read (list/retrieve) - needed to populate the household picker on the
+    # InventoryLocation create form and the inventory-booking dialog, which every
+    # regular user needs to use, not just the space owner.
+    permission_classes = [(CustomIsSpaceOwner | (IsReadOnlyDRF & CustomIsUser)) & CustomTokenHasReadWriteScope]
     pagination_class = DefaultPagination
 
     def get_queryset(self):
