@@ -130,6 +130,57 @@ def test_shopping_recipe_excludes_inventory_onhand(u1_s1, space_1):
     assert r['count'] == 9  # 10 default ingredients minus the one excluded as on-hand
 
 
+def test_shopping_recipe_excludes_direct_substitute_onhand(u1_s1, space_1):
+    """mealplan_autoexclude_onhand also excludes a food whose direct substitute is on hand."""
+    user = auth.get_user(u1_s1)
+    user.userpreference.mealplan_autoadd_shopping = True
+    user.userpreference.mealplan_autoexclude_onhand = True
+    user.userpreference.save()
+
+    with scopes_disabled():
+        household = Household.objects.create(name='test', space=space_1)
+        UserSpace.objects.filter(user=user, space=space_1).update(household=household)
+        for us in UserSpace.objects.filter(space=space_1, household=household):
+            invalidate_household_cache(us)
+        recipe = RecipeFactory(created_by=user, space=space_1)
+        needed_food = Ingredient.objects.filter(step__recipe=recipe, space=space_1).first().food
+        substitute_food = Food.objects.create(name='substitute for ' + needed_food.name, space=space_1)
+        needed_food.substitute.add(substitute_food)
+        location = InventoryLocationFactory(space=space_1, household=household)
+        InventoryEntryFactory(space=space_1, food=substitute_food, inventory_location=location, amount=1)
+
+    assert u1_s1.put(reverse(SHOPPING_RECIPE_URL, args={recipe.id})).status_code == 200
+    r = json.loads(u1_s1.get(reverse(SHOPPING_LIST_URL)).content)
+    assert needed_food.id not in [x['food']['id'] for x in r['results']]
+    assert r['count'] == 9  # 10 default ingredients minus the one excluded via its substitute
+
+
+def test_shopping_recipe_excludes_child_substitute_onhand(u1_s1, space_1):
+    """mealplan_autoexclude_onhand excludes a food with substitute_children=True when a child is on hand."""
+    user = auth.get_user(u1_s1)
+    user.userpreference.mealplan_autoadd_shopping = True
+    user.userpreference.mealplan_autoexclude_onhand = True
+    user.userpreference.save()
+
+    with scopes_disabled():
+        household = Household.objects.create(name='test', space=space_1)
+        UserSpace.objects.filter(user=user, space=space_1).update(household=household)
+        for us in UserSpace.objects.filter(space=space_1, household=household):
+            invalidate_household_cache(us)
+        recipe = RecipeFactory(created_by=user, space=space_1)
+        needed_food = Ingredient.objects.filter(step__recipe=recipe, space=space_1).first().food
+        needed_food.substitute_children = True
+        needed_food.save()
+        child_food = needed_food.add_child(name='child of ' + needed_food.name, space=space_1)
+        location = InventoryLocationFactory(space=space_1, household=household)
+        InventoryEntryFactory(space=space_1, food=child_food, inventory_location=location, amount=1)
+
+    assert u1_s1.put(reverse(SHOPPING_RECIPE_URL, args={recipe.id})).status_code == 200
+    r = json.loads(u1_s1.get(reverse(SHOPPING_LIST_URL)).content)
+    assert needed_food.id not in [x['food']['id'] for x in r['results']]
+    assert r['count'] == 9  # 10 default ingredients minus the one excluded via its on-hand child
+
+
 def test_shopping_recipe_mixed_authors(u1_s1, u2_s1, space_1):
     with scopes_disabled():
         user1 = auth.get_user(u1_s1)

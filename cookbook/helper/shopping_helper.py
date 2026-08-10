@@ -6,9 +6,11 @@ from django.db.models.functions import Coalesce
 from django.utils.translation import gettext as _
 
 from cookbook.connectors.connector_manager import ActionType, ConnectorManager
-from cookbook.helper.food_availability_helper import _is_available
+from cookbook.helper.food_availability_helper import (
+    _is_available, _substitute_available, children_substitute_filter, sibling_substitute_filter,
+)
 from cookbook.helper.permission_helper import get_household_user_ids
-from cookbook.models import Ingredient, MealPlan, Recipe, ShoppingListEntry, ShoppingListRecipe, SupermarketCategoryRelation
+from cookbook.models import Food, Ingredient, MealPlan, Recipe, ShoppingListEntry, ShoppingListRecipe, SupermarketCategoryRelation
 
 
 def shopping_helper(qs, request):
@@ -87,9 +89,21 @@ class RecipeShoppingEditor():
             queryset = Ingredient.objects.filter(step__recipe__id=id, food__ignore_shopping=False, space=self.space)
             owner_user_space = self.created_by.userspace_set.filter(space=self.space).first()
             household = getattr(owner_user_space, 'household', None)
-            # _is_available is inventory-only now; shopping_users is vestigial, so skip the query
+            # _is_available is inventory-only now; shopping_users is vestigial, so skip the query.
+            # A food also counts as "on hand" if a substitute (direct, or via substitute_children /
+            # substitute_siblings) has stock - same resolution Food.objects.cookable() uses for the
+            # makenow badge (managers.py), otherwise the auto-generated list re-adds foods the
+            # household can already cover with what they have.
             available = _is_available(household, [], prefix='food__')
-            queryset = queryset.exclude(available)
+            substitute_available = Food.objects.filter(_substitute_available(household, []))
+            children_available = children_substitute_filter(household, [])
+            siblings_available = sibling_substitute_filter(household, [])
+            queryset = queryset.exclude(
+                available
+                | Q(food__in=substitute_available)
+                | Q(food__in=children_available)
+                | Q(food__in=siblings_available)
+            )
             return queryset
         else:
             return Ingredient.objects.filter(step__recipe__id=id, food__ignore_shopping=False, space=self.space)
