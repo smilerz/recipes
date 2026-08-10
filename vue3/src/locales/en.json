@@ -579,6 +579,8 @@
   "Private": "Private",
   "Private_Recipe": "Private Recipe",
   "Private_Recipe_Help": "Private recipes are only shown to you and people they are shared with.",
+  "TrackAsFood": "Track as pantry food",
+  "TrackAsFoodHelp": "Creates a food with this recipe's name so it can be added to shopping lists, the pantry, and used as an ingredient elsewhere. Unchecking removes the link but keeps the food.",
   "Profile": "Profile",
   "Properties": "Properties",
   "PropertiesFoodHelp": "Properties can be added to Recipes and Foods. Properties on Foods are automatically calculated based on their amount in the recipe.",

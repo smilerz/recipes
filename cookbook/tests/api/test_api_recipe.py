@@ -286,6 +286,28 @@ def test_food_properties_skipped_on_create(u1_s1, space_1):
     assert len(get_response['food_properties']) > 0
 
 
+def test_recipe_exposes_linked_food(u1_s1, space_1):
+    """#5: the recipe editor needs to know whether this recipe is already tracked as a pantry
+    food, to render the checkbox correctly and avoid creating a duplicate."""
+    with scopes_disabled():
+        recipe = RecipeFactory(space=space_1)
+        food = Food.objects.create(name=recipe.name, recipe=recipe, space=space_1)
+
+    r = u1_s1.get(reverse(DETAIL_URL, args=[recipe.id]))
+    assert r.status_code == 200
+    response = json.loads(r.content)
+    assert response['food']['id'] == food.id
+    assert response['food']['name'] == food.name
+
+
+def test_recipe_food_is_null_when_not_tracked(u1_s1, space_1):
+    with scopes_disabled():
+        recipe = RecipeFactory(space=space_1)
+    r = u1_s1.get(reverse(DETAIL_URL, args=[recipe.id]))
+    assert r.status_code == 200
+    assert json.loads(r.content)['food'] is None
+
+
 # --- recipe stats (E-1) ---
 
 def _get_stats(client):

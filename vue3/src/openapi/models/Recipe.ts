@@ -55,6 +55,13 @@ import {
     NutritionInformationToJSON,
     NutritionInformationToJSONTyped,
 } from './NutritionInformation';
+import type { FoodSimple } from './FoodSimple';
+import {
+    FoodSimpleFromJSON,
+    FoodSimpleFromJSONTyped,
+    FoodSimpleToJSON,
+    FoodSimpleToJSONTyped,
+} from './FoodSimple';
 
 /**
  * Expose the derived ``image`` URL + ``image_crop_data`` of a recipe's
@@ -232,6 +239,12 @@ export interface Recipe {
      * @memberof Recipe
      */
     shared?: Array<User>;
+    /**
+     * 
+     * @type {FoodSimple}
+     * @memberof Recipe
+     */
+    readonly food: FoodSimple | null;
 }
 
 /**
@@ -249,6 +262,7 @@ export function instanceOfRecipe(value: object): value is Recipe {
     if (!('foodProperties' in value) || value['foodProperties'] === undefined) return false;
     if (!('rating' in value) || value['rating'] === undefined) return false;
     if (!('lastCooked' in value) || value['lastCooked'] === undefined) return false;
+    if (!('food' in value) || value['food'] === undefined) return false;
     return true;
 }
 
@@ -290,6 +304,7 @@ export function RecipeFromJSONTyped(json: any, ignoreDiscriminator: boolean): Re
         'lastCooked': (json['last_cooked'] == null ? null : new Date(json['last_cooked'])),
         '_private': json['private'] == null ? undefined : json['private'],
         'shared': json['shared'] == null ? undefined : ((json['shared'] as Array<any>).map(UserFromJSON)),
+        'food': FoodSimpleFromJSON(json['food']),
     };
 }
 
@@ -297,7 +312,7 @@ export function RecipeToJSON(json: any): Recipe {
     return RecipeToJSONTyped(json, false);
 }
 
-export function RecipeToJSONTyped(value?: Omit<Recipe, 'image'|'image_crop_data'|'images'|'created_by'|'created_at'|'updated_at'|'food_properties'|'rating'|'last_cooked'> | null, ignoreDiscriminator: boolean = false): any {
+export function RecipeToJSONTyped(value?: Omit<Recipe, 'image'|'image_crop_data'|'images'|'created_by'|'created_at'|'updated_at'|'food_properties'|'rating'|'last_cooked'|'food'> | null, ignoreDiscriminator: boolean = false): any {
     if (value == null) {
         return value;
     }

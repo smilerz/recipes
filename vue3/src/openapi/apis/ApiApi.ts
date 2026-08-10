@@ -592,7 +592,7 @@ export interface ApiAiProviderUpdateRequest {
 }
 
 export interface ApiAiStepSortCreateRequest {
-    recipe: Omit<Recipe, 'image'|'imageCropData'|'images'|'createdBy'|'createdAt'|'updatedAt'|'foodProperties'|'rating'|'lastCooked'>;
+    recipe: Omit<Recipe, 'image'|'imageCropData'|'images'|'createdBy'|'createdAt'|'updatedAt'|'foodProperties'|'rating'|'lastCooked'|'food'>;
     provider?: number;
 }
 
@@ -1411,7 +1411,7 @@ export interface ApiPropertyUpdateRequest {
 
 export interface ApiRecipeAipropertiesCreateRequest {
     id: number;
-    recipe: Omit<Recipe, 'image'|'imageCropData'|'images'|'createdBy'|'createdAt'|'updatedAt'|'foodProperties'|'rating'|'lastCooked'>;
+    recipe: Omit<Recipe, 'image'|'imageCropData'|'images'|'createdBy'|'createdAt'|'updatedAt'|'foodProperties'|'rating'|'lastCooked'|'food'>;
     provider?: number;
 }
 
@@ -1510,12 +1510,12 @@ export interface ApiRecipeCascadingListRequest {
 }
 
 export interface ApiRecipeCreateRequest {
-    recipe: Omit<Recipe, 'image'|'imageCropData'|'images'|'createdBy'|'createdAt'|'updatedAt'|'foodProperties'|'rating'|'lastCooked'>;
+    recipe: Omit<Recipe, 'image'|'imageCropData'|'images'|'createdBy'|'createdAt'|'updatedAt'|'foodProperties'|'rating'|'lastCooked'|'food'>;
 }
 
 export interface ApiRecipeDeleteExternalPartialUpdateRequest {
     id: number;
-    patchedRecipe?: Omit<PatchedRecipe, 'image'|'imageCropData'|'images'|'createdBy'|'createdAt'|'updatedAt'|'foodProperties'|'rating'|'lastCooked'>;
+    patchedRecipe?: Omit<PatchedRecipe, 'image'|'imageCropData'|'images'|'createdBy'|'createdAt'|'updatedAt'|'foodProperties'|'rating'|'lastCooked'|'food'>;
 }
 
 export interface ApiRecipeDestroyRequest {
@@ -1685,7 +1685,7 @@ export interface ApiRecipeNullingListRequest {
 
 export interface ApiRecipePartialUpdateRequest {
     id: number;
-    patchedRecipe?: Omit<PatchedRecipe, 'image'|'imageCropData'|'images'|'createdBy'|'createdAt'|'updatedAt'|'foodProperties'|'rating'|'lastCooked'>;
+    patchedRecipe?: Omit<PatchedRecipe, 'image'|'imageCropData'|'images'|'createdBy'|'createdAt'|'updatedAt'|'foodProperties'|'rating'|'lastCooked'|'food'>;
 }
 
 export interface ApiRecipeProtectingListRequest {
@@ -1711,7 +1711,7 @@ export interface ApiRecipeShoppingUpdateRequest {
 
 export interface ApiRecipeUpdateRequest {
     id: number;
-    recipe: Omit<Recipe, 'image'|'imageCropData'|'images'|'createdBy'|'createdAt'|'updatedAt'|'foodProperties'|'rating'|'lastCooked'>;
+    recipe: Omit<Recipe, 'image'|'imageCropData'|'images'|'createdBy'|'createdAt'|'updatedAt'|'foodProperties'|'rating'|'lastCooked'|'food'>;
 }
 
 export interface ApiSearchFieldsRetrieveRequest {

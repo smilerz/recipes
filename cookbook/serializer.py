@@ -1398,6 +1398,15 @@ class RecipeSerializer(PrimaryRecipeImageMixin, RecipeBaseSerializer):
     last_cooked = serializers.DateTimeField(source='lastcooked', required=False, allow_null=True, read_only=True)
     food_properties = serializers.SerializerMethodField('get_food_properties')
     created_by = UserSerializer(read_only=True)
+    # #5: whether this recipe is already tracked as a pantry food (Food.recipe is the reverse FK,
+    # no related_name so `food_set` - read-only here, linking/unlinking goes through the Food API
+    # directly from the recipe editor, not through this serializer).
+    food = serializers.SerializerMethodField('get_food')
+
+    @extend_schema_field(FoodSimpleSerializer(allow_null=True))
+    def get_food(self, obj):
+        food = obj.food_set.first()
+        return FoodSimpleSerializer(food).data if food else None
 
     @extend_schema_field(serializers.JSONField)
     def get_food_properties(self, obj):
@@ -1416,9 +1425,9 @@ class RecipeSerializer(PrimaryRecipeImageMixin, RecipeBaseSerializer):
         fields = (
             'id', 'name', 'description', 'image', 'image_crop_data', 'images', 'keywords', 'steps', 'working_time', 'waiting_time', 'created_by', 'created_at', 'updated_at', 'source_url',
             'internal', 'show_ingredient_overview', 'nutrition', 'properties', 'food_properties', 'servings', 'file_path', 'servings_text', 'diameter', 'diameter_text', 'rating',
-            'last_cooked', 'private', 'shared'
+            'last_cooked', 'private', 'shared', 'food'
         )
-        read_only_fields = ['image', 'images', 'created_by', 'created_at', 'food_properties']
+        read_only_fields = ['image', 'images', 'created_by', 'created_at', 'food_properties', 'food']
 
     def validate(self, data):
         above_limit, msg = above_space_limit(self.context['request'].space)
