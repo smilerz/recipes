@@ -181,6 +181,7 @@ describe('stockUpRowsFromEntries — shop-date grouping, sort, pantry-aware chec
         2: {id: 2, name: 'Apples', inInventory: 'False'},                                                  // not in pantry
         3: {id: 3, name: 'Bread', inInventory: 'True', earliestExpiry: new Date('2026-07-10T00:00:00Z')},  // in pantry, EXPIRED (NOW=07-15)
         4: {id: 4, name: 'Cream', inInventory: 'True', earliestExpiry: new Date('2026-07-16T00:00:00Z')},  // in pantry, expiring SOON
+        5: {id: 5, name: 'Butter', inInventory: 'False', substituteOnhand: true},                          // not in pantry, but a substitute is
     }
     const getFood = (id: number) => foods[id]
     const at = (iso: string) => new Date(iso + 'T12:00:00Z')  // midday UTC -> unambiguous calendar day in Chicago
@@ -195,6 +196,11 @@ describe('stockUpRowsFromEntries — shop-date grouping, sort, pantry-aware chec
         expect(rows.find(r => (r.food as any).id === 2)!.checked).toBe(true)   // Apples: not in pantry → checked
         expect(rows.find(r => (r.food as any).id === 3)!.checked).toBe(true)   // Bread: in pantry but EXPIRED → restock
         expect(rows.find(r => (r.food as any).id === 4)!.checked).toBe(true)   // Cream: in pantry but SOON → restock
+    })
+
+    it('seeds unchecked when the food itself is absent but an on-hand substitute covers it', () => {
+        const rows = stockUpRowsFromEntries([entry(5, at('2026-07-14'))], getFood, NOW)
+        expect(rows.find(r => (r.food as any).id === 5)!.checked).toBe(false)
     })
 
     it('groups by shop date (most recent first), alphabetical by food within a date', () => {

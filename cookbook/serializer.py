@@ -1719,6 +1719,9 @@ class FoodShoppingSerializer(serializers.ModelSerializer):
     in_inventory = serializers.SerializerMethodField('get_in_inventory')
     earliest_expiry = serializers.SerializerMethodField('get_earliest_expiry')
     food_image = UserFileViewSerializer(read_only=True, allow_null=True)
+    # has_substitute_available (Stock Up, FR-G): a direct/tree substitute already has stock, so the
+    # row shouldn't default to "needs restocking". Same degrade-gracefully reasoning as in_inventory.
+    substitute_onhand = serializers.SerializerMethodField('get_substitute_onhand')
 
     @extend_schema_field(serializers.CharField(allow_null=True))
     def get_in_inventory(self, obj):
@@ -1727,6 +1730,10 @@ class FoodShoppingSerializer(serializers.ModelSerializer):
     @extend_schema_field(serializers.DateField(allow_null=True))
     def get_earliest_expiry(self, obj):
         return getattr(obj, 'earliest_expiry', None)
+
+    @extend_schema_field(bool)
+    def get_substitute_onhand(self, obj):
+        return getattr(obj, 'has_substitute_available', False)
 
     # TODO duplicate code with FoodSerializer, merge into one or use proper function
     def create(self, validated_data):
@@ -1759,7 +1766,7 @@ class FoodShoppingSerializer(serializers.ModelSerializer):
     class Meta:
         model = Food
         fields = ('id', 'name', 'plural_name', 'supermarket_category', 'shopping_lists', 'in_inventory', 'earliest_expiry',
-                  'shopping_amount', 'shelf_life_days', 'preferred_shopping_unit', 'food_image')
+                  'shopping_amount', 'shelf_life_days', 'preferred_shopping_unit', 'food_image', 'substitute_onhand')
 
 
 class ShoppingListEntrySerializer(WritableNestedModelSerializer):

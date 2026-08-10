@@ -120,7 +120,7 @@ export interface StockUpRowSeed<F = unknown> {
  * unit-less); an information-free entry falls back to the food's pack via stockUpRowFromFood;
  * rows aggregate by (food, unit) — same unit sums, different units stay separate rows.
  */
-export function stockUpRowsFromEntries<F extends {name?: string | null, inInventory?: string | null, earliestExpiry?: Date | string | null, shoppingAmount?: number | null, preferredShoppingUnit?: Unit | null, shelfLifeDays?: number | null}>(
+export function stockUpRowsFromEntries<F extends {name?: string | null, inInventory?: string | null, earliestExpiry?: Date | string | null, shoppingAmount?: number | null, preferredShoppingUnit?: Unit | null, shelfLifeDays?: number | null, substituteOnhand?: boolean | null}>(
     entries: StockUpEntrySeed[],
     getFood: (id: number) => F | undefined,
     now: Date = new Date(),
@@ -147,8 +147,10 @@ export function stockUpRowsFromEntries<F extends {name?: string | null, inInvent
         if (existing) {
             existing.amount += amount
         } else {
-            // seed unchecked only when a FRESH lot is already on hand; absent / expiring / expired → checked (restock)
+            // seed unchecked when a FRESH lot is on hand, OR a substitute already covers the need;
+            // absent / expiring / expired with no substitute → checked (restock)
             const fresh = pantryJarState(parseBooleanAnnotation(food.inInventory), food.earliestExpiry ? new Date(food.earliestExpiry) : null, now).state === 'in-stock'
+                || !!food.substituteOnhand
             byDateFoodUnit.set(key, {food, amount, unit, expires: pack.expires, checked: !fresh, completedAt})
         }
     }

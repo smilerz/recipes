@@ -74,7 +74,9 @@ from cookbook.helper import recipe_url_import as helper
 from cookbook.helper.HelperFunctions import str2bool, safe_request
 from cookbook.helper.ai_helper import can_perform_ai_request, AiCallbackHandler
 from cookbook.helper.batch_edit_helper import add_to_relation, remove_from_relation, remove_all_from_relation, set_relation
-from cookbook.helper.food_availability_helper import _is_available, annotate_food_inventory, request_household
+from cookbook.helper.food_availability_helper import (
+    _is_available, annotate_food_inventory, annotate_food_substitute_availability, request_household,
+)
 from cookbook.helper.image_processing import handle_image, set_primary_recipe_image
 from cookbook.helper.inventory_helper import add_food_to_pantry, get_or_create_default_inventory_location, reduce_food_to_amount, set_food_onhand
 from cookbook.helper.ingredient_parser import IngredientParser
@@ -2827,8 +2829,11 @@ class ShoppingListEntryViewSet(LoggingMixin, viewsets.ModelViewSet):
         self.queryset = self.queryset.filter(space=self.request.space)
 
         # Household-scoped inventory + earliest_expiry on the nested food so shopping rows tint the
-        # pantry jar (FR-H2 / FR-B4), matching FoodViewSet / RecipeViewSet.
-        food_qs = annotate_food_inventory(Food.objects.all(), request_household(self.request), timezone.localdate(), with_expiry=True)
+        # pantry jar (FR-H2 / FR-B4), matching FoodViewSet / RecipeViewSet. Also substitute
+        # availability so Stock Up can skip suggesting a restock when a substitute covers it.
+        household = request_household(self.request)
+        food_qs = annotate_food_inventory(Food.objects.all(), household, timezone.localdate(), with_expiry=True)
+        food_qs = annotate_food_substitute_availability(food_qs, household)
 
         # select_related("list_recipe")
         self.queryset = self.queryset.filter(
