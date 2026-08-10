@@ -815,6 +815,11 @@ onMounted(async () => {
             // Filter not found (e.g. deleted) — fall through to a normal search.
         }
     }
+    // Deep-link from a Food/Keyword/Unit database-page "Recipes" count link (#11): that link
+    // means recipes tagged with exactly that hierarchy node, not its descendants too.
+    if (route.query.includeChildren !== undefined) {
+        settings.includeChildren.value = route.query.includeChildren === 'true'
+    }
     searchRecipes({page: page.value})
     startReQueryWatcher()
     loadStats()

@@ -17,8 +17,15 @@ describe('buildSubtitleParts', () => {
     it('emits a link part for a positive numeric value with a filterLink', () => {
         const parts = buildSubtitleParts({id: 42, numrecipe: 5}, [recipesCol], t)
         expect(parts).toEqual([
-            {text: 'Recipes: 5', to: {name: 'SearchPage', query: {foods: 42}}},
+            {text: 'Recipes: 5', to: {name: 'SearchPage', query: {foods: 42, includeChildren: 'false'}}},
         ])
+    })
+
+    // #11: "5 recipes for Fruit" means recipes tagged with Fruit specifically - descendant foods
+    // (Apples, Oranges) shouldn't leak in via the search page's normal include-children default.
+    it('excludes hierarchy children by default on the generated link', () => {
+        const parts = buildSubtitleParts({id: 42, numrecipe: 5}, [recipesCol], t)
+        expect(parts[0].to?.query.includeChildren).toBe('false')
     })
 
     it('emits plain text (no link) when the value is 0', () => {
@@ -40,7 +47,7 @@ describe('buildSubtitleParts', () => {
     it('mixes link and text parts across columns', () => {
         const parts = buildSubtitleParts({id: 7, numrecipe: 3, plural: 'apples'}, [recipesCol, plainCol], t)
         expect(parts).toEqual([
-            {text: 'Recipes: 3', to: {name: 'SearchPage', query: {foods: 7}}},
+            {text: 'Recipes: 3', to: {name: 'SearchPage', query: {foods: 7, includeChildren: 'false'}}},
             {text: 'apples'},
         ])
     })

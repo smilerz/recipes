@@ -38,7 +38,7 @@ describe('ModelListCellRenderer — number column with filterLink', () => {
         const wrapper = mountCell(filterLinkHeader, {id: 42, numrecipe: 5})
         const link = wrapper.findComponent(RouterLink)
         expect(link.exists()).toBe(true)
-        expect(link.props('to')).toEqual({name: 'SearchPage', query: {foods: 42}})
+        expect(link.props('to')).toEqual({name: 'SearchPage', query: {foods: 42, includeChildren: 'false'}})
         expect(wrapper.text()).toContain('5')
     })
 

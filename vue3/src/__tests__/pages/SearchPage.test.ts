@@ -142,6 +142,21 @@ describe('SearchPage (Phase 3 rewrite)', () => {
             const arg = (apiMock.apiRecipeList as any).mock.calls[0][0]
             expect(arg.query).toBe('pasta')
         })
+
+        // #11: a Food/Keyword/Unit database-page "Recipes" count link means recipes tagged with
+        // exactly that hierarchy node - ?includeChildren=false on arrival must actually apply,
+        // not get silently overridden by the persisted device default (which defaults true).
+        it('honors ?includeChildren=false from a database-page deep link', async () => {
+            await mountSearchPage({foods: '5', includeChildren: 'false'})
+            const arg = (apiMock.apiRecipeList as any).mock.calls[0][0]
+            expect(arg.includeChildren).toBe(false)
+        })
+
+        it('still defaults to includeChildren=true without the query param', async () => {
+            await mountSearchPage({foods: '5'})
+            const arg = (apiMock.apiRecipeList as any).mock.calls[0][0]
+            expect(arg.includeChildren).toBe(true)
+        })
     })
 
     describe('direct URL params', () => {
