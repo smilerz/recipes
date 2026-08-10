@@ -262,6 +262,11 @@ function confirmDelete() {
     })
 }
 
+// The recipe-view hero image renders its own persistent edit icon (not this menu's "Edit Photo"
+// item, which stays for accessibility/redundancy) - it triggers this dialog via a template ref
+// since the dialog state lives here, not on the image.
+defineExpose({openPhotoEditor})
+
 </script>
 
 

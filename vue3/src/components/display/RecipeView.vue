@@ -19,6 +19,10 @@
                                   :class="{'cursor-pointer': recipe.image}"
                                   :aria-label="$t('Recipe_Image')"
                                   @click="recipe.image && openGalleryLightbox(0)" />
+                    <v-btn v-if="useUserPreferenceStore().isAuthenticated" icon="$edit" color="white" size="small"
+                           variant="text" class="photo-edit-overlay-btn" data-test="photo-edit-overlay-btn"
+                           :aria-label="$t('Edit_Photo')" :title="$t('Edit_Photo')"
+                           @click.stop="contextMenuRef?.openPhotoEditor()"></v-btn>
                     <recipe-image-strip :images="recipe.images ?? []" @open-lightbox="openGalleryLightbox" class="hero-strip" />
                 </div>
 
@@ -27,7 +31,7 @@
                     <span class="ps-2 text-h5  flex-grow-1 pa-1" style="min-width: 0" :class="{'text-truncate': !showFullRecipeName}" @click="showFullRecipeName = !showFullRecipeName">
                         {{ recipe.name }}
                     </span>
-                        <recipe-context-menu :recipe="recipe" :servings="servings" context="view" v-if="useUserPreferenceStore().isAuthenticated"></recipe-context-menu>
+                        <recipe-context-menu :recipe="recipe" :servings="servings" context="view" ref="contextMenuRef" v-if="useUserPreferenceStore().isAuthenticated"></recipe-context-menu>
                     </div>
                     <keywords-component variant="flat" class="ms-1" :keywords="recipe.keywords"></keywords-component>
                     <private-recipe-badge :users="recipe.shared" v-if="recipe._private"></private-recipe-badge>
@@ -71,6 +75,10 @@
                                       :class="{'cursor-pointer': recipe.image}"
                                       :aria-label="$t('Recipe_Image')"
                                       @click="recipe.image && openGalleryLightbox(0)" />
+                        <v-btn v-if="useUserPreferenceStore().isAuthenticated" icon="$edit" color="white" size="small"
+                               variant="text" class="photo-edit-overlay-btn" data-test="photo-edit-overlay-btn"
+                               :aria-label="$t('Edit_Photo')" :title="$t('Edit_Photo')"
+                               @click.stop="contextMenuRef?.openPhotoEditor()"></v-btn>
                         <recipe-image-strip :images="recipe.images ?? []" @open-lightbox="openGalleryLightbox" class="hero-strip" />
                     </div>
                 </v-col>
@@ -80,7 +88,7 @@
                             <div class="d-flex">
                                 <h1 class="flex-column flex-grow-1">{{ recipe.name }}</h1>
                                 <div class="d-flex align-center mb-auto mt-2" v-if="useUserPreferenceStore().isAuthenticated">
-                                    <recipe-context-menu :recipe="recipe" :servings="servings" context="view"></recipe-context-menu>
+                                    <recipe-context-menu :recipe="recipe" :servings="servings" context="view" ref="contextMenuRef"></recipe-context-menu>
                                 </div>
                             </div>
                             <p v-if="deviceSettings.recipe_showAuthor">
@@ -235,6 +243,11 @@ const {request, release} = useWakeLock()
 const {doAiImport, fileApiLoading} = useFileApi()
 
 const loading = ref(false)
+// Both mobile and desktop layouts render their own <recipe-context-menu> (mutually exclusive via
+// v-if/v-else), so one ref safely targets whichever is mounted - the persistent photo-edit icon
+// overlaid on the hero image triggers the dialog through it (#10 follow-up: a menu item alone
+// wasn't discoverable enough).
+const contextMenuRef = ref<InstanceType<typeof RecipeContextMenu> | null>(null)
 const recipe = defineModel<Recipe>({required: true})
 const props = defineProps<{
     servings?: number,
@@ -360,5 +373,17 @@ function aiConvertRecipe() {
     left: 0;
     right: 0;
     z-index: 1;
+}
+
+/* Top-right so it never collides with .hero-strip's full-width thumbnail row at the bottom.
+   Dark scrim (matching RecipeImageStrip's own rgba chrome) so the icon stays legible over any
+   photo, not just ones with a light area in that corner. */
+.photo-edit-overlay-btn {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    z-index: 2;
+    background: rgba(0, 0, 0, 0.5);
+    border-radius: 50%;
 }
 </style>

@@ -149,3 +149,117 @@ describe('RecipeView', () => {
         expect(wrapper.find('.stub-keywords').exists()).toBe(true)
     })
 })
+
+// #10 follow-up: a persistent icon overlay on the hero image (not a buried menu item) triggers
+// the photo editor via a ref into RecipeContextMenu, since its dialog/state live there. This
+// stub requires a real expose() call to work, unlike a trivial template stub - it would fail if
+// RecipeView's ref wiring (or RecipeContextMenu's defineExpose) regressed.
+describe('photo edit icon overlay on the hero image (#10 follow-up)', () => {
+    const openPhotoEditorSpy = vi.fn()
+
+    beforeEach(() => {
+        resetApiMock()
+        openPhotoEditorSpy.mockClear()
+    })
+
+    function mountAuthenticated(recipe = makeRecipe({ id: 1, name: 'Test Recipe', servings: 4, steps: [] })) {
+        const prePopulate: PiniaPlugin = ({ store }) => {
+            if (store.$id === 'user_preference_store') {
+                store.userSettings = makeUserPreference() as any
+                store.activeSpace = makeSpace() as any
+                store.isAuthenticated = true
+            }
+        }
+        const pinia = createPinia()
+        pinia.use(prePopulate)
+        const i18n = createI18n({ legacy: false, locale: 'en', messages: { en: { Edit_Photo: 'Edit Photo' } }, missingWarn: false, fallbackWarn: false })
+        const router = createRouter({
+            history: createMemoryHistory(),
+            routes: [
+                { path: '/', name: 'StartPage', component: { template: '<div/>' } },
+                { path: '/recipe/:id', name: 'RecipeViewPage', component: { template: '<div/>' } },
+                { path: '/edit/:model/:id?', name: 'ModelEditPage', component: { template: '<div/>' } },
+                { path: '/advanced-search', name: 'SearchPage', component: { template: '<div/>' } },
+            ],
+        })
+
+        return mount(RecipeView, {
+            props: { modelValue: recipe, servings: undefined },
+            global: {
+                plugins: [pinia, i18n, router],
+                stubs: {
+                    StepsOverview: { template: '<div class="stub-steps-overview"/>' },
+                    RecipeActivity: { template: '<div class="stub-recipe-activity"/>' },
+                    RecipeContextMenu: {
+                        setup(_, { expose }) {
+                            expose({ openPhotoEditor: openPhotoEditorSpy })
+                            return () => null
+                        },
+                    },
+                    KeywordsBar: { template: '<div class="stub-keywords"/>' },
+                    KeywordsComponent: { template: '<div class="stub-keywords"/>' },
+                    RecipeImage: { template: '<div class="stub-recipe-image"/>' },
+                    ExternalRecipeViewer: { template: '<div class="stub-external-viewer"/>' },
+                    StepView: { template: '<div class="stub-step-view"/>' },
+                    PropertyView: { template: '<div class="stub-property-view"/>' },
+                    PrivateRecipeBadge: { template: '<div class="stub-private-badge"/>' },
+                    ModelSelect: { template: '<div class="stub-model-select"/>' },
+                    NumberScalerDialog: { template: '<div class="stub-number-scaler"/>' },
+                    RecipeScalingDialog: { template: '<div class="stub-scaling-dialog"/>' },
+                    AddToShoppingDialog: { template: '<div class="stub-add-to-shopping"/>' },
+                    RecipeShareDialog: { template: '<div class="stub-share-dialog"/>' },
+                    AiActionButton: { template: '<div class="stub-ai-button"/>' },
+                },
+            },
+        })
+    }
+
+    it('shows the edit-photo icon and calls the exposed openPhotoEditor when clicked', async () => {
+        const wrapper = mountAuthenticated()
+        await flushPromises()
+
+        const icon = wrapper.find('[data-test="photo-edit-overlay-btn"]')
+        expect(icon.exists()).toBe(true)
+
+        await icon.trigger('click')
+        expect(openPhotoEditorSpy).toHaveBeenCalledTimes(1)
+    })
+
+    it('hides the icon for anonymous (unauthenticated) viewers', async () => {
+        const prePopulate: PiniaPlugin = ({ store }) => {
+            if (store.$id === 'user_preference_store') {
+                store.userSettings = makeUserPreference() as any
+                store.activeSpace = makeSpace() as any
+                store.isAuthenticated = false
+            }
+        }
+        const pinia = createPinia()
+        pinia.use(prePopulate)
+        const i18n = createI18n({ legacy: false, locale: 'en', messages: { en: {} }, missingWarn: false, fallbackWarn: false })
+        const router = createRouter({
+            history: createMemoryHistory(),
+            routes: [
+                { path: '/', name: 'StartPage', component: { template: '<div/>' } },
+                { path: '/recipe/:id', name: 'RecipeViewPage', component: { template: '<div/>' } },
+            ],
+        })
+        const wrapper = mount(RecipeView, {
+            props: { modelValue: makeRecipe({ id: 1, name: 'Test Recipe', servings: 4, steps: [] }), servings: undefined },
+            global: {
+                plugins: [pinia, i18n, router],
+                stubs: {
+                    StepsOverview: { template: '<div/>' }, RecipeActivity: { template: '<div/>' },
+                    RecipeContextMenu: { template: '<div/>' }, KeywordsBar: { template: '<div/>' },
+                    KeywordsComponent: { template: '<div/>' }, RecipeImage: { template: '<div/>' },
+                    ExternalRecipeViewer: { template: '<div/>' }, StepView: { template: '<div/>' },
+                    PropertyView: { template: '<div/>' }, PrivateRecipeBadge: { template: '<div/>' },
+                    ModelSelect: { template: '<div/>' }, NumberScalerDialog: { template: '<div/>' },
+                    RecipeScalingDialog: { template: '<div/>' }, AddToShoppingDialog: { template: '<div/>' },
+                    RecipeShareDialog: { template: '<div/>' }, AiActionButton: { template: '<div/>' },
+                },
+            },
+        })
+        await flushPromises()
+        expect(wrapper.find('[data-test="photo-edit-overlay-btn"]').exists()).toBe(false)
+    })
+})

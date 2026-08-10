@@ -255,6 +255,20 @@ describe('use up (view context only)', () => {
     })
 })
 
+// #10 follow-up: the persistent icon overlay on RecipeView's hero image triggers this from
+// outside the component (via a ref), since the dialog/state live here, not on the image itself.
+describe('photo editor exposed for external trigger', () => {
+    beforeEach(() => resetApiMock())
+
+    it('openPhotoEditor is callable from outside the component', async () => {
+        apiMock.apiRecipeRetrieve.mockResolvedValue({id: 5, images: []})
+        const w = mountMenu({}, { context: 'view', recipe: { id: 5, name: 'Pancakes', steps: [] } })
+        await (w.vm as any).openPhotoEditor()
+        await w.vm.$nextTick()
+        expect(apiMock.apiRecipeRetrieve).toHaveBeenCalledWith({ id: 5 })
+    })
+})
+
 describe('shopping dialog isolation (E-shopping / D10)', () => {
     it('clicking Add to Shopping opens AddToShoppingDialog via v-model (D10: menu item was a no-op)', async () => {
         const w = mountMenu({}, { context: 'card' })
