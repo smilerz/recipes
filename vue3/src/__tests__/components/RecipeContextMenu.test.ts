@@ -180,7 +180,10 @@ describe('RecipeContextMenu', () => {
     })
 
     describe('context gating', () => {
-        it('hides card-only items when context is view', () => {
+        // photo is intentionally NOT card-only (#10): a quick-edit path already existed for
+        // cards, and gating it off the recipe view meant changing a photo required the full
+        // edit -> navigate -> save round trip. cooklog stays card-only (unchanged).
+        it('hides cooklog (still card-only) but shows photo (#10) when context is view', () => {
             const w = mountMenu({
                 card_visibleMenuItems: ['edit', 'book', 'cooklog', 'photo'],
             }, { context: 'view' })
@@ -188,7 +191,7 @@ describe('RecipeContextMenu', () => {
             expect(text).toContain('Edit')
             expect(text).toContain('Add to Book')
             expect(text).not.toContain('Log Cooking')
-            expect(text).not.toContain('Edit Photo')
+            expect(text).toContain('Edit Photo')
         })
 
         it('shows card-only items when context is card', () => {
