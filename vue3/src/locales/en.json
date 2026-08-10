@@ -459,6 +459,8 @@
   "Meal_Type_Required": "Meal type is required",
   "Meal_Types": "Meal types",
   "Merge": "Merge",
+  "MergeWithNext": "Merge with next step",
+  "MergeWithPrevious": "Merge with previous step",
   "default_rating_4": "4+",
   "minimum_rating": "Minimum rating",
   "MergeAutomateHelp": "Create an automation that replaces future objects of this type with the selected object.",
