@@ -20,9 +20,9 @@
                         <span>
                             <i class="fas fa-check text-success fa-fw" v-if="a.checked"></i>
                             <i class="fas fa-clock-rotate-left text-info fa-fw" v-if="a.delayed"></i> <b>
-                            <span :class="{'text-disabled': a.checked || a.delayed}" class="text-no-wrap">
+                            <span :class="{'text-disabled': a.checked || a.delayed}">
                                 <span v-if="amounts.length > 1 || (amounts.length == 1 && !isSingularAmount(a.amount)) || a.unit">{{ $n(a.amount) }}</span>
-                                <span class="ms-1" v-if="a.unit">{{ pluralString(a.unit, a.amount) }}</span>
+                                <span class="ms-1" v-if="a.unit">{{ ' ' + pluralString(a.unit, a.amount) }}</span>
                             </span>
                             </b>
                         </span>
@@ -341,8 +341,8 @@ function handleSwipe() {
 }
 
 .shopping-qty-col {
-    min-width: 5.5rem;
-    max-width: 5.5rem;
+    min-width: 8.5rem;
+    max-width: 8.5rem;
     flex-shrink: 0;
 }
 
