@@ -943,6 +943,7 @@ class InventoryLocationViewSet(LoggingMixin, viewsets.ModelViewSet, DeleteRelati
     OpenApiParameter(name='empty', description=_('If true also return empty entries, if false (default) only return entries with amount > 0.'), type=bool),
     OpenApiParameter(name='code', description=_('Returns all entries with the same food as the given code. If code is given food parameter is ignored'), type=str),
     OpenApiParameter(name='food_id', description=_('Returns all entries with the given food id'), type=int),
+    OpenApiParameter(name='food_ids', description=_('Returns all entries whose food id is in the given list. For multiple repeat the parameter.'), type=int, many=True),
     OpenApiParameter(name='inventory_location_id', description=_('Returns all entries with the given inventory location id'), type=int),
 ]))
 class InventoryEntryViewSet(LoggingMixin, viewsets.ModelViewSet, DeleteRelationMixing):
@@ -971,6 +972,8 @@ class InventoryEntryViewSet(LoggingMixin, viewsets.ModelViewSet, DeleteRelationM
                     queryset = queryset.none()
             elif food_id := self.request.query_params.get('food_id'):
                 queryset = queryset.filter(food_id=food_id)
+            elif food_ids := self.request.query_params.getlist('food_ids'):
+                queryset = queryset.filter(food_id__in=food_ids)
 
             if inventory_location_id := self.request.query_params.get('inventory_location_id'):
                 queryset = queryset.filter(inventory_location_id=inventory_location_id)

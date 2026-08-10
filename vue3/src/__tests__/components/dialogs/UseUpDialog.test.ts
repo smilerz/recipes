@@ -233,6 +233,42 @@ describe('UseUpDialog (food,unit) rows + consumed + DEC-8', () => {
         expect((wrapper.vm as any).scoped).toBe(true)
     })
 
+    it('UU-13: includes an on-hand substitute for a recipe food that is not itself on hand, labeled', async () => {
+        const MARGARINE = {id: 3, name: 'Margarine'}
+        apiMock.apiFoodRetrieve.mockResolvedValue({id: 2, name: 'Butter', availableSubstitutes: [MARGARINE]})
+        apiMock.apiInventoryEntryList.mockResolvedValue({results: [
+            {food: MARGARINE, unit: null, amount: 1},
+        ]})
+        const wrapper = mountDialog()
+        void (wrapper.vm as any).open({foodIds: [2], title: 'Use up: Toast'})
+        await flushPromises()
+
+        expect(apiMock.apiFoodRetrieve).toHaveBeenCalledWith({id: 2})
+        const call = apiMock.apiInventoryEntryList.mock.calls[0][0]
+        expect(call.foodIds).toEqual(expect.arrayContaining([2, 3]))
+
+        const rows = (wrapper.vm as any).rows
+        expect(rows).toHaveLength(1)
+        expect(rows[0].food.id).toBe(3)
+        expect(rows[0].substituteFor).toBe('Butter')
+    })
+
+    it('UU-14: an unmocked/failed food lookup degrades to exact-match only, no crash', async () => {
+        // apiFoodRetrieve is left on its default (rejecting) mock - mirrors UU-08's setup, proving
+        // the substitute lookup is best-effort and never blocks the existing exact-match path.
+        apiMock.apiInventoryEntryList.mockResolvedValue({results: [
+            {food: MILK, unit: GAL, amount: 1},
+            {food: BUTTER, unit: null, amount: 1},
+        ]})
+        const wrapper = mountDialog()
+        void (wrapper.vm as any).open({foodIds: [1], title: 'Use up: Pancakes'})
+        await flushPromises()
+
+        const rows = (wrapper.vm as any).rows
+        expect(rows).toHaveLength(1)
+        expect(rows[0].food.id).toBe(1)
+    })
+
     it('UU-12: sections put the rest behind a collapsed expander, revealed by showAll', async () => {
         apiMock.apiInventoryEntryList.mockResolvedValue({results: [
             {food: MILK, unit: GAL, amount: 1},    // recent

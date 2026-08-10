@@ -266,6 +266,7 @@
   "UsedIn": "used in {recipes}",
   "StockPantryFromRecent": "Stock pantry from recent…",
   "UseUpRecipe": "Use up: {recipe}",
+  "UsedAsSubstituteFor": "Used as substitute for {food}",
   "PantryForRecipe": "Pantry: {recipe}",
   "PantryForThisRecipe": "Pantry for this recipe",
   "AddToPantry": "＋ Pantry",

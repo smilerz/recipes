@@ -139,6 +139,7 @@ models/PatchedSync.ts
 models/PatchedUnit.ts
 models/PatchedUnitConversion.ts
 models/PatchedUser.ts
+models/PatchedUserFile.ts
 models/PatchedUserPreference.ts
 models/PatchedUserSpace.ts
 models/PatchedViewLog.ts

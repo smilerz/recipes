@@ -1049,6 +1049,7 @@ export interface ApiInventoryEntryListRequest {
     code?: string;
     empty?: boolean;
     foodId?: number;
+    foodIds?: Array<number>;
     inventoryLocationId?: number;
     page?: number;
     pageSize?: number;
@@ -7555,6 +7556,10 @@ export class ApiApi extends runtime.BaseAPI {
 
         if (requestParameters['foodId'] != null) {
             queryParameters['food_id'] = requestParameters['foodId'];
+        }
+
+        if (requestParameters['foodIds'] != null) {
+            queryParameters['food_ids'] = requestParameters['foodIds'];
         }
 
         if (requestParameters['inventoryLocationId'] != null) {
@@ -18253,6 +18258,7 @@ export class ApiApi extends runtime.BaseAPI {
 
         const consumes: runtime.Consume[] = [
             { contentType: 'multipart/form-data' },
+            { contentType: 'application/json' },
         ];
         // @ts-ignore: canConsumeForm may be unused
         const canConsumeForm = runtime.canConsumeForm(consumes);
@@ -18498,6 +18504,7 @@ export class ApiApi extends runtime.BaseAPI {
 
         const consumes: runtime.Consume[] = [
             { contentType: 'multipart/form-data' },
+            { contentType: 'application/json' },
         ];
         // @ts-ignore: canConsumeForm may be unused
         const canConsumeForm = runtime.canConsumeForm(consumes);
@@ -18726,6 +18733,7 @@ export class ApiApi extends runtime.BaseAPI {
 
         const consumes: runtime.Consume[] = [
             { contentType: 'multipart/form-data' },
+            { contentType: 'application/json' },
         ];
         // @ts-ignore: canConsumeForm may be unused
         const canConsumeForm = runtime.canConsumeForm(consumes);

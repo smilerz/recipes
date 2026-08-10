@@ -137,6 +137,7 @@ export * from './PatchedSync';
 export * from './PatchedUnit';
 export * from './PatchedUnitConversion';
 export * from './PatchedUser';
+export * from './PatchedUserFile';
 export * from './PatchedUserPreference';
 export * from './PatchedUserSpace';
 export * from './PatchedViewLog';

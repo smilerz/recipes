@@ -29,6 +29,9 @@
                                             → {{ row.amount }} {{ (row.newUnit ?? row.unit)?.name || '' }}<template v-if="row.amount === 0"> · {{ $t('OutToList') }}</template>
                                         </span>
                                     </div>
+                                    <div v-if="row.substituteFor" class="text-caption text-info text-truncate">
+                                        {{ $t('UsedAsSubstituteFor', {food: row.substituteFor}) }}
+                                    </div>
                                 </div>
                                 <!-- re-declared rows are a new measurement in a new unit — the old
                                      unit's count is not a meaningful bound (1 gallon -> 16 cups) -->
@@ -83,6 +86,7 @@ interface Row {
     amount: number
     original: number
     recipe?: string  // the recently-cooked recipe this row is grouped under
+    substituteFor?: string  // the recipe food this row is standing in for, when it isn't itself wanted
 }
 
 /** How many recent recipes to seed the "Recently cooked" section from (DEC-7). */
@@ -157,14 +161,18 @@ async function open(opts?: {foodIds?: number[], title?: string}) {
     title.value = opts?.title ?? t('UseUp')
     const api = new ApiApi()
     try {
-        const inventory = await api.apiInventoryEntryList({pageSize: 500})
-        let grouped = groupInventoryByFoodUnit<Food, Unit>(inventory.results ?? [])
-
         if (opts?.foodIds) {
-            const wanted = new Set(opts.foodIds)
-            rows.value = grouped.filter(g => g.food.id != null && wanted.has(g.food.id)).map(g => ({...g, newUnit: null}))
+            const {acceptableFoodIds, substituteFor} = await resolveSubstituteAvailability(api, opts.foodIds)
+            const inventory = await api.apiInventoryEntryList({foodIds: [...acceptableFoodIds]})
+            const grouped = groupInventoryByFoodUnit<Food, Unit>(inventory.results ?? [])
+            rows.value = grouped
+                .filter(g => g.food.id != null && acceptableFoodIds.has(g.food.id))
+                .map(g => ({...g, newUnit: null, substituteFor: g.food.id != null ? substituteFor.get(g.food.id) : undefined}))
             return
         }
+
+        const inventory = await api.apiInventoryEntryList({pageSize: 500})
+        let grouped = groupInventoryByFoodUnit<Food, Unit>(inventory.results ?? [])
 
         const orderedRecipes = await recentRecipes(api)
         const {groups, other} = groupUseUpRowsByRecipe(grouped, orderedRecipes)
@@ -178,6 +186,30 @@ async function open(opts?: {foodIds?: number[], title?: string}) {
     } finally {
         loading.value = false
     }
+}
+
+/**
+ * Expand a recipe's wanted food ids to the full set of on-hand-satisfying ids, using each food's
+ * `availableSubstitutes` (household/on-hand scoped server-side). That field is detail-only (empty
+ * on list responses), hence one apiFoodRetrieve per wanted food rather than a single list call -
+ * bounded by the recipe's ingredient count, run in parallel, and best-effort: a failed lookup just
+ * means that food falls back to exact-match only, never blocks the dialog opening.
+ */
+async function resolveSubstituteAvailability(
+    api: ApiApi, wantedIds: number[],
+): Promise<{acceptableFoodIds: Set<number>, substituteFor: Map<number, string>}> {
+    const acceptableFoodIds = new Set(wantedIds)
+    const substituteFor = new Map<number, string>()
+    const wantedFoods = await Promise.all(wantedIds.map(id => api.apiFoodRetrieve({id}).catch(() => null)))
+    for (const food of wantedFoods) {
+        if (!food?.id) continue
+        for (const sub of food.availableSubstitutes ?? []) {
+            if (sub.id == null || acceptableFoodIds.has(sub.id)) continue
+            acceptableFoodIds.add(sub.id)
+            substituteFor.set(sub.id, food.name ?? '')
+        }
+    }
+    return {acceptableFoodIds, substituteFor}
 }
 
 /** Recently-cooked recipes (most-recent first) with their food ids, from the CookLog (best-effort). */
