@@ -30,19 +30,16 @@
                                 <!--                                <v-number-input label="Days" control-variant="split" :min="1"></v-number-input>-->
                                 <!--TODO create days input with +/- synced to date -->
                                 <recipe-card :recipe="editingObj.recipe" :servings="editingObj.servings" v-if="editingObj && editingObj.recipe" link-target="_blank"></recipe-card>
-                                <v-btn prepend-icon="$shopping" color="create" class="mt-1" v-if="!editingObj.shopping && editingObj.recipe && isUpdate()">
-                                    {{ $t('Add') }}
-                                    <add-to-shopping-dialog :recipe="editingObj.recipe" :meal-plan="editingObj"
-                                                            @created="editingObj.shopping = true;"></add-to-shopping-dialog>
-                                </v-btn>
 
                                 <v-checkbox :label="$t('AddToShopping')" v-model="editingObj.addshopping" hide-details v-if="editingObj.recipe && !isUpdate()"></v-checkbox>
 
-                                <!-- Editable preview opened after a new plan is created (D11 P2a). Fresh-mounted
-                                     per open so it reloads the recipe; the browser-remembered fast-path skips it. -->
+                                <!-- Editable preview, opened either after a new plan is created (D11 P2a, the
+                                     "AddToShopping" checkbox above) or on switching to the Shopping tab on a plan
+                                     that has a recipe but no shopping list yet (#1). Fresh-mounted per open so it
+                                     reloads the recipe; the browser-remembered fast-path skips the P2a case. -->
                                 <add-to-shopping-dialog v-if="shoppingPreviewOpen && previewPlan" v-model="shoppingPreviewOpen"
                                                         :recipe="previewPlan.recipe" :meal-plan="previewPlan" :show-skip-preview="true"
-                                                        @created="editingObj.shopping = true"></add-to-shopping-dialog>
+                                                        @created="onShoppingCreated"></add-to-shopping-dialog>
                             </v-col>
                             <v-col cols="12" md="6">
                                 <v-text-field :label="$t('Title')" v-model="editingObj.title"></v-text-field>
@@ -240,7 +237,27 @@ watch(() => tab.value, async (newVal) => {
     }
     useShoppingStore().selectedMealPlan = editingObj.value.id
     useShoppingStore().updateEntriesStructure()
+
+    // #1: the tab used to just show whatever shopping entries already existed (none, the first
+    // time) with no way to populate from here. Open the same pantry-aware, scale-adjusted preview
+    // the old "Add" button used to gate behind the Meal Plan tab, so the tab is never a dead end.
+    if (editingObj.value.recipe && !editingObj.value.shopping) {
+        previewPlan.value = editingObj.value
+        shoppingPreviewOpen.value = true
+    }
 })
+
+/**
+ * the shopping-list dialog already persisted the entries itself (independent of Save) - don't let
+ * this nested mutation mark the whole plan as unsaved. editingObjChanged's watcher runs on the
+ * next tick's flush, so it must be reset after that flush, not synchronously here.
+ */
+function onShoppingCreated() {
+    editingObj.value.shopping = true
+    nextTick(() => {
+        editingObjChanged.value = false
+    })
+}
 
 onMounted(() => {
     initializeEditor()

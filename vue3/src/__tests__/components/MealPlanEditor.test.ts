@@ -112,4 +112,55 @@ describe('MealPlanEditor', () => {
 
         w.unmount()
     })
+
+    // #1: switching to the Shopping tab on a plan that already has a recipe but no shopping
+    // list yet used to just show an empty list - the only populate trigger lived on the other
+    // (Meal Plan) tab, easy to never find. It should offer the same pantry-aware, scale-adjusted
+    // preview automatically instead of dead-ending.
+    it('opens the pantry-aware shopping preview when switching to the Shopping tab on an unpopulated plan', async () => {
+        const item = makeMealPlan({id: 8, shopping: false})
+        const w = mountEditor(item)
+        await flushPromises()
+
+        expect((w.vm as any).shoppingPreviewOpen).toBe(false)
+
+        ;(w.vm as any).tab = 'shopping'
+        await flushPromises()
+
+        expect((w.vm as any).shoppingPreviewOpen).toBe(true)
+        expect((w.vm as any).previewPlan?.id).toBe(8)
+
+        w.unmount()
+    })
+
+    it('does not reopen the preview once the plan already has a shopping list', async () => {
+        const item = makeMealPlan({id: 9, shopping: true})
+        const w = mountEditor(item)
+        await flushPromises()
+
+        ;(w.vm as any).tab = 'shopping'
+        await flushPromises()
+
+        expect((w.vm as any).shoppingPreviewOpen).toBe(false)
+
+        w.unmount()
+    })
+
+    // The dialog's "created" event already persisted the shopping-list entries independently of
+    // Save - the nested editingObj.shopping mutation shouldn't mark the whole plan as unsaved.
+    it('creating the shopping list from the preview does not mark the plan as unsaved', async () => {
+        const item = makeMealPlan({id: 10, shopping: false})
+        const w = mountEditor(item)
+        await flushPromises()
+
+        expect((w.vm as any).editingObjChanged).toBe(false)
+
+        ;(w.vm as any).onShoppingCreated()
+        await flushPromises()
+
+        expect((w.vm as any).editingObj.shopping).toBe(true)
+        expect((w.vm as any).editingObjChanged).toBe(false)
+
+        w.unmount()
+    })
 })
