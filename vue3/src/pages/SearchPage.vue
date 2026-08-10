@@ -657,7 +657,7 @@ const debouncedSearch = useDebounceFn(() => searchRecipes({page: 1}), 300)
 let stopReQueryWatcher: (() => void) | null = null
 function startReQueryWatcher() {
     if (stopReQueryWatcher) return
-    stopReQueryWatcher = watch([filterParams, ordering, query, pageSize], () => {
+    stopReQueryWatcher = watch([filterParams, ordering, query, pageSize, settings.includeChildren], () => {
         debouncedSearch()
     })
 }
