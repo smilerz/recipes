@@ -115,7 +115,7 @@
 
 <script lang="ts" setup>
 import {computed, reactive, ref} from 'vue'
-import {Ingredient} from "@/openapi";
+import {FoodSimple, Ingredient} from "@/openapi";
 import {calculateFoodAmount} from "../../utils/number_utils";
 import {useUserPreferenceStore} from "../../stores/UserPreferenceStore";
 import {ingredientToFoodString, ingredientToUnitString, parseBooleanAnnotation} from "@/utils/model_utils.ts";
@@ -177,6 +177,43 @@ const mobileStatus = computed(() =>
         : deviceSettings.recipe_stepInlineStatus)
 )
 
+// Random-but-stable substitute pick, keyed by food id in sessionStorage: same food shows the same
+// substitute everywhere on the site for the rest of the browser session (no flicker on a page
+// refresh mid-cook), while different foods aren't all pinned to index 0. substituteChip() and
+// substituteText() MUST both read this — a past bug (9a5608d2c) only wired one of them to a
+// random pick, so the desktop hint and mobile chip could disagree.
+const SUBSTITUTE_PICK_STORAGE_KEY = 'ingredientsTable.substitutePick'
+
+function loadSubstitutePicks(): Record<number, number> {
+    try {
+        return JSON.parse(sessionStorage.getItem(SUBSTITUTE_PICK_STORAGE_KEY) ?? '{}')
+    } catch {
+        return {}
+    }
+}
+
+function pickSubstitute(i: Ingredient): FoodSimple | null {
+    const subs = i.food?.availableSubstitutes ?? []
+    if (!subs.length) return null
+    const foodId = i.food?.id
+    if (foodId == null) return subs[0]
+
+    const picks = loadSubstitutePicks()
+    const existing = subs.find(s => s.id === picks[foodId])
+    if (existing) return existing
+
+    const chosen = subs[Math.floor(Math.random() * subs.length)]
+    if (chosen.id != null) {
+        picks[foodId] = chosen.id
+        try {
+            sessionStorage.setItem(SUBSTITUTE_PICK_STORAGE_KEY, JSON.stringify(picks))
+        } catch {
+            // storage unavailable (private mode, etc.) — the pick just won't persist
+        }
+    }
+    return chosen
+}
+
 // The chip surfaces only the food's on-hand / in-pantry substitutes
 // (availableSubstitutes — the serializer fills it from on-hand OR pantry).
 // Substitutes that are merely *defined* but not available are intentionally
@@ -184,7 +221,7 @@ const mobileStatus = computed(() =>
 function substituteChip(i: Ingredient): {name: string, extra: number} | null {
     const subs = i.food?.availableSubstitutes ?? []
     if (!subs.length) return null
-    return {name: subs[0].name ?? '', extra: subs.length - 1}
+    return {name: pickSubstitute(i)?.name ?? '', extra: subs.length - 1}
 }
 
 // Whether the mobile row needs a second (continuation) line for note and/or chip.
@@ -218,10 +255,11 @@ function isOnShoppingList(i: Ingredient): boolean {
     return parseBooleanAnnotation(i.food?.shopping)
 }
 
-// Show the first available substitute — the same one the mobile substitute
-// chip surfaces via substituteChip(), so the two views never disagree.
+// Show the same randomly-picked substitute the mobile chip surfaces via
+// substituteChip() (pickSubstitute is the shared, session-cached source), so
+// the two views never disagree.
 function substituteText(i: Ingredient): string {
-    return i.food?.availableSubstitutes?.[0]?.name ?? ''
+    return pickSubstitute(i)?.name ?? ''
 }
 
 // Number of display characters the inline substitute block contributes when
