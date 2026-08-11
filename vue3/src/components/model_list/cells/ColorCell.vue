@@ -4,7 +4,7 @@
 
 <script setup lang="ts">
 
-const obj = defineModel<String>({required: true})
+const obj = defineModel<string>({required: true})
 </script>
 
 <style scoped>

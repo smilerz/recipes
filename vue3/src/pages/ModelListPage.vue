@@ -162,20 +162,19 @@
 <script setup lang="ts">
 
 
-import {defineAsyncComponent, onBeforeMount, PropType, ref, shallowRef, watch} from "vue";
+import {onBeforeMount, PropType, ref, watch} from "vue";
 import {ErrorMessageType, useMessageStore} from "@/stores/MessageStore";
 import {useI18n} from "vue-i18n";
 import {EditorSupportedModels, EditorSupportedTypes, GenericModel, getGenericModelFromString, Model, TInviteLink,} from "@/types/Models";
 import ModelEditDialog from "@/components/dialogs/ModelEditDialog.vue";
-import {useRoute, useRouter} from "vue-router";
+import {useRouter} from "vue-router";
 import {useUserPreferenceStore} from "@/stores/UserPreferenceStore";
 import ModelMergeDialog from "@/components/dialogs/ModelMergeDialog.vue";
 import {VDataTableUpdateOptions} from "@/vuetify";
 import SyncDialog from "@/components/dialogs/SyncDialog.vue";
-import {ApiApi, ApiRecipeListRequest, Group, RecipeImport, Space, UserSpace} from "@/openapi";
+import {ApiApi, Group, RecipeImport, Space, UserSpace} from "@/openapi";
 import {useTitle} from "@vueuse/core";
-import RecipeShareDialog from "@/components/dialogs/RecipeShareDialog.vue";
-import AddToShoppingDialog from "@/components/dialogs/AddToShoppingDialog.vue";
+
 import BatchDeleteDialog from "@/components/dialogs/BatchDeleteDialog.vue";
 import {useRouteQuery} from "@vueuse/router";
 import BatchEditFoodDialog from "@/components/dialogs/BatchEditFoodDialog.vue";
@@ -184,7 +183,6 @@ import BatchEditUserSpaceDialog from "@/components/dialogs/BatchEditUserSpaceDia
 
 const {t} = useI18n()
 const router = useRouter()
-const route = useRoute()
 const title = useTitle()
 
 const props = defineProps({
@@ -253,7 +251,9 @@ function loadItems(options: VDataTableUpdateOptions) {
     page.value = options.page
     pageSize.value = options.itemsPerPage
 
-    genericModel.value.list({query: debouncedQuery.value, page: options.page, pageSize: pageSize.value}, {signal: signal.value}).then((r: any) => {
+    let request = {query: debouncedQuery.value, page: options.page, pageSize: pageSize.value}
+
+    genericModel.value.list(request, {signal: signal.value}).then((r: any) => {
         items.value = r.results
         itemCount.value = r.count
     }).catch((err: any) => {
