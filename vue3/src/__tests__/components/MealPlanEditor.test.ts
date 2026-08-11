@@ -67,7 +67,6 @@ function mountEditor(item: any) {
                 RecipeCard: {template: '<div class="stub-recipe-card"/>'},
                 ClosableHelpAlert: {template: '<div class="stub-help-alert"/>'},
                 RecipeShoppingPreview: {template: '<div class="stub-recipe-shopping-preview"/>'},
-                AddToShoppingDialog: {template: '<div class="stub-add-to-shopping-dialog"/>'},
             },
         },
     })
@@ -118,27 +117,28 @@ describe('MealPlanEditor', () => {
         w.unmount()
     })
 
-    // #1 (revised after live feedback): the original fix auto-opened the preview on Shopping-tab
-    // navigation, which could silently attempt to save an unsaved plan and surface a raw 400 if a
-    // required field (meal type) was missing. Checking "Add to Shopping" is now the sole trigger -
-    // it only stages the recipe's ingredients, no save attempted until the dialog itself commits.
-    it('opens the pantry-aware shopping preview when Add to Shopping is checked', async () => {
+    // #1 (revised after live feedback, twice): the original fix auto-opened a preview DIALOG on
+    // Shopping-tab navigation, which could silently attempt to save an unsaved plan and surface a
+    // raw 400 if a required field (meal type) was missing. That became checking "Add to Shopping"
+    // opens a dialog instead - user feedback again: since the Shopping tab now shows the identical
+    // preview content inline (item 17's RecipeShoppingPreview reuse), a popup on top of it is
+    // redundant. Checking the box now just switches to the tab that's already showing it.
+    it('switches to the Shopping tab when Add to Shopping is checked', async () => {
         const item = makeMealPlan({id: 8, shopping: false})
         const w = mountEditor(item)
         await flushPromises()
 
-        expect((w.vm as any).shoppingPreviewOpen).toBe(false)
+        expect((w.vm as any).tab).toBe('plan')
 
         ;(w.vm as any).editingObj.addshopping = true
         await flushPromises()
 
-        expect((w.vm as any).shoppingPreviewOpen).toBe(true)
-        expect((w.vm as any).previewPlan?.id).toBe(8)
+        expect((w.vm as any).tab).toBe('shopping')
 
         w.unmount()
     })
 
-    it('does not reopen the preview once the plan already has a shopping list', async () => {
+    it('does not switch tabs again once the plan already has a shopping list', async () => {
         const item = makeMealPlan({id: 9, shopping: true})
         const w = mountEditor(item)
         await flushPromises()
@@ -146,7 +146,7 @@ describe('MealPlanEditor', () => {
         ;(w.vm as any).editingObj.addshopping = true
         await flushPromises()
 
-        expect((w.vm as any).shoppingPreviewOpen).toBe(false)
+        expect((w.vm as any).tab).toBe('plan')
 
         w.unmount()
     })
@@ -249,7 +249,7 @@ describe('MealPlanEditor', () => {
             expect(w.findAll('.v-tab').some(t => t.text().includes('Shopping'))).toBe(true)
         })
 
-        it('checking the box for an existing plan opens the preview immediately, no save needed', async () => {
+        it('checking the box for an existing plan switches to the Shopping tab immediately, no save needed', async () => {
             const item = makeMealPlan({id: 16, shopping: false})
             const w = mountEditor(item)
             await flushPromises()
@@ -258,12 +258,11 @@ describe('MealPlanEditor', () => {
             await checkbox.setValue(true)
             await flushPromises()
 
-            expect((w.vm as any).shoppingPreviewOpen).toBe(true)
-            expect((w.vm as any).previewPlan?.id).toBe(16)
+            expect((w.vm as any).tab).toBe('shopping')
             expect(apiMock.apiMealPlanUpdate).not.toHaveBeenCalled()
         })
 
-        it('checking the box for a new (unsaved) plan also opens the preview by default, without saving', async () => {
+        it('checking the box for a new (unsaved) plan also switches to the Shopping tab by default, without saving', async () => {
             const w = mountEditor(null)
             await flushPromises()
             ;(w.vm as any).editingObj.recipe = makeMealPlan().recipe
@@ -273,14 +272,14 @@ describe('MealPlanEditor', () => {
             await checkbox.setValue(true)
             await flushPromises()
 
-            expect((w.vm as any).shoppingPreviewOpen).toBe(true)
+            expect((w.vm as any).tab).toBe('shopping')
             expect(apiMock.apiMealPlanCreate).not.toHaveBeenCalled()
         })
 
         // The browser-remembered fast path (D11 P2a) is unchanged by this redesign: it still
         // bypasses the preview entirely for a new plan, deferring to onSave()'s existing
         // resolveMealplanShoppingAction logic to send addshopping straight through on create.
-        it('does not open the preview for a new plan when the skip-preview fast path is enabled', async () => {
+        it('does not switch tabs for a new plan when the skip-preview fast path is enabled', async () => {
             const w = mountEditor(null)
             await flushPromises()
             ;(w.vm as any).editingObj.recipe = makeMealPlan().recipe
@@ -291,7 +290,7 @@ describe('MealPlanEditor', () => {
             await checkbox.setValue(true)
             await flushPromises()
 
-            expect((w.vm as any).shoppingPreviewOpen).toBe(false)
+            expect((w.vm as any).tab).toBe('plan')
         })
     })
 

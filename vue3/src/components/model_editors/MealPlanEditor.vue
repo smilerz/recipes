@@ -33,17 +33,6 @@
 
                                 <v-checkbox :label="$t('AddToShopping')" v-model="editingObj.addshopping" hide-details
                                             data-test="addshopping-checkbox" v-if="editingObj.recipe && !editingObj.shopping"></v-checkbox>
-
-                                <!-- Editable preview, opened as soon as "Add to Shopping" is checked - staging
-                                     ingredient selection only needs the recipe, not a saved plan. Committing (the
-                                     dialog's own button) saves the plan first via onBeforeCommit if it isn't saved
-                                     yet, then links the shopping entries to the fresh id - a two-step save behind
-                                     one click, not a save forced by merely opening the preview. The new-plan
-                                     skip-preview fast path bypasses this entirely (still resolved at Save time). -->
-                                <add-to-shopping-dialog v-if="shoppingPreviewOpen && previewPlan" v-model="shoppingPreviewOpen"
-                                                        :recipe="previewPlan.recipe" :meal-plan="previewPlan" :show-skip-preview="true"
-                                                        :on-before-commit="ensurePlanSaved"
-                                                        @created="onShoppingCreated"></add-to-shopping-dialog>
                             </v-col>
                             <v-col cols="12" md="6">
                                 <v-text-field :label="$t('Title')" v-model="editingObj.title"></v-text-field>
@@ -143,7 +132,6 @@ import ShoppingLineItem from "@/components/display/ShoppingLineItem.vue";
 import ShoppingListEntryInput from "@/components/inputs/ShoppingListEntryInput.vue";
 import ClosableHelpAlert from "@/components/display/ClosableHelpAlert.vue";
 import {useMealPlanStore} from "@/stores/MealPlanStore";
-import AddToShoppingDialog from "@/components/dialogs/AddToShoppingDialog.vue";
 import RecipeShoppingPreview from "@/components/display/RecipeShoppingPreview.vue";
 import {resolveMealplanShoppingAction} from "@/utils/mealplan_shopping";
 import type {ShoppingListEntry} from "@/openapi";
@@ -183,8 +171,6 @@ const tab = ref('plan')
 // D11 P2a: a new plan's "add to shopping" intent opens an editable preview (default) instead of
 // the silent backend auto-add; the browser-remembered fast-path skips straight to the silent add.
 const deviceSettings = useUserPreferenceStore().deviceSettings
-const shoppingPreviewOpen = ref(false)
-const previewPlan = ref<MealPlan | undefined>(undefined)
 
 function onSave() {
     const wantsShopping = !isUpdate() && !!editingObj.value.recipe && !!editingObj.value.addshopping
@@ -195,8 +181,7 @@ function onSave() {
         if (!obj?.id) return obj  // save failed (e.g. validation error) — saveObject already surfaced it
         useMealPlanStore().plans.set(obj.id, obj)
         if (action.openPreview && obj.recipe) {
-            previewPlan.value = obj
-            shoppingPreviewOpen.value = true
+            tab.value = 'shopping'
         }
         return obj
     })
@@ -213,21 +198,20 @@ watch(() => editingObj.value.mealType, (newType, oldType) => {
     }
 })
 
-// Checking the box stages the preview immediately - it only needs the recipe, not a saved plan
-// (see AddToShoppingDialog's onBeforeCommit for where the plan actually gets saved, on commit).
-// The new-plan skip-preview fast path is untouched: it bypasses the preview and lets onSave()
-// resolve addshopping straight through to the backend's silent auto-add.
+// Checking the box switches straight to the Shopping tab, which already shows the same staging
+// preview inline (item 17) - no separate popup needed anymore. The new-plan skip-preview fast
+// path is untouched: it stays on the Plan tab and lets onSave() resolve addshopping straight
+// through to the backend's silent auto-add.
 watch(() => editingObj.value.addshopping, (val) => {
     if (!val || editingObj.value.shopping) return
     if (!isUpdate() && deviceSettings.mealplan_shopping_skipPreview) return
-    previewPlan.value = editingObj.value
-    shoppingPreviewOpen.value = true
+    tab.value = 'shopping'
 })
 
 /**
  * ensures the plan is persisted before the shopping preview commits its entries - a shopping
  * entry links to a real meal-plan id, but staging/reviewing it never required one. Called by
- * AddToShoppingDialog only when its own "Add to Shopping" button is clicked.
+ * RecipeShoppingPreview only when its own "Add to Shopping" button is clicked.
  */
 async function ensurePlanSaved(): Promise<MealPlan | undefined> {
     if (isUpdate()) return editingObj.value
@@ -239,7 +223,6 @@ async function ensurePlanSaved(): Promise<MealPlan | undefined> {
     const obj = await saveObject()
     if (obj?.id) {
         useMealPlanStore().plans.set(obj.id, obj)
-        previewPlan.value = obj
     }
     return obj
 }
