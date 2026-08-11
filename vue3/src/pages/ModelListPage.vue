@@ -140,6 +140,11 @@
                             </v-menu>
                         </v-btn>
                     </template>
+
+                    <template v-for="component in genericModel.model.tableColumns" #[`item.${component.slot}`]="{ item }">
+                        <component :is="component.component" :modelValue="item[component.slot]" ></component>
+                    </template>
+
                 </v-data-table-server>
             </v-col>
         </v-row>
@@ -162,7 +167,7 @@
 <script setup lang="ts">
 
 
-import {onBeforeMount, PropType, ref, watch} from "vue";
+import {defineAsyncComponent, onBeforeMount, PropType, ref, shallowRef, watch} from "vue";
 import {ErrorMessageType, useMessageStore} from "@/stores/MessageStore";
 import {useI18n} from "vue-i18n";
 import {EditorSupportedModels, EditorSupportedTypes, GenericModel, getGenericModelFromString, Model, TInviteLink,} from "@/types/Models";

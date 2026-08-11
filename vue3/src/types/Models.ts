@@ -92,6 +92,11 @@ type ModelTableHeaders = {
     hidden?: boolean,
 }
 
+type ModelTableColumns = {
+    slot: string,
+    component: any,
+}
+
 /**
  * custom type containing all attributes needed by the generic model system to properly handle all functions
  */
@@ -122,6 +127,7 @@ export type Model = {
     isTree?: boolean | undefined,
 
     tableHeaders: ModelTableHeaders[],
+    tableColumns: ModelTableColumns[],
 }
 export let SUPPORTED_MODELS = new Map<string, Model>()
 
@@ -782,6 +788,10 @@ export const TInviteLink = {
         {title: 'Role', key: 'group.name'},
         {title: 'Valid Until', key: 'validUntil'},
         {title: 'Actions', key: 'action', align: 'end'},
+    ],
+
+    tableColumns: [
+        {slot:'validUntil', component: defineAsyncComponent(() => import(`@/components/model_list/cells/DateCell.vue`))}
     ]
 } as Model
 registerModel(TInviteLink)
