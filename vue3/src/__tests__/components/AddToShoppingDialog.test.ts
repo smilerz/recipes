@@ -13,6 +13,25 @@ vi.mock('@/openapi', async (importOriginal) => ({
     ResponseError: class extends Error { response: any; constructor(r: any) { super(); this.response = r } },
 }))
 
+// MessageStore calls useI18n() at store-setup time, which requires an active component
+// instance - fine when some other component warms the store first (as happens in the real
+// app), but this dialog never does, and no prior test here exercised its success/error path
+// to surface it. Mocked like other test files that hit the same gotcha (e.g. SearchPage.test.ts).
+vi.mock('@/stores/MessageStore', async (importOriginal) => {
+    const actual = await importOriginal<any>()
+    return {
+        ...actual,
+        useMessageStore: () => ({
+            addError: vi.fn(),
+            addPreparedMessage: vi.fn(),
+            addMessage: vi.fn(),
+            deleteAllMessages: vi.fn(),
+            messages: [],
+            snackbarQueue: [],
+        }),
+    }
+})
+
 vi.mock('@vueuse/core', async () => {
     const { ref } = await import('vue')
     return {
@@ -32,7 +51,7 @@ describe('AddToShoppingDialog', () => {
         apiMock.apiRecipeRetrieve = vi.fn()
         apiMock.apiRecipeRelatedList = vi.fn()
         apiMock.apiShoppingListRecipeCreate = vi.fn()
-        apiMock.apiShoppingListEntryBulkCreate = vi.fn()
+        ;(apiMock as any).apiShoppingListRecipeBulkCreateEntriesCreate = vi.fn()
     })
 
     function mountDialog(recipe = makeRecipe({ id: 1, name: 'Cookies', servings: 4 }), extraProps: Record<string, any> = {}) {
@@ -172,5 +191,60 @@ describe('AddToShoppingDialog', () => {
         toggle.click()
         await flushPromises()
         expect(store.deviceSettings.mealplan_shopping_skipPreview).toBe(true)
+    })
+
+    // Staging (loading the recipe, computing ingredients/pantry state) never needed a saved meal
+    // plan - only committing does, to link the entries. onBeforeCommit lets the opener (e.g.
+    // MealPlanEditor) save an unsaved plan right at that moment instead of forcing it upfront.
+    describe('commit with an unsaved meal plan (onBeforeCommit)', () => {
+        function setupCommittableDialog(extraProps: Record<string, any> = {}) {
+            apiMock.apiRecipeRetrieve.mockResolvedValue(makeRecipe({id: 1, steps: [makeStep({ingredients: [makeIngredient()]})], servings: 4}))
+            apiMock.apiRecipeRelatedList.mockResolvedValue([])
+            apiMock.apiShoppingListRecipeCreate.mockResolvedValue({id: 99})
+            ;(apiMock as any).apiShoppingListRecipeBulkCreateEntriesCreate.mockResolvedValue({})
+            return mountDialog(undefined, extraProps)
+        }
+
+        it('does not call onBeforeCommit when mealPlan already has an id', async () => {
+            const onBeforeCommit = vi.fn()
+            const wrapper = setupCommittableDialog({mealPlan: {id: 5}, onBeforeCommit})
+            await flushPromises()
+
+            await (wrapper.vm as any).createShoppingListRecipe()
+            await flushPromises()
+
+            expect(onBeforeCommit).not.toHaveBeenCalled()
+            expect(apiMock.apiShoppingListRecipeCreate).toHaveBeenCalledWith(
+                expect.objectContaining({shoppingListRecipe: expect.objectContaining({mealplan: 5})})
+            )
+        })
+
+        it('calls onBeforeCommit and links entries to the returned id when mealPlan has none yet', async () => {
+            const onBeforeCommit = vi.fn().mockResolvedValue({id: 42})
+            const wrapper = setupCommittableDialog({onBeforeCommit})
+            await flushPromises()
+
+            await (wrapper.vm as any).createShoppingListRecipe()
+            await flushPromises()
+
+            expect(onBeforeCommit).toHaveBeenCalled()
+            expect(apiMock.apiShoppingListRecipeCreate).toHaveBeenCalledWith(
+                expect.objectContaining({shoppingListRecipe: expect.objectContaining({mealplan: 42})})
+            )
+            expect(wrapper.emitted('created')).toBeTruthy()
+        })
+
+        it('aborts without creating anything when onBeforeCommit fails to produce an id', async () => {
+            const onBeforeCommit = vi.fn().mockResolvedValue(undefined)
+            const wrapper = setupCommittableDialog({onBeforeCommit})
+            await flushPromises()
+
+            await (wrapper.vm as any).createShoppingListRecipe()
+            await flushPromises()
+
+            expect(onBeforeCommit).toHaveBeenCalled()
+            expect(apiMock.apiShoppingListRecipeCreate).not.toHaveBeenCalled()
+            expect(wrapper.emitted('created')).toBeFalsy()
+        })
     })
 })

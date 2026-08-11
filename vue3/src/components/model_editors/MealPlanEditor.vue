@@ -14,7 +14,7 @@
         <v-card-text class="pa-0">
             <v-tabs v-model="tab" :disabled="loading" grow>
                 <v-tab prepend-icon="$mealplan" value="plan">{{ $t('Meal_Plan') }}</v-tab>
-                <v-tab prepend-icon="$shopping" value="shopping">{{ $t('Shopping_list') }}</v-tab>
+                <v-tab prepend-icon="$shopping" value="shopping" v-if="editingObj.shopping || editingObj.addshopping">{{ $t('Shopping_list') }}</v-tab>
             </v-tabs>
         </v-card-text>
 
@@ -31,14 +31,18 @@
                                 <!--TODO create days input with +/- synced to date -->
                                 <recipe-card :recipe="editingObj.recipe" :servings="editingObj.servings" v-if="editingObj && editingObj.recipe" link-target="_blank"></recipe-card>
 
-                                <v-checkbox :label="$t('AddToShopping')" v-model="editingObj.addshopping" hide-details v-if="editingObj.recipe && !isUpdate()"></v-checkbox>
+                                <v-checkbox :label="$t('AddToShopping')" v-model="editingObj.addshopping" hide-details
+                                            data-test="addshopping-checkbox" v-if="editingObj.recipe && !editingObj.shopping"></v-checkbox>
 
-                                <!-- Editable preview, opened either after a new plan is created (D11 P2a, the
-                                     "AddToShopping" checkbox above) or on switching to the Shopping tab on a plan
-                                     that has a recipe but no shopping list yet (#1). Fresh-mounted per open so it
-                                     reloads the recipe; the browser-remembered fast-path skips the P2a case. -->
+                                <!-- Editable preview, opened as soon as "Add to Shopping" is checked - staging
+                                     ingredient selection only needs the recipe, not a saved plan. Committing (the
+                                     dialog's own button) saves the plan first via onBeforeCommit if it isn't saved
+                                     yet, then links the shopping entries to the fresh id - a two-step save behind
+                                     one click, not a save forced by merely opening the preview. The new-plan
+                                     skip-preview fast path bypasses this entirely (still resolved at Save time). -->
                                 <add-to-shopping-dialog v-if="shoppingPreviewOpen && previewPlan" v-model="shoppingPreviewOpen"
                                                         :recipe="previewPlan.recipe" :meal-plan="previewPlan" :show-skip-preview="true"
+                                                        :on-before-commit="ensurePlanSaved"
                                                         @created="onShoppingCreated"></add-to-shopping-dialog>
                             </v-col>
                             <v-col cols="12" md="6">
@@ -201,6 +205,32 @@ watch(() => editingObj.value.mealType, (newType, oldType) => {
     }
 })
 
+// Checking the box stages the preview immediately - it only needs the recipe, not a saved plan
+// (see AddToShoppingDialog's onBeforeCommit for where the plan actually gets saved, on commit).
+// The new-plan skip-preview fast path is untouched: it bypasses the preview and lets onSave()
+// resolve addshopping straight through to the backend's silent auto-add.
+watch(() => editingObj.value.addshopping, (val) => {
+    if (!val || editingObj.value.shopping) return
+    if (!isUpdate() && deviceSettings.mealplan_shopping_skipPreview) return
+    previewPlan.value = editingObj.value
+    shoppingPreviewOpen.value = true
+})
+
+/**
+ * ensures the plan is persisted before the shopping preview commits its entries - a shopping
+ * entry links to a real meal-plan id, but staging/reviewing it never required one. Called by
+ * AddToShoppingDialog only when its own "Add to Shopping" button is clicked.
+ */
+async function ensurePlanSaved(): Promise<MealPlan | undefined> {
+    if (isUpdate()) return editingObj.value
+    const obj = await saveObject()
+    if (obj?.id) {
+        useMealPlanStore().plans.set(obj.id, obj)
+        previewPlan.value = obj
+    }
+    return obj
+}
+
 function applyTimeToEditingDates() {
     if (!mealPlanTime.value) return
     let changed = editingObjChanged.value
@@ -219,32 +249,14 @@ function applyTimeToEditingDates() {
 }
 
 /**
- * update shopping list when switching to shopping tab
+ * scope the shopping list view to this plan when switching to the Shopping tab - never triggers
+ * a save (the tab is only reachable once the plan is saved or the preview is staging, per its
+ * own v-if; ShoppingListView's own v-else loading state covers the brief gap while unsaved).
  */
-watch(() => tab.value, async (newVal) => {
-    if (newVal !== 'shopping') return
-    // The shopping list scopes to a saved plan, so persist a new plan first (D11 P2b). Going to
-    // the tab means managing shopping directly — don't silently auto-add. On save failure (e.g.
-    // missing meal type) fall back to the plan tab; saveObject already surfaced the field error.
-    if (!editingObj.value.id) {
-        editingObj.value.addshopping = false
-        const obj = await saveObject()
-        if (!obj?.id) {
-            tab.value = 'plan'
-            return
-        }
-        useMealPlanStore().plans.set(obj.id, obj)
-    }
+watch(() => tab.value, (newVal) => {
+    if (newVal !== 'shopping' || !editingObj.value.id) return
     useShoppingStore().selectedMealPlan = editingObj.value.id
     useShoppingStore().updateEntriesStructure()
-
-    // #1: the tab used to just show whatever shopping entries already existed (none, the first
-    // time) with no way to populate from here. Open the same pantry-aware, scale-adjusted preview
-    // the old "Add" button used to gate behind the Meal Plan tab, so the tab is never a dead end.
-    if (editingObj.value.recipe && !editingObj.value.shopping) {
-        previewPlan.value = editingObj.value
-        shoppingPreviewOpen.value = true
-    }
 })
 
 /**

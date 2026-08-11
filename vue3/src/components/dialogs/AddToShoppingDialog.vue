@@ -67,6 +67,9 @@ const props = defineProps({
     mealPlan: {type: Object as PropType<MealPlan>, required: false},
     // When opened as the meal-plan auto-add preview, show the "skip preview next time" toggle (D11 P2a).
     showSkipPreview: {type: Boolean, default: false},
+    // Called on commit when mealPlan has no id yet - lets the opener persist an unsaved plan
+    // (staging/reviewing ingredients never needed one) right before entries link to it.
+    onBeforeCommit: {type: Function as PropType<() => Promise<MealPlan | undefined>>, required: false},
 })
 
 const deviceSettings = useUserPreferenceStore().deviceSettings
@@ -151,17 +154,28 @@ function loadRecipeData() {
 /**
  * creates a shopping list recipe from all selected ingredients
  */
-function createShoppingListRecipe() {
+async function createShoppingListRecipe() {
     let api = new ApiApi()
     loading.value = true
+
+    let mealPlanId = props.mealPlan?.id
+    if (!mealPlanId && props.onBeforeCommit) {
+        const savedPlan = await props.onBeforeCommit()
+        if (!savedPlan?.id) {
+            // save failed (e.g. a required field) - the opener already surfaced the error
+            loading.value = false
+            return
+        }
+        mealPlanId = savedPlan.id
+    }
 
     let shoppingListRecipe = {
         recipe: props.recipe.id,
         servings: servings.value,
     } as ShoppingListRecipe
 
-    if (props.mealPlan && props.mealPlan.id) {
-        shoppingListRecipe.mealplan = props.mealPlan.id!
+    if (mealPlanId) {
+        shoppingListRecipe.mealplan = mealPlanId
     }
 
     let shoppingListEntries = {
