@@ -117,28 +117,31 @@ describe('MealPlanEditor', () => {
         w.unmount()
     })
 
-    // #1 (revised after live feedback, twice): the original fix auto-opened a preview DIALOG on
-    // Shopping-tab navigation, which could silently attempt to save an unsaved plan and surface a
-    // raw 400 if a required field (meal type) was missing. That became checking "Add to Shopping"
-    // opens a dialog instead - user feedback again: since the Shopping tab now shows the identical
-    // preview content inline (item 17's RecipeShoppingPreview reuse), a popup on top of it is
-    // redundant. Checking the box now just switches to the tab that's already showing it.
-    it('switches to the Shopping tab when Add to Shopping is checked', async () => {
+    // #1 (revised after live feedback, three times now): the original fix auto-opened a preview
+    // DIALOG on Shopping-tab navigation, which could silently attempt to save an unsaved plan and
+    // surface a raw 400 if a required field (meal type) was missing. That became checking "Add to
+    // Shopping" opens a dialog instead - redundant once the tab shows the identical preview
+    // content inline (item 17). That became auto-switching to the tab (item 18) - user feedback
+    // again: checking the box should just reveal the tab as reachable, not navigate there for the
+    // user. The tab visibility can't rely solely on editingObj.addshopping past a save, though -
+    // it's a write-only backend field, never echoed back in the response.
+    it('reveals the Shopping tab without switching to it when Add to Shopping is checked', async () => {
         const item = makeMealPlan({id: 8, shopping: false})
         const w = mountEditor(item)
         await flushPromises()
 
-        expect((w.vm as any).tab).toBe('plan')
+        expect(w.findAll('.v-tab').some(t => t.text().includes('Shopping'))).toBe(false)
 
         ;(w.vm as any).editingObj.addshopping = true
         await flushPromises()
 
-        expect((w.vm as any).tab).toBe('shopping')
+        expect((w.vm as any).tab).toBe('plan')
+        expect(w.findAll('.v-tab').some(t => t.text().includes('Shopping'))).toBe(true)
 
         w.unmount()
     })
 
-    it('does not switch tabs again once the plan already has a shopping list', async () => {
+    it('does not affect tab state once the plan already has a shopping list', async () => {
         const item = makeMealPlan({id: 9, shopping: true})
         const w = mountEditor(item)
         await flushPromises()
@@ -147,6 +150,30 @@ describe('MealPlanEditor', () => {
         await flushPromises()
 
         expect((w.vm as any).tab).toBe('plan')
+
+        w.unmount()
+    })
+
+    // The backend's `addshopping` field is write_only - a create/update response never echoes it
+    // back, so editingObj.addshopping reverts to undefined right after Save even though the user's
+    // intent (and onSave()'s own resolveMealplanShoppingAction result) was to review/add shopping
+    // items. Without a separate signal, the tab would vanish the instant Save completes.
+    it('keeps the Shopping tab visible after Save even though addshopping is not echoed back', async () => {
+        const created = makeMealPlan({id: 22, shopping: false})
+        delete (created as any).addshopping
+        ;(apiMock as any).apiMealPlanCreate = vi.fn().mockResolvedValue(created)
+        const w = mountEditor(null)
+        await flushPromises()
+        ;(w.vm as any).editingObj.recipe = created.recipe
+        ;(w.vm as any).editingObj.mealType = created.mealType
+        ;(w.vm as any).editingObj.addshopping = true
+        await flushPromises()
+
+        await w.find('.save-btn').trigger('click')
+        await flushPromises()
+
+        expect((w.vm as any).editingObj.addshopping).toBeUndefined()
+        expect(w.findAll('.v-tab').some(t => t.text().includes('Shopping'))).toBe(true)
 
         w.unmount()
     })
@@ -249,7 +276,7 @@ describe('MealPlanEditor', () => {
             expect(w.findAll('.v-tab').some(t => t.text().includes('Shopping'))).toBe(true)
         })
 
-        it('checking the box for an existing plan switches to the Shopping tab immediately, no save needed', async () => {
+        it('checking the box for an existing plan reveals the Shopping tab immediately, no save needed, no tab switch', async () => {
             const item = makeMealPlan({id: 16, shopping: false})
             const w = mountEditor(item)
             await flushPromises()
@@ -258,11 +285,12 @@ describe('MealPlanEditor', () => {
             await checkbox.setValue(true)
             await flushPromises()
 
-            expect((w.vm as any).tab).toBe('shopping')
+            expect((w.vm as any).tab).toBe('plan')
+            expect(w.findAll('.v-tab').some(t => t.text().includes('Shopping'))).toBe(true)
             expect(apiMock.apiMealPlanUpdate).not.toHaveBeenCalled()
         })
 
-        it('checking the box for a new (unsaved) plan also switches to the Shopping tab by default, without saving', async () => {
+        it('checking the box for a new (unsaved) plan also reveals the Shopping tab by default, without saving or switching', async () => {
             const w = mountEditor(null)
             await flushPromises()
             ;(w.vm as any).editingObj.recipe = makeMealPlan().recipe
@@ -272,7 +300,8 @@ describe('MealPlanEditor', () => {
             await checkbox.setValue(true)
             await flushPromises()
 
-            expect((w.vm as any).tab).toBe('shopping')
+            expect((w.vm as any).tab).toBe('plan')
+            expect(w.findAll('.v-tab').some(t => t.text().includes('Shopping'))).toBe(true)
             expect(apiMock.apiMealPlanCreate).not.toHaveBeenCalled()
         })
 

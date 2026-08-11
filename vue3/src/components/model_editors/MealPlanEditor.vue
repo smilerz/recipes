@@ -14,7 +14,7 @@
         <v-card-text class="pa-0">
             <v-tabs v-model="tab" :disabled="loading">
                 <v-tab prepend-icon="$mealplan" value="plan" class="meal-plan-tab">{{ $t('Meal_Plan') }}</v-tab>
-                <v-tab prepend-icon="$shopping" value="shopping" v-if="editingObj.shopping || editingObj.addshopping" class="meal-plan-tab">{{ $t('Shopping_list') }}</v-tab>
+                <v-tab prepend-icon="$shopping" value="shopping" v-if="editingObj.shopping || editingObj.addshopping || shoppingTabAvailable" class="meal-plan-tab">{{ $t('Shopping_list') }}</v-tab>
             </v-tabs>
         </v-card-text>
 
@@ -172,6 +172,12 @@ const tab = ref('plan')
 // the silent backend auto-add; the browser-remembered fast-path skips straight to the silent add.
 const deviceSettings = useUserPreferenceStore().deviceSettings
 
+// `addshopping` is a write-only backend field - never echoed back in a save response - so
+// editingObj.addshopping reverts to undefined right after Save even when the user's intent to
+// review/add shopping items is still current. This tracks that intent independently so the
+// Shopping tab stays reachable once Save resolves it (see onSave()'s openPreview branch).
+const shoppingTabAvailable = ref(false)
+
 function onSave() {
     const wantsShopping = !isUpdate() && !!editingObj.value.recipe && !!editingObj.value.addshopping
     const action = resolveMealplanShoppingAction(wantsShopping, deviceSettings.mealplan_shopping_skipPreview)
@@ -181,7 +187,7 @@ function onSave() {
         if (!obj?.id) return obj  // save failed (e.g. validation error) — saveObject already surfaced it
         useMealPlanStore().plans.set(obj.id, obj)
         if (action.openPreview && obj.recipe) {
-            tab.value = 'shopping'
+            shoppingTabAvailable.value = true
         }
         return obj
     })
@@ -198,14 +204,14 @@ watch(() => editingObj.value.mealType, (newType, oldType) => {
     }
 })
 
-// Checking the box switches straight to the Shopping tab, which already shows the same staging
-// preview inline (item 17) - no separate popup needed anymore. The new-plan skip-preview fast
-// path is untouched: it stays on the Plan tab and lets onSave() resolve addshopping straight
-// through to the backend's silent auto-add.
+// Checking the box just reveals the Shopping tab (which already shows the same staging preview
+// inline, item 17) as reachable - it does not navigate there itself, the user clicks it when
+// ready. The new-plan skip-preview fast path is untouched: it stays on the Plan tab and lets
+// onSave() resolve addshopping straight through to the backend's silent auto-add.
 watch(() => editingObj.value.addshopping, (val) => {
     if (!val || editingObj.value.shopping) return
     if (!isUpdate() && deviceSettings.mealplan_shopping_skipPreview) return
-    tab.value = 'shopping'
+    shoppingTabAvailable.value = true
 })
 
 /**
