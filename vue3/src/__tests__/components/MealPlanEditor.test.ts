@@ -66,7 +66,7 @@ function mountEditor(item: any) {
                 ModelSelect: {template: '<div class="stub-model-select"/>'},
                 RecipeCard: {template: '<div class="stub-recipe-card"/>'},
                 ClosableHelpAlert: {template: '<div class="stub-help-alert"/>'},
-                ShoppingListView: {template: '<div class="stub-shopping-list-view"/>'},
+                RecipeShoppingPreview: {template: '<div class="stub-recipe-shopping-preview"/>'},
                 AddToShoppingDialog: {template: '<div class="stub-add-to-shopping-dialog"/>'},
             },
         },
@@ -155,6 +155,7 @@ describe('MealPlanEditor', () => {
     // Save - the nested editingObj.shopping mutation shouldn't mark the whole plan as unsaved.
     it('creating the shopping list from the preview does not mark the plan as unsaved', async () => {
         const item = makeMealPlan({id: 10, shopping: false})
+        ;(apiMock as any).apiShoppingListEntryList = vi.fn().mockResolvedValue({count: 0, next: null, previous: null, results: [], timestamp: new Date()})
         const w = mountEditor(item)
         await flushPromises()
 
@@ -167,6 +168,40 @@ describe('MealPlanEditor', () => {
         expect((w.vm as any).editingObjChanged).toBe(false)
 
         w.unmount()
+    })
+
+    // The Shopping tab used to embed the global ShoppingListView (loading the whole household
+    // list); it now fetches just this plan's entries directly for the shared preview component.
+    describe('loading scoped shopping entries', () => {
+        it('fetches entries scoped to this plan when switching to the Shopping tab', async () => {
+            const item = makeMealPlan({id: 20, shopping: true})
+            ;(apiMock as any).apiShoppingListEntryList = vi.fn().mockResolvedValue({count: 1, next: null, previous: null, results: [{id: 501}], timestamp: new Date()})
+            const w = mountEditor(item)
+            await flushPromises()
+
+            ;(w.vm as any).tab = 'shopping'
+            await flushPromises()
+
+            expect((apiMock as any).apiShoppingListEntryList).toHaveBeenCalledWith(expect.objectContaining({mealplan: 20}))
+            expect((w.vm as any).shoppingEntries).toEqual([{id: 501}])
+
+            w.unmount()
+        })
+
+        it('loads entries immediately once the preview commits, without waiting for a tab switch', async () => {
+            const item = makeMealPlan({id: 21, shopping: false})
+            ;(apiMock as any).apiShoppingListEntryList = vi.fn().mockResolvedValue({count: 1, next: null, previous: null, results: [{id: 900}], timestamp: new Date()})
+            const w = mountEditor(item)
+            await flushPromises()
+
+            ;(w.vm as any).onShoppingCreated()
+            await flushPromises()
+
+            expect((apiMock as any).apiShoppingListEntryList).toHaveBeenCalledWith(expect.objectContaining({mealplan: 21}))
+            expect((w.vm as any).shoppingEntries).toEqual([{id: 900}])
+
+            w.unmount()
+        })
     })
 
     // Live-testing #1 surfaced a real bug: switching to the Shopping tab on a brand-new plan
@@ -286,6 +321,27 @@ describe('MealPlanEditor', () => {
             expect((apiMock as any).apiMealPlanCreate).toHaveBeenCalled()
             expect(result?.id).toBe(18)
             expect((w.vm as any).editingObj.id).toBe(18)
+        })
+
+        // Bug found live: ensurePlanSaved() is only ever called right before the caller (the
+        // shopping preview) commits its own entries - if the save payload still carries
+        // addshopping: true, the backend's MealPlan serializer ALSO silently auto-adds
+        // (RecipeShoppingEditor, server-side), producing a second, duplicate ShoppingListRecipe
+        // for the same plan+recipe. onSave() already resolves this for the Save-button path
+        // (resolveMealplanShoppingAction) - ensurePlanSaved() needs the same protection.
+        it('clears addshopping before saving, so the backend does not also silently auto-add', async () => {
+            const created = makeMealPlan({id: 19})
+            ;(apiMock as any).apiMealPlanCreate = vi.fn().mockResolvedValue(created)
+            const w = mountEditor(null)
+            await flushPromises()
+            ;(w.vm as any).editingObj.recipe = created.recipe
+            ;(w.vm as any).editingObj.mealType = created.mealType
+            ;(w.vm as any).editingObj.addshopping = true
+
+            await (w.vm as any).ensurePlanSaved()
+
+            const sentPayload = ((apiMock as any).apiMealPlanCreate.mock.calls[0][0] as any).mealPlan
+            expect(sentPayload.addshopping).toBe(false)
         })
     })
 })

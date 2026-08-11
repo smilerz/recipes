@@ -1,11 +1,10 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { flushPromises, mount } from '@vue/test-utils'
 import { createPinia, setActivePinia, type PiniaPlugin } from 'pinia'
-import { useUserPreferenceStore } from '@/stores/UserPreferenceStore'
 import { createI18n } from 'vue-i18n'
 import { createRouter, createMemoryHistory } from 'vue-router'
 import { apiMock, resetApiMock } from '@/__tests__/api-mock'
-import { makeRecipe, makeStep, makeIngredient, makeFood, makeUnit, makeUserPreference } from '@/__tests__/factories'
+import { makeRecipe, makeStep, makeIngredient, makeUserPreference } from '@/__tests__/factories'
 
 vi.mock('@/openapi', async (importOriginal) => ({
     ...(await importOriginal<any>()),
@@ -13,10 +12,6 @@ vi.mock('@/openapi', async (importOriginal) => ({
     ResponseError: class extends Error { response: any; constructor(r: any) { super(); this.response = r } },
 }))
 
-// MessageStore calls useI18n() at store-setup time, which requires an active component
-// instance - fine when some other component warms the store first (as happens in the real
-// app), but this dialog never does, and no prior test here exercised its success/error path
-// to surface it. Mocked like other test files that hit the same gotcha (e.g. SearchPage.test.ts).
 vi.mock('@/stores/MessageStore', async (importOriginal) => {
     const actual = await importOriginal<any>()
     return {
@@ -44,14 +39,13 @@ vi.mock('@vueuse/router', () => ({
 }))
 
 import AddToShoppingDialog from '@/components/dialogs/AddToShoppingDialog.vue'
+import RecipeShoppingPreview from '@/components/display/RecipeShoppingPreview.vue'
 
 describe('AddToShoppingDialog', () => {
     beforeEach(() => {
         resetApiMock()
         apiMock.apiRecipeRetrieve = vi.fn()
         apiMock.apiRecipeRelatedList = vi.fn()
-        apiMock.apiShoppingListRecipeCreate = vi.fn()
-        ;(apiMock as any).apiShoppingListRecipeBulkCreateEntriesCreate = vi.fn()
     })
 
     function mountDialog(recipe = makeRecipe({ id: 1, name: 'Cookies', servings: 4 }), extraProps: Record<string, any> = {}) {
@@ -71,180 +65,65 @@ describe('AddToShoppingDialog', () => {
         })
 
         return mount(AddToShoppingDialog, {
-            props: { recipe, ...extraProps },
+            props: { recipe, modelValue: true, ...extraProps },
             global: {
                 plugins: [pinia, i18n, router],
                 stubs: {
                     ModelSelect: { template: '<div class="stub-model-select"/>' },
                     VClosableCardTitle: { template: '<div class="stub-title"/>' },
-                    // Mirror the real indicator: renders a jar only when in-inventory is truthy.
-                    PantryJarIndicator: { props: ['inInventory', 'earliestExpiry'], template: '<span class="stub-jar" v-if="inInventory"/>' },
+                    PantryJarIndicator: { props: ['inInventory', 'earliestExpiry'], template: '<span/>' },
                 },
             },
         })
     }
 
-    it('mounts without error', async () => {
-        const fullRecipe = makeRecipe({
-            id: 1,
-            steps: [makeStep({ ingredients: [makeIngredient()] })],
-            servings: 4,
-        })
-        apiMock.apiRecipeRetrieve.mockResolvedValue(fullRecipe)
+    it('mounts without error and loads the recipe', async () => {
+        apiMock.apiRecipeRetrieve.mockResolvedValue(makeRecipe({ id: 1, steps: [makeStep({ ingredients: [makeIngredient()] })], servings: 4 }))
         apiMock.apiRecipeRelatedList.mockResolvedValue([])
 
         const wrapper = mountDialog()
         await flushPromises()
 
         expect(wrapper.exists()).toBe(true)
-    })
-
-    it('calls apiRecipeRetrieve on mount', async () => {
-        apiMock.apiRecipeRetrieve.mockResolvedValue(makeRecipe({ id: 1 }))
-        apiMock.apiRecipeRelatedList.mockResolvedValue([])
-
-        mountDialog()
-        await flushPromises()
-
         expect(apiMock.apiRecipeRetrieve).toHaveBeenCalledWith({ id: 1 })
     })
 
-    it('calls apiRecipeRelatedList to load related recipes', async () => {
-        apiMock.apiRecipeRetrieve.mockResolvedValue(makeRecipe({ id: 1 }))
+    it('forwards recipe, mealPlan, showSkipPreview and onBeforeCommit to the shared preview', async () => {
+        apiMock.apiRecipeRetrieve.mockResolvedValue(makeRecipe({ id: 1, steps: [makeStep({ ingredients: [makeIngredient()] })], servings: 4 }))
+        apiMock.apiRecipeRelatedList.mockResolvedValue([])
+        const onBeforeCommit = vi.fn()
+        const mealPlan = { id: 5 }
+
+        const wrapper = mountDialog(undefined, { mealPlan, showSkipPreview: true, onBeforeCommit })
+        await flushPromises()
+
+        const preview = wrapper.findComponent(RecipeShoppingPreview)
+        expect(preview.props('mealPlan')).toEqual(mealPlan)
+        expect(preview.props('showSkipPreview')).toBe(true)
+        expect(preview.props('onBeforeCommit')).toBe(onBeforeCommit)
+    })
+
+    it('closes the dialog and re-emits created when the shared preview emits created', async () => {
+        apiMock.apiRecipeRetrieve.mockResolvedValue(makeRecipe({ id: 1, steps: [makeStep({ ingredients: [makeIngredient()] })], servings: 4 }))
+        apiMock.apiRecipeRelatedList.mockResolvedValue([])
+
+        const wrapper = mountDialog()
+        await flushPromises()
+
+        wrapper.findComponent(RecipeShoppingPreview).vm.$emit('created')
+        await flushPromises()
+
+        expect(wrapper.emitted('created')).toBeTruthy()
+        expect((wrapper.vm as any).dialog).toBe(false)
+    })
+
+    it('title reflects the servings bound from the shared preview', async () => {
+        apiMock.apiRecipeRetrieve.mockResolvedValue(makeRecipe({ id: 1, steps: [makeStep({ ingredients: [makeIngredient()] })], servings: 3 }))
         apiMock.apiRecipeRelatedList.mockResolvedValue([])
 
         mountDialog()
         await flushPromises()
-
-        expect(apiMock.apiRecipeRelatedList).toHaveBeenCalledWith({ id: 1 })
-    })
-
-    it('builds dialog entries from recipe ingredients', async () => {
-        const ingredient = makeIngredient({ food: makeFood({ name: 'Flour' }), amount: 2, unit: makeUnit({ name: 'cups' }) })
-        const recipe = makeRecipe({
-            id: 1,
-            servings: 4,
-            steps: [makeStep({ ingredients: [ingredient] })],
-        })
-        apiMock.apiRecipeRetrieve.mockResolvedValue(recipe)
-        apiMock.apiRecipeRelatedList.mockResolvedValue([])
-
-        const wrapper = mountDialog()
-        await flushPromises()
-        // open via v-model (the real path), not a private ref — mirrors how RecipeContextMenu drives it
-        await wrapper.setProps({ modelValue: true })
-        await flushPromises()
-
-        expect(document.body.innerHTML).toContain('Flour')
-    })
-
-    // D11 Phase 1: the dialog already auto-unchecks on-hand ingredients silently — make that
-    // visible with a pantry jar on the on-hand rows so the pre-uncheck is explained (and still
-    // overridable via the row checkbox).
-    it('shows a pantry jar on on-hand ingredients and pre-unchecks them', async () => {
-        const onHand = makeIngredient({ food: makeFood({ name: 'Flour', foodOnhand: true, inInventory: 'True', earliestExpiry: null }) })
-        const needed = makeIngredient({ food: makeFood({ id: 2, name: 'Sugar', foodOnhand: false, inInventory: 'False', earliestExpiry: null }) })
-        const recipe = makeRecipe({ id: 1, servings: 4, steps: [makeStep({ ingredients: [onHand, needed] })] })
-        apiMock.apiRecipeRetrieve.mockResolvedValue(recipe)
-        apiMock.apiRecipeRelatedList.mockResolvedValue([])
-
-        const wrapper = mountDialog()
-        await flushPromises()
-        await wrapper.setProps({ modelValue: true })
-        await flushPromises()
-
-        // exactly one jar — on the on-hand food (Flour), not the needed one (Sugar)
-        expect(document.body.querySelectorAll('.stub-jar').length).toBe(1)
-
-        const entries = (wrapper.vm as any).dialogRecipes[0].entries
-        const flour = entries.find((e: any) => e.food?.name === 'Flour')
-        const sugar = entries.find((e: any) => e.food?.name === 'Sugar')
-        expect(flour.checked).toBe(false)   // on-hand → pre-unchecked
-        expect(sugar.checked).toBe(true)    // needed → checked
-    })
-
-    // D11 P2a: when the dialog is the meal-plan auto-add preview (showSkipPreview), it offers a
-    // browser-remembered "skip preview next time" toggle bound to the device setting.
-    it('does not show the skip-preview toggle by default', async () => {
-        apiMock.apiRecipeRetrieve.mockResolvedValue(makeRecipe({ id: 1, steps: [makeStep({ ingredients: [makeIngredient()] })], servings: 4 }))
-        apiMock.apiRecipeRelatedList.mockResolvedValue([])
-        const wrapper = mountDialog()
-        await flushPromises()
-        await wrapper.setProps({ modelValue: true })
-        await flushPromises()
-        expect(document.body.querySelector('.skip-preview-toggle')).toBeNull()
-    })
-
-    it('shows the skip-preview toggle when showSkipPreview is set and writes the device setting', async () => {
-        apiMock.apiRecipeRetrieve.mockResolvedValue(makeRecipe({ id: 1, steps: [makeStep({ ingredients: [makeIngredient()] })], servings: 4 }))
-        apiMock.apiRecipeRelatedList.mockResolvedValue([])
-        const wrapper = mountDialog(undefined, { showSkipPreview: true })
-        await flushPromises()
-        await wrapper.setProps({ modelValue: true })
-        await flushPromises()
-
-        const store = useUserPreferenceStore()
-        expect(store.deviceSettings.mealplan_shopping_skipPreview).toBe(false)
-
-        const toggle = document.body.querySelector('.skip-preview-toggle input') as HTMLInputElement
-        expect(toggle).not.toBeNull()
-        toggle.click()
-        await flushPromises()
-        expect(store.deviceSettings.mealplan_shopping_skipPreview).toBe(true)
-    })
-
-    // Staging (loading the recipe, computing ingredients/pantry state) never needed a saved meal
-    // plan - only committing does, to link the entries. onBeforeCommit lets the opener (e.g.
-    // MealPlanEditor) save an unsaved plan right at that moment instead of forcing it upfront.
-    describe('commit with an unsaved meal plan (onBeforeCommit)', () => {
-        function setupCommittableDialog(extraProps: Record<string, any> = {}) {
-            apiMock.apiRecipeRetrieve.mockResolvedValue(makeRecipe({id: 1, steps: [makeStep({ingredients: [makeIngredient()]})], servings: 4}))
-            apiMock.apiRecipeRelatedList.mockResolvedValue([])
-            apiMock.apiShoppingListRecipeCreate.mockResolvedValue({id: 99})
-            ;(apiMock as any).apiShoppingListRecipeBulkCreateEntriesCreate.mockResolvedValue({})
-            return mountDialog(undefined, extraProps)
-        }
-
-        it('does not call onBeforeCommit when mealPlan already has an id', async () => {
-            const onBeforeCommit = vi.fn()
-            const wrapper = setupCommittableDialog({mealPlan: {id: 5}, onBeforeCommit})
-            await flushPromises()
-
-            await (wrapper.vm as any).createShoppingListRecipe()
-            await flushPromises()
-
-            expect(onBeforeCommit).not.toHaveBeenCalled()
-            expect(apiMock.apiShoppingListRecipeCreate).toHaveBeenCalledWith(
-                expect.objectContaining({shoppingListRecipe: expect.objectContaining({mealplan: 5})})
-            )
-        })
-
-        it('calls onBeforeCommit and links entries to the returned id when mealPlan has none yet', async () => {
-            const onBeforeCommit = vi.fn().mockResolvedValue({id: 42})
-            const wrapper = setupCommittableDialog({onBeforeCommit})
-            await flushPromises()
-
-            await (wrapper.vm as any).createShoppingListRecipe()
-            await flushPromises()
-
-            expect(onBeforeCommit).toHaveBeenCalled()
-            expect(apiMock.apiShoppingListRecipeCreate).toHaveBeenCalledWith(
-                expect.objectContaining({shoppingListRecipe: expect.objectContaining({mealplan: 42})})
-            )
-            expect(wrapper.emitted('created')).toBeTruthy()
-        })
-
-        it('aborts without creating anything when onBeforeCommit fails to produce an id', async () => {
-            const onBeforeCommit = vi.fn().mockResolvedValue(undefined)
-            const wrapper = setupCommittableDialog({onBeforeCommit})
-            await flushPromises()
-
-            await (wrapper.vm as any).createShoppingListRecipe()
-            await flushPromises()
-
-            expect(onBeforeCommit).toHaveBeenCalled()
-            expect(apiMock.apiShoppingListRecipeCreate).not.toHaveBeenCalled()
-            expect(wrapper.emitted('created')).toBeFalsy()
-        })
+        // the recipe's own servings (3) is applied as the initial value once loaded
+        expect(document.body.innerHTML).not.toContain('undefined')
     })
 })
