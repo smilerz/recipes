@@ -176,6 +176,27 @@ describe('RecipeShoppingPreview', () => {
         expect(sugar.checked).toBe(true)    // needed → checked
     })
 
+    // Bug reported live: a recipe with both "lime juice" (on hand) and "lemon juice" (a
+    // substitute relationship, not itself on hand) pre-checked lemon juice for shopping - wrong,
+    // since a substitute is already available. The pre-check only looked at the food's OWN
+    // onhand/ignoreShopping flags, ignoring Food.substituteOnhand (already computed backend-side,
+    // reused by #2/#3's substitute-aware availability work elsewhere in the app).
+    it('pre-unchecks and shows a pantry jar for an ingredient whose substitute is on hand, not itself', async () => {
+        const substituteCovered = makeIngredient({ food: makeFood({ name: 'Lemon juice', foodOnhand: false, substituteOnhand: true, inInventory: 'False', earliestExpiry: null }) })
+        const recipe = makeRecipe({ id: 1, servings: 4, steps: [makeStep({ ingredients: [substituteCovered] })] })
+        apiMock.apiRecipeRetrieve.mockResolvedValue(recipe)
+        apiMock.apiRecipeRelatedList.mockResolvedValue([])
+
+        const wrapper = mountPreview()
+        await flushPromises()
+
+        expect(document.body.querySelectorAll('.stub-jar').length).toBe(1)
+
+        const entries = (wrapper.vm as any).dialogRecipes[0].entries
+        const lemonJuice = entries.find((e: any) => e.food?.name === 'Lemon juice')
+        expect(lemonJuice.checked).toBe(false)
+    })
+
     // D11 P2a: when opened as the meal-plan auto-add preview (showSkipPreview), offers a
     // browser-remembered "skip preview next time" toggle bound to the device setting.
     it('does not show the skip-preview toggle by default', async () => {

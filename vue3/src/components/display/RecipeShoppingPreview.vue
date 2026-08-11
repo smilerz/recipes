@@ -19,8 +19,10 @@
                         <td>
                             <template v-if="e.food"> {{ ingredientToFoodString(e.ingredient, ingredientFactor) }}</template>
                             <!-- Surface why an on-hand row is pre-unchecked: the pantry jar signals it's
-                                 already stocked (with expiry tint). The row stays overridable (D11 P1). -->
-                            <pantry-jar-indicator :in-inventory="parseBooleanAnnotation(e.food?.inInventory)"
+                                 already stocked (with expiry tint), or that a substitute is on hand
+                                 instead (no expiry tint - it's not this exact food that's stocked).
+                                 The row stays overridable (D11 P1). -->
+                            <pantry-jar-indicator :in-inventory="parseBooleanAnnotation(e.food?.inInventory) || e.food?.substituteOnhand"
                                                   :earliest-expiry="e.food?.earliestExpiry" size="x-small" class="ml-1"></pantry-jar-indicator>
                         </td>
                     </tr>
@@ -147,7 +149,7 @@ function loadRecipeData() {
                                 unit: ingredient.unit,
                                 ingredient: ingredient,
                                 checked: liveMode.value ? existing != undefined
-                                    : (ingredient.food ? !(ingredient.food.ignoreShopping || ingredient.food.foodOnhand) : true),
+                                    : (ingredient.food ? !(ingredient.food.ignoreShopping || ingredient.food.foodOnhand || ingredient.food.substituteOnhand) : true),
                                 entryId: existing?.id,
                             })
                         }
