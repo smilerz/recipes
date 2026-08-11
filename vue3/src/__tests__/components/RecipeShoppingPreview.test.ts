@@ -6,7 +6,7 @@ import { useShoppingStore } from '@/stores/ShoppingStore'
 import { createI18n } from 'vue-i18n'
 import { createRouter, createMemoryHistory } from 'vue-router'
 import { apiMock, resetApiMock } from '@/__tests__/api-mock'
-import { makeRecipe, makeStep, makeIngredient, makeFood, makeUnit, makeUserPreference, makeShoppingListEntry } from '@/__tests__/factories'
+import { makeRecipe, makeStep, makeIngredient, makeFood, makeFoodSimple, makeUnit, makeUserPreference, makeShoppingListEntry } from '@/__tests__/factories'
 
 vi.mock('@/openapi', async (importOriginal) => ({
     ...(await importOriginal<any>()),
@@ -181,8 +181,8 @@ describe('RecipeShoppingPreview', () => {
     // since a substitute is already available. The pre-check only looked at the food's OWN
     // onhand/ignoreShopping flags, ignoring Food.substituteOnhand (already computed backend-side,
     // reused by #2/#3's substitute-aware availability work elsewhere in the app).
-    it('pre-unchecks and shows a pantry jar for an ingredient whose substitute is on hand, not itself', async () => {
-        const substituteCovered = makeIngredient({ food: makeFood({ name: 'Lemon juice', foodOnhand: false, substituteOnhand: true, inInventory: 'False', earliestExpiry: null }) })
+    it('pre-unchecks an ingredient whose substitute is on hand, not itself', async () => {
+        const substituteCovered = makeIngredient({ food: makeFood({ name: 'Lemon juice', foodOnhand: false, substituteOnhand: true, inInventory: 'False', earliestExpiry: null, availableSubstitutes: [makeFoodSimple({name: 'Lime juice'})] }) })
         const recipe = makeRecipe({ id: 1, servings: 4, steps: [makeStep({ ingredients: [substituteCovered] })] })
         apiMock.apiRecipeRetrieve.mockResolvedValue(recipe)
         apiMock.apiRecipeRelatedList.mockResolvedValue([])
@@ -190,11 +190,46 @@ describe('RecipeShoppingPreview', () => {
         const wrapper = mountPreview()
         await flushPromises()
 
-        expect(document.body.querySelectorAll('.stub-jar').length).toBe(1)
-
         const entries = (wrapper.vm as any).dialogRecipes[0].entries
         const lemonJuice = entries.find((e: any) => e.food?.name === 'Lemon juice')
         expect(lemonJuice.checked).toBe(false)
+    })
+
+    // Follow-up: a substitute-only row should look visibly different from an actually-on-hand
+    // row (a distinct swap icon, not the pantry jar) and name the substitute inline - not just in
+    // a hover-only tooltip/aria-label - so the user can decide without extra interaction. When
+    // several substitutes are available, show specifically the FIRST one (not a random pick like
+    // the recipe-view page's IngredientsTable.vue - this is a one-time decision, not a long-lived
+    // display, so determinism was chosen over IngredientsTable's session-stable-random spread).
+    it('shows a distinct substitute icon and names the first available substitute, not the pantry jar', async () => {
+        const substituteCovered = makeIngredient({
+            food: makeFood({
+                name: 'Lemon juice', foodOnhand: false, substituteOnhand: true, inInventory: 'False', earliestExpiry: null,
+                availableSubstitutes: [makeFoodSimple({name: 'Lime juice'}), makeFoodSimple({name: 'Bottled lemon juice'})],
+            }),
+        })
+        const recipe = makeRecipe({ id: 1, servings: 4, steps: [makeStep({ ingredients: [substituteCovered] })] })
+        apiMock.apiRecipeRetrieve.mockResolvedValue(recipe)
+        apiMock.apiRecipeRelatedList.mockResolvedValue([])
+
+        mountPreview()
+        await flushPromises()
+
+        expect(document.body.querySelectorAll('.stub-jar').length).toBe(0)
+        expect(document.body.textContent).toContain('Lime juice')
+        expect(document.body.textContent).not.toContain('Bottled lemon juice')
+    })
+
+    it('still shows the pantry jar (not the substitute icon) when the food itself is on hand', async () => {
+        const onHand = makeIngredient({ food: makeFood({ name: 'Flour', foodOnhand: true, substituteOnhand: false, inInventory: 'True', earliestExpiry: null }) })
+        const recipe = makeRecipe({ id: 1, servings: 4, steps: [makeStep({ ingredients: [onHand] })] })
+        apiMock.apiRecipeRetrieve.mockResolvedValue(recipe)
+        apiMock.apiRecipeRelatedList.mockResolvedValue([])
+
+        mountPreview()
+        await flushPromises()
+
+        expect(document.body.querySelectorAll('.stub-jar').length).toBe(1)
     })
 
     // D11 P2a: when opened as the meal-plan auto-add preview (showSkipPreview), offers a

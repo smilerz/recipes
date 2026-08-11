@@ -2,6 +2,21 @@ import {DateTime} from "luxon"
 import type {Unit} from "@/openapi"
 import {parseBooleanAnnotation} from "@/utils/model_utils"
 
+/**
+ * Accessible label for a food covered by an on-hand substitute (not itself on hand): lists every
+ * currently-available substitute by name, falling back to a generic label if none loaded. Shared
+ * by every surface that shows the "substitute available" icon (recipe view, shopping preview) so
+ * they can't drift out of agreement on the wording.
+ */
+export function substituteAvailableLabel(
+    food: {availableSubstitutes?: Array<{name?: string | null}> | null} | null | undefined,
+    t: (key: string, params?: Record<string, unknown>) => string,
+): string {
+    const subs = food?.availableSubstitutes ?? []
+    if (subs.length) return t('SubstituteAvailable', {names: subs.map(s => s.name).join(', ')})
+    return t('SubstituteOnHand')
+}
+
 /** A lot expiring within this many days (inclusive) is "expiring soon". */
 export const EXPIRING_SOON_DAYS = 3
 

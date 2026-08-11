@@ -19,11 +19,18 @@
                         <td>
                             <template v-if="e.food"> {{ ingredientToFoodString(e.ingredient, ingredientFactor) }}</template>
                             <!-- Surface why an on-hand row is pre-unchecked: the pantry jar signals it's
-                                 already stocked (with expiry tint), or that a substitute is on hand
-                                 instead (no expiry tint - it's not this exact food that's stocked).
-                                 The row stays overridable (D11 P1). -->
-                            <pantry-jar-indicator :in-inventory="parseBooleanAnnotation(e.food?.inInventory) || e.food?.substituteOnhand"
+                                 already stocked (with expiry tint); a distinct swap icon + the first
+                                 available substitute's name signals a substitute covers it instead -
+                                 not the same as having the food itself, so it gets its own icon/color
+                                 (mirrors IngredientsTable.vue's identical distinction). Both stay
+                                 overridable via the row checkbox (D11 P1). -->
+                            <pantry-jar-indicator v-if="parseBooleanAnnotation(e.food?.inInventory)" :in-inventory="true"
                                                   :earliest-expiry="e.food?.earliestExpiry" size="x-small" class="ml-1"></pantry-jar-indicator>
+                            <v-icon v-else-if="e.food?.substituteOnhand" icon="fa-solid fa-right-left" color="success" size="x-small" class="ml-1"
+                                    :aria-label="substituteAvailableLabel(e.food, $t)"></v-icon>
+                            <span v-if="!parseBooleanAnnotation(e.food?.inInventory) && e.food?.substituteOnhand" class="text-caption text-medium-emphasis ml-1">
+                                ({{ e.food?.availableSubstitutes?.[0]?.name }})
+                            </span>
                         </td>
                     </tr>
                     </tbody>
@@ -53,6 +60,7 @@ import {calculateFoodAmount} from "@/utils/number_utils";
 import {useUserPreferenceStore} from "@/stores/UserPreferenceStore";
 import {useShoppingStore} from "@/stores/ShoppingStore";
 import {ingredientToUnitString, ingredientToFoodString, parseBooleanAnnotation} from "@/utils/model_utils.ts";
+import {substituteAvailableLabel} from "@/utils/pantry_utils.ts";
 import ModelSelect from "@/components/inputs/ModelSelect.vue";
 import PantryJarIndicator from "@/components/display/PantryJarIndicator.vue";
 

@@ -123,6 +123,7 @@ import IngredientContextMenu from "@/components/inputs/IngredientContextMenu.vue
 import PantryJarIndicator from "@/components/display/PantryJarIndicator.vue";
 import {useDisplay} from "vuetify";
 import {useI18n} from "vue-i18n";
+import {substituteAvailableLabel} from "@/utils/pantry_utils.ts";
 
 const emit = defineEmits(['scale'])
 const {mobile} = useDisplay()
@@ -273,9 +274,7 @@ function inlineSubstituteLength(i: Ingredient): number {
 }
 
 function substituteLabel(i: Ingredient): string {
-    const subs = i.food?.availableSubstitutes ?? []
-    if (subs.length) return t('SubstituteAvailable', {names: subs.map(s => s.name).join(', ')})
-    return t('SubstituteOnHand')
+    return substituteAvailableLabel(i.food, t)
 }
 
 </script>
