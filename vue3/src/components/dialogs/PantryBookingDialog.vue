@@ -128,6 +128,7 @@ const dialog = defineModel<boolean>()
 const props = defineProps<{
     bookingMode: string,
     inventoryEntryId?: number,
+    foodId?: number,
 }>()
 
 const {t} = useI18n()
@@ -179,51 +180,54 @@ watch(dialog, (newValue, oldValue) => {
     if (!newValue) {
         resetForm()
     } else {
+        const promises: Promise<unknown>[] = []
+        const api = new ApiApi()
+
+        formLoading.value = true
         bookingMode.value = props.bookingMode
 
         if (props.inventoryEntryId) {
             let api = new ApiApi()
-            api.apiInventoryEntryRetrieve({id: props.inventoryEntryId}).then(r => {
+            promises.push(api.apiInventoryEntryRetrieve({id: props.inventoryEntryId}).then(r => {
                 inventoryEntry.value = r
                 inventoryEntrySelected()
-            })
+            }))
         }
-    }
-})
+        if (props.foodId) {
+            let api = new ApiApi()
+            promises.push(api.apiFoodRetrieve({id: props.foodId}).then(r => {
+                food.value = r
+            }))
+        }
 
-onMounted(() => {
-    let api = new ApiApi()
-    bookingMode.value = props.bookingMode
+        api.apiInventoryEntryList({pageSize: 1}).then(r => {
+            promises.push(api.apiInventoryEntryList({pageSize: 100, page: Math.max(1, Math.ceil(r.count / 100))}).then(r => {
+                const counts = new Map<number, { unit: Unit, count: number }>()
+                r.results.forEach(entry => {
+                    if (entry.unit) {
+                        const u = entry.unit
+                        const count = counts.get(u.id!) || {unit: u, count: 0}
+                        count.count++
+                        counts.set(u.id!, count)
+                    }
+                })
 
-    if (props.inventoryEntryId) {
-        
-        api.apiInventoryEntryRetrieve({id: props.inventoryEntryId}).then(r => {
-            inventoryEntry.value = r
-            inventoryEntrySelected()
+                commonUnits.value = Array.from(counts.values())
+                    .sort((a, b) => b.count - a.count)
+                    .slice(0, 5)
+                    .map(c => c.unit)
+            }).catch(err => {
+                useMessageStore().addError(ErrorMessageType.FETCH_ERROR, err)
+            }))
+
+            Promise.allSettled(promises).finally(() => {
+                formLoading.value = false
+            })
+        }).catch(err => {
+            useMessageStore().addError(ErrorMessageType.FETCH_ERROR, err)
         })
     }
-    
-    // TODO tidy up, do I need to load the last page?
-    api.apiInventoryEntryList({pageSize: 100}).then(r => {
-        const counts = new Map<number, { unit: Unit, count: number }>()
-        r.results.forEach(entry => {
-            if (entry.unit) {
-                const u = entry.unit
-                const count = counts.get(u.id!) || {unit: u, count: 0}
-                count.count++
-                counts.set(u.id!, count)
-            }
-        })
-
-        commonUnits.value = Array.from(counts.values())
-            .sort((a, b) => b.count - a.count)
-            .slice(0, 5)
-            .map(c => c.unit)
-    }).catch(err => {
-        
-    })
 })
-
 
 
 /**
