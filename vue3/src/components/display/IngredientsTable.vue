@@ -31,7 +31,7 @@
 
                             <template v-if="showInlineStatus">
                                 <pantry-jar-indicator v-if="isOnHand(i)" in-inventory :earliest-expiry="i.food?.earliestExpiry" size="x-small" class="ml-1"></pantry-jar-indicator>
-                                <v-icon v-else-if="i.food.substituteOnhand" icon="fa-solid fa-right-left" color="success" size="x-small" class="ml-1" :aria-label="substituteLabel(i)"></v-icon>
+                                <v-icon v-else-if="i.food.substituteOnhand" icon="fa-solid fa-right-left" color="warning" size="x-small" class="ml-1" :aria-label="substituteLabel(i)"></v-icon>
                                 <v-icon v-if="isOnShoppingList(i)" icon="fa-solid fa-cart-shopping" color="success" size="x-small" class="ml-1" :aria-label="$t('Shopping')"></v-icon>
                                 <v-icon v-if="i.food.ignoreShopping" icon="fa-solid fa-ban" color="warning" size="x-small" class="ml-1" :aria-label="$t('IgnoreShopping')"></v-icon>
                                 <span v-if="!isOnHand(i) && i.food.availableSubstitutes?.length && !mobile" class="text-caption text-medium-emphasis ml-1">
@@ -96,7 +96,7 @@
                     <span v-if="hasNote(i) && notesDisplay === 'inline'" class="font-italic">— {{ i.note }}</span>
                     <span v-else-if="hasNote(i) && notesDisplay === 'truncate'" data-test="ingredient-note" class="font-italic" style="cursor: pointer;" @click.stop="toggleNoteExpand(idx)">— {{ expandedNotes[idx] ? i.note : truncateNote(i.note) }}</span>
                     <v-chip v-if="mobileStatus && !isOnHand(i) && substituteChip(i)" data-test="ingredient-substitute"
-                            size="x-small" label class="ml-1" variant="tonal" color="success"
+                            size="x-small" label class="ml-1" variant="tonal" color="warning"
                             prepend-icon="fa-solid fa-right-left">
                         {{ substituteChip(i)!.name }}<span v-if="substituteChip(i)!.extra > 0" class="ms-1">+{{ substituteChip(i)!.extra }}</span>
                     </v-chip>

@@ -26,7 +26,7 @@
                                  overridable via the row checkbox (D11 P1). -->
                             <pantry-jar-indicator v-if="parseBooleanAnnotation(e.food?.inInventory)" :in-inventory="true"
                                                   :earliest-expiry="e.food?.earliestExpiry" size="x-small" class="ml-1"></pantry-jar-indicator>
-                            <v-icon v-else-if="e.food?.substituteOnhand" icon="fa-solid fa-right-left" color="success" size="x-small" class="ml-1"
+                            <v-icon v-else-if="e.food?.substituteOnhand" icon="fa-solid fa-right-left" color="warning" size="x-small" class="ml-1"
                                     :aria-label="substituteAvailableLabel(e.food, $t)"></v-icon>
                             <span v-if="!parseBooleanAnnotation(e.food?.inInventory) && e.food?.substituteOnhand" class="text-caption text-medium-emphasis ml-1">
                                 ({{ e.food?.availableSubstitutes?.[0]?.name }})
