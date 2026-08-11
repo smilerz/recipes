@@ -95,13 +95,7 @@
                         <v-chip label v-if="item.id == useUserPreferenceStore().activeSpace.id!" color="success">{{ $t('Active') }}</v-chip>
                         <v-chip label v-else color="info" @click="useUserPreferenceStore().switchSpace(item)">{{ $t('Select') }}</v-chip>
                     </template>
-                    <template v-slot:item.color="{ item }">
-                        <v-chip label :color="item.color">{{ item.color }}</v-chip>
-                    </template>
-                    <template v-slot:item.isFreezer="{ item }" v-if="genericModel.model.name == 'InventoryLocation'">
-                        <v-chip label v-if="item.isFreezer" color="success">{{ $t('Yes') }}</v-chip>
-                        <v-chip label v-else color="info">{{ $t('No') }}</v-chip>
-                    </template>
+
                     <template v-slot:item.action="{ item }">
                         <v-btn class="float-right" icon="$menu" variant="plain">
                             <v-icon icon="$menu"></v-icon>
@@ -141,8 +135,9 @@
                         </v-btn>
                     </template>
 
+                    <!-- generic columns -->
                     <template v-for="component in genericModel.model.tableColumns" #[`item.${component.slot}`]="{ item }">
-                        <component :is="component.component" :modelValue="item[component.slot]" ></component>
+                        <component :is="component.component" :modelValue="(component.function) ? component.function(item) : item[component.slot]" ></component>
                     </template>
 
                 </v-data-table-server>
