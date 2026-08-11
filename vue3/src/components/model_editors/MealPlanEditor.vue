@@ -12,9 +12,9 @@
         :editing-object="editingObj">
 
         <v-card-text class="pa-0">
-            <v-tabs v-model="tab" :disabled="loading" grow>
-                <v-tab prepend-icon="$mealplan" value="plan">{{ $t('Meal_Plan') }}</v-tab>
-                <v-tab prepend-icon="$shopping" value="shopping" v-if="editingObj.shopping || editingObj.addshopping">{{ $t('Shopping_list') }}</v-tab>
+            <v-tabs v-model="tab" :disabled="loading">
+                <v-tab prepend-icon="$mealplan" value="plan" class="meal-plan-tab">{{ $t('Meal_Plan') }}</v-tab>
+                <v-tab prepend-icon="$shopping" value="shopping" v-if="editingObj.shopping || editingObj.addshopping" class="meal-plan-tab">{{ $t('Shopping_list') }}</v-tab>
             </v-tabs>
         </v-card-text>
 
@@ -372,6 +372,13 @@ function initializeDateRange() {
 </script>
 
 <style scoped>
+/* pinned to a fixed half-width instead of v-tabs' "grow" (equal-share of visible tabs) so the
+   Meal Plan tab doesn't jump between full and half width as the Shopping List tab appears/disappears */
+.meal-plan-tab {
+    flex: 0 0 50%;
+    max-width: 50%;
+}
+
 @media (min-width: 600px) {
     .datetime-joined-group {
         background: rgba(0, 0, 0, 0.04);
