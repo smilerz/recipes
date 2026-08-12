@@ -269,6 +269,40 @@ describe('UseUpDialog (food,unit) rows + consumed + DEC-8', () => {
         expect(rows[0].food.id).toBe(1)
     })
 
+    // Reported live: a real household can have dozens of mutually-substitutable foods on hand at
+    // once (many different rums standing in for one recipe's "aged rum") - a row per on-hand
+    // substitute doesn't scale. They collapse into one row with a picker instead.
+    it('many on-hand substitutes for one recipe food collapse into a single row with a picker, not one row each', async () => {
+        const RUM1 = {id: 11, name: 'Bacardi'}
+        const RUM2 = {id: 12, name: 'Mount Gay'}
+        const RUM3 = {id: 13, name: 'Appleton'}
+        apiMock.apiFoodRetrieve.mockResolvedValue({id: 10, name: 'Aged Rum', availableSubstitutes: [RUM1, RUM2, RUM3]})
+        apiMock.apiInventoryEntryList.mockResolvedValue({results: [
+            {food: RUM1, unit: null, amount: 1},
+            {food: RUM2, unit: null, amount: 1},
+            {food: RUM3, unit: null, amount: 1},
+        ]})
+        const wrapper = mountDialog()
+        void (wrapper.vm as any).open({foodIds: [10], title: 'Use up: Cocktail'})
+        await flushPromises()
+
+        const rows = (wrapper.vm as any).rows
+        expect(rows).toHaveLength(1)
+        expect(rows[0].substituteOptions).toHaveLength(3)
+        expect(rows[0].substituteFor).toBe('Aged Rum')
+        // defaults to alphabetically first when the wanted food itself isn't on hand
+        expect(rows[0].food.name).toBe('Appleton')
+
+        expect(document.body.querySelector('[data-test="substitute-picker"]')).not.toBeNull()
+
+        ;(wrapper.vm as any).selectSubstitute(rows[0], RUM2.id)
+        await flushPromises()
+
+        expect(rows[0].food.id).toBe(RUM2.id)
+        expect(rows[0].amount).toBe(1)
+        expect(rows[0].newUnit).toBeNull()
+    })
+
     it('UU-12: sections put the rest behind a collapsed expander, revealed by showAll', async () => {
         apiMock.apiInventoryEntryList.mockResolvedValue({results: [
             {food: MILK, unit: GAL, amount: 1},    // recent

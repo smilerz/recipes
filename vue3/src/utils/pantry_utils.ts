@@ -260,6 +260,60 @@ export function groupInventoryByFoodUnit<F extends {id?: number | null}, U exten
     return [...byKey.values()]
 }
 
+export interface FoodUnitGroup<F = unknown, U = unknown> {
+    food: F
+    unit: U | null
+    amount: number
+    original: number
+}
+
+export interface SubstituteSlotInfo {
+    name: string
+    subIds: Set<number>
+}
+
+/**
+ * Collapse on-hand (food, unit) groups into one row per WANTED recipe ingredient, never one row
+ * per on-hand substitute (Use Up, D-substitute-select). A household can have dozens of mutually
+ * substitutable foods on hand at once (e.g. many different rums standing in for one recipe's
+ * "aged rum") - a row-per-bottle UI doesn't scale past a handful. When an ingredient has more
+ * than one on-hand candidate (itself plus its available substitutes), those candidates become
+ * `substituteOptions` on a single row (the caller renders a picker) instead of separate rows.
+ * Each on-hand food is assigned to exactly one wanted-ingredient slot, first-match-wins, so a
+ * substitute shared by two recipe ingredients in the same recipe isn't offered under both.
+ * Options (and the default selection, when the wanted food itself isn't on hand) sort by name.
+ */
+export function groupUseUpBySubstituteSlot<F extends {id?: number | null, name?: string | null}, U extends {id?: number | null}>(
+    groups: Array<FoodUnitGroup<F, U>>,
+    wantedIds: number[],
+    substituteInfo: Map<number, SubstituteSlotInfo>,
+): Array<FoodUnitGroup<F, U> & {key: string, substituteFor?: string, substituteOptions?: Array<FoodUnitGroup<F, U>>}> {
+    const rows: Array<FoodUnitGroup<F, U> & {key: string, substituteFor?: string, substituteOptions?: Array<FoodUnitGroup<F, U>>}> = []
+    const consumedFoodIds = new Set<number>()
+    for (const wantedId of wantedIds) {
+        const info = substituteInfo.get(wantedId)
+        const candidateIds = new Set<number>([wantedId, ...(info?.subIds ?? [])])
+        const seenFoods = new Set<number>()
+        const options: Array<FoodUnitGroup<F, U>> = []
+        for (const g of groups) {
+            const fid = g.food.id
+            if (fid == null || !candidateIds.has(fid) || seenFoods.has(fid) || consumedFoodIds.has(fid)) continue
+            seenFoods.add(fid)
+            options.push(g)
+        }
+        if (!options.length) continue
+        options.forEach(o => consumedFoodIds.add(o.food.id!))
+        options.sort((a, b) => (a.food.name ?? '').localeCompare(b.food.name ?? ''))
+        const primary = options.find(o => o.food.id === wantedId) ?? options[0]
+        if (options.length === 1) {
+            rows.push({...primary, key: `wanted:${wantedId}`, substituteFor: primary.food.id !== wantedId ? info?.name : undefined})
+        } else {
+            rows.push({...primary, key: `wanted:${wantedId}`, substituteFor: info?.name, substituteOptions: options})
+        }
+    }
+    return rows
+}
+
 export interface RecentRecipeRef {
     id: number
     name: string
