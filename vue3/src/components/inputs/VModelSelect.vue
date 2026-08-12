@@ -16,21 +16,34 @@
         :disabled="props.disabled"
         :return-object="props.returnObject"
         :chips="props.chips"
+        :closable-chips="props.chips"
         :multiple="props.multiple"
         :placeholder="props.placeholder"
         :loading="loading"
-        closable-chips
 
-        @keydown.enter.exact="createItem(false)"
-        @keydown.shift.enter="createItem(true)"
+        @keydown.enter.exact="createItem(search, false)"
+        @keydown.shift.enter="createItem(search, true)"
         @blur="hasFocus = false"
         @focus="hasFocus = true"
     >
-        <template #menu-header>
-            <v-list-item>
-                {{search}}
+        <template v-slot:chip="{ props, item }">
+            <v-chip
+                v-bind="props"
+                :text="item.title"
+            ></v-chip>
+        </template>
+
+        <template v-slot:item="{ props, item }">
+            <v-list-item
+                v-bind="props"
+                :title="item.title"
+            >
+                <template v-if="item.raw.id == undefined" #append>
+                    <v-icon icon="$create" color="success"></v-icon>
+                </template>
             </v-list-item>
         </template>
+
         <template #menu-footer>
             <!-- TODO condition items or select does not include search -->
             <v-list-item v-if="search != undefined && search != '' && props.create">
@@ -40,7 +53,7 @@
                         <i class="fa-solid fa-arrow-turn-down fa-stack-1x fa-rotate-90"></i>
                     </span>
                 </v-chip>
-                <v-chip label size="small" >Erstellen & Bearbeiten
+                <v-chip label size="small">Erstellen & Bearbeiten
 
                     <span class="fa-stack">
                         <i class="fa-regular fa-square fa-stack-2x"></i>
@@ -58,6 +71,11 @@
 
 
     </v-autocomplete>
+
+    <model-edit-dialog :model="props.model" v-model="modelValue" v-if="!props.multiple"></model-edit-dialog>
+
+    {{ search }} <br/>
+    {{ modelValue }}
 </template>
 
 <script setup lang="ts">
@@ -69,6 +87,7 @@ import {Density} from "vuetify/lib/composables/density";
 import {EditorSupportedModels, EditorSupportedTypes, GenericModel, getGenericModelFromString} from "@/types/Models.ts";
 import {ErrorMessageType, PreparedMessage, useMessageStore} from "@/stores/MessageStore.ts";
 import {useI18n} from "vue-i18n";
+import ModelEditDialog from "@/components/dialogs/ModelEditDialog.vue";
 
 const {t} = useI18n()
 
@@ -89,13 +108,13 @@ const props = defineProps({
     density: {type: String as PropType<Density | undefined>},
     clearable: {type: Boolean, default: false},
     disabled: {type: Boolean, default: false},
-    returnObject: {type: Boolean, default: false},
+    returnObject: {type: Boolean, default: true},
     chips: {type: Boolean, default: false},
     multiple: {type: Boolean, default: false},
     placeholder: {type: String, default: undefined},
 })
 
-const modelValue = defineModel<EditorSupportedTypes|EditorSupportedTypes[]>()
+const modelValue = defineModel<EditorSupportedTypes | EditorSupportedTypes[]>()
 const modelClass = ref({} as GenericModel)
 const loading = ref(false)
 const hasFocus = ref(false)
@@ -104,12 +123,36 @@ const hasMoreItems = ref(false) // TODO implement
 
 const items = ref([] as EditorSupportedTypes[])
 
-const search = ref<string|undefined>(undefined)
+const search = ref<string | undefined>(undefined)
 
+/**
+ * listen to search update and call debounced search
+ */
 watch(search, (newValue, oldValue) => {
-    console.log('search changed', `"${oldValue}"`, `--> "${newValue}"`)
     if (hasFocus.value) {
         debouncedSearchItems()
+    }
+})
+
+watch(modelValue, (newValue, oldValue) => { // TODO simulate with slow networ
+    console.log('modelValue changed', `"${oldValue}"`, `--> "${newValue}"`)
+    if (Array.isArray(newValue)) {
+        newValue.filter(item => item.id == undefined && item.creating == undefined).forEach(item => {
+            // prevent same item from being created multiple times
+            if (Array.isArray(modelValue.value)) {
+                let tempItem = modelValue.value.filter(item => item.name == newValue.name)
+                if (tempItem != undefined && Array.isArray(modelValue.value)) {
+                    tempItem.creating = true
+                }
+            }
+
+            // create item
+            createItem(item.name, false)
+        })
+    } else {
+        if (newValue && newValue.id == undefined) {
+            createItem(newValue.name, false)
+        }
     }
 })
 
@@ -138,19 +181,21 @@ function searchItems() {
     if (query.startsWith(' ')) {
         return
     }
-    console.log('searching', `"${query}"`)
 
     loading.value = true
     return modelClass.value.list({query: query, page: 1, pageSize: props.limit}).then((r: any) => {
         if (modelClass.value.model.isPaginated) {
             hasMoreItems.value = !!r.next
             items.value = r.results
-            return items.value
         } else {
             hasMoreItems.value = false
             items.value = r
-            return items.value
         }
+
+        if (search.value != '' && search.value != undefined && props.create) { // TODO proper function for this condition with all checks ( items or select does not include search, permision)
+            items.value.splice(0, 0, {name: search.value})
+        }
+
     }).catch((err: any) => {
         useMessageStore().addError(ErrorMessageType.FETCH_ERROR, err)
     }).finally(() => {
@@ -164,20 +209,30 @@ function searchItems() {
  * handle new object being created
  *
  */
-async function createItem(edit: boolean) {
-    if (props.create) {
-        return modelClass.value.create({name: search.value}).then((createdObj: any) => {
+async function createItem(name: string | undefined, edit: boolean) {
+    if (props.create && name != undefined && name != '') {
+        return modelClass.value.create({name: name}).then((createdObj: any) => {
             useMessageStore().addPreparedMessage(PreparedMessage.CREATE_SUCCESS, createdObj)
             emit('create', createdObj)
 
             items.value.push(createdObj)
             if (props.multiple) {
-                modelValue.value.push(createdObj)
+                if(Array.isArray(modelValue.value)){
+                    let tempItem = modelValue.value.filter(item => item.name == createdObj.name)
+                    if (tempItem){
+                        modelValue.value.splice(modelValue.value.indexOf(tempItem), 1, createdObj)
+                    } else {
+                        modelValue.value.push(createdObj)
+                    }
+                } else {
+                    modelValue.value = [createdObj]
+                }
+
                 search.value = ''
             } else {
                 modelValue.value = createdObj
             }
-
+            return createdObj
         }).catch((err: any) => {
             useMessageStore().addError(ErrorMessageType.CREATE_ERROR, err)
         })
