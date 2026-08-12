@@ -168,7 +168,7 @@ describe('ModelListMobileView — subtitle filter links', () => {
         const link = w.find('a.rl-stub')
         expect(link.exists()).toBe(true)
         expect(link.text()).toContain('Recipes: 5')
-        expect(JSON.parse(link.attributes('data-to')!)).toEqual({name: 'SearchPage', query: {foods: 42}})
+        expect(JSON.parse(link.attributes('data-to')!)).toEqual({name: 'SearchPage', query: {foods: 42, includeChildren: 'false'}})
     })
 
     it('renders the recipe count as plain text (no link) when 0', () => {
