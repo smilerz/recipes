@@ -55,13 +55,6 @@ import {
     NutritionInformationToJSON,
     NutritionInformationToJSONTyped,
 } from './NutritionInformation';
-import type { FoodSimple } from './FoodSimple';
-import {
-    FoodSimpleFromJSON,
-    FoodSimpleFromJSONTyped,
-    FoodSimpleToJSON,
-    FoodSimpleToJSONTyped,
-} from './FoodSimple';
 
 /**
  * Expose the derived ``image`` URL + ``image_crop_data`` of a recipe's
@@ -239,12 +232,6 @@ export interface PatchedRecipe {
      * @memberof PatchedRecipe
      */
     shared?: Array<User>;
-    /**
-     * 
-     * @type {FoodSimple}
-     * @memberof PatchedRecipe
-     */
-    readonly food?: FoodSimple | null;
 }
 
 /**
@@ -292,7 +279,6 @@ export function PatchedRecipeFromJSONTyped(json: any, ignoreDiscriminator: boole
         'lastCooked': json['last_cooked'] == null ? undefined : (new Date(json['last_cooked'])),
         '_private': json['private'] == null ? undefined : json['private'],
         'shared': json['shared'] == null ? undefined : ((json['shared'] as Array<any>).map(UserFromJSON)),
-        'food': json['food'] == null ? undefined : FoodSimpleFromJSON(json['food']),
     };
 }
 
@@ -300,7 +286,7 @@ export function PatchedRecipeToJSON(json: any): PatchedRecipe {
     return PatchedRecipeToJSONTyped(json, false);
 }
 
-export function PatchedRecipeToJSONTyped(value?: Omit<PatchedRecipe, 'image'|'image_crop_data'|'images'|'created_by'|'created_at'|'updated_at'|'food_properties'|'rating'|'last_cooked'|'food'> | null, ignoreDiscriminator: boolean = false): any {
+export function PatchedRecipeToJSONTyped(value?: Omit<PatchedRecipe, 'image'|'image_crop_data'|'images'|'created_by'|'created_at'|'updated_at'|'food_properties'|'rating'|'last_cooked'> | null, ignoreDiscriminator: boolean = false): any {
     if (value == null) {
         return value;
     }

@@ -124,9 +124,6 @@
                                     v-model="editingObj.showIngredientOverview"></v-checkbox>
 
                         <v-text-field :label="$t('Imported_From')" v-model="editingObj.sourceUrl"></v-text-field>
-                        <v-checkbox v-if="isUpdate()" :label="$t('TrackAsFood')" persistent-hint :hint="$t('TrackAsFoodHelp')"
-                                    data-test="track-as-food-checkbox" :model-value="!!editingObj.food" :loading="foodLinkLoading"
-                                    @update:model-value="toggleTrackAsFood"></v-checkbox>
                         <v-checkbox :label="$t('Private_Recipe')" persistent-hint :hint="$t('Private_Recipe_Help')" v-model="editingObj._private"></v-checkbox>
                         <model-select mode="tags" model="User" :label="$t('Share')" persistent-hint v-model="editingObj.shared"
                                       append-to-body v-if="editingObj._private"></model-select>
@@ -175,7 +172,7 @@
 
 <script setup lang="ts">
 
-import {nextTick, onMounted, PropType, ref, watch} from "vue";
+import {onMounted, PropType, ref, watch} from "vue";
 import {ApiApi, Ingredient, Recipe, Step} from "@/openapi";
 import ModelEditorBase from "@/components/model_editors/ModelEditorBase.vue";
 import {useModelEditorFunctions} from "@/composables/useModelEditorFunctions";
@@ -302,35 +299,6 @@ function handleSplitAllSteps(): void {
     if (editingObj.value.steps) {
         splitAllSteps(editingObj.value.steps, '\n')
     }
-}
-
-/**
- * #5: create/unlink a Food tracking this recipe as a pantry item. editingObj.food is read-only
- * (server-computed from Food.recipe, the reverse FK), so refetch the recipe afterward rather than
- * assigning the field directly - mirrors deleteExternalFile()'s reassign-whole-object pattern.
- */
-const foodLinkLoading = ref(false)
-
-function toggleTrackAsFood(value: boolean | null) {
-    foodLinkLoading.value = true
-    const api = new ApiApi()
-    const action = value
-        ? api.apiFoodCreate({food: {name: editingObj.value.name, recipe: {id: editingObj.value.id, name: editingObj.value.name}}})
-        : api.apiFoodPartialUpdate({id: editingObj.value.food!.id!, patchedFood: {recipe: null}})
-
-    action.then(() => api.apiRecipeRetrieve({id: editingObj.value.id!})).then(r => {
-        editingObj.value = r
-        // the create/unlink call already persisted - don't let the refetch's reassignment
-        // mark the whole form as unsaved. editingObjChanged watcher runs on the next tick's
-        // flush, so it must be reset after that flush, not synchronously here.
-        return nextTick()
-    }).then(() => {
-        editingObjChanged.value = false
-    }).catch(err => {
-        useMessageStore().addError(ErrorMessageType.UPDATE_ERROR, err)
-    }).finally(() => {
-        foodLinkLoading.value = false
-    })
 }
 
 /**
