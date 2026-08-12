@@ -636,6 +636,7 @@
   "RecipeBookHelp": "Recipebooks contain recipe book entries or can be automatically populated by using saved search filters. ",
   "RecipeHelp": "Recipes are the foundation of Tandoor and consist of general information and steps, made up of ingredients, instructions and more. ",
   "RecipeStepsHelp": "Ingredients, Instructions and more can be edited in the tab Steps.",
+  "RecipeTrackedAsFood": "Linked to food: {name}",
   "Recipe Structure": "Recipe Structure",
   "results": "results",
   "RecipeStructure": "Recipe Structure",

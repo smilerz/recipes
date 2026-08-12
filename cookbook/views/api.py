@@ -1288,6 +1288,7 @@ class FoodInheritFieldViewSet(LoggingMixin, viewsets.ReadOnlyModelViewSet):
     OpenApiParameter(name='in_shopping_list', description='Filter foods that are (true) / are not (false) on the shopping list.', type=bool),
     OpenApiParameter(name='has_children', description='Filter foods that have (true) / do not have (false) child foods.', type=bool),
     OpenApiParameter(name='has_recipe', description='Filter foods that are (true) / are not (false) linked to a recipe.', type=bool),
+    OpenApiParameter(name='recipe', description='Filter foods linked to this recipe id.', type=int),
     OpenApiParameter(name='used_in_recipes', description='Filter foods that are (true) / are not (false) used in any recipe.', type=bool),
     OpenApiParameter(name='ignore_shopping', description='Filter foods with ignore_shopping set to this value.', type=bool),
     OpenApiParameter(name='supermarket_category', description='Filter foods by supermarket category id.', type=int),
@@ -1347,6 +1348,13 @@ class FoodViewSet(OrderingMixin, LoggingMixin, TreeMixin, DeleteRelationMixing):
         qs = self._apply_tristate(qs, 'in_shopping_list', Q(shopping_status=True), Q(shopping_status=False))
         qs = self._apply_tristate(qs, 'has_children', Q(numchild__gt=0), Q(numchild=0))
         qs = self._apply_tristate(qs, 'has_recipe', Q(recipe__isnull=False), Q(recipe__isnull=True))
+
+        recipe = self.request.query_params.get('recipe', None)
+        if recipe is not None:
+            try:
+                qs = qs.filter(recipe_id=int(recipe))
+            except ValueError:
+                pass
         qs = self._apply_tristate(qs, 'used_in_recipes', Q(recipe_count__gt=0), Q(recipe_count=0))
 
         ignore_shopping = self.request.query_params.get('ignore_shopping', None)
@@ -1622,6 +1630,29 @@ class FoodViewSet(OrderingMixin, LoggingMixin, TreeMixin, DeleteRelationMixing):
         obj = self.get_object()
         qs = obj.get_substitutes()
         return Response(FoodSimpleSerializer(qs, many=True).data)
+
+    @extend_schema(
+        request=inline_serializer(name='FoodFromRecipeSerializer', fields={'recipe': IntegerField(), 'name': CharField(required=False)}),
+        responses=FoodSerializer,
+    )
+    @decorators.action(detail=False, methods=['POST'], url_path='create-from-recipe', url_name='create-from-recipe')
+    def create_from_recipe(self, request):
+        """
+        Track a recipe as a pantry food. Food.objects.get_or_create() (TreeManager)
+        dedupes by (name, space), so this reuses an existing food of the same name
+        instead of creating a duplicate, then links it to the recipe.
+        """
+        recipe = Recipe.objects.filter(pk=request.data.get('recipe'), space=request.space).first()
+        if recipe is None:
+            return Response({'error': 'recipe is required and must exist in the current space'}, status=status.HTTP_400_BAD_REQUEST)
+
+        name = request.data.get('name') or recipe.name
+        food, created = Food.objects.get_or_create(name=name, space=request.space, defaults={'recipe': recipe})
+        if not created and food.recipe_id != recipe.id:
+            food.recipe = recipe
+            food.save()
+
+        return Response(self.get_serializer(food).data, status=status.HTTP_201_CREATED if created else status.HTTP_200_OK)
 
     @decorators.action(detail=True, methods=['POST'])
     def fdc(self, request, pk):

@@ -31,6 +31,7 @@ import type {
   FdcQuery,
   Food,
   FoodBatchUpdate,
+  FoodFromRecipe,
   FoodInheritField,
   FoodSimple,
   FoodStats,
@@ -211,6 +212,8 @@ import {
     FoodToJSON,
     FoodBatchUpdateFromJSON,
     FoodBatchUpdateToJSON,
+    FoodFromRecipeFromJSON,
+    FoodFromRecipeToJSON,
     FoodInheritFieldFromJSON,
     FoodInheritFieldToJSON,
     FoodSimpleFromJSON,
@@ -832,6 +835,10 @@ export interface ApiFoodCreateRequest {
     food: Omit<Food, 'shopping'|'parent'|'numchild'|'numrecipe'|'fullName'|'substituteOnhand'|'availableSubstitutes'|'inInventory'|'earliestExpiry'|'substituteInventory'|'matchedFilter'>;
 }
 
+export interface ApiFoodCreateFromRecipeCreateRequest {
+    foodFromRecipe: FoodFromRecipe;
+}
+
 export interface ApiFoodDestroyRequest {
     id: number;
 }
@@ -860,6 +867,7 @@ export interface ApiFoodListRequest {
     page?: number;
     pageSize?: number;
     query?: string;
+    recipe?: number;
     root?: number;
     supermarketCategory?: number;
     tree?: number;
@@ -5470,6 +5478,49 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
+     * Track a recipe as a pantry food. Food.objects.get_or_create() (TreeManager) dedupes by (name, space), so this reuses an existing food of the same name instead of creating a duplicate, then links it to the recipe.
+     */
+    async apiFoodCreateFromRecipeCreateRaw(requestParameters: ApiFoodCreateFromRecipeCreateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Food>> {
+        if (requestParameters['foodFromRecipe'] == null) {
+            throw new runtime.RequiredError(
+                'foodFromRecipe',
+                'Required parameter "foodFromRecipe" was null or undefined when calling apiFoodCreateFromRecipeCreate().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        if (this.configuration && this.configuration.apiKey) {
+            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
+        }
+
+
+        let urlPath = `/api/food/create-from-recipe/`;
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: FoodFromRecipeToJSON(requestParameters['foodFromRecipe']),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => FoodFromJSON(jsonValue));
+    }
+
+    /**
+     * Track a recipe as a pantry food. Food.objects.get_or_create() (TreeManager) dedupes by (name, space), so this reuses an existing food of the same name instead of creating a duplicate, then links it to the recipe.
+     */
+    async apiFoodCreateFromRecipeCreate(requestParameters: ApiFoodCreateFromRecipeCreateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Food> {
+        const response = await this.apiFoodCreateFromRecipeCreateRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
      * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
      */
     async apiFoodDestroyRaw(requestParameters: ApiFoodDestroyRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
@@ -5694,6 +5745,10 @@ export class ApiApi extends runtime.BaseAPI {
 
         if (requestParameters['query'] != null) {
             queryParameters['query'] = requestParameters['query'];
+        }
+
+        if (requestParameters['recipe'] != null) {
+            queryParameters['recipe'] = requestParameters['recipe'];
         }
 
         if (requestParameters['root'] != null) {

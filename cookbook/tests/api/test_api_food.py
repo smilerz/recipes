@@ -86,7 +86,7 @@ def test_food_list_schema_declares_filter_params():
         'query', 'ordering', 'root', 'tree', 'tree_search', 'onhand',
         'has_substitute', 'in_shopping_list', 'has_children', 'has_recipe',
         'used_in_recipes', 'ignore_shopping', 'supermarket_category',
-        'has_inventory', 'inventory_location', 'expired', 'expiring_soon',
+        'has_inventory', 'inventory_location', 'expired', 'expiring_soon', 'recipe',
     }
     missing = expected - names
     assert not missing, f'/api/food/ list is missing OpenAPI query params: {sorted(missing)}'
@@ -1200,6 +1200,31 @@ def test_filter_has_recipe(u1_s1, space_1):
     assert food_without_recipe.id in result_ids
 
 
+def test_filter_recipe_exact(u1_s1, space_1):
+    with scopes_disabled():
+        recipe_1 = RecipeFactory(space=space_1)
+        recipe_2 = RecipeFactory(space=space_1)
+        food_linked = FoodFactory(space=space_1)
+        food_linked.recipe = recipe_1
+        food_linked.save()
+        food_other_recipe = FoodFactory(space=space_1)
+        food_other_recipe.recipe = recipe_2
+        food_other_recipe.save()
+        food_unlinked = FoodFactory(space=space_1)
+
+    response = get_filter_results(u1_s1, f'?recipe={recipe_1.id}')
+    result_ids = [x['id'] for x in response['results']]
+    assert result_ids == [food_linked.id]
+
+
+def test_filter_recipe_invalid_value_ignored(u1_s1, space_1):
+    with scopes_disabled():
+        FoodFactory(space=space_1)
+
+    response = get_filter_results(u1_s1, '?recipe=not-an-id')
+    assert response['count'] == 1
+
+
 # ==================== used_in_recipes filter ====================
 
 def test_filter_used_in_recipes(u1_s1, space_1):
@@ -2018,6 +2043,56 @@ def test_shopping_action_unit_not_found_returns_400(u1_s1, space_1):
         food = FoodFactory(space=space_1)
     r = u1_s1.put(reverse('api:food-shopping', args=[food.id]),
                   {'amount': 1, 'unit': 999999}, content_type='application/json')
+    assert r.status_code == 400
+
+
+# ==================== create_from_recipe action ====================
+
+def test_create_from_recipe_creates_and_links_food(u1_s1, space_1):
+    with scopes_disabled():
+        recipe = RecipeFactory(space=space_1)
+
+    r = u1_s1.post(reverse('api:food-create-from-recipe'),
+                    {'recipe': recipe.id, 'name': 'Sourdough Bread'},
+                    content_type='application/json')
+    assert r.status_code == 201
+    with scopes_disabled():
+        food = Food.objects.get(recipe=recipe)
+        assert food.name == 'Sourdough Bread'
+    assert json.loads(r.content)['id'] == food.id
+
+
+def test_create_from_recipe_is_idempotent(u1_s1, space_1):
+    """get_or_create semantics: calling it again for the same recipe returns the
+    existing food rather than creating a second one linked to the same recipe."""
+    with scopes_disabled():
+        recipe = RecipeFactory(space=space_1)
+
+    first = u1_s1.post(reverse('api:food-create-from-recipe'),
+                        {'recipe': recipe.id, 'name': 'Sourdough Bread'},
+                        content_type='application/json')
+    second = u1_s1.post(reverse('api:food-create-from-recipe'),
+                         {'recipe': recipe.id, 'name': 'Sourdough Bread'},
+                         content_type='application/json')
+    assert second.status_code == 200
+    assert json.loads(first.content)['id'] == json.loads(second.content)['id']
+    with scopes_disabled():
+        assert Food.objects.filter(recipe=recipe).count() == 1
+
+
+def test_create_from_recipe_requires_recipe(u1_s1, space_1):
+    r = u1_s1.post(reverse('api:food-create-from-recipe'),
+                    {'name': 'Sourdough Bread'}, content_type='application/json')
+    assert r.status_code == 400
+
+
+def test_create_from_recipe_recipe_must_be_in_space(u1_s1, space_2):
+    with scopes_disabled():
+        other_space_recipe = RecipeFactory(space=space_2)
+
+    r = u1_s1.post(reverse('api:food-create-from-recipe'),
+                    {'recipe': other_space_recipe.id, 'name': 'Sourdough Bread'},
+                    content_type='application/json')
     assert r.status_code == 400
 
 
