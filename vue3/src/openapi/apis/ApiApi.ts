@@ -83,6 +83,7 @@ import type {
   PaginatedShoppingListEntryList,
   PaginatedShoppingListList,
   PaginatedShoppingListRecipeList,
+  PaginatedSpaceBackupList,
   PaginatedSpaceList,
   PaginatedStepList,
   PaginatedStorageList,
@@ -163,6 +164,7 @@ import type {
   ShoppingListEntryBulkCreate,
   ShoppingListRecipe,
   Space,
+  SpaceBackup,
   Step,
   StockUp,
   Storage,
@@ -318,6 +320,8 @@ import {
     PaginatedShoppingListListToJSON,
     PaginatedShoppingListRecipeListFromJSON,
     PaginatedShoppingListRecipeListToJSON,
+    PaginatedSpaceBackupListFromJSON,
+    PaginatedSpaceBackupListToJSON,
     PaginatedSpaceListFromJSON,
     PaginatedSpaceListToJSON,
     PaginatedStepListFromJSON,
@@ -478,6 +482,8 @@ import {
     ShoppingListRecipeToJSON,
     SpaceFromJSON,
     SpaceToJSON,
+    SpaceBackupFromJSON,
+    SpaceBackupToJSON,
     StepFromJSON,
     StepToJSON,
     StockUpFromJSON,
@@ -1879,6 +1885,31 @@ export interface ApiShoppingListRetrieveRequest {
 export interface ApiShoppingListUpdateRequest {
     id: number;
     shoppingList?: ShoppingList;
+}
+
+export interface ApiSpaceBackupCreateRequest {
+    spaceBackup?: Omit<SpaceBackup, 'running'|'msg'|'totalItems'|'processedItems'|'file'|'fileSizeKb'|'createdBy'|'createdAt'>;
+}
+
+export interface ApiSpaceBackupDestroyRequest {
+    id: number;
+}
+
+export interface ApiSpaceBackupListRequest {
+    page?: number;
+    pageSize?: number;
+}
+
+export interface ApiSpaceBackupRestoreCreateRequest {
+    id: number;
+}
+
+export interface ApiSpaceBackupRestorePreviewCreateRequest {
+    id: number;
+}
+
+export interface ApiSpaceBackupRetrieveRequest {
+    id: number;
 }
 
 export interface ApiSpaceCreateRequest {
@@ -14858,6 +14889,246 @@ export class ApiApi extends runtime.BaseAPI {
      */
     async apiShoppingListUpdate(requestParameters: ApiShoppingListUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ShoppingList> {
         const response = await this.apiShoppingListUpdateRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Part 3 (In-App Backup/Restore) of the pantry-expiration-and-data-portability plan. create() kicks off build in a background thread (same convention as AppExportView) since a full-space backup can cover thousands of rows; restore() runs synchronously (same simplification Part 2\'s portable-data import made — restore is a deliberate, infrequent, admin-only action, not a hot path).
+     */
+    async apiSpaceBackupCreateRaw(requestParameters: ApiSpaceBackupCreateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<SpaceBackup>> {
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        if (this.configuration && this.configuration.apiKey) {
+            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
+        }
+
+
+        let urlPath = `/api/space-backup/`;
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: SpaceBackupToJSON(requestParameters['spaceBackup']),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => SpaceBackupFromJSON(jsonValue));
+    }
+
+    /**
+     * Part 3 (In-App Backup/Restore) of the pantry-expiration-and-data-portability plan. create() kicks off build in a background thread (same convention as AppExportView) since a full-space backup can cover thousands of rows; restore() runs synchronously (same simplification Part 2\'s portable-data import made — restore is a deliberate, infrequent, admin-only action, not a hot path).
+     */
+    async apiSpaceBackupCreate(requestParameters: ApiSpaceBackupCreateRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<SpaceBackup> {
+        const response = await this.apiSpaceBackupCreateRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Part 3 (In-App Backup/Restore) of the pantry-expiration-and-data-portability plan. create() kicks off build in a background thread (same convention as AppExportView) since a full-space backup can cover thousands of rows; restore() runs synchronously (same simplification Part 2\'s portable-data import made — restore is a deliberate, infrequent, admin-only action, not a hot path).
+     */
+    async apiSpaceBackupDestroyRaw(requestParameters: ApiSpaceBackupDestroyRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
+        if (requestParameters['id'] == null) {
+            throw new runtime.RequiredError(
+                'id',
+                'Required parameter "id" was null or undefined when calling apiSpaceBackupDestroy().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.apiKey) {
+            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
+        }
+
+
+        let urlPath = `/api/space-backup/{id}/`;
+        urlPath = urlPath.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id'])));
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'DELETE',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.VoidApiResponse(response);
+    }
+
+    /**
+     * Part 3 (In-App Backup/Restore) of the pantry-expiration-and-data-portability plan. create() kicks off build in a background thread (same convention as AppExportView) since a full-space backup can cover thousands of rows; restore() runs synchronously (same simplification Part 2\'s portable-data import made — restore is a deliberate, infrequent, admin-only action, not a hot path).
+     */
+    async apiSpaceBackupDestroy(requestParameters: ApiSpaceBackupDestroyRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
+        await this.apiSpaceBackupDestroyRaw(requestParameters, initOverrides);
+    }
+
+    /**
+     * Part 3 (In-App Backup/Restore) of the pantry-expiration-and-data-portability plan. create() kicks off build in a background thread (same convention as AppExportView) since a full-space backup can cover thousands of rows; restore() runs synchronously (same simplification Part 2\'s portable-data import made — restore is a deliberate, infrequent, admin-only action, not a hot path).
+     */
+    async apiSpaceBackupListRaw(requestParameters: ApiSpaceBackupListRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PaginatedSpaceBackupList>> {
+        const queryParameters: any = {};
+
+        if (requestParameters['page'] != null) {
+            queryParameters['page'] = requestParameters['page'];
+        }
+
+        if (requestParameters['pageSize'] != null) {
+            queryParameters['page_size'] = requestParameters['pageSize'];
+        }
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.apiKey) {
+            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
+        }
+
+
+        let urlPath = `/api/space-backup/`;
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => PaginatedSpaceBackupListFromJSON(jsonValue));
+    }
+
+    /**
+     * Part 3 (In-App Backup/Restore) of the pantry-expiration-and-data-portability plan. create() kicks off build in a background thread (same convention as AppExportView) since a full-space backup can cover thousands of rows; restore() runs synchronously (same simplification Part 2\'s portable-data import made — restore is a deliberate, infrequent, admin-only action, not a hot path).
+     */
+    async apiSpaceBackupList(requestParameters: ApiSpaceBackupListRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PaginatedSpaceBackupList> {
+        const response = await this.apiSpaceBackupListRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Part 3 (In-App Backup/Restore) of the pantry-expiration-and-data-portability plan. create() kicks off build in a background thread (same convention as AppExportView) since a full-space backup can cover thousands of rows; restore() runs synchronously (same simplification Part 2\'s portable-data import made — restore is a deliberate, infrequent, admin-only action, not a hot path).
+     */
+    async apiSpaceBackupRestoreCreateRaw(requestParameters: ApiSpaceBackupRestoreCreateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<{ [key: string]: any; }>> {
+        if (requestParameters['id'] == null) {
+            throw new runtime.RequiredError(
+                'id',
+                'Required parameter "id" was null or undefined when calling apiSpaceBackupRestoreCreate().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.apiKey) {
+            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
+        }
+
+
+        let urlPath = `/api/space-backup/{id}/restore/`;
+        urlPath = urlPath.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id'])));
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse<any>(response);
+    }
+
+    /**
+     * Part 3 (In-App Backup/Restore) of the pantry-expiration-and-data-portability plan. create() kicks off build in a background thread (same convention as AppExportView) since a full-space backup can cover thousands of rows; restore() runs synchronously (same simplification Part 2\'s portable-data import made — restore is a deliberate, infrequent, admin-only action, not a hot path).
+     */
+    async apiSpaceBackupRestoreCreate(requestParameters: ApiSpaceBackupRestoreCreateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<{ [key: string]: any; }> {
+        const response = await this.apiSpaceBackupRestoreCreateRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Part 3 (In-App Backup/Restore) of the pantry-expiration-and-data-portability plan. create() kicks off build in a background thread (same convention as AppExportView) since a full-space backup can cover thousands of rows; restore() runs synchronously (same simplification Part 2\'s portable-data import made — restore is a deliberate, infrequent, admin-only action, not a hot path).
+     */
+    async apiSpaceBackupRestorePreviewCreateRaw(requestParameters: ApiSpaceBackupRestorePreviewCreateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<{ [key: string]: any; }>> {
+        if (requestParameters['id'] == null) {
+            throw new runtime.RequiredError(
+                'id',
+                'Required parameter "id" was null or undefined when calling apiSpaceBackupRestorePreviewCreate().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.apiKey) {
+            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
+        }
+
+
+        let urlPath = `/api/space-backup/{id}/restore-preview/`;
+        urlPath = urlPath.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id'])));
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse<any>(response);
+    }
+
+    /**
+     * Part 3 (In-App Backup/Restore) of the pantry-expiration-and-data-portability plan. create() kicks off build in a background thread (same convention as AppExportView) since a full-space backup can cover thousands of rows; restore() runs synchronously (same simplification Part 2\'s portable-data import made — restore is a deliberate, infrequent, admin-only action, not a hot path).
+     */
+    async apiSpaceBackupRestorePreviewCreate(requestParameters: ApiSpaceBackupRestorePreviewCreateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<{ [key: string]: any; }> {
+        const response = await this.apiSpaceBackupRestorePreviewCreateRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Part 3 (In-App Backup/Restore) of the pantry-expiration-and-data-portability plan. create() kicks off build in a background thread (same convention as AppExportView) since a full-space backup can cover thousands of rows; restore() runs synchronously (same simplification Part 2\'s portable-data import made — restore is a deliberate, infrequent, admin-only action, not a hot path).
+     */
+    async apiSpaceBackupRetrieveRaw(requestParameters: ApiSpaceBackupRetrieveRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<SpaceBackup>> {
+        if (requestParameters['id'] == null) {
+            throw new runtime.RequiredError(
+                'id',
+                'Required parameter "id" was null or undefined when calling apiSpaceBackupRetrieve().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.apiKey) {
+            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
+        }
+
+
+        let urlPath = `/api/space-backup/{id}/`;
+        urlPath = urlPath.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id'])));
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => SpaceBackupFromJSON(jsonValue));
+    }
+
+    /**
+     * Part 3 (In-App Backup/Restore) of the pantry-expiration-and-data-portability plan. create() kicks off build in a background thread (same convention as AppExportView) since a full-space backup can cover thousands of rows; restore() runs synchronously (same simplification Part 2\'s portable-data import made — restore is a deliberate, infrequent, admin-only action, not a hot path).
+     */
+    async apiSpaceBackupRetrieve(requestParameters: ApiSpaceBackupRetrieveRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<SpaceBackup> {
+        const response = await this.apiSpaceBackupRetrieveRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
