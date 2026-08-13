@@ -237,7 +237,7 @@
 
 <script setup lang="ts">
 
-import {computed, onBeforeMount, onMounted, PropType, ref} from "vue";
+import {computed, onBeforeMount, onMounted, PropType, ref, shallowRef} from "vue";
 import {DateTime} from "luxon";
 import {canRouteToModel, EditorSupportedModels, GenericModel, getGenericModelFromString} from "@/types/Models.ts";
 import {useTitle} from "@vueuse/core";
@@ -268,7 +268,7 @@ const tableHeaders = [
     {title: t('Actions'), key: 'actions', align: 'end', nowrap: true},
 ] as VDataTableHeaders[]
 
-const genericModel = ref({} as GenericModel)
+const genericModel = shallowRef({} as GenericModel)
 const editingObj = ref({} as EditorSupportedModels)
 
 /**

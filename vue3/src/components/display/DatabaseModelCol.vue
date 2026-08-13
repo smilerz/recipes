@@ -11,7 +11,7 @@
 <script setup lang="ts">
 
 import {EditorSupportedModels, GenericModel, getGenericModelFromString} from "@/types/Models.ts";
-import {onBeforeMount, PropType, ref, watch} from "vue";
+import {onBeforeMount, PropType, shallowRef, watch} from "vue";
 import {useI18n} from "vue-i18n";
 
 const {t} = useI18n()
@@ -27,7 +27,7 @@ const props = defineProps({
     },
 })
 
-const genericModel = ref({} as GenericModel)
+const genericModel = shallowRef({} as GenericModel)
 
 watch(() => props.model, (newValue, oldValue) => {
     if (newValue != oldValue) {
