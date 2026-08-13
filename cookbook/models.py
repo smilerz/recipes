@@ -1669,6 +1669,29 @@ class ExportLog(models.Model, PermissionModelMixin):
         ordering = ('pk',)
 
 
+class SpaceBackup(models.Model, PermissionModelMixin):
+    running = models.BooleanField(default=True)
+    msg = models.TextField(default="")
+
+    total_items = models.IntegerField(default=0)
+    processed_items = models.IntegerField(default=0)
+
+    file = models.FileField(upload_to='backups/', null=True, blank=True)
+    file_size_kb = models.IntegerField(default=0, blank=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    created_by = models.ForeignKey(User, on_delete=models.CASCADE)
+
+    objects = ScopedManager(space='space')
+    space = models.ForeignKey(Space, on_delete=models.CASCADE)
+
+    def __str__(self):
+        return f"{self.created_at}:{self.space_id}"
+
+    class Meta:
+        ordering = ('-created_at',)
+
+
 class BookmarkletImport(ExportModelOperationsMixin('bookmarklet_import'), models.Model, PermissionModelMixin):
     html = models.TextField()
     url = models.CharField(max_length=256, null=True, blank=True)

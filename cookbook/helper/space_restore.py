@@ -1,0 +1,165 @@
+"""Part 3 of the pantry-expiration-and-data-portability plan: in-app space backup/restore.
+See .claude/plans/pantry-expiration-and-data-portability.md.
+
+Sub-phase 3b — the restore engine. v1 ships exactly one mode: restore into a brand-new
+space, never in-place overwrite. Restore never trusts a serialized row's original pk for
+anything other than looking itself up in the per-model old-pk-to-new-object map built as
+rows are created (in the dependency order discover_space_scoped_models already gives) —
+FK fields pointing at a restored model are rewritten to the new object; FK fields pointing
+at User are re-linked to an *existing* target-instance account by username, never
+recreated (unresolvable references are reported and that row is skipped, not silently
+dropped or misattributed); FK fields pointing at anything else (global, instance-wide
+reference data untouched by restore) keep their original pk.
+
+KNOWN GAP (flagged, not silently dropped): M2M fields — Food.substitute,
+RecipeBook.shared, UserSpace.groups, Food.inherit_fields/child_inherit_fields — are not
+yet restored by this sub-phase.
+"""
+from django.contrib.auth.models import User
+from django.db import transaction
+
+from cookbook.helper.permission_helper import create_space_for_user
+from cookbook.helper.space_backup import discover_space_scoped_models, _fk_fields
+from cookbook.models import Space, TreeModel, UserSpace
+
+
+def assert_target_space_is_empty(space):
+    """A freshly-created, untouched space has exactly one UserSpace row (its creator) and
+    nothing else. Raises ValueError if `space` has anything more than that baseline."""
+    if UserSpace.objects.filter(space=space).count() > 1:
+        raise ValueError(f'space {space.pk} already has additional members — refusing to restore into it')
+
+    for model, lookup_path in discover_space_scoped_models():
+        if model is UserSpace:
+            continue
+        if model.objects.filter(**{lookup_path: space}).exists():
+            raise ValueError(f'space {space.pk} already has {model.__name__} data — refusing to restore into it')
+
+
+def _resolve_users(users_payload):
+    """{old_pk_str: {'username', 'email'}} -> ({old_pk_int: User}, [unresolved usernames]).
+    Matches by username first, falling back to email; never creates an account."""
+    user_map = {}
+    unresolved = []
+    for old_pk_str, info in users_payload.items():
+        user = User.objects.filter(username=info['username']).first()
+        if user is None and info.get('email'):
+            user = User.objects.filter(email=info['email']).first()
+        if user is not None:
+            user_map[int(old_pk_str)] = user
+        else:
+            unresolved.append(info['username'])
+    return user_map, unresolved
+
+
+def preview_restore(backup_data):
+    """Zero-write: what restore_space_backup would do, without doing it. Lets the UI show
+    the full username/email re-link list for review before the admin commits — restore is
+    the one place this feature acts on cross-cutting identity data, and the adversarial risk
+    most likely to bite someone (a different real person now registered under a matching
+    username/email on this instance)."""
+    model_counts = {name: len(rows) for name, rows in backup_data.get('models', {}).items()}
+
+    users = []
+    for info in backup_data.get('users', {}).values():
+        user = User.objects.filter(username=info['username']).first()
+        if user is None and info.get('email'):
+            user = User.objects.filter(email=info['email']).first()
+        users.append({'username': info['username'], 'email': info.get('email', ''), 'resolved': user is not None})
+
+    return {'model_counts': model_counts, 'users': users}
+
+
+def _create_row(model, fields, is_tree, parent_obj):
+    """The actual insert — isolated so the tree-vs-plain branch stays in one place and so
+    tests can simulate a mid-restore failure without depending on ORM internals."""
+    if is_tree:
+        return parent_obj.add_child(**fields) if parent_obj is not None else model.add_root(**fields)
+    return model.objects.create(**fields)
+
+
+def restore_space_backup(backup_data, admin_user):
+    """Creates a brand-new Space and restores backup_data (as produced by
+    build_space_backup) into it. The whole operation is one transaction — any failure
+    rolls back to no new space created, never a half-built one.
+
+    Returns (new_space, report) where report = {
+        'models': {model_name: {'created': N, 'skipped': N}},
+        'unresolved_users': [username, ...],
+    }
+    """
+    with transaction.atomic():
+        new_space = create_space_for_user(admin_user, name=f"Restored: {backup_data['space_name']}").space
+        assert_target_space_is_empty(new_space)
+
+        user_map, unresolved_users = _resolve_users(backup_data.get('users', {}))
+
+        pk_maps = {}  # model name -> {old_pk: new_object}
+        report_models = {}
+
+        for model, _lookup_path in discover_space_scoped_models():
+            rows = backup_data['models'].get(model.__name__, [])
+            fk_field_map = dict(_fk_fields(model))
+            not_null_fields = {f.name for f in model._meta.get_fields()
+                               if f.concrete and hasattr(f, 'null') and not f.null}
+            m2m_field_names = {f.name for f in model._meta.get_fields() if f.many_to_many}
+            is_tree = issubclass(model, TreeModel)
+
+            created = 0
+            skipped = 0
+            path_to_new_obj = {}
+            ordered_rows = sorted(rows, key=lambda r: r['fields'].get('depth', 0)) if is_tree else rows
+
+            for row in ordered_rows:
+                fields = dict(row['fields'])
+                fields.pop('numchild', None)
+                old_path = fields.pop('path', None) if is_tree else None
+                depth = fields.pop('depth', None) if is_tree else None
+                # M2M values can't go through create()/add_root() — stripped here, not yet
+                # restored (known gap, see module docstring), not silently mis-populated.
+                for m2m_name in m2m_field_names:
+                    fields.pop(m2m_name, None)
+
+                skip_row = False
+                for field_name, related_model in fk_field_map.items():
+                    if field_name not in fields:
+                        continue
+                    old_value = fields[field_name]
+                    if related_model is Space:
+                        fields[field_name] = new_space
+                    elif related_model is User:
+                        resolved = user_map.get(old_value) if old_value is not None else None
+                        if resolved is None and old_value is not None and field_name in not_null_fields:
+                            skip_row = True
+                            break
+                        fields[field_name] = resolved
+                    elif related_model.__name__ in pk_maps:
+                        resolved = pk_maps[related_model.__name__].get(old_value) if old_value is not None else None
+                        if resolved is None and old_value is not None and field_name in not_null_fields:
+                            skip_row = True
+                            break
+                        fields[field_name] = resolved
+                    # else: FK to a model outside the space-scoped set (global reference
+                    # data untouched by restore) — keep the original pk value as-is.
+
+                if skip_row:
+                    skipped += 1
+                    continue
+
+                parent_obj = None
+                if is_tree and depth and depth > 1:
+                    parent_path = old_path[:-model.steplen]
+                    parent_obj = path_to_new_obj.get(parent_path)
+                    if parent_obj is None:
+                        skipped += 1
+                        continue
+
+                new_obj = _create_row(model, fields, is_tree, parent_obj)
+                if is_tree:
+                    path_to_new_obj[old_path] = new_obj
+                pk_maps.setdefault(model.__name__, {})[row['pk']] = new_obj
+                created += 1
+
+            report_models[model.__name__] = {'created': created, 'skipped': skipped}
+
+        return new_space, {'models': report_models, 'unresolved_users': unresolved_users}

@@ -97,7 +97,7 @@ from cookbook.models import (
     MealType, Property, PropertyType, Recipe, RecipeBook, RecipeBookEntry, ShareLink, ShoppingListEntry, ShoppingListRecipe, Space, Step, Storage, Supermarket,
     SupermarketCategory, SupermarketCategoryRelation, Sync, SyncLog, Unit, UnitConversion, UserFile, UserPreference, UserSpace, ViewLog, RecipeImport, SearchPreference,
     SearchFields, AiLog, AiProvider, ShoppingList, InventoryLocation, InventoryEntry, InventoryLog, Household,
-    RecipeImage
+    RecipeImage, SpaceBackup
 )
 from cookbook.provider.dropbox import Dropbox
 from cookbook.provider.local import Local
@@ -116,6 +116,7 @@ from cookbook.serializer import (AccessTokenSerializer, AutomationSerializer, Au
                                  RecipeOverviewSerializer, RecipeSerializer, RecipeShoppingUpdateSerializer,
                                  RecipeSimpleSerializer, ShoppingListEntryBulkSerializer,
                                  ShoppingListEntrySerializer, ShoppingListRecipeSerializer, SpaceSerializer,
+                                 SpaceBackupSerializer,
                                  StepSerializer, StorageSerializer,
                                  InventoryLocationSerializer, InventoryEntrySerializer, InventoryLogSerializer,
                                  DrawDownSerializer, StockUpSerializer,
@@ -3086,6 +3087,59 @@ class ExportLogViewSet(LoggingMixin, viewsets.ModelViewSet):
 
     def get_queryset(self):
         return self.queryset.filter(space=self.request.space, created_by=self.request.user)
+
+
+class SpaceBackupViewSet(LoggingMixin, viewsets.ModelViewSet):
+    """Part 3 (In-App Backup/Restore) of the pantry-expiration-and-data-portability plan.
+    create() kicks off build in a background thread (same convention as AppExportView) since
+    a full-space backup can cover thousands of rows; restore() runs synchronously (same
+    simplification Part 2's portable-data import made — restore is a deliberate, infrequent,
+    admin-only action, not a hot path)."""
+    queryset = SpaceBackup.objects
+    serializer_class = SpaceBackupSerializer
+    permission_classes = [(CustomIsAdmin | CustomIsSpaceOwner) & CustomTokenHasReadWriteScope]
+    pagination_class = DefaultPagination
+    http_method_names = ['get', 'post', 'delete', 'head', 'options']
+
+    def get_queryset(self):
+        return self.queryset.filter(space=self.request.space).all()
+
+    def create(self, request, *args, **kwargs):
+        from cookbook.helper.space_backup import run_space_backup
+        backup_log = SpaceBackup.objects.create(created_by=request.user, space=request.space)
+        t = threading.Thread(target=run_space_backup, args=[request.space, backup_log])
+        t.setDaemon(True)
+        t.start()
+        return Response(self.get_serializer(backup_log).data, status=status.HTTP_201_CREATED)
+
+    def _load_backup_data(self, backup_log):
+        with backup_log.file.open('r') as f:
+            return json.load(f)
+
+    @extend_schema(request=None, responses={200: OpenApiTypes.OBJECT, 400: OpenApiTypes.OBJECT})
+    @decorators.action(detail=True, methods=['POST'], url_path='restore-preview')
+    def restore_preview(self, request, pk=None):
+        from cookbook.helper.space_restore import preview_restore
+        backup_log = self.get_object()
+        if backup_log.running or not backup_log.file:
+            return Response({'error': 'backup is not ready to restore from'}, status=status.HTTP_400_BAD_REQUEST)
+
+        return Response(preview_restore(self._load_backup_data(backup_log)), status=status.HTTP_200_OK)
+
+    @extend_schema(request=None, responses={200: OpenApiTypes.OBJECT, 400: OpenApiTypes.OBJECT})
+    @decorators.action(detail=True, methods=['POST'])
+    def restore(self, request, pk=None):
+        from cookbook.helper.space_restore import restore_space_backup
+        backup_log = self.get_object()
+        if backup_log.running or not backup_log.file:
+            return Response({'error': 'backup is not ready to restore from'}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            new_space, report = restore_space_backup(self._load_backup_data(backup_log), request.user)
+        except ValueError as e:
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+        return Response({'space_id': new_space.pk, 'space_name': new_space.name, 'report': report}, status=status.HTTP_200_OK)
 
 
 class BookmarkletImportViewSet(LoggingMixin, viewsets.ModelViewSet):

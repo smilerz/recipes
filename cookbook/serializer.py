@@ -34,7 +34,7 @@ from cookbook.models import (Automation, BookmarkletImport, Comment, CookLog, Cu
                              ExportLog, Food, FoodInheritField, ImportLog, Ingredient, InviteLink,
                              Keyword, MealPlan, MealType, NutritionInformation, Property,
                              PropertyType, Recipe, RecipeBook, RecipeBookEntry, RecipeImage, RecipeImport,
-                             ShareLink, ShoppingListEntry, ShoppingListRecipe, Space,
+                             ShareLink, ShoppingListEntry, ShoppingListRecipe, Space, SpaceBackup,
                              Step, Storage, Supermarket, SupermarketCategory,
                              SupermarketCategoryRelation, Sync, SyncLog, Unit, UnitConversion,
                              UserFile, UserPreference, UserSpace, ViewLog, ConnectorConfig, SearchPreference, SearchFields, AiLog, AiProvider, ShoppingList,
@@ -1964,6 +1964,20 @@ class ExportLogSerializer(serializers.ModelSerializer):
             'possibly_not_expired',
             'created_by', 'created_at')
         read_only_fields = ('created_by',)
+
+
+class SpaceBackupSerializer(serializers.ModelSerializer):
+
+    def create(self, validated_data):
+        validated_data['created_by'] = self.context['request'].user
+        validated_data['space'] = self.context['request'].space
+        return super().create(validated_data)
+
+    class Meta:
+        model = SpaceBackup
+        fields = ('id', 'running', 'msg', 'total_items', 'processed_items', 'file', 'file_size_kb',
+                  'created_by', 'created_at')
+        read_only_fields = ('running', 'msg', 'total_items', 'processed_items', 'file', 'file_size_kb', 'created_by')
 
 
 class AutomationSerializer(serializers.ModelSerializer):
