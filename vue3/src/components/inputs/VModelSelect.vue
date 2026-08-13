@@ -1,5 +1,5 @@
 <template>
-
+    {{ props.model }}
     <v-autocomplete
         :ref="`ref_${props.id}`"
         v-model="modelValue"
@@ -30,6 +30,8 @@
             <v-chip
                 v-bind="props"
                 :text="item.title"
+                :prepend-avatar="(modelClass.model.name == 'Recipe') ? item.raw.image : undefined"
+
             ></v-chip>
         </template>
 
@@ -38,8 +40,15 @@
                 v-bind="props"
                 :title="item.title"
             >
+                <template #prepend v-if="modelClass.model.name == 'Recipe'">
+                    <v-avatar :image="item.raw.image" v-if="item.raw.image"></v-avatar>
+                    <v-avatar image="../../assets/recipe_no_image.svg" v-else></v-avatar>
+                </template>
+
                 <template v-if="item.raw.id == undefined" #append>
-                    <v-icon icon="$create" color="success"></v-icon>
+                    <v-icon icon="$create" color="success">
+
+                    </v-icon>
                 </template>
             </v-list-item>
         </template>
@@ -47,32 +56,38 @@
         <template #menu-footer>
             <!-- TODO condition items or select does not include search -->
             <v-list-item v-if="search != undefined && search != '' && props.create">
-                <v-chip label size="small">Erstellen
-                    <span class="fa-stack">
-                        <i class="fa-regular fa-square fa-stack-2x"></i>
-                        <i class="fa-solid fa-arrow-turn-down fa-stack-1x fa-rotate-90"></i>
-                    </span>
-                </v-chip>
-                <v-chip label size="small">Erstellen & Bearbeiten
+<!--                <v-chip label size="small">Erstellen-->
+<!--                    <span class="fa-stack">-->
+<!--                        <i class="fa-regular fa-square fa-stack-2x"></i>-->
+<!--                        <i class="fa-solid fa-arrow-turn-down fa-stack-1x fa-rotate-90"></i>-->
+<!--                    </span>-->
+<!--                </v-chip>-->
+<!--                <v-chip label size="small">Erstellen & Bearbeiten-->
 
-                    <span class="fa-stack">
-                        <i class="fa-regular fa-square fa-stack-2x"></i>
-                        <i class="fa-solid fa-arrow-up fa-stack-1x"></i>
-                    </span>
-                    +
-                    <span class="fa-stack">
-                        <i class="fa-regular fa-square fa-stack-2x"></i>
-                        <i class="fa-solid fa-arrow-turn-down fa-stack-1x fa-rotate-90"></i>
-                    </span>
+<!--                    <span class="fa-stack">-->
+<!--                        <i class="fa-regular fa-square fa-stack-2x"></i>-->
+<!--                        <i class="fa-solid fa-arrow-up fa-stack-1x"></i>-->
+<!--                    </span>-->
+<!--                    +-->
+<!--                    <span class="fa-stack">-->
+<!--                        <i class="fa-regular fa-square fa-stack-2x"></i>-->
+<!--                        <i class="fa-solid fa-arrow-turn-down fa-stack-1x fa-rotate-90"></i>-->
+<!--                    </span>-->
+<!--                </v-chip>-->
+                <v-chip size="x-small" class="mr-1" label><i class="fas fa-level-down-alt fa-rotate-90"></i></v-chip>
+                <span class="mr-4">Erstellen</span>
 
-                </v-chip>
+                <v-chip size="x-small" class="mr-1" label><i class="fas fa-arrow-up"></i></v-chip>
+                <v-chip size="x-small" class="mr-1" label><i class="fas fa-level-down-alt fa-rotate-90"></i></v-chip>
+                <span>Erstellen & Bearbeiten</span>
+                <span class="text-disabled font-italic text-caption ms-3" v-if="hasMoreItems">{{ $t('ModelSelectResultsHelp') }}</span>
             </v-list-item>
         </template>
 
 
     </v-autocomplete>
 
-    <model-edit-dialog :model="props.model" v-model="modelValue" v-if="!props.multiple"></model-edit-dialog>
+    <model-edit-dialog :model="props.model" v-model="editDialog" :item="modelValue" @save="modelValue = $event" v-if="!props.multiple"></model-edit-dialog>
 
     {{ search }} <br/>
     {{ modelValue }}
@@ -80,7 +95,7 @@
 
 <script setup lang="ts">
 
-import {onBeforeMount, onMounted, PropType, ref, watch} from "vue";
+import {computed, onBeforeMount, onMounted, PropType, ref, watch} from "vue";
 import {ApiApi, Food} from "@/openapi";
 import {useDebounceFn} from "@vueuse/core";
 import {Density} from "vuetify/lib/composables/density";
@@ -88,6 +103,7 @@ import {EditorSupportedModels, EditorSupportedTypes, GenericModel, getGenericMod
 import {ErrorMessageType, PreparedMessage, useMessageStore} from "@/stores/MessageStore.ts";
 import {useI18n} from "vue-i18n";
 import ModelEditDialog from "@/components/dialogs/ModelEditDialog.vue";
+import {useUserPreferenceStore} from "@/stores/UserPreferenceStore.ts";
 
 const {t} = useI18n()
 
@@ -119,11 +135,26 @@ const modelClass = ref({} as GenericModel)
 const loading = ref(false)
 const hasFocus = ref(false)
 const hasLoadedOnce = ref(false)
+const editDialog = ref(false)
 const hasMoreItems = ref(false) // TODO implement
 
 const items = ref([] as EditorSupportedTypes[])
 
 const search = ref<string | undefined>(undefined)
+
+/**
+ * determine if the user should be able to create a new item based on create prop and if the item is already present
+ */
+const showCreate = computed(() => {
+    const existingNames = items.value.map(item => item.name.toLowerCase())
+    if (Array.isArray(modelValue.value)) {
+        existingNames.concat(modelValue.value.map(item => item.name.toLowerCase()))
+    } else if (props.returnObject && modelValue.value != undefined) {
+        existingNames.push(modelValue.value.name.toLowerCase())
+    }
+
+    return props.create && search.value != undefined && search.value.length > 0 && !existingNames.includes(search.value.toLowerCase())
+})
 
 /**
  * listen to search update and call debounced search
@@ -134,6 +165,9 @@ watch(search, (newValue, oldValue) => {
     }
 })
 
+/**
+ * watch for changes in modelValue to detect new, local items being added so they can be saved to the server
+ */
 watch(modelValue, (newValue, oldValue) => { // TODO simulate with slow networ
     console.log('modelValue changed', `"${oldValue}"`, `--> "${newValue}"`)
     if (Array.isArray(newValue)) {
@@ -157,7 +191,7 @@ watch(modelValue, (newValue, oldValue) => { // TODO simulate with slow networ
 })
 
 /**
- * create instance of model class when mounted
+ * create instance of model class before mounting
  */
 onBeforeMount(() => {
     modelClass.value = getGenericModelFromString(props.model, t)
@@ -169,6 +203,9 @@ onMounted(() => {
     }
 })
 
+/**
+ * debounce search to prevent race conditions
+ */
 const debouncedSearchItems = useDebounceFn(() => {
     searchItems()
 }, 300)
@@ -192,7 +229,7 @@ function searchItems() {
             items.value = r
         }
 
-        if (search.value != '' && search.value != undefined && props.create) { // TODO proper function for this condition with all checks ( items or select does not include search, permision)
+        if (showCreate.value) {
             items.value.splice(0, 0, {name: search.value})
         }
 
@@ -207,7 +244,8 @@ function searchItems() {
 
 /**
  * handle new object being created
- *
+ * @param name name of the item to create
+ * @param edit if the edit dialog should be opened after creation
  */
 async function createItem(name: string | undefined, edit: boolean) {
     if (props.create && name != undefined && name != '') {
@@ -217,9 +255,9 @@ async function createItem(name: string | undefined, edit: boolean) {
 
             items.value.push(createdObj)
             if (props.multiple) {
-                if(Array.isArray(modelValue.value)){
+                if (Array.isArray(modelValue.value)) {
                     let tempItem = modelValue.value.filter(item => item.name == createdObj.name)
-                    if (tempItem){
+                    if (tempItem) {
                         modelValue.value.splice(modelValue.value.indexOf(tempItem), 1, createdObj)
                     } else {
                         modelValue.value.push(createdObj)
@@ -231,6 +269,10 @@ async function createItem(name: string | undefined, edit: boolean) {
                 search.value = ''
             } else {
                 modelValue.value = createdObj
+            }
+
+            if (edit) {
+                editDialog.value = true
             }
             return createdObj
         }).catch((err: any) => {
