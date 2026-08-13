@@ -76,7 +76,7 @@
 </template>
 
 <script lang="ts" setup>
-import {computed, onBeforeMount, ref, useTemplateRef} from "vue"
+import {computed, onBeforeMount, ref, shallowRef, useTemplateRef} from "vue"
 import {EditorSupportedModels, GenericModel, getGenericModelFromString} from "@/types/Models"
 import Multiselect from '@vueform/multiselect'
 import {ErrorMessageType, PreparedMessage, useMessageStore} from "@/stores/MessageStore";
@@ -158,7 +158,7 @@ const itemLabel = computed(() => {
 const showFloatingLabel = computed(() => !!props.label && !props.inline)
 
 const model = defineModel()
-const modelClass = ref({} as GenericModel)
+const modelClass = shallowRef({} as GenericModel)
 const loading = ref(false)
 const hasMoreItems = ref(false)
 
