@@ -11,9 +11,14 @@ recreated (unresolvable references are reported and that row is skipped, not sil
 dropped or misattributed); FK fields pointing at anything else (global, instance-wide
 reference data untouched by restore) keep their original pk.
 
-KNOWN GAP (flagged, not silently dropped): M2M fields — Food.substitute,
-RecipeBook.shared, UserSpace.groups, Food.inherit_fields/child_inherit_fields — are not
-yet restored by this sub-phase.
+M2M fields (Food.substitute, RecipeBook.shared, UserSpace.groups,
+Food.inherit_fields/child_inherit_fields) are resolved in a second pass after every
+model's rows exist, using the same FK/User/global-pk resolution rules — an M2M target
+that's itself a restored model resolves through its pk_maps entry, a User-target resolves
+through user_map, anything else (Group, FoodInheritField — global, same-instance,
+untouched by restore) is reattached by original pk. Uses .add() (union), never .set()
+(replace) — critical for UserSpace.groups specifically, see _create_row's UserSpace
+special-case below.
 """
 from django.contrib.auth.models import User
 from django.db import transaction
@@ -115,8 +120,8 @@ def restore_space_backup(backup_data, admin_user):
                 fields.pop('numchild', None)
                 old_path = fields.pop('path', None) if is_tree else None
                 depth = fields.pop('depth', None) if is_tree else None
-                # M2M values can't go through create()/add_root() — stripped here, not yet
-                # restored (known gap, see module docstring), not silently mis-populated.
+                # M2M values can't go through create()/add_root() — stripped here, resolved
+                # in a second pass once every model's rows exist (see module docstring).
                 for m2m_name in m2m_field_names:
                     fields.pop(m2m_name, None)
 
@@ -146,6 +151,18 @@ def restore_space_backup(backup_data, admin_user):
                     skipped += 1
                     continue
 
+                if model is UserSpace:
+                    # The person doing a restore is typically also a member of the
+                    # original space, and create_space_for_user already auto-created
+                    # their own UserSpace (with the 'admin' group) before this loop
+                    # started. Recreating it here would duplicate that row — reuse the
+                    # existing one instead (its groups still get merged in the M2M pass).
+                    existing = UserSpace.objects.filter(user=fields.get('user'), space=new_space).first()
+                    if existing is not None:
+                        pk_maps.setdefault(model.__name__, {})[row['pk']] = existing
+                        created += 1
+                        continue
+
                 parent_obj = None
                 if is_tree and depth and depth > 1:
                     parent_path = old_path[:-model.steplen]
@@ -162,4 +179,43 @@ def restore_space_backup(backup_data, admin_user):
 
             report_models[model.__name__] = {'created': created, 'skipped': skipped}
 
+        _restore_m2m_fields(backup_data, pk_maps, user_map)
+
         return new_space, {'models': report_models, 'unresolved_users': unresolved_users}
+
+
+def _restore_m2m_fields(backup_data, pk_maps, user_map):
+    """Second pass, after every model's rows exist: populate M2M fields stripped during
+    creation. Always .add() (union), never .set() (replace) — a freshly-created object's
+    M2M starts empty so the two are equivalent there, but UserSpace rows reused via the
+    admin-dedup special case in the main loop are NOT empty (they already carry the
+    auto-attached 'admin' group), and .set() would silently strip that."""
+    for model, _lookup_path in discover_space_scoped_models():
+        m2m_field_names = [f.name for f in model._meta.get_fields() if f.many_to_many]
+        if not m2m_field_names:
+            continue
+
+        model_pk_map = pk_maps.get(model.__name__, {})
+        for row in backup_data['models'].get(model.__name__, []):
+            new_obj = model_pk_map.get(row['pk'])
+            if new_obj is None:
+                continue
+
+            for field_name in m2m_field_names:
+                old_values = row['fields'].get(field_name) or []
+                if not old_values:
+                    continue
+
+                related_model = model._meta.get_field(field_name).related_model
+                if related_model is User:
+                    resolved = [user_map[v] for v in old_values if v in user_map]
+                elif related_model.__name__ in pk_maps:
+                    related_pk_map = pk_maps[related_model.__name__]
+                    resolved = [related_pk_map[v] for v in old_values if v in related_pk_map]
+                else:
+                    # global/non-space-scoped M2M target (Group, FoodInheritField, ...) —
+                    # same instance, same table, original pks are still valid rows.
+                    resolved = list(related_model.objects.filter(pk__in=old_values))
+
+                if resolved:
+                    getattr(new_obj, field_name).add(*resolved)

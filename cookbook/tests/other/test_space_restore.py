@@ -11,12 +11,13 @@ silently dropped.
 """
 import pytest
 from django.contrib import auth
+from django.contrib.auth.models import Group
 from django_scopes import scopes_disabled
 
 from cookbook.helper.space_backup import build_space_backup
 from cookbook.helper.space_restore import assert_target_space_is_empty, preview_restore, restore_space_backup
 from cookbook.helper.permission_helper import create_space_for_user
-from cookbook.models import Food, Recipe, RecipeBook, RecipeBookEntry, Space, UserSpace
+from cookbook.models import Food, FoodInheritField, Recipe, RecipeBook, RecipeBookEntry, Space, UserSpace
 from cookbook.tests.factories import FoodFactory, RecipeBookFactory, RecipeFactory
 
 
@@ -182,3 +183,86 @@ def test_preview_restore_lists_resolved_and_unresolved_users(space_1, u1_s1):
     by_username = {u['username']: u for u in preview['users']}
     assert by_username[user.username]['resolved'] is True
     assert by_username['ghost-user']['resolved'] is False
+
+
+@pytest.mark.django_db
+def test_restore_recreates_food_substitute_m2m(space_1, u1_s1):
+    user = auth.get_user(u1_s1)
+    with scopes_disabled():
+        lime = FoodFactory(space=space_1, name='Lime')
+        lemon = FoodFactory(space=space_1, name='Lemon')
+        lime.substitute.add(lemon)
+        backup = build_space_backup(space_1)
+
+        new_space, report = restore_space_backup(backup, user)
+
+        new_lime = Food.objects.get(space=new_space, name='Lime')
+        new_lemon = Food.objects.get(space=new_space, name='Lemon')
+        assert new_lemon in new_lime.substitute.all()
+
+
+@pytest.mark.django_db
+def test_restore_recreates_recipe_book_shared_users(space_1, u1_s1, u2_s1):
+    user = auth.get_user(u1_s1)
+    other_user = auth.get_user(u2_s1)
+    with scopes_disabled():
+        book = RecipeBookFactory(space=space_1, name='Shared Book')
+        book.shared.add(other_user)
+        backup = build_space_backup(space_1)
+
+        new_space, report = restore_space_backup(backup, user)
+
+        new_book = RecipeBook.objects.get(space=new_space, name='Shared Book')
+        assert other_user in new_book.shared.all()
+
+
+@pytest.mark.django_db
+def test_restore_recreates_food_inherit_fields_m2m(space_1, u1_s1):
+    user = auth.get_user(u1_s1)
+    with scopes_disabled():
+        inherit_field, _ = FoodInheritField.objects.get_or_create(field='name', defaults={'name': 'Name'})
+        food = FoodFactory(space=space_1, name='InheritTest')
+        food.inherit_fields.add(inherit_field)
+        backup = build_space_backup(space_1)
+
+        new_space, report = restore_space_backup(backup, user)
+
+        new_food = Food.objects.get(space=new_space, name='InheritTest')
+        assert inherit_field in new_food.inherit_fields.all()
+
+
+@pytest.mark.django_db
+def test_restore_recreates_userspace_groups_for_other_members(space_1, u1_s1, u2_s1):
+    user = auth.get_user(u1_s1)
+    other_user = auth.get_user(u2_s1)
+    with scopes_disabled():
+        other_userspace = UserSpace.objects.get(user=other_user, space=space_1)
+        other_userspace.groups.add(Group.objects.get(name='guest'))
+        backup = build_space_backup(space_1)
+
+        new_space, report = restore_space_backup(backup, user)
+
+        new_userspace = UserSpace.objects.get(user=other_user, space=new_space)
+        assert 'guest' in new_userspace.groups.values_list('name', flat=True)
+
+
+@pytest.mark.django_db
+def test_restore_reuses_existing_userspace_for_restoring_admin_and_merges_groups(space_1, u1_s1):
+    """The person doing a restore is typically also a member of the original space —
+    create_space_for_user already auto-created their UserSpace (with the 'admin' group,
+    since they're the one creating the space). Restoring their own backed-up UserSpace row
+    must not create a duplicate, and must never strip that auto-attached 'admin' group even
+    if their original UserSpace happened to have a different group."""
+    user = auth.get_user(u1_s1)
+    with scopes_disabled():
+        original_userspace = UserSpace.objects.get(user=user, space=space_1)
+        original_userspace.groups.set([Group.objects.get(name='user')])
+        backup = build_space_backup(space_1)
+
+        new_space, report = restore_space_backup(backup, user)
+
+        matches = UserSpace.objects.filter(user=user, space=new_space)
+        assert matches.count() == 1
+        groups = set(matches.first().groups.values_list('name', flat=True))
+        assert 'admin' in groups
+        assert 'user' in groups
