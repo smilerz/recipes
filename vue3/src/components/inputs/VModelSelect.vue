@@ -1,5 +1,5 @@
 <template>
-    {{ props.model }}
+
     <v-autocomplete
         :ref="`ref_${props.id}`"
         v-model="modelValue"
@@ -8,10 +8,9 @@
         no-filter
         :items="items"
         item-title="name"
-        :label="props.label"
+        :label="label"
         :hint="props.hint"
         :hide-details="props.hideDetails"
-        :hide-no-data="!hasLoadedOnce"
         :density="props.density"
         :clearable="props.clearable"
         :disabled="props.disabled"
@@ -34,6 +33,12 @@
                 :text="item.title"
                 :prepend-avatar="(modelClass.model.name == 'Recipe') ? item.raw.image : undefined"
             ></v-chip>
+        </template>
+
+        <template #no-data>
+            <v-list-item v-if="hasLoadedOnce">
+                {{$t('No_Results')}}
+            </v-list-item>
         </template>
 
         <template v-slot:item="{ props, item }">
@@ -177,6 +182,17 @@ const modelValueId = computed(() => {
 })
 
 /**
+ * default to model class localization key for a label when none is given
+ */
+const label = computed(() => {
+    if (props.label) {
+        return props.label
+    } else {
+        return t(modelClass.value.model.localizationKey)
+    }
+})
+
+/**
  * listen to search update and call debounced search
  */
 watch(search, (newValue, oldValue) => {
@@ -210,11 +226,13 @@ const debouncedSearchItems = useDebounceFn(() => {
  * performs the API request to search for the selected input
  */
 function searchItems() {
+    console.log('searching items')
     let query = (search.value == undefined) ? '' : search.value
     if (query.startsWith(' ')) {
+        console.log('search query starts with space')
         return
     }
-
+    console.log('search query is', query)
     loading.value = true
     return modelClass.value.list({query: query, page: 1, pageSize: props.limit}).then((r: any) => {
         if (modelClass.value.model.isPaginated) {
@@ -236,6 +254,7 @@ function searchItems() {
     }).catch((err: any) => {
         useMessageStore().addError(ErrorMessageType.FETCH_ERROR, err)
     }).finally(() => {
+        console.log('search items finished')
         loading.value = false
         hasLoadedOnce.value = true
     })
