@@ -14,7 +14,7 @@ export function useModelEditorFunctions<T>(modelName: EditorSupportedModels, emi
 
     const loading = ref(true)
     const editingObj = ref({} as T)
-    const modelClass = ref({} as GenericModel)
+    const modelClass = shallowRef({} as GenericModel)
 
     const editingObjChanged = ref(false)
     let onBeforeSaveCallback: (() => Promise<any> | any) | undefined = undefined
