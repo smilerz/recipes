@@ -41,6 +41,24 @@ def test_list_household_scoped(u1_s1, u2_s1, space_1):
 
 
 @pytest.mark.django_db
+def test_list_filters_by_food_ids(u1_s1, space_1):
+    """food_ids (repeatable) narrows the list to entries for exactly those foods - the scoped-
+    fetch path Use Up needs instead of paging through the whole household inventory."""
+    user = auth.get_user(u1_s1)
+    with scopes_disabled():
+        household = Household.objects.create(name='h1', space=space_1)
+        UserSpace.objects.filter(user=user, space=space_1).update(household=household)
+        loc = InventoryLocationFactory(space=space_1, household=household)
+        wanted_food = FoodFactory(space=space_1)
+        other_food = FoodFactory(space=space_1)
+        wanted_entry = InventoryEntryFactory(space=space_1, food=wanted_food, inventory_location=loc, amount=1)
+        InventoryEntryFactory(space=space_1, food=other_food, inventory_location=loc, amount=1)
+
+    ids = get_result_ids(u1_s1.get(reverse(LIST_URL), {'food_ids': [wanted_food.id]}))
+    assert ids == [wanted_entry.id]
+
+
+@pytest.mark.django_db
 def test_stock_up_creates_lots_with_logs(u1_s1, space_1):
     """Stock up bulk-creates one on-hand lot per item (amount/location/expiry) with a B_ADD log."""
     user = auth.get_user(u1_s1)

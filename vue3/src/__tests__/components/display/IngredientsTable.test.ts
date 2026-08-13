@@ -78,6 +78,7 @@ describe('IngredientsTable inline onhand / substitute', () => {
     beforeEach(() => {
         setActivePinia(createPinia())
         resetApiMock()
+        sessionStorage.clear()
     })
 
     it("applies IngredientContextMenu's update:foodStatus to the ingredient food (live jar)", async () => {
@@ -138,12 +139,12 @@ describe('IngredientsTable inline onhand / substitute', () => {
         expect(html).not.toContain('FullListName')
     })
 
-    // Inline text shows the FIRST available substitute (deterministic — the
-    // same one the mobile substitute chip surfaces via substituteChip). Keeps
-    // the row short; the aria-label on the yellow icon still lists all for
-    // screen readers.
-    it('inline substitute text renders the first availableSubstitute deterministically', () => {
+    // Inline text shows a randomly-picked available substitute (not always the
+    // first — that was the original defect this session). The aria-label on
+    // the yellow icon still lists all for screen readers.
+    it('inline substitute text renders exactly one availableSubstitute, chosen randomly', () => {
         const ing = makeIngredient({food: {
+            id: 41,
             foodOnhand: false,
             availableSubstitutes: [
                 {id: 2, name: 'Alpha'},
@@ -152,15 +153,14 @@ describe('IngredientsTable inline onhand / substitute', () => {
             ],
             substituteOnhand: true,
         }})
-        // Guard against random selection re-creeping in: even when Math.random
-        // would steer to a later index, the pick must be the first substitute.
+        // Steer the pick to the last entry, proving it's no longer hardcoded to index 0.
         const mathSpy = vi.spyOn(Math, 'random').mockReturnValue(0.99)
         try {
             const w = mountTable([ing])
             const visible = w.find('.text-caption.text-medium-emphasis').text()
-            expect(visible).toContain('Alpha')
+            expect(visible).toContain('Gamma')
+            expect(visible).not.toContain('Alpha')
             expect(visible).not.toContain('Beta')
-            expect(visible).not.toContain('Gamma')
             expect(visible).not.toContain(',')
         } finally {
             mathSpy.mockRestore()
@@ -271,6 +271,7 @@ describe('IngredientsTable mobile Option-C list layout', () => {
     beforeEach(() => {
         setActivePinia(createPinia())
         resetApiMock()
+        sessionStorage.clear()
     })
 
     function mountTableMobile(ingredients: any[], context: 'overview' | 'step' = 'step', extraProps: any = {}) {
@@ -314,11 +315,54 @@ describe('IngredientsTable mobile Option-C list layout', () => {
     })
 
     it('substitute chip lists the on-hand substitutes (availableSubstitutes) with +N for extras', () => {
-        const ing = makeIngredient({food: {foodOnhand: false, availableSubstitutes: [{id: 2, name: 'Margarine'}, {id: 3, name: 'Ghee'}]}})
-        const chip = mountTableMobile([ing]).find('[data-test="ingredient-substitute"]')
-        expect(chip.exists()).toBe(true)
-        expect(chip.text()).toContain('Margarine')
-        expect(chip.text()).toContain('+1')
+        const mathSpy = vi.spyOn(Math, 'random').mockReturnValue(0)  // deterministic pick for this assertion
+        try {
+            const ing = makeIngredient({food: {foodOnhand: false, availableSubstitutes: [{id: 2, name: 'Margarine'}, {id: 3, name: 'Ghee'}]}})
+            const chip = mountTableMobile([ing]).find('[data-test="ingredient-substitute"]')
+            expect(chip.exists()).toBe(true)
+            expect(chip.text()).toContain('Margarine')
+            expect(chip.text()).toContain('+1')
+        } finally {
+            mathSpy.mockRestore()
+        }
+    })
+
+    // Regression: 9a5608d2c ("show first substitute deterministically") existed because an earlier
+    // random-pick attempt only wired substituteText(), so the desktop hint and mobile chip could
+    // disagree. Both must read the SAME pick, cached by food id.
+    it('inline text and mobile chip agree on the same substitute pick for the same food', () => {
+        const food = {id: 42, foodOnhand: false, availableSubstitutes: [
+            {id: 2, name: 'Alpha'}, {id: 3, name: 'Beta'}, {id: 4, name: 'Gamma'},
+        ], substituteOnhand: true}
+        const mathSpy = vi.spyOn(Math, 'random').mockReturnValue(0.5)  // steers off index 0
+        try {
+            const textVisible = mountTable([makeIngredient({food})]).find('.text-caption.text-medium-emphasis').text()
+            const picked = ['Alpha', 'Beta', 'Gamma'].find(n => textVisible.includes(n))
+            expect(picked).toBeDefined()
+
+            mathSpy.mockReturnValue(0)  // if the chip re-rolled independently it would now show Alpha
+            const chipText = mountTableMobile([makeIngredient({food})]).find('[data-test="ingredient-substitute"]').text()
+            expect(chipText).toContain(picked!)
+        } finally {
+            mathSpy.mockRestore()
+        }
+    })
+
+    it("a food's substitute pick is stable across remounts within the same session", () => {
+        const food = {id: 43, foodOnhand: false, availableSubstitutes: [
+            {id: 2, name: 'Alpha'}, {id: 3, name: 'Beta'}, {id: 4, name: 'Gamma'},
+        ], substituteOnhand: true}
+        const mathSpy = vi.spyOn(Math, 'random').mockReturnValue(0.99)  // steers to Gamma
+        try {
+            const first = mountTable([makeIngredient({food})]).find('.text-caption.text-medium-emphasis').text()
+            expect(first).toContain('Gamma')
+
+            mathSpy.mockReturnValue(0)  // would steer to Alpha if the pick re-rolled on remount
+            const second = mountTable([makeIngredient({food})]).find('.text-caption.text-medium-emphasis').text()
+            expect(second).toContain('Gamma')
+        } finally {
+            mathSpy.mockRestore()
+        }
     })
 
     it('no chip when the food has substitutes DEFINED but none on hand (availableSubstitutes empty)', () => {

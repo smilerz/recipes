@@ -97,6 +97,18 @@ def test_parse_servings_text(value, expected):
     assert parse_servings_text(value) == expected
 
 
+def test_source_import_step_serializer_defaults_name_to_empty_string():
+    from cookbook.serializer import SourceImportStepSerializer
+    step = {'instruction': 'mix', 'ingredients': []}
+    assert SourceImportStepSerializer(step).data['name'] == ''
+
+
+def test_source_import_step_serializer_preserves_given_name():
+    from cookbook.serializer import SourceImportStepSerializer
+    step = {'name': 'Prep', 'instruction': 'mix', 'ingredients': []}
+    assert SourceImportStepSerializer(step).data['name'] == 'Prep'
+
+
 @pytest.mark.parametrize("arg", RECIPES, ids=[x['file'][0] for x in RECIPES])
 def test_recipe_import(arg, u1_s1):
     url = arg['url']

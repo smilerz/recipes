@@ -434,7 +434,9 @@ onMounted(() => {
         useShoppingStore().autoSyncHasFocus = (document.visibilityState === 'visible')
     });
 
-    useShoppingStore().refreshFromAPI()
+    // meal-plan-scoped view only needs that plan's entries - loading the whole household
+    // list here made a single meal plan's Shopping tab pull every entry, unfiltered.
+    useShoppingStore().refreshFromAPI(props.mealPlanId)
 
     autoSyncLoop()
 

@@ -32,7 +32,10 @@ export function buildSubtitleParts(
         if (typeof val === 'number' || typeof val === 'boolean') {
             const text = `${t(col.title)}: ${val}`
             if (col.filterLink && typeof val === 'number' && val > 0) {
-                parts.push({text, to: {name: col.filterLink.route, query: {[col.filterLink.param]: item.id}}})
+                // "5 recipes" for a hierarchy node (Food/Keyword) means recipes tagged with
+                // exactly that node - descendants (e.g. Apples/Oranges under Fruit) shouldn't
+                // leak in via the search page's own include-children default.
+                parts.push({text, to: {name: col.filterLink.route, query: {[col.filterLink.param]: item.id, includeChildren: 'false'}}})
             } else {
                 parts.push({text})
             }

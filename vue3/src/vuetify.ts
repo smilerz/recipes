@@ -39,6 +39,11 @@ export const vuetifyOptions = {
         VSwitch: {
             color: 'primary'
         },
+        // without this every tab bar's active indicator/text falls back to Vuetify's default
+        // near-black instead of the space's configured theme color
+        VTabs: {
+            color: 'primary'
+        },
         // globally set the correct decimal seperator
         // VNumberInput: {
         //     decimalSeparator: 0.1.toLocaleString().replace(/\d/g, '')

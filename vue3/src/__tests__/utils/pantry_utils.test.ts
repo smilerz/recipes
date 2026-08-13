@@ -1,6 +1,6 @@
 import {describe, it, expect, beforeEach, afterEach} from 'vitest'
 import {DateTime, Settings} from 'luxon'
-import {expiryStatus, expiryColor, expiryDateLabel, pantryGroup, EXPIRING_SOON_DAYS, shelfLifeToDays, shelfLifeFromDays, isoDateToApiDate, stockUpRowFromFood, stockUpRowsFromEntries, stockUpItemsFromRows, useUpItemsFromRows, groupInventoryByFoodUnit, distinctRecentRecipes, foodRecipeUsageMap, recipeFoodIds, recipePantryRows, partitionUseUpRows, groupUseUpRowsByRecipe, pantryJarState} from '@/utils/pantry_utils'
+import {expiryStatus, expiryColor, expiryDateLabel, pantryGroup, EXPIRING_SOON_DAYS, shelfLifeToDays, shelfLifeFromDays, isoDateToApiDate, stockUpRowFromFood, stockUpRowsFromEntries, stockUpItemsFromRows, useUpItemsFromRows, groupInventoryByFoodUnit, groupUseUpBySubstituteSlot, distinctRecentRecipes, foodRecipeUsageMap, recipeFoodIds, recipePantryRows, partitionUseUpRows, groupUseUpRowsByRecipe, pantryJarState} from '@/utils/pantry_utils'
 
 const NOW = new Date('2026-07-15T12:00:00')
 const day = (iso: string) => new Date(iso)
@@ -181,6 +181,7 @@ describe('stockUpRowsFromEntries — shop-date grouping, sort, pantry-aware chec
         2: {id: 2, name: 'Apples', inInventory: 'False'},                                                  // not in pantry
         3: {id: 3, name: 'Bread', inInventory: 'True', earliestExpiry: new Date('2026-07-10T00:00:00Z')},  // in pantry, EXPIRED (NOW=07-15)
         4: {id: 4, name: 'Cream', inInventory: 'True', earliestExpiry: new Date('2026-07-16T00:00:00Z')},  // in pantry, expiring SOON
+        5: {id: 5, name: 'Butter', inInventory: 'False', substituteOnhand: true},                          // not in pantry, but a substitute is
     }
     const getFood = (id: number) => foods[id]
     const at = (iso: string) => new Date(iso + 'T12:00:00Z')  // midday UTC -> unambiguous calendar day in Chicago
@@ -195,6 +196,11 @@ describe('stockUpRowsFromEntries — shop-date grouping, sort, pantry-aware chec
         expect(rows.find(r => (r.food as any).id === 2)!.checked).toBe(true)   // Apples: not in pantry → checked
         expect(rows.find(r => (r.food as any).id === 3)!.checked).toBe(true)   // Bread: in pantry but EXPIRED → restock
         expect(rows.find(r => (r.food as any).id === 4)!.checked).toBe(true)   // Cream: in pantry but SOON → restock
+    })
+
+    it('seeds unchecked when the food itself is absent but an on-hand substitute covers it', () => {
+        const rows = stockUpRowsFromEntries([entry(5, at('2026-07-14'))], getFood, NOW)
+        expect(rows.find(r => (r.food as any).id === 5)!.checked).toBe(false)
     })
 
     it('groups by shop date (most recent first), alphabetical by food within a date', () => {
@@ -336,6 +342,77 @@ describe('groupInventoryByFoodUnit', () => {
 
     it('skips lots whose amount does not parse (NaN never seeds a row)', () => {
         expect(groupInventoryByFoodUnit([lot(milk, gal, 'not-a-number' as any)])).toHaveLength(0)
+    })
+})
+
+describe('groupUseUpBySubstituteSlot', () => {
+    const bottle = {id: 100, name: 'bottle'}
+    const rum1 = {id: 11, name: 'Bacardi'}
+    const rum2 = {id: 12, name: 'Mount Gay'}
+    const rum3 = {id: 13, name: 'Appleton'}
+    const wantedRum = {id: 10, name: 'Aged Rum'}
+    const lime = {id: 20, name: 'Lime juice'}
+    const opt = (food: any, amount = 1) => ({food, unit: bottle, amount, original: amount})
+
+    it('a wanted food with no on-hand candidates at all produces no row', () => {
+        const rows = groupUseUpBySubstituteSlot([], [wantedRum.id], new Map())
+        expect(rows).toHaveLength(0)
+    })
+
+    it('exactly one on-hand candidate (the wanted food itself) is a plain row, no picker', () => {
+        const rows = groupUseUpBySubstituteSlot([opt(wantedRum)], [wantedRum.id], new Map([[wantedRum.id, {name: wantedRum.name, subIds: new Set()}]]))
+        expect(rows).toHaveLength(1)
+        expect(rows[0].food).toBe(wantedRum)
+        expect(rows[0].substituteFor).toBeUndefined()
+        expect(rows[0].substituteOptions).toBeUndefined()
+    })
+
+    it('exactly one on-hand candidate that is a substitute (not the wanted food) is a plain row labeled with the wanted name', () => {
+        const rows = groupUseUpBySubstituteSlot([opt(rum1)], [wantedRum.id], new Map([[wantedRum.id, {name: wantedRum.name, subIds: new Set([rum1.id])}]]))
+        expect(rows).toHaveLength(1)
+        expect(rows[0].food).toBe(rum1)
+        expect(rows[0].substituteFor).toBe('Aged Rum')
+        expect(rows[0].substituteOptions).toBeUndefined()
+    })
+
+    // The reported real case: dozens of mutually-substitutable foods on hand at once must not
+    // become dozens of separate rows - they collapse into one row with selectable options.
+    it('many on-hand candidates collapse into a single row with all of them as options, sorted by name', () => {
+        const info = new Map([[wantedRum.id, {name: wantedRum.name, subIds: new Set([rum1.id, rum2.id, rum3.id])}]])
+        const rows = groupUseUpBySubstituteSlot([opt(rum1), opt(rum2), opt(rum3)], [wantedRum.id], info)
+        expect(rows).toHaveLength(1)
+        expect(rows[0].substituteFor).toBe('Aged Rum')
+        expect(rows[0].substituteOptions?.map(o => o.food.name)).toEqual(['Appleton', 'Bacardi', 'Mount Gay'])
+    })
+
+    it('defaults to the wanted food itself when it is on hand alongside its substitutes', () => {
+        const info = new Map([[wantedRum.id, {name: wantedRum.name, subIds: new Set([rum1.id])}]])
+        const rows = groupUseUpBySubstituteSlot([opt(rum1), opt(wantedRum)], [wantedRum.id], info)
+        expect(rows[0].food).toBe(wantedRum)
+        expect(rows[0].substituteOptions).toHaveLength(2)
+    })
+
+    it('defaults to the first substitute by name when the wanted food itself is not on hand', () => {
+        const info = new Map([[wantedRum.id, {name: wantedRum.name, subIds: new Set([rum1.id, rum2.id])}]])
+        const rows = groupUseUpBySubstituteSlot([opt(rum2), opt(rum1)], [wantedRum.id], info)
+        expect(rows[0].food.name).toBe('Bacardi')  // alphabetically first, not insertion order
+    })
+
+    it('a substitute shared by two wanted ingredients is assigned to only the first, never offered twice', () => {
+        const sharedSub = {id: 30, name: 'Shared'}
+        const wanted2 = {id: 21, name: 'Second Thing'}
+        const info = new Map([
+            [wantedRum.id, {name: wantedRum.name, subIds: new Set([sharedSub.id])}],
+            [wanted2.id, {name: wanted2.name, subIds: new Set([sharedSub.id])}],
+        ])
+        const rows = groupUseUpBySubstituteSlot([opt(sharedSub)], [wantedRum.id, wanted2.id], info)
+        expect(rows).toHaveLength(1)
+        expect(rows[0].substituteFor).toBe('Aged Rum')
+    })
+
+    it('a wanted ingredient with no substitute info and nothing on hand for it is skipped', () => {
+        const rows = groupUseUpBySubstituteSlot([opt(rum1)], [lime.id], new Map())
+        expect(rows).toHaveLength(0)
     })
 })
 

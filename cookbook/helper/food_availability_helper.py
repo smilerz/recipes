@@ -1,4 +1,4 @@
-from django.db.models import Exists, OuterRef, Q, Subquery
+from django.db.models import BooleanField, Case, Exists, OuterRef, Q, Subquery, Value, When
 from django.db.models.functions import Substr
 
 from cookbook.models import Food, InventoryEntry
@@ -103,4 +103,24 @@ def sibling_substitute_filter(household, shopping_users):
             path__startswith=Substr(OuterRef('path'), 1, Food.steplen * (OuterRef('depth') - 1)),
             depth=OuterRef('depth'),
         ),
+    )
+
+
+def annotate_food_substitute_availability(qs, household):
+    """Annotate a Food queryset with ``has_substitute_available``: True when a direct substitute,
+    or an available one via substitute_children/substitute_siblings, has household stock - the
+    same resolution Food.objects.cookable() uses for the makenow badge (FR-G, Stock Up).
+
+    Plain membership checks (pk__in=<queryset>), not correlated Exists()/OuterRef subqueries:
+    children_substitute_filter/sibling_substitute_filter already resolve their own OuterRef
+    correlations internally and return a closed, self-contained set of satisfied food ids.
+    """
+    substitute_ids = Food.objects.filter(_substitute_available(household, [])).values('pk')
+    children_ids = children_substitute_filter(household, []).values('pk')
+    sibling_ids = sibling_substitute_filter(household, []).values('pk')
+    return qs.annotate(
+        has_substitute_available=Case(
+            When(Q(pk__in=substitute_ids) | Q(pk__in=children_ids) | Q(pk__in=sibling_ids), then=Value(True)),
+            default=Value(False), output_field=BooleanField(),
+        )
     )

@@ -114,6 +114,12 @@ export interface FoodShopping {
      * @memberof FoodShopping
      */
     readonly foodImage: UserFileView | null;
+    /**
+     * 
+     * @type {boolean}
+     * @memberof FoodShopping
+     */
+    readonly substituteOnhand: boolean;
 }
 
 /**
@@ -126,6 +132,7 @@ export function instanceOfFoodShopping(value: object): value is FoodShopping {
     if (!('inInventory' in value) || value['inInventory'] === undefined) return false;
     if (!('earliestExpiry' in value) || value['earliestExpiry'] === undefined) return false;
     if (!('foodImage' in value) || value['foodImage'] === undefined) return false;
+    if (!('substituteOnhand' in value) || value['substituteOnhand'] === undefined) return false;
     return true;
 }
 
@@ -150,6 +157,7 @@ export function FoodShoppingFromJSONTyped(json: any, ignoreDiscriminator: boolea
         'shelfLifeDays': json['shelf_life_days'] == null ? undefined : json['shelf_life_days'],
         'preferredShoppingUnit': json['preferred_shopping_unit'] == null ? undefined : UnitFromJSON(json['preferred_shopping_unit']),
         'foodImage': UserFileViewFromJSON(json['food_image']),
+        'substituteOnhand': json['substitute_onhand'],
     };
 }
 
@@ -157,7 +165,7 @@ export function FoodShoppingToJSON(json: any): FoodShopping {
     return FoodShoppingToJSONTyped(json, false);
 }
 
-export function FoodShoppingToJSONTyped(value?: Omit<FoodShopping, 'supermarket_category'|'shopping_lists'|'in_inventory'|'earliest_expiry'|'food_image'> | null, ignoreDiscriminator: boolean = false): any {
+export function FoodShoppingToJSONTyped(value?: Omit<FoodShopping, 'supermarket_category'|'shopping_lists'|'in_inventory'|'earliest_expiry'|'food_image'|'substitute_onhand'> | null, ignoreDiscriminator: boolean = false): any {
     if (value == null) {
         return value;
     }

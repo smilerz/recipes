@@ -19,15 +19,27 @@
                                class="mb-2" @click="showAll = true">
                             {{ $t('ShowWholePantry', {count: section.expandable}) }}
                         </v-btn>
-                        <v-card v-for="row in section.rows" :key="`${row.food.id}-${row.unit?.id ?? 'none'}`" border class="mb-2" data-test="useup-row">
+                        <v-card v-for="row in section.rows" :key="row.key ?? `${row.food.id}-${row.unit?.id ?? 'none'}`" border class="mb-2" data-test="useup-row">
                             <v-card-text class="useup-grid">
                                 <div class="overflow-hidden">
-                                    <div class="font-weight-medium text-truncate">{{ row.food.name }}</div>
+                                    <!-- several on-hand foods can satisfy this one recipe ingredient (e.g. many
+                                         substitutable rums) - a picker beats a row per bottle, which stops
+                                         scaling past a handful (D-substitute-select). -->
+                                    <v-autocomplete v-if="row.substituteOptions" data-test="substitute-picker"
+                                                     :model-value="row.food.id"
+                                                     :items="row.substituteOptions.map(o => ({title: o.food.name, value: o.food.id}))"
+                                                     @update:model-value="(id: number) => selectSubstitute(row, id)"
+                                                     density="compact" hide-details variant="plain" class="font-weight-medium substitute-picker"
+                                                     :menu-props="{maxHeight: 300}"></v-autocomplete>
+                                    <div v-else class="font-weight-medium text-truncate">{{ row.food.name }}</div>
                                     <div class="text-caption text-medium-emphasis">
                                         {{ $t('InStock') }}: {{ row.original }} {{ row.unit?.name || '' }}
                                         <span v-if="rowChanged(row)" class="text-warning">
                                             → {{ row.amount }} {{ (row.newUnit ?? row.unit)?.name || '' }}<template v-if="row.amount === 0"> · {{ $t('OutToList') }}</template>
                                         </span>
+                                    </div>
+                                    <div v-if="row.substituteFor" class="text-caption text-info text-truncate">
+                                        {{ $t('UsedAsSubstituteFor', {food: row.substituteFor}) }}
                                     </div>
                                 </div>
                                 <!-- re-declared rows are a new measurement in a new unit — the old
@@ -69,20 +81,32 @@ import ClosableHelpAlert from "@/components/display/ClosableHelpAlert.vue";
 import {
     distinctRecentRecipes,
     groupInventoryByFoodUnit,
+    groupUseUpBySubstituteSlot,
     groupUseUpRowsByRecipe,
     recipeFoodIds,
+    SubstituteSlotInfo,
     useUpItemsFromRows,
 } from "@/utils/pantry_utils.ts";
 import {useShoppingActions} from "@/composables/useShoppingActions.ts";
 import {ErrorMessageType, MessageType, useMessageStore} from "@/stores/MessageStore.ts";
 
+interface SubstituteOption {
+    food: Food
+    unit: Unit | null
+    amount: number
+    original: number
+}
+
 interface Row {
+    key?: string  // stable identity for v-for when the picked food can change (substituteOptions)
     food: Food
     unit: Unit | null
     newUnit: Unit | null
     amount: number
     original: number
     recipe?: string  // the recently-cooked recipe this row is grouped under
+    substituteFor?: string  // the recipe food this row is standing in for, when it isn't itself wanted
+    substituteOptions?: SubstituteOption[]  // present when >1 on-hand food could fill this slot - render a picker
 }
 
 /** How many recent recipes to seed the "Recently cooked" section from (DEC-7). */
@@ -157,14 +181,18 @@ async function open(opts?: {foodIds?: number[], title?: string}) {
     title.value = opts?.title ?? t('UseUp')
     const api = new ApiApi()
     try {
-        const inventory = await api.apiInventoryEntryList({pageSize: 500})
-        let grouped = groupInventoryByFoodUnit<Food, Unit>(inventory.results ?? [])
-
         if (opts?.foodIds) {
-            const wanted = new Set(opts.foodIds)
-            rows.value = grouped.filter(g => g.food.id != null && wanted.has(g.food.id)).map(g => ({...g, newUnit: null}))
+            const substituteInfo = await resolveSubstituteInfo(api, opts.foodIds)
+            const acceptableFoodIds = new Set(opts.foodIds)
+            for (const info of substituteInfo.values()) for (const id of info.subIds) acceptableFoodIds.add(id)
+            const inventory = await api.apiInventoryEntryList({foodIds: [...acceptableFoodIds]})
+            const grouped = groupInventoryByFoodUnit<Food, Unit>(inventory.results ?? [])
+            rows.value = groupUseUpBySubstituteSlot(grouped, opts.foodIds, substituteInfo).map(g => ({...g, newUnit: null}))
             return
         }
+
+        const inventory = await api.apiInventoryEntryList({pageSize: 500})
+        let grouped = groupInventoryByFoodUnit<Food, Unit>(inventory.results ?? [])
 
         const orderedRecipes = await recentRecipes(api)
         const {groups, other} = groupUseUpRowsByRecipe(grouped, orderedRecipes)
@@ -178,6 +206,38 @@ async function open(opts?: {foodIds?: number[], title?: string}) {
     } finally {
         loading.value = false
     }
+}
+
+/**
+ * Look up each wanted food's `availableSubstitutes` (household/on-hand scoped server-side). That
+ * field is detail-only (empty on list responses), hence one apiFoodRetrieve per wanted food
+ * rather than a single list call - bounded by the recipe's ingredient count, run in parallel, and
+ * best-effort: a failed lookup just means that food falls back to exact-match only, never blocks
+ * the dialog opening.
+ */
+async function resolveSubstituteInfo(api: ApiApi, wantedIds: number[]): Promise<Map<number, SubstituteSlotInfo>> {
+    const substituteInfo = new Map<number, SubstituteSlotInfo>()
+    const wantedFoods = await Promise.all(wantedIds.map(id => api.apiFoodRetrieve({id}).catch(() => null)))
+    for (const food of wantedFoods) {
+        if (!food?.id) continue
+        const subIds = new Set<number>()
+        for (const sub of food.availableSubstitutes ?? []) {
+            if (sub.id != null) subIds.add(sub.id)
+        }
+        substituteInfo.set(food.id, {name: food.name ?? '', subIds})
+    }
+    return substituteInfo
+}
+
+/** Switch a substitute-picker row to a different on-hand option (D-substitute-select). */
+function selectSubstitute(row: Row, foodId: number | null) {
+    const option = row.substituteOptions?.find(o => o.food.id === foodId)
+    if (!option) return
+    row.food = option.food
+    row.unit = option.unit
+    row.original = option.original
+    row.amount = option.original
+    row.newUnit = null
 }
 
 /** Recently-cooked recipes (most-recent first) with their food ids, from the CookLog (best-effort). */

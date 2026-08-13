@@ -74,7 +74,9 @@ from cookbook.helper import recipe_url_import as helper
 from cookbook.helper.HelperFunctions import str2bool, safe_request
 from cookbook.helper.ai_helper import can_perform_ai_request, AiCallbackHandler
 from cookbook.helper.batch_edit_helper import add_to_relation, remove_from_relation, remove_all_from_relation, set_relation
-from cookbook.helper.food_availability_helper import _is_available, annotate_food_inventory, request_household
+from cookbook.helper.food_availability_helper import (
+    _is_available, annotate_food_inventory, annotate_food_substitute_availability, request_household,
+)
 from cookbook.helper.image_processing import handle_image, set_primary_recipe_image
 from cookbook.helper.inventory_helper import add_food_to_pantry, get_or_create_default_inventory_location, reduce_food_to_amount, set_food_onhand
 from cookbook.helper.ingredient_parser import IngredientParser
@@ -943,6 +945,7 @@ class InventoryLocationViewSet(LoggingMixin, viewsets.ModelViewSet, DeleteRelati
     OpenApiParameter(name='empty', description=_('If true also return empty entries, if false (default) only return entries with amount > 0.'), type=bool),
     OpenApiParameter(name='code', description=_('Returns all entries with the same food as the given code. If code is given food parameter is ignored'), type=str),
     OpenApiParameter(name='food_id', description=_('Returns all entries with the given food id'), type=int),
+    OpenApiParameter(name='food_ids', description=_('Returns all entries whose food id is in the given list. For multiple repeat the parameter.'), type=int, many=True),
     OpenApiParameter(name='inventory_location_id', description=_('Returns all entries with the given inventory location id'), type=int),
 ]))
 class InventoryEntryViewSet(LoggingMixin, viewsets.ModelViewSet, DeleteRelationMixing):
@@ -971,6 +974,8 @@ class InventoryEntryViewSet(LoggingMixin, viewsets.ModelViewSet, DeleteRelationM
                     queryset = queryset.none()
             elif food_id := self.request.query_params.get('food_id'):
                 queryset = queryset.filter(food_id=food_id)
+            elif food_ids := self.request.query_params.getlist('food_ids'):
+                queryset = queryset.filter(food_id__in=food_ids)
 
             if inventory_location_id := self.request.query_params.get('inventory_location_id'):
                 queryset = queryset.filter(inventory_location_id=inventory_location_id)
@@ -1283,6 +1288,7 @@ class FoodInheritFieldViewSet(LoggingMixin, viewsets.ReadOnlyModelViewSet):
     OpenApiParameter(name='in_shopping_list', description='Filter foods that are (true) / are not (false) on the shopping list.', type=bool),
     OpenApiParameter(name='has_children', description='Filter foods that have (true) / do not have (false) child foods.', type=bool),
     OpenApiParameter(name='has_recipe', description='Filter foods that are (true) / are not (false) linked to a recipe.', type=bool),
+    OpenApiParameter(name='recipe', description='Filter foods linked to this recipe id.', type=int),
     OpenApiParameter(name='used_in_recipes', description='Filter foods that are (true) / are not (false) used in any recipe.', type=bool),
     OpenApiParameter(name='ignore_shopping', description='Filter foods with ignore_shopping set to this value.', type=bool),
     OpenApiParameter(name='supermarket_category', description='Filter foods by supermarket category id.', type=int),
@@ -1342,6 +1348,13 @@ class FoodViewSet(OrderingMixin, LoggingMixin, TreeMixin, DeleteRelationMixing):
         qs = self._apply_tristate(qs, 'in_shopping_list', Q(shopping_status=True), Q(shopping_status=False))
         qs = self._apply_tristate(qs, 'has_children', Q(numchild__gt=0), Q(numchild=0))
         qs = self._apply_tristate(qs, 'has_recipe', Q(recipe__isnull=False), Q(recipe__isnull=True))
+
+        recipe = self.request.query_params.get('recipe', None)
+        if recipe is not None:
+            try:
+                qs = qs.filter(recipe_id=int(recipe))
+            except ValueError:
+                pass
         qs = self._apply_tristate(qs, 'used_in_recipes', Q(recipe_count__gt=0), Q(recipe_count=0))
 
         ignore_shopping = self.request.query_params.get('ignore_shopping', None)
@@ -1617,6 +1630,29 @@ class FoodViewSet(OrderingMixin, LoggingMixin, TreeMixin, DeleteRelationMixing):
         obj = self.get_object()
         qs = obj.get_substitutes()
         return Response(FoodSimpleSerializer(qs, many=True).data)
+
+    @extend_schema(
+        request=inline_serializer(name='FoodFromRecipeSerializer', fields={'recipe': IntegerField(), 'name': CharField(required=False)}),
+        responses=FoodSerializer,
+    )
+    @decorators.action(detail=False, methods=['POST'], url_path='create-from-recipe', url_name='create-from-recipe')
+    def create_from_recipe(self, request):
+        """
+        Track a recipe as a pantry food. Food.objects.get_or_create() (TreeManager)
+        dedupes by (name, space), so this reuses an existing food of the same name
+        instead of creating a duplicate, then links it to the recipe.
+        """
+        recipe = Recipe.objects.filter(pk=request.data.get('recipe'), space=request.space).first()
+        if recipe is None:
+            return Response({'error': 'recipe is required and must exist in the current space'}, status=status.HTTP_400_BAD_REQUEST)
+
+        name = request.data.get('name') or recipe.name
+        food, created = Food.objects.get_or_create(name=name, space=request.space, defaults={'recipe': recipe})
+        if not created and food.recipe_id != recipe.id:
+            food.recipe = recipe
+            food.save()
+
+        return Response(self.get_serializer(food).data, status=status.HTTP_201_CREATED if created else status.HTTP_200_OK)
 
     @decorators.action(detail=True, methods=['POST'])
     def fdc(self, request, pk):
@@ -2824,8 +2860,11 @@ class ShoppingListEntryViewSet(LoggingMixin, viewsets.ModelViewSet):
         self.queryset = self.queryset.filter(space=self.request.space)
 
         # Household-scoped inventory + earliest_expiry on the nested food so shopping rows tint the
-        # pantry jar (FR-H2 / FR-B4), matching FoodViewSet / RecipeViewSet.
-        food_qs = annotate_food_inventory(Food.objects.all(), request_household(self.request), timezone.localdate(), with_expiry=True)
+        # pantry jar (FR-H2 / FR-B4), matching FoodViewSet / RecipeViewSet. Also substitute
+        # availability so Stock Up can skip suggesting a restock when a substitute covers it.
+        household = request_household(self.request)
+        food_qs = annotate_food_inventory(Food.objects.all(), household, timezone.localdate(), with_expiry=True)
+        food_qs = annotate_food_substitute_availability(food_qs, household)
 
         # select_related("list_recipe")
         self.queryset = self.queryset.filter(

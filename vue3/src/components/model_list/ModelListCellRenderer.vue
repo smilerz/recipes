@@ -15,7 +15,7 @@
     <template v-else-if="header.type === 'number'">
         <router-link
             v-if="value != null && value > 0 && header.filterLink"
-            :to="{name: header.filterLink.route, query: {[header.filterLink.param]: item.id}}"
+            :to="{name: header.filterLink.route, query: {[header.filterLink.param]: item.id, includeChildren: 'false'}}"
             class="text-decoration-none text-inherit"
             :aria-label="t(header.title) + ': ' + value"
             @click.stop

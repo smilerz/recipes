@@ -293,10 +293,25 @@
                                             <v-menu activator="parent">
                                                 <v-list>
                                                     <v-list-item prepend-icon="$delete" @click="deleteStep(s)">{{ $t('Delete') }}</v-list-item>
-                                                    <v-list-item prepend-icon="fa-solid fa-maximize" @click="splitStep(s, '\n')">{{ $t('Split') }}</v-list-item>
+                                                    <v-list-item prepend-icon="fa-solid fa-maximize" @click="handleSplitStep(s)">{{ $t('Split') }}</v-list-item>
+                                                    <v-list-item prepend-icon="fa-solid fa-arrow-down"
+                                                                 @click="mergeStep(s)" v-if="stepIndex < importResponse.recipe.steps.length - 1" data-test="merge-next">
+                                                        {{ $t('MergeWithNext') }}
+                                                    </v-list-item>
+                                                    <v-list-item prepend-icon="fa-solid fa-arrow-up"
+                                                                 @click="mergeStep(importResponse.recipe.steps[stepIndex - 1])" v-if="stepIndex > 0" data-test="merge-previous">
+                                                        {{ $t('MergeWithPrevious') }}
+                                                    </v-list-item>
+                                                    <v-list-item prepend-icon="fas fa-plus-circle" @click="expandedStepNames.add(stepIndex)"
+                                                                 v-if="!expandedStepNames.has(stepIndex) && !s.name" data-test="add-step-name">
+                                                        {{ $t('Name') }}
+                                                    </v-list-item>
                                                 </v-list>
                                             </v-menu>
                                         </v-btn>
+                                    </v-col>
+                                    <v-col cols="12" v-if="expandedStepNames.has(stepIndex) || s.name">
+                                        <v-text-field v-model="s.name" :label="$t('Name')" data-test="step-name-field"></v-text-field>
                                     </v-col>
                                     <v-col cols="12" md="6">
                                         <v-list>
@@ -706,6 +721,7 @@ const editingIngredientIndex = ref(0)
 const dialogIngredientSorter = ref(false)
 const editingStep = ref<Step | SourceImportStep>({} as Step)
 const editingStepIndex = ref(0)
+const expandedStepNames = ref<Set<number>>(new Set())
 
 onMounted(() => {
     loadOrCreateBookmarkletToken()
@@ -883,6 +899,15 @@ function handleSplitAllSteps(): void {
 }
 
 /**
+ * splits the given step (only) at newlines, in place
+ */
+function handleSplitStep(step: SourceImportStep): void {
+    if (importResponse.value.recipe && importResponse.value.recipe.steps) {
+        splitStep(importResponse.value.recipe.steps, step, '\n')
+    }
+}
+
+/**
  * Merge two steps (the given and next one)
  */
 function mergeStep(step: SourceImportStep) {
@@ -1001,7 +1026,7 @@ function resetImporter() {
 }
 
 // Exposed for testing the post-import image-attach flow.
-defineExpose({createRecipeFromImport, importFromUrlList, importResponse, selectedImages, editAfterImport})
+defineExpose({createRecipeFromImport, importFromUrlList, importResponse, selectedImages, editAfterImport, mergeStep, handleSplitStep, expandedStepNames, stepper})
 
 </script>
 

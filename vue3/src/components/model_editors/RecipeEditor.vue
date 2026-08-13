@@ -137,6 +137,21 @@
                             </v-btn>
                         </div>
 
+                        <template v-if="isUpdate()">
+                            <v-divider class="my-4"></v-divider>
+                            <v-label>{{ $t('Create Food') }}</v-label>
+                            <div v-if="linkedFood" class="text-body-2 mt-1" data-test="linked-food-message">
+                                {{ $t('RecipeTrackedAsFood', {name: linkedFood.name}) }}
+                            </div>
+                            <template v-else>
+                                <v-text-field :label="$t('Name')" density="compact" v-model="createFoodName" data-test="create-food-name"></v-text-field>
+                                <v-btn color="create" prepend-icon="$create" :loading="creatingFood" @click="createFoodFromRecipe" data-test="create-food-button">
+                                    {{ $t('Create Food') }}
+                                </v-btn>
+                                <div class="text-caption text-medium-emphasis mt-1">{{ $t('create_food_desc') }}</div>
+                            </template>
+                        </template>
+
                     </v-form>
                 </v-tabs-window-item>
             </v-tabs-window>
@@ -173,7 +188,7 @@
 <script setup lang="ts">
 
 import {onMounted, PropType, ref, watch} from "vue";
-import {ApiApi, Ingredient, Recipe, Step} from "@/openapi";
+import {ApiApi, Food, Ingredient, Recipe, Step} from "@/openapi";
 import ModelEditorBase from "@/components/model_editors/ModelEditorBase.vue";
 import {useModelEditorFunctions} from "@/composables/useModelEditorFunctions";
 import ModelSelect from "@/components/inputs/ModelSelect.vue";
@@ -230,6 +245,10 @@ const dialogStepManager = ref(false)
 
 const aiStepSortLoading = ref(false)
 
+const linkedFood = ref<Food | null>(null)
+const createFoodName = ref('')
+const creatingFood = ref(false)
+
 onMounted(() => {
     initializeEditor()
 })
@@ -250,6 +269,42 @@ function initializeEditor() {
             editingObj.value.internal = true //TODO make database default after v2
         },
         itemDefaults: props.itemDefaults,
+    }).then(() => {
+        createFoodName.value = editingObj.value.name ?? ''
+        checkLinkedFood()
+    })
+}
+
+/**
+ * checks whether the recipe is already tracked as a pantry food, so the
+ * "Create Food" control only shows when there's nothing to create yet
+ */
+function checkLinkedFood() {
+    if (!isUpdate()) {
+        linkedFood.value = null
+        return
+    }
+    let api = new ApiApi()
+    api.apiFoodList({recipe: editingObj.value.id}).then(r => {
+        linkedFood.value = r.results?.[0] ?? null
+    }).catch(err => {
+        useMessageStore().addError(ErrorMessageType.FETCH_ERROR, err)
+    })
+}
+
+/**
+ * tracks the current recipe as a pantry food (get_or_create on the backend, so
+ * this can't create a duplicate even if triggered more than once)
+ */
+function createFoodFromRecipe() {
+    creatingFood.value = true
+    let api = new ApiApi()
+    api.apiFoodCreateFromRecipeCreate({foodFromRecipe: {recipe: editingObj.value.id!, name: createFoodName.value}}).then(r => {
+        linkedFood.value = r
+    }).catch(err => {
+        useMessageStore().addError(ErrorMessageType.CREATE_ERROR, err)
+    }).finally(() => {
+        creatingFood.value = false
     })
 }
 

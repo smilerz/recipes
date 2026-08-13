@@ -321,6 +321,35 @@ def test_entry_food_carries_household_inventory(u1_s1, space_1):
     assert row['food']['earliest_expiry'] == (today + timedelta(days=5)).isoformat()
 
 
+def test_entry_food_carries_substitute_onhand(u1_s1, space_1):
+    """Shopping-entry nested food surfaces substitute_onhand (Stock Up needs it to skip suggesting
+    a restock when a direct substitute already covers the food, mirroring the makenow badge)."""
+    from cookbook.models import InventoryLocation
+    from cookbook.tests.factories import InventoryEntryFactory, InventoryLocationFactory
+
+    user = auth.get_user(u1_s1)
+    with scopes_disabled():
+        household = Household.objects.create(name='hh', space=space_1)
+        UserSpace.objects.filter(user=user, space=space_1).update(household=household)
+        invalidate_household_cache(UserSpace.objects.get(user=user, space=space_1))
+
+        food = FoodFactory(space=space_1)
+        substitute_food = FoodFactory(space=space_1)
+        food.substitute.add(substitute_food)
+        ShoppingListEntryFactory(food=food, space=space_1, created_by=user, checked=False)
+        no_substitute_food = FoodFactory(space=space_1)
+        ShoppingListEntryFactory(food=no_substitute_food, space=space_1, created_by=user, checked=False)
+
+        loc = InventoryLocationFactory(space=space_1, household=household)
+        InventoryEntryFactory(space=space_1, food=substitute_food, inventory_location=loc, amount=1)
+
+    results = json.loads(u1_s1.get(reverse(LIST_URL)).content)['results']
+    row = next(r for r in results if r['food']['id'] == food.id)
+    other_row = next(r for r in results if r['food']['id'] == no_substitute_food.id)
+    assert row['food']['substitute_onhand'] is True
+    assert other_row['food']['substitute_onhand'] is False
+
+
 def test_entry_food_carries_pack_and_shelf_life(u1_s1, space_1):
     """Shopping-entry nested food carries the pack (shopping_amount + preferred_shopping_unit) and
     shelf_life_days so the stock-up dialog can seed rows from the list response — no per-food refetch."""

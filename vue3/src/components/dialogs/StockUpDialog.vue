@@ -86,6 +86,7 @@ import ClosableHelpAlert from "@/components/display/ClosableHelpAlert.vue";
 import PantryJarIndicator from "@/components/display/PantryJarIndicator.vue";
 import {stockUpItemsFromRows, stockUpRowsFromEntries} from "@/utils/pantry_utils.ts";
 import {ErrorMessageType, MessageType, useMessageStore} from "@/stores/MessageStore.ts";
+import {useUserPreferenceStore} from "@/stores/UserPreferenceStore.ts";
 
 interface Row {
     food: FoodShopping
@@ -174,8 +175,12 @@ async function open() {
     freezerRow.value = null
     const api = new ApiApi()
     try {
+        // unbounded checked=true history reads years-old purchases (FR-F1 regression); bound it to
+        // the same recency window the user already set for the shopping list itself.
+        const recentDays = useUserPreferenceStore().userSettings.shoppingRecentDays
+        const updatedAfter = recentDays ? DateTime.now().minus({days: recentDays}).toJSDate() : undefined
         const [checked, locationList] = await Promise.all([
-            api.apiShoppingListEntryList({checked: true, pageSize: 50}),
+            api.apiShoppingListEntryList({checked: true, pageSize: 50, updatedAfter}),
             // locations are optional (null -> backend default); their failure must not kill seeding
             api.apiInventoryLocationList({pageSize: 100}).catch(() => ({results: []})),
         ])

@@ -301,6 +301,7 @@ export function makeFood(overrides: Partial<Food> = {}): Food {
         substituteSiblings: false,
         substituteChildren: false,
         substituteOnhand: false,
+        availableSubstitutes: [],
         childInheritFields: [],
         openDataSlug: '',
         shoppingLists: [],

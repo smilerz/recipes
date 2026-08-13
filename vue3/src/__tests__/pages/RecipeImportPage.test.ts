@@ -8,7 +8,7 @@
  * single-import path, navigation never happened).
  */
 import {describe, it, expect, vi, beforeEach} from 'vitest'
-import {shallowMount, flushPromises} from '@vue/test-utils'
+import {shallowMount, mount, flushPromises} from '@vue/test-utils'
 import {createPinia, setActivePinia} from 'pinia'
 import {createI18n} from 'vue-i18n'
 import {createVuetify} from 'vuetify'
@@ -56,6 +56,20 @@ function mountPage() {
     return {wrapper, push}
 }
 
+function mountPageFull() {
+    const i18n = createI18n({legacy: false, locale: 'en', messages: {en: {}}, missingWarn: false, fallbackWarn: false})
+    const vuetify = createVuetify({components, directives})
+    const router = createRouter({
+        history: createMemoryHistory(),
+        routes: [
+            {path: '/', name: 'StartPage', component: {template: '<div/>'}},
+            {path: '/recipe/view/:id', name: 'RecipeViewPage', component: {template: '<div/>'}},
+            {path: '/edit/:model/:id', name: 'ModelEditPage', component: {template: '<div/>'}},
+        ],
+    })
+    return mount(RecipeImportPage, {global: {plugins: [createPinia(), i18n, vuetify, router]}})
+}
+
 describe('RecipeImportPage — post-import image attach (C3)', () => {
     beforeEach(() => {
         setActivePinia(createPinia())
@@ -95,5 +109,104 @@ describe('RecipeImportPage — post-import image attach (C3)', () => {
         expect(createRecipeImageFromUrlMock.mock.calls[0]).toEqual([123, 'http://example.com/1.jpg'])
         expect(createRecipeImageFromUrlMock.mock.calls[1]).toEqual([123, 'http://example.com/2.jpg'])
         expect(push).toHaveBeenCalledWith(expect.objectContaining({name: 'RecipeViewPage'}))
+    })
+})
+
+/**
+ * #12: per-step split/merge controls in the import review step editor.
+ *
+ * handleSplitStep replaces a broken inline template call - splitStep(s, '\n') was invoked
+ * with the step object where the utility expects the steps ARRAY as its first argument
+ * (signature: splitStep(steps, step, split_character)), so clicking "Split" on an
+ * individual step threw immediately (s.findIndex is not a function). mergeStep already
+ * merged a step with the next one correctly but had no UI control wired to it at all.
+ */
+describe('RecipeImportPage step split/merge (#12)', () => {
+    beforeEach(() => {
+        setActivePinia(createPinia())
+    })
+
+    function stepsFixture() {
+        return [
+            {instruction: 'chop\nonions', ingredients: [{amount: 1, food: {name: 'onion'}, unit: null, note: '', originalText: '1 onion'}]},
+            {instruction: 'boil water', ingredients: [{amount: 2, food: {name: 'water'}, unit: null, note: '', originalText: '2 cups water'}]},
+            {instruction: 'combine', ingredients: []},
+        ]
+    }
+
+    it('handleSplitStep splits only the targeted step, leaving the others untouched', async () => {
+        const {wrapper} = mountPage()
+        ;(wrapper.vm as any).importResponse = {recipe: {keywords: [], steps: stepsFixture()}}
+        // read the step back through the reactive proxy - a step object built outside
+        // importResponse's own reactive tree is never === the array's own elements
+        const reactiveSteps = (wrapper.vm as any).importResponse.recipe.steps
+        ;(wrapper.vm as any).handleSplitStep(reactiveSteps[0])
+
+        const result = (wrapper.vm as any).importResponse.recipe.steps
+        expect(result).toHaveLength(4)
+        expect(result[0].instruction).toBe('chop')
+        expect(result[1].instruction).toBe('onions')
+        expect(result[2].instruction).toBe('boil water')
+        expect(result[3].instruction).toBe('combine')
+    })
+
+    it('mergeStep merges a step with the next one (merge-with-next)', async () => {
+        const {wrapper} = mountPage()
+        ;(wrapper.vm as any).importResponse = {recipe: {keywords: [], steps: stepsFixture()}}
+        const reactiveSteps = (wrapper.vm as any).importResponse.recipe.steps
+        ;(wrapper.vm as any).mergeStep(reactiveSteps[0])
+
+        const result = (wrapper.vm as any).importResponse.recipe.steps
+        expect(result).toHaveLength(2)
+        expect(result[0].instruction).toBe('chop\nonions\nboil water')
+        expect(result[0].ingredients).toHaveLength(2)
+        expect(result[1].instruction).toBe('combine')
+    })
+
+    it('mergeStep called with the previous step achieves merge-with-previous', async () => {
+        const {wrapper} = mountPage()
+        ;(wrapper.vm as any).importResponse = {recipe: {keywords: [], steps: stepsFixture()}}
+        const reactiveSteps = (wrapper.vm as any).importResponse.recipe.steps
+        // merging step[2] ("combine") with its previous step is mergeStep(steps[1])
+        ;(wrapper.vm as any).mergeStep(reactiveSteps[1])
+
+        const result = (wrapper.vm as any).importResponse.recipe.steps
+        expect(result).toHaveLength(2)
+        expect(result[0].instruction).toBe('chop\nonions')
+        expect(result[1].instruction).toBe('boil water\ncombine')
+    })
+})
+
+describe('RecipeImportPage step name field (#12)', () => {
+    beforeEach(() => {
+        setActivePinia(createPinia())
+    })
+
+    it('is hidden until expanded, then binds to the step', async () => {
+        const wrapper = mountPageFull()
+        ;(wrapper.vm as any).stepper = 'step_editor'
+        ;(wrapper.vm as any).importResponse = {recipe: {keywords: [], steps: [{instruction: 'chop', ingredients: []}]}}
+        await flushPromises()
+
+        expect(wrapper.find('[data-test="step-name-field"]').exists()).toBe(false)
+
+        ;(wrapper.vm as any).expandedStepNames.add(0)
+        await flushPromises()
+
+        const field = wrapper.find('[data-test="step-name-field"] input')
+        expect(field.exists()).toBe(true)
+        await field.setValue('Prep')
+        await flushPromises()
+
+        expect((wrapper.vm as any).importResponse.recipe.steps[0].name).toBe('Prep')
+    })
+
+    it('stays visible once the step already has a name, without needing to expand it', async () => {
+        const wrapper = mountPageFull()
+        ;(wrapper.vm as any).stepper = 'step_editor'
+        ;(wrapper.vm as any).importResponse = {recipe: {keywords: [], steps: [{name: 'Prep', instruction: 'chop', ingredients: []}]}}
+        await flushPromises()
+
+        expect(wrapper.find('[data-test="step-name-field"]').exists()).toBe(true)
     })
 })

@@ -12,9 +12,9 @@
         :editing-object="editingObj">
 
         <v-card-text class="pa-0">
-            <v-tabs v-model="tab" :disabled="loading" grow>
-                <v-tab prepend-icon="$mealplan" value="plan">{{ $t('Meal_Plan') }}</v-tab>
-                <v-tab prepend-icon="$shopping" value="shopping">{{ $t('Shopping_list') }}</v-tab>
+            <v-tabs v-model="tab" :disabled="loading">
+                <v-tab prepend-icon="$mealplan" value="plan" class="meal-plan-tab">{{ $t('Meal_Plan') }}</v-tab>
+                <v-tab prepend-icon="$shopping" value="shopping" v-if="editingObj.shopping || editingObj.addshopping || shoppingTabAvailable" class="meal-plan-tab">{{ $t('Shopping_list') }}</v-tab>
             </v-tabs>
         </v-card-text>
 
@@ -30,19 +30,9 @@
                                 <!--                                <v-number-input label="Days" control-variant="split" :min="1"></v-number-input>-->
                                 <!--TODO create days input with +/- synced to date -->
                                 <recipe-card :recipe="editingObj.recipe" :servings="editingObj.servings" v-if="editingObj && editingObj.recipe" link-target="_blank"></recipe-card>
-                                <v-btn prepend-icon="$shopping" color="create" class="mt-1" v-if="!editingObj.shopping && editingObj.recipe && isUpdate()">
-                                    {{ $t('Add') }}
-                                    <add-to-shopping-dialog :recipe="editingObj.recipe" :meal-plan="editingObj"
-                                                            @created="editingObj.shopping = true;"></add-to-shopping-dialog>
-                                </v-btn>
 
-                                <v-checkbox :label="$t('AddToShopping')" v-model="editingObj.addshopping" hide-details v-if="editingObj.recipe && !isUpdate()"></v-checkbox>
-
-                                <!-- Editable preview opened after a new plan is created (D11 P2a). Fresh-mounted
-                                     per open so it reloads the recipe; the browser-remembered fast-path skips it. -->
-                                <add-to-shopping-dialog v-if="shoppingPreviewOpen && previewPlan" v-model="shoppingPreviewOpen"
-                                                        :recipe="previewPlan.recipe" :meal-plan="previewPlan" :show-skip-preview="true"
-                                                        @created="editingObj.shopping = true"></add-to-shopping-dialog>
+                                <v-checkbox :label="$t('AddToShopping')" v-model="editingObj.addshopping" hide-details
+                                            data-test="addshopping-checkbox" v-if="editingObj.recipe && !editingObj.shopping"></v-checkbox>
                             </v-col>
                             <v-col cols="12" md="6">
                                 <v-text-field :label="$t('Title')" v-model="editingObj.title"></v-text-field>
@@ -105,9 +95,17 @@
                 <v-tabs-window-item value="shopping">
                     <closable-help-alert class="mb-2" :text="$t('MealPlanShoppingHelp')"></closable-help-alert>
 
-                    <!-- Only mount the list once the plan has an id (a new plan is auto-persisted on
-                         tab open, see the tab watcher) so it never scopes to an undefined mealplan. -->
-                    <shopping-list-view v-if="editingObj.id" :meal-plan-id="editingObj.id"></shopping-list-view>
+                    <!-- Same reusable component either way - staging (not yet committed) shows the
+                         recipe's ingredients with a commit button; live (already committed) shows the
+                         real, editable ShoppingListEntry rows once they're loaded. -->
+                    <recipe-shopping-preview v-if="editingObj.recipe && editingObj.shopping && shoppingEntries !== undefined"
+                                              :key="editingObj.id"
+                                              :recipe="editingObj.recipe" :meal-plan="editingObj"
+                                              :existing-entries="shoppingEntries"></recipe-shopping-preview>
+                    <recipe-shopping-preview v-else-if="editingObj.recipe && !editingObj.shopping"
+                                              :recipe="editingObj.recipe" :meal-plan="editingObj"
+                                              :on-before-commit="ensurePlanSaved"
+                                              @created="onShoppingCreated"></recipe-shopping-preview>
                     <div v-else class="d-flex justify-center pa-4"><v-progress-circular indeterminate></v-progress-circular></div>
 
                 </v-tabs-window-item>
@@ -119,7 +117,7 @@
 
 <script setup lang="ts">
 
-import {nextTick, onMounted, onUnmounted, PropType, ref, toRaw, watch} from "vue";
+import {nextTick, onMounted, PropType, ref, toRaw, watch} from "vue";
 import {ApiApi, MealPlan, MealType, ShoppingListRecipe} from "@/openapi";
 import ModelEditorBase from "@/components/model_editors/ModelEditorBase.vue";
 import {useModelEditorFunctions} from "@/composables/useModelEditorFunctions";
@@ -131,13 +129,12 @@ import {VDateInput} from "vuetify/components";
 import {useUserPreferenceStore} from "@/stores/UserPreferenceStore";
 import {ErrorMessageType, MessageType, useMessageStore} from "@/stores/MessageStore";
 import ShoppingLineItem from "@/components/display/ShoppingLineItem.vue";
-import {useShoppingStore} from "@/stores/ShoppingStore";
 import ShoppingListEntryInput from "@/components/inputs/ShoppingListEntryInput.vue";
 import ClosableHelpAlert from "@/components/display/ClosableHelpAlert.vue";
 import {useMealPlanStore} from "@/stores/MealPlanStore";
-import AddToShoppingDialog from "@/components/dialogs/AddToShoppingDialog.vue";
-import ShoppingListView from "@/components/display/ShoppingListView.vue";
+import RecipeShoppingPreview from "@/components/display/RecipeShoppingPreview.vue";
 import {resolveMealplanShoppingAction} from "@/utils/mealplan_shopping";
+import type {ShoppingListEntry} from "@/openapi";
 
 const props = defineProps({
     item: {type: {} as PropType<MealPlan>, required: false, default: null},
@@ -174,8 +171,12 @@ const tab = ref('plan')
 // D11 P2a: a new plan's "add to shopping" intent opens an editable preview (default) instead of
 // the silent backend auto-add; the browser-remembered fast-path skips straight to the silent add.
 const deviceSettings = useUserPreferenceStore().deviceSettings
-const shoppingPreviewOpen = ref(false)
-const previewPlan = ref<MealPlan | undefined>(undefined)
+
+// `addshopping` is a write-only backend field - never echoed back in a save response - so
+// editingObj.addshopping reverts to undefined right after Save even when the user's intent to
+// review/add shopping items is still current. This tracks that intent independently so the
+// Shopping tab stays reachable once Save resolves it (see onSave()'s openPreview branch).
+const shoppingTabAvailable = ref(false)
 
 function onSave() {
     const wantsShopping = !isUpdate() && !!editingObj.value.recipe && !!editingObj.value.addshopping
@@ -186,8 +187,7 @@ function onSave() {
         if (!obj?.id) return obj  // save failed (e.g. validation error) — saveObject already surfaced it
         useMealPlanStore().plans.set(obj.id, obj)
         if (action.openPreview && obj.recipe) {
-            previewPlan.value = obj
-            shoppingPreviewOpen.value = true
+            shoppingTabAvailable.value = true
         }
         return obj
     })
@@ -203,6 +203,35 @@ watch(() => editingObj.value.mealType, (newType, oldType) => {
         applyTimeToEditingDates()
     }
 })
+
+// Checking the box just reveals the Shopping tab (which already shows the same staging preview
+// inline, item 17) as reachable - it does not navigate there itself, the user clicks it when
+// ready. The new-plan skip-preview fast path is untouched: it stays on the Plan tab and lets
+// onSave() resolve addshopping straight through to the backend's silent auto-add.
+watch(() => editingObj.value.addshopping, (val) => {
+    if (!val || editingObj.value.shopping) return
+    if (!isUpdate() && deviceSettings.mealplan_shopping_skipPreview) return
+    shoppingTabAvailable.value = true
+})
+
+/**
+ * ensures the plan is persisted before the shopping preview commits its entries - a shopping
+ * entry links to a real meal-plan id, but staging/reviewing it never required one. Called by
+ * RecipeShoppingPreview only when its own "Add to Shopping" button is clicked.
+ */
+async function ensurePlanSaved(): Promise<MealPlan | undefined> {
+    if (isUpdate()) return editingObj.value
+    // the caller (the shopping preview) is about to commit its own entries right after this -
+    // the backend's create() serializer ALSO silently auto-adds when addshopping is true
+    // (RecipeShoppingEditor, server-side), which would otherwise produce a second, duplicate
+    // ShoppingListRecipe for the same plan+recipe.
+    editingObj.value.addshopping = false
+    const obj = await saveObject()
+    if (obj?.id) {
+        useMealPlanStore().plans.set(obj.id, obj)
+    }
+    return obj
+}
 
 function applyTimeToEditingDates() {
     if (!mealPlanTime.value) return
@@ -221,35 +250,47 @@ function applyTimeToEditingDates() {
     })
 }
 
+const shoppingEntries = ref<ShoppingListEntry[] | undefined>(undefined)
+
 /**
- * update shopping list when switching to shopping tab
+ * fetch just this plan's shopping entries (not the whole household list) so
+ * recipe-shopping-preview can render its live, editable view.
  */
-watch(() => tab.value, async (newVal) => {
-    if (newVal !== 'shopping') return
-    // The shopping list scopes to a saved plan, so persist a new plan first (D11 P2b). Going to
-    // the tab means managing shopping directly — don't silently auto-add. On save failure (e.g.
-    // missing meal type) fall back to the plan tab; saveObject already surfaced the field error.
-    if (!editingObj.value.id) {
-        editingObj.value.addshopping = false
-        const obj = await saveObject()
-        if (!obj?.id) {
-            tab.value = 'plan'
-            return
-        }
-        useMealPlanStore().plans.set(obj.id, obj)
+async function loadShoppingEntries() {
+    if (!editingObj.value.id) return
+    try {
+        const r = await new ApiApi().apiShoppingListEntryList({mealplan: editingObj.value.id, pageSize: 100})
+        shoppingEntries.value = r.results
+    } catch (err) {
+        useMessageStore().addError(ErrorMessageType.FETCH_ERROR, err)
     }
-    useShoppingStore().selectedMealPlan = editingObj.value.id
-    useShoppingStore().updateEntriesStructure()
+}
+
+/**
+ * load the plan's entries once switching to an already-committed Shopping tab - never triggers
+ * a save (the tab is only reachable once the plan is saved or the preview is staging, per its
+ * own v-if/v-else-if).
+ */
+watch(() => tab.value, (newVal) => {
+    if (newVal !== 'shopping' || !editingObj.value.shopping) return
+    loadShoppingEntries()
 })
+
+/**
+ * the shopping preview already persisted the entries itself (independent of Save) - don't let
+ * this nested mutation mark the whole plan as unsaved. editingObjChanged's watcher runs on the
+ * next tick's flush, so it must be reset after that flush, not synchronously here.
+ */
+function onShoppingCreated() {
+    editingObj.value.shopping = true
+    loadShoppingEntries()
+    nextTick(() => {
+        editingObjChanged.value = false
+    })
+}
 
 onMounted(() => {
     initializeEditor()
-})
-
-onUnmounted(() => {
-    if (useShoppingStore().selectedMealPlan == editingObj.value.id) {
-        useShoppingStore().selectedMealPlan = undefined
-    }
 })
 
 /**
@@ -343,6 +384,13 @@ function initializeDateRange() {
 </script>
 
 <style scoped>
+/* pinned to a fixed half-width instead of v-tabs' "grow" (equal-share of visible tabs) so the
+   Meal Plan tab doesn't jump between full and half width as the Shopping List tab appears/disappears */
+.meal-plan-tab {
+    flex: 0 0 50%;
+    max-width: 50%;
+}
+
 @media (min-width: 600px) {
     .datetime-joined-group {
         background: rgba(0, 0, 0, 0.04);

@@ -99,4 +99,7 @@ export type ShoppingDialogRecipeEntry = {
     food: Food|null,
     ingredient: Ingredient|null,
     checked: boolean,
+    // set only in RecipeShoppingPreview's "live" mode - the id of the real ShoppingListEntry
+    // this row currently corresponds to, undefined while unchecked/staged.
+    entryId?: number,
 }

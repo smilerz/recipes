@@ -180,7 +180,10 @@ describe('RecipeContextMenu', () => {
     })
 
     describe('context gating', () => {
-        it('hides card-only items when context is view', () => {
+        // photo is intentionally NOT card-only (#10): a quick-edit path already existed for
+        // cards, and gating it off the recipe view meant changing a photo required the full
+        // edit -> navigate -> save round trip. cooklog stays card-only (unchanged).
+        it('hides cooklog (still card-only) but shows photo (#10) when context is view', () => {
             const w = mountMenu({
                 card_visibleMenuItems: ['edit', 'book', 'cooklog', 'photo'],
             }, { context: 'view' })
@@ -188,7 +191,7 @@ describe('RecipeContextMenu', () => {
             expect(text).toContain('Edit')
             expect(text).toContain('Add to Book')
             expect(text).not.toContain('Log Cooking')
-            expect(text).not.toContain('Edit Photo')
+            expect(text).toContain('Edit Photo')
         })
 
         it('shows card-only items when context is card', () => {
@@ -249,6 +252,20 @@ describe('use up (view context only)', () => {
 
         expect(useUpOpenSpy).toHaveBeenCalledTimes(1)
         expect(useUpOpenSpy.mock.calls[0][0].foodIds.sort()).toEqual([1, 2])
+    })
+})
+
+// #10 follow-up: the persistent icon overlay on RecipeView's hero image triggers this from
+// outside the component (via a ref), since the dialog/state live here, not on the image itself.
+describe('photo editor exposed for external trigger', () => {
+    beforeEach(() => resetApiMock())
+
+    it('openPhotoEditor is callable from outside the component', async () => {
+        apiMock.apiRecipeRetrieve.mockResolvedValue({id: 5, images: []})
+        const w = mountMenu({}, { context: 'view', recipe: { id: 5, name: 'Pancakes', steps: [] } })
+        await (w.vm as any).openPhotoEditor()
+        await w.vm.$nextTick()
+        expect(apiMock.apiRecipeRetrieve).toHaveBeenCalledWith({ id: 5 })
     })
 })
 

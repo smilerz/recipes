@@ -657,7 +657,7 @@ const debouncedSearch = useDebounceFn(() => searchRecipes({page: 1}), 300)
 let stopReQueryWatcher: (() => void) | null = null
 function startReQueryWatcher() {
     if (stopReQueryWatcher) return
-    stopReQueryWatcher = watch([filterParams, ordering, query, pageSize], () => {
+    stopReQueryWatcher = watch([filterParams, ordering, query, pageSize, settings.includeChildren], () => {
         debouncedSearch()
     })
 }
@@ -814,6 +814,11 @@ onMounted(async () => {
         } catch {
             // Filter not found (e.g. deleted) — fall through to a normal search.
         }
+    }
+    // Deep-link from a Food/Keyword/Unit database-page "Recipes" count link (#11): that link
+    // means recipes tagged with exactly that hierarchy node, not its descendants too.
+    if (route.query.includeChildren !== undefined) {
+        settings.includeChildren.value = route.query.includeChildren === 'true'
     }
     searchRecipes({page: page.value})
     startReQueryWatcher()

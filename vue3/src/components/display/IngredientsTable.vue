@@ -31,7 +31,7 @@
 
                             <template v-if="showInlineStatus">
                                 <pantry-jar-indicator v-if="isOnHand(i)" in-inventory :earliest-expiry="i.food?.earliestExpiry" size="x-small" class="ml-1"></pantry-jar-indicator>
-                                <v-icon v-else-if="i.food.substituteOnhand" icon="fa-solid fa-right-left" color="success" size="x-small" class="ml-1" :aria-label="substituteLabel(i)"></v-icon>
+                                <v-icon v-else-if="i.food.substituteOnhand" icon="fa-solid fa-right-left" color="warning" size="x-small" class="ml-1" :aria-label="substituteLabel(i)"></v-icon>
                                 <v-icon v-if="isOnShoppingList(i)" icon="fa-solid fa-cart-shopping" color="success" size="x-small" class="ml-1" :aria-label="$t('Shopping')"></v-icon>
                                 <v-icon v-if="i.food.ignoreShopping" icon="fa-solid fa-ban" color="warning" size="x-small" class="ml-1" :aria-label="$t('IgnoreShopping')"></v-icon>
                                 <span v-if="!isOnHand(i) && i.food.availableSubstitutes?.length && !mobile" class="text-caption text-medium-emphasis ml-1">
@@ -96,7 +96,7 @@
                     <span v-if="hasNote(i) && notesDisplay === 'inline'" class="font-italic">— {{ i.note }}</span>
                     <span v-else-if="hasNote(i) && notesDisplay === 'truncate'" data-test="ingredient-note" class="font-italic" style="cursor: pointer;" @click.stop="toggleNoteExpand(idx)">— {{ expandedNotes[idx] ? i.note : truncateNote(i.note) }}</span>
                     <v-chip v-if="mobileStatus && !isOnHand(i) && substituteChip(i)" data-test="ingredient-substitute"
-                            size="x-small" label class="ml-1" variant="tonal" color="success"
+                            size="x-small" label class="ml-1" variant="tonal" color="warning"
                             prepend-icon="fa-solid fa-right-left">
                         {{ substituteChip(i)!.name }}<span v-if="substituteChip(i)!.extra > 0" class="ms-1">+{{ substituteChip(i)!.extra }}</span>
                     </v-chip>
@@ -115,7 +115,7 @@
 
 <script lang="ts" setup>
 import {computed, reactive, ref} from 'vue'
-import {Ingredient} from "@/openapi";
+import {FoodSimple, Ingredient} from "@/openapi";
 import {calculateFoodAmount} from "../../utils/number_utils";
 import {useUserPreferenceStore} from "../../stores/UserPreferenceStore";
 import {ingredientToFoodString, ingredientToUnitString, parseBooleanAnnotation} from "@/utils/model_utils.ts";
@@ -123,6 +123,7 @@ import IngredientContextMenu from "@/components/inputs/IngredientContextMenu.vue
 import PantryJarIndicator from "@/components/display/PantryJarIndicator.vue";
 import {useDisplay} from "vuetify";
 import {useI18n} from "vue-i18n";
+import {substituteAvailableLabel} from "@/utils/pantry_utils.ts";
 
 const emit = defineEmits(['scale'])
 const {mobile} = useDisplay()
@@ -177,6 +178,43 @@ const mobileStatus = computed(() =>
         : deviceSettings.recipe_stepInlineStatus)
 )
 
+// Random-but-stable substitute pick, keyed by food id in sessionStorage: same food shows the same
+// substitute everywhere on the site for the rest of the browser session (no flicker on a page
+// refresh mid-cook), while different foods aren't all pinned to index 0. substituteChip() and
+// substituteText() MUST both read this — a past bug (9a5608d2c) only wired one of them to a
+// random pick, so the desktop hint and mobile chip could disagree.
+const SUBSTITUTE_PICK_STORAGE_KEY = 'ingredientsTable.substitutePick'
+
+function loadSubstitutePicks(): Record<number, number> {
+    try {
+        return JSON.parse(sessionStorage.getItem(SUBSTITUTE_PICK_STORAGE_KEY) ?? '{}')
+    } catch {
+        return {}
+    }
+}
+
+function pickSubstitute(i: Ingredient): FoodSimple | null {
+    const subs = i.food?.availableSubstitutes ?? []
+    if (!subs.length) return null
+    const foodId = i.food?.id
+    if (foodId == null) return subs[0]
+
+    const picks = loadSubstitutePicks()
+    const existing = subs.find(s => s.id === picks[foodId])
+    if (existing) return existing
+
+    const chosen = subs[Math.floor(Math.random() * subs.length)]
+    if (chosen.id != null) {
+        picks[foodId] = chosen.id
+        try {
+            sessionStorage.setItem(SUBSTITUTE_PICK_STORAGE_KEY, JSON.stringify(picks))
+        } catch {
+            // storage unavailable (private mode, etc.) — the pick just won't persist
+        }
+    }
+    return chosen
+}
+
 // The chip surfaces only the food's on-hand / in-pantry substitutes
 // (availableSubstitutes — the serializer fills it from on-hand OR pantry).
 // Substitutes that are merely *defined* but not available are intentionally
@@ -184,7 +222,7 @@ const mobileStatus = computed(() =>
 function substituteChip(i: Ingredient): {name: string, extra: number} | null {
     const subs = i.food?.availableSubstitutes ?? []
     if (!subs.length) return null
-    return {name: subs[0].name ?? '', extra: subs.length - 1}
+    return {name: pickSubstitute(i)?.name ?? '', extra: subs.length - 1}
 }
 
 // Whether the mobile row needs a second (continuation) line for note and/or chip.
@@ -218,10 +256,11 @@ function isOnShoppingList(i: Ingredient): boolean {
     return parseBooleanAnnotation(i.food?.shopping)
 }
 
-// Show the first available substitute — the same one the mobile substitute
-// chip surfaces via substituteChip(), so the two views never disagree.
+// Show the same randomly-picked substitute the mobile chip surfaces via
+// substituteChip() (pickSubstitute is the shared, session-cached source), so
+// the two views never disagree.
 function substituteText(i: Ingredient): string {
-    return i.food?.availableSubstitutes?.[0]?.name ?? ''
+    return pickSubstitute(i)?.name ?? ''
 }
 
 // Number of display characters the inline substitute block contributes when
@@ -235,9 +274,7 @@ function inlineSubstituteLength(i: Ingredient): number {
 }
 
 function substituteLabel(i: Ingredient): string {
-    const subs = i.food?.availableSubstitutes ?? []
-    if (subs.length) return t('SubstituteAvailable', {names: subs.map(s => s.name).join(', ')})
-    return t('SubstituteOnHand')
+    return substituteAvailableLabel(i.food, t)
 }
 
 </script>

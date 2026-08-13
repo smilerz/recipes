@@ -9,15 +9,18 @@
  */
 import {describe, it, expect, vi, beforeEach} from 'vitest'
 import {mount, flushPromises} from '@vue/test-utils'
-import {createPinia, setActivePinia} from 'pinia'
+import {createPinia, setActivePinia, type PiniaPlugin} from 'pinia'
 import {createI18n} from 'vue-i18n'
 import {createVuetify} from 'vuetify'
 import * as vuetifyComponents from 'vuetify/components'
 import * as vuetifyDirectives from 'vuetify/directives'
 
 import {apiMock, resetApiMock} from '@/__tests__/api-mock'
+import {makeUserPreference} from '@/__tests__/factories'
 
 vi.mock('@/openapi', async (imp) => ({...(await imp<any>()), ApiApi: class { constructor() { return apiMock } }}))
+vi.mock('@vueuse/core', async (imp) => ({...(await imp<any>()), useStorage: (_key: string, defaultValue: any) => ({value: defaultValue})}))
+vi.mock('@vueuse/router', () => ({useRouteQuery: () => ({value: false})}))
 
 const {addMessageMock, addErrorMock} = vi.hoisted(() => ({addMessageMock: vi.fn(), addErrorMock: vi.fn()}))
 vi.mock('@/stores/MessageStore', async (imp) => ({...(await imp<any>()), useMessageStore: () => ({addMessage: addMessageMock, addError: addErrorMock})}))
@@ -27,13 +30,22 @@ import StockUpDialog from '@/components/dialogs/StockUpDialog.vue'
 const L = {id: 5, name: 'l'}
 const CUP = {id: 6, name: 'cup'}
 
-function mountDialog() {
+function mountDialog(userPreferenceOverrides: Record<string, any> = {}) {
+    const prePopulate: PiniaPlugin = ({store}) => {
+        if (store.$id === 'user_preference_store') {
+            store.userSettings = makeUserPreference(userPreferenceOverrides) as any
+        }
+    }
+    const pinia = createPinia()
+    pinia.use(prePopulate)
+    setActivePinia(pinia)
+
     const i18n = createI18n({legacy: false, locale: 'en', messages: {en: {}}, missingWarn: false, fallbackWarn: false})
     const vuetify = createVuetify({components: vuetifyComponents, directives: vuetifyDirectives})
     return mount(StockUpDialog, {
         attachTo: document.body,
         global: {
-            plugins: [createPinia(), i18n, vuetify],
+            plugins: [pinia, i18n, vuetify],
             stubs: {
                 // Declare props + emit so the freezer test can drive the location select's
                 // update:modelValue (the Unit and Location selects are both ModelSelect now,
@@ -131,6 +143,22 @@ describe('StockUpDialog seeding (D3)', () => {
             expect.objectContaining({food: 3, amount: 1, unit: null}),
             expect.objectContaining({food: 2, amount: 5, unit: 7}),
         ])
+    })
+
+    it('SU-05: fetch is bounded by shoppingRecentDays, not unbounded history', async () => {
+        apiMock.apiShoppingListEntryList.mockResolvedValue({results: []})
+
+        const wrapper = mountDialog({shoppingRecentDays: 30})
+        void (wrapper.vm as any).open()
+        await flushPromises()
+
+        expect(apiMock.apiShoppingListEntryList).toHaveBeenCalledTimes(1)
+        const call = apiMock.apiShoppingListEntryList.mock.calls[0][0]
+        expect(call.checked).toBe(true)
+        expect(call.updatedAfter).toBeInstanceOf(Date)
+        const daysAgo = (Date.now() - call.updatedAfter.getTime()) / (1000 * 60 * 60 * 24)
+        expect(daysAgo).toBeGreaterThan(29)
+        expect(daysAgo).toBeLessThan(31)
     })
 
     it('SU-04: switching a row to a freezer location clears the auto shelf-life expiry (DEC-4 B)', async () => {

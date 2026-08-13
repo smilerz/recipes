@@ -16,6 +16,7 @@ import {createRouter, createMemoryHistory} from 'vue-router'
 import {h} from 'vue'
 import {apiMock, resetApiMock} from '@/__tests__/api-mock'
 import {makeUserPreference} from '@/__tests__/factories'
+import {useUserPreferenceStore} from '@/stores/UserPreferenceStore'
 
 vi.mock('@/openapi', async (importOriginal) => ({
     ...(await importOriginal<any>()),
@@ -141,6 +142,21 @@ describe('SearchPage (Phase 3 rewrite)', () => {
             const arg = (apiMock.apiRecipeList as any).mock.calls[0][0]
             expect(arg.query).toBe('pasta')
         })
+
+        // #11: a Food/Keyword/Unit database-page "Recipes" count link means recipes tagged with
+        // exactly that hierarchy node - ?includeChildren=false on arrival must actually apply,
+        // not get silently overridden by the persisted device default (which defaults true).
+        it('honors ?includeChildren=false from a database-page deep link', async () => {
+            await mountSearchPage({foods: '5', includeChildren: 'false'})
+            const arg = (apiMock.apiRecipeList as any).mock.calls[0][0]
+            expect(arg.includeChildren).toBe(false)
+        })
+
+        it('still defaults to includeChildren=true without the query param', async () => {
+            await mountSearchPage({foods: '5'})
+            const arg = (apiMock.apiRecipeList as any).mock.calls[0][0]
+            expect(arg.includeChildren).toBe(true)
+        })
     })
 
     describe('direct URL params', () => {
@@ -216,6 +232,28 @@ describe('SearchPage (Phase 3 rewrite)', () => {
             await flushPromises()
             const callsAfter = (apiMock.apiRecipeList as any).mock.calls.length
             expect(callsAfter).toBeGreaterThan(callsBefore)
+            wrapper.unmount()
+            vi.useRealTimers()
+        })
+
+        // #13: the "Include Children" switch (settings tab) writes search_includeChildren
+        // to device settings - buildSearchParams() does read it on the NEXT search, but
+        // toggling the switch by itself never triggered a re-query, so results looked
+        // unchanged until the user changed something else (query/filter/sort/page).
+        it('re-fetches when includeChildren changes', async () => {
+            vi.useFakeTimers({shouldAdvanceTime: true})
+            const {wrapper} = await mountSearchPage()
+            const callsBefore = (apiMock.apiRecipeList as any).mock.calls.length
+
+            useUserPreferenceStore().deviceSettings.search_includeChildren = false
+            await flushPromises()
+            vi.advanceTimersByTime(350)
+            await flushPromises()
+
+            const callsAfter = (apiMock.apiRecipeList as any).mock.calls.length
+            expect(callsAfter).toBeGreaterThan(callsBefore)
+            const arg = (apiMock.apiRecipeList as any).mock.calls[callsAfter - 1][0]
+            expect(arg.includeChildren).toBe(false)
             wrapper.unmount()
             vi.useRealTimers()
         })
