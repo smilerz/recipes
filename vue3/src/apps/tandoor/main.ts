@@ -60,6 +60,7 @@ let settings = {
         {path: 'open-data-import', component: () => import("@/components/settings/OpenDataImportSettings.vue"), name: 'OpenDataImportSettings', meta: {title: 'Settings'}},
         {path: 'export', component: () => import("@/components/settings/ExportDataSettings.vue"), name: 'ExportDataSettings', meta: {title: 'Settings'}},
         {path: 'portable-data-import', component: () => import("@/components/settings/PortableDataImportSettings.vue"), name: 'PortableDataImportSettings', meta: {title: 'Settings'}},
+        {path: 'space-backup', component: () => import("@/components/settings/SpaceBackupSettings.vue"), name: 'SpaceBackupSettings', meta: {title: 'Settings'}},
         {path: 'api', component: () => import("@/components/settings/ApiSettings.vue"), name: 'ApiSettings', meta: {title: 'Settings'}},
     ], meta: {title: 'Settings'}
 }
