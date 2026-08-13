@@ -4,7 +4,7 @@
 
         <v-model-select model="Food" create label="Food(Create)"></v-model-select>
         <v-model-select model="Food" create chips multiple label="Food(Create+Tags+Mult)"></v-model-select>
-        <v-model-select model="Recipe" label="Recipe"></v-model-select>
+        <v-model-select model="Recipe" clearable label="Recipe"></v-model-select>
     </v-container>
 </template>
 

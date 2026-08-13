@@ -11,6 +11,7 @@
         :label="props.label"
         :hint="props.hint"
         :hide-details="props.hideDetails"
+        :hide-no-data="!hasLoadedOnce"
         :density="props.density"
         :clearable="props.clearable"
         :disabled="props.disabled"
@@ -21,91 +22,95 @@
         :placeholder="props.placeholder"
         :loading="loading"
 
-        @keydown.enter.exact="createItem(search, false)"
-        @keydown.shift.enter="createItem(search, true)"
+        @keydown.enter.exact="createItem(search, false); console.log('triggered enter keydown')"
+        @keydown.shift.enter="createItem(search, true); console.log('triggered shift enter keydown')"
+        @keydown.shift.e.prevent="editDialog = true"
         @blur="hasFocus = false"
-        @focus="hasFocus = true"
+        @focus="hasFocus = true; searchItems()"
     >
         <template v-slot:chip="{ props, item }">
             <v-chip
                 v-bind="props"
                 :text="item.title"
                 :prepend-avatar="(modelClass.model.name == 'Recipe') ? item.raw.image : undefined"
-
             ></v-chip>
         </template>
 
         <template v-slot:item="{ props, item }">
-            <v-list-item
-                v-bind="props"
-                :title="item.title"
+            <v-list-item v-if="item.raw.id == undefined"
+                         :title="item.title"
+                         @click.exact="createItem(search, false); console.log('triggered click ITEM')"
+                         @click.shift="createItem(search, true); console.log('triggered click ITEM SHIFT')"
+            >
+                <template #append>
+                    <v-icon icon="$create" color="success">
+
+                    </v-icon>
+                </template>
+            </v-list-item>
+            <!-- normal items -> normal rendering -->
+            <v-list-item v-if="item.raw.id > 0"
+                         v-bind="props"
+                         :title="item.title"
             >
                 <template #prepend v-if="modelClass.model.name == 'Recipe'">
                     <v-avatar :image="item.raw.image" v-if="item.raw.image"></v-avatar>
                     <v-avatar image="../../assets/recipe_no_image.svg" v-else></v-avatar>
                 </template>
 
-                <template v-if="item.raw.id == undefined" #append>
-                    <v-icon icon="$create" color="success">
 
-                    </v-icon>
-                </template>
+            </v-list-item>
+            <!-- render special info item last -->
+            <v-list-item v-if="item.raw.id == -1"
+                         size="small"
+                         density="compact"
+                         disabled
+                         v-bind="props"
+                         :title="item.title"
+            >
             </v-list-item>
         </template>
 
-        <template #menu-footer>
-            <!-- TODO condition items or select does not include search -->
-            <v-list-item v-if="search != undefined && search != '' && props.create">
-<!--                <v-chip label size="small">Erstellen-->
-<!--                    <span class="fa-stack">-->
-<!--                        <i class="fa-regular fa-square fa-stack-2x"></i>-->
-<!--                        <i class="fa-solid fa-arrow-turn-down fa-stack-1x fa-rotate-90"></i>-->
-<!--                    </span>-->
-<!--                </v-chip>-->
-<!--                <v-chip label size="small">Erstellen & Bearbeiten-->
+        <template #menu-footer v-if="!mobile">
+            <v-list-item>
+                <span v-if="!props.multiple">
+                    <v-chip size="x-small" class="mr-1 ml-2" label><i class="fas fa-arrow-up"></i></v-chip>
+                    <v-chip size="x-small" class="mr-1" label>E</v-chip>
+                    <span>{{ $t('Editor') }}</span>
+                </span>
+                <span v-if="props.create" :class="{'text-disabled': !showCreate || loading }">
+                    <v-chip size="x-small" class="mr-1" label><i class="fas fa-level-down-alt fa-rotate-90"></i></v-chip>
+                    <span class="mr-4">{{ $t('Create') }}</span>
 
-<!--                    <span class="fa-stack">-->
-<!--                        <i class="fa-regular fa-square fa-stack-2x"></i>-->
-<!--                        <i class="fa-solid fa-arrow-up fa-stack-1x"></i>-->
-<!--                    </span>-->
-<!--                    +-->
-<!--                    <span class="fa-stack">-->
-<!--                        <i class="fa-regular fa-square fa-stack-2x"></i>-->
-<!--                        <i class="fa-solid fa-arrow-turn-down fa-stack-1x fa-rotate-90"></i>-->
-<!--                    </span>-->
-<!--                </v-chip>-->
-                <v-chip size="x-small" class="mr-1" label><i class="fas fa-level-down-alt fa-rotate-90"></i></v-chip>
-                <span class="mr-4">Erstellen</span>
-
-                <v-chip size="x-small" class="mr-1" label><i class="fas fa-arrow-up"></i></v-chip>
-                <v-chip size="x-small" class="mr-1" label><i class="fas fa-level-down-alt fa-rotate-90"></i></v-chip>
-                <span>Erstellen & Bearbeiten</span>
-                <span class="text-disabled font-italic text-caption ms-3" v-if="hasMoreItems">{{ $t('ModelSelectResultsHelp') }}</span>
+                    <template v-if="!props.multiple">
+                        <v-chip size="x-small" class="mr-1" label><i class="fas fa-arrow-up"></i></v-chip>
+                        <v-chip size="x-small" class="mr-1" label><i class="fas fa-level-down-alt fa-rotate-90"></i></v-chip>
+                        <span>{{ $t('Create') }} & {{ $t('Edit') }}</span>
+                    </template>
+                </span>
             </v-list-item>
         </template>
-
 
     </v-autocomplete>
 
-    <model-edit-dialog :model="props.model" v-model="editDialog" :item="modelValue" @save="modelValue = $event" v-if="!props.multiple"></model-edit-dialog>
+    <model-edit-dialog :model="props.model" v-model="editDialog" :item-id="modelValueId" @save="handleModelEditorUpdate" @create="handleModelEditorUpdate"></model-edit-dialog>
 
-    {{ search }} <br/>
-    {{ modelValue }}
+
 </template>
 
 <script setup lang="ts">
 
-import {computed, onBeforeMount, onMounted, PropType, ref, watch} from "vue";
-import {ApiApi, Food} from "@/openapi";
+import {computed, nextTick, onBeforeMount, onMounted, PropType, ref, watch} from "vue";
 import {useDebounceFn} from "@vueuse/core";
 import {Density} from "vuetify/lib/composables/density";
 import {EditorSupportedModels, EditorSupportedTypes, GenericModel, getGenericModelFromString} from "@/types/Models.ts";
 import {ErrorMessageType, PreparedMessage, useMessageStore} from "@/stores/MessageStore.ts";
 import {useI18n} from "vue-i18n";
 import ModelEditDialog from "@/components/dialogs/ModelEditDialog.vue";
-import {useUserPreferenceStore} from "@/stores/UserPreferenceStore.ts";
+import {useDisplay} from "vuetify";
 
 const {t} = useI18n()
+const {mobile} = useDisplay()
 
 const emit = defineEmits(['update:modelValue', 'create'])
 
@@ -136,7 +141,8 @@ const loading = ref(false)
 const hasFocus = ref(false)
 const hasLoadedOnce = ref(false)
 const editDialog = ref(false)
-const hasMoreItems = ref(false) // TODO implement
+const hasMoreItems = ref(false)
+const lastAddedItem = ref<EditorSupportedTypes>(undefined)
 
 const items = ref([] as EditorSupportedTypes[])
 
@@ -146,7 +152,7 @@ const search = ref<string | undefined>(undefined)
  * determine if the user should be able to create a new item based on create prop and if the item is already present
  */
 const showCreate = computed(() => {
-    const existingNames = items.value.map(item => item.name.toLowerCase())
+    const existingNames = items.value.filter(item => item.id != undefined).map(item => item.name.toLowerCase())
     if (Array.isArray(modelValue.value)) {
         existingNames.concat(modelValue.value.map(item => item.name.toLowerCase()))
     } else if (props.returnObject && modelValue.value != undefined) {
@@ -157,36 +163,26 @@ const showCreate = computed(() => {
 })
 
 /**
+ * modelValue id or undefined if nothing is selected or its props.multiple is set
+ */
+const modelValueId = computed(() => {
+    console.log(modelValue.value)
+    if (props.multiple && lastAddedItem.value) {
+        return lastAddedItem.value.id
+    } else if (modelValue.value) {
+        return modelValue.value.id
+    }
+
+    return undefined
+})
+
+/**
  * listen to search update and call debounced search
  */
 watch(search, (newValue, oldValue) => {
     if (hasFocus.value) {
+        loading.value = true
         debouncedSearchItems()
-    }
-})
-
-/**
- * watch for changes in modelValue to detect new, local items being added so they can be saved to the server
- */
-watch(modelValue, (newValue, oldValue) => { // TODO simulate with slow networ
-    console.log('modelValue changed', `"${oldValue}"`, `--> "${newValue}"`)
-    if (Array.isArray(newValue)) {
-        newValue.filter(item => item.id == undefined && item.creating == undefined).forEach(item => {
-            // prevent same item from being created multiple times
-            if (Array.isArray(modelValue.value)) {
-                let tempItem = modelValue.value.filter(item => item.name == newValue.name)
-                if (tempItem != undefined && Array.isArray(modelValue.value)) {
-                    tempItem.creating = true
-                }
-            }
-
-            // create item
-            createItem(item.name, false)
-        })
-    } else {
-        if (newValue && newValue.id == undefined) {
-            createItem(newValue.name, false)
-        }
     }
 })
 
@@ -233,6 +229,10 @@ function searchItems() {
             items.value.splice(0, 0, {name: search.value})
         }
 
+        if (hasMoreItems.value) {
+            items.value.push({name: t('ModelSelectResultsHelp'), id: -1})
+        }
+
     }).catch((err: any) => {
         useMessageStore().addError(ErrorMessageType.FETCH_ERROR, err)
     }).finally(() => {
@@ -249,19 +249,17 @@ function searchItems() {
  */
 async function createItem(name: string | undefined, edit: boolean) {
     if (props.create && name != undefined && name != '') {
+        loading.value = true
         return modelClass.value.create({name: name}).then((createdObj: any) => {
             useMessageStore().addPreparedMessage(PreparedMessage.CREATE_SUCCESS, createdObj)
             emit('create', createdObj)
 
             items.value.push(createdObj)
+            items.value = items.value.filter((item: any) => item.id != undefined)
+
             if (props.multiple) {
                 if (Array.isArray(modelValue.value)) {
-                    let tempItem = modelValue.value.filter(item => item.name == createdObj.name)
-                    if (tempItem) {
-                        modelValue.value.splice(modelValue.value.indexOf(tempItem), 1, createdObj)
-                    } else {
-                        modelValue.value.push(createdObj)
-                    }
+                    modelValue.value.push(createdObj)
                 } else {
                     modelValue.value = [createdObj]
                 }
@@ -271,15 +269,37 @@ async function createItem(name: string | undefined, edit: boolean) {
                 modelValue.value = createdObj
             }
 
-            if (edit) {
+            lastAddedItem.value = createdObj
+
+            if (edit && !props.multiple) {
                 editDialog.value = true
             }
             return createdObj
         }).catch((err: any) => {
             useMessageStore().addError(ErrorMessageType.CREATE_ERROR, err)
+        }).finally(() => {
+            loading.value = false
         })
     }
+}
 
+/**
+ * handle edit dialog updates depending on the mode the select is in
+ * @param event
+ */
+function handleModelEditorUpdate(event: EditorSupportedTypes) {
+    if (props.multiple) {
+        console.log('is multiple')
+        if (Array.isArray(modelValue.value) && modelValue.value.length > 0) {
+            let existingIndex = modelValue.value.findIndex((item: any) => item.id == event.id)
+            console.log('splicing at', existingIndex)
+            modelValue.value.splice(existingIndex, 1, event)
+        } else {
+            modelValue.value = [event]
+        }
+    } else {
+        modelValue.value = event
+    }
 }
 
 </script>
