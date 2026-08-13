@@ -88,6 +88,26 @@ export function shelfLifeFromDays(days: number | null | undefined): {value: numb
     return {value: days, period: 'day'}
 }
 
+/**
+ * Common expiry durations, in days — one tap gets a sensible date/duration without configuring
+ * a food's shelf-life fields first. Shared by every duration/date entry point (FoodEditor's three
+ * shelf-life rows, the Open confirm dialog) so "the common choices" stay a single definition.
+ */
+export const EXPIRY_PRESET_DAYS = [3, 7, 14, 30, 90, 180, 365]
+
+/** Human-readable label for a preset duration, e.g. "2 Weeks" — reuses the same Days/Weeks/Months
+ * period labels already shown in the shelf-life period selector, for one consistent vocabulary. */
+export function formatShelfLifeDuration(days: number, t: (key: string) => string): string {
+    const {value, period} = shelfLifeFromDays(days)
+    const label = period === 'month' ? 'Months' : period === 'week' ? 'Weeks' : 'Days'
+    return `${value} ${t(label)}`
+}
+
+/** today (or `from`) + `days`, as a Date — the absolute-date counterpart to a duration preset. */
+export function daysFromNow(days: number, from: Date = new Date()): Date {
+    return DateTime.fromJSDate(from).plus({days}).toJSDate()
+}
+
 export interface StockUpRowDefaults {
     amount: number
     unit: Unit | null

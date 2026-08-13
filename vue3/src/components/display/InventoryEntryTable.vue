@@ -33,10 +33,15 @@
                                     {{ expiryDateLabel(item.expires) }}
                                 </v-chip>
                                 <span v-else class="text-disabled">—</span>
+                                <v-chip v-if="item.openedAt" size="x-small" variant="tonal" color="warning" class="ms-1" closable
+                                        :data-test="`opened-chip-${item.id}`" @click:close="unopenLot(item)">
+                                    {{ t('Opened') }} {{ expiryDateLabel(item.openedAt) }}
+                                </v-chip>
                             </td>
                             <td class="text-end">
                                 <v-btn-group divided border density="comfortable">
                                     <v-btn icon="fa-solid fa-clock-rotate-left" :title="t('History')" @click="openLog(item)"></v-btn>
+                                    <v-btn v-if="!item.openedAt" icon="fa-solid fa-box-open" :title="t('Open')" :data-test="`open-lot-${item.id}`" @click="openLot(item)"></v-btn>
                                     <v-btn icon="fa-solid fa-minus" :title="t('Remove')" @click="openBooking('remove', item)"></v-btn>
                                     <v-btn icon="fa-solid fa-arrow-right" :title="t('Move')" @click="openBooking('move', item)"></v-btn>
                                 </v-btn-group>
@@ -56,11 +61,17 @@
                             <v-chip v-if="item.expires" size="small" label class="me-2" :color="expiryColor(expiryStatus(item.expires, now))">
                                 {{ expiryDateLabel(item.expires) }}
                             </v-chip>
+                            <v-chip v-if="item.openedAt" size="x-small" variant="tonal" color="warning" class="me-2" closable
+                                    :data-test="`opened-chip-${item.id}`" @click:close="unopenLot(item)">
+                                {{ t('Opened') }} {{ expiryDateLabel(item.openedAt) }}
+                            </v-chip>
                             <v-btn icon="$menu" variant="text" size="small" :aria-label="t('Actions')">
                                 <v-icon icon="$menu"></v-icon>
                                 <v-menu activator="parent">
                                     <v-list density="compact">
                                         <v-list-item :title="t('History')" prepend-icon="fa-solid fa-clock-rotate-left" @click="openLog(item)"></v-list-item>
+                                        <v-list-item v-if="!item.openedAt" :title="t('Open')" prepend-icon="fa-solid fa-box-open" :data-test="`open-lot-${item.id}`"
+                                                     @click="openLot(item)"></v-list-item>
                                         <v-list-item :title="t('Remove')" prepend-icon="fa-solid fa-minus" @click="openBooking('remove', item)"></v-list-item>
                                         <v-list-item :title="t('Move')" prepend-icon="fa-solid fa-arrow-right" @click="openBooking('move', item)"></v-list-item>
                                     </v-list>
@@ -86,7 +97,7 @@ import {useI18n} from "vue-i18n";
 import InventoryEntryLogDialog from "@/components/dialogs/InventoryEntryLogDialog.vue";
 import PantryBookingDialog from "@/components/dialogs/PantryBookingDialog.vue";
 import {expiryColor, expiryDateLabel, expiryStatus, pantryGroup} from "@/utils/pantry_utils.ts";
-import {ErrorMessageType, useMessageStore} from "@/stores/MessageStore.ts";
+import {ErrorMessageType, MessageType, StructuredMessage, useMessageStore} from "@/stores/MessageStore.ts";
 
 const {t} = useI18n()
 const {mobile} = useDisplay()
@@ -131,6 +142,31 @@ function qtyLabel(item: InventoryEntry): string {
 function openLog(item: InventoryEntry) {
     entryLogEntry.value = item
     entryLogDialog.value = true
+}
+
+/** Mark a lot opened — starts (or, if the lot is still frozen, records but doesn't yet apply) the
+ * Opened shelf-life clock. Surfaces the result via a toast rather than a pre-commit preview
+ * dialog, since the suggested date can only be computed server-side (it depends on the food's
+ * three shelf-life fields and the lot's current freezer status) — same "never silent" spirit as
+ * the move-triggered recompute, just after the fact instead of before. */
+function openLot(item: InventoryEntry) {
+    new ApiApi().apiInventoryEntryOpenCreate({id: item.id!}).then(r => {
+        Object.assign(item, r)
+        const text = r.expires ? t('OpenedExpiryUpdated', {date: expiryDateLabel(r.expires)}) : t('OpenedStillFrozen')
+        useMessageStore().addMessage(MessageType.SUCCESS, {title: t('Opened'), text} as StructuredMessage, 4000)
+    }).catch(err => {
+        useMessageStore().addError(ErrorMessageType.UPDATE_ERROR, err)
+    })
+}
+
+/** Undo: clear opened_at. The lot's expiry reverts to whatever the sealed-state formula gives it
+ * for its current location — no hidden "original date" snapshot to restore. */
+function unopenLot(item: InventoryEntry) {
+    new ApiApi().apiInventoryEntryOpenDestroy({id: item.id!}).then(r => {
+        Object.assign(item, r)
+    }).catch(err => {
+        useMessageStore().addError(ErrorMessageType.UPDATE_ERROR, err)
+    })
 }
 
 // Remove / move a lot through the shared PantryBookingDialog (upstream's row-action flow).

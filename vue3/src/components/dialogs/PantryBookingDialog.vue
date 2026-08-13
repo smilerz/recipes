@@ -120,7 +120,7 @@ import ModelSelect from "@/components/inputs/ModelSelect.vue";
 import {useI18n} from "vue-i18n";
 import {computed, onMounted, ref, watch} from "vue";
 import {useUserPreferenceStore} from "@/stores/UserPreferenceStore.ts";
-import {ErrorMessageType, PreparedMessage, useMessageStore} from "@/stores/MessageStore.ts";
+import {ErrorMessageType, MessageType, PreparedMessage, StructuredMessage, useMessageStore} from "@/stores/MessageStore.ts";
 
 const emits = defineEmits(['update'])
 
@@ -311,6 +311,9 @@ function moveInventory() {
     if (inventoryEntry.value != null) {
         formLoading.value = true
         let changed = false
+        // a freeze/thaw transition (see recompute_lot_expiry) may recompute expires server-side;
+        // compare against the pre-move value so that surfaces via its own toast, never silently
+        const expiresBeforeMove = inventoryEntry.value.expires
 
         if (inventoryLocation.value != null && inventoryEntry.value.inventoryLocation != inventoryLocation.value) {
             inventoryEntry.value.inventoryLocation = inventoryLocation.value
@@ -324,6 +327,11 @@ function moveInventory() {
         if (changed) {
             api.apiInventoryEntryUpdate({id: inventoryEntry.value.id!, inventoryEntry: inventoryEntry.value}).then(r => {
                 useMessageStore().addPreparedMessage(PreparedMessage.UPDATE_SUCCESS)
+                if (r.expires && (r.expires?.getTime() ?? null) !== (expiresBeforeMove?.getTime() ?? null)) {
+                    useMessageStore().addMessage(MessageType.INFO,
+                        {title: t('Expires'), text: t('OpenedExpiryUpdated', {date: DateTime.fromJSDate(r.expires).toLocaleString(DateTime.DATE_MED)})} as StructuredMessage,
+                        4000)
+                }
                 inventoryEntrySelected()
             }).catch(err => {
                 useMessageStore().addError(ErrorMessageType.UPDATE_ERROR, err)

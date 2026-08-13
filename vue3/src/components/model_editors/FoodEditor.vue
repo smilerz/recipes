@@ -33,15 +33,47 @@
                         <model-select :label="$t('Category')" v-model="editingObj.supermarketCategory" model="SupermarketCategory" allow-create append-to-body></model-select>
                         <model-select :label="$t('ShoppingList')" :hint="$t('DefaultShoppingListHelp')" v-model="editingObj.shoppingLists" model="ShoppingList" mode="tags" allow-create append-to-body></model-select>
 
-                        <v-row density="compact" align="center" class="mb-2">
+                        <div class="text-caption text-medium-emphasis mb-1">{{ $t('ShelfLife') }}</div>
+
+                        <v-row density="compact" align="center">
                             <v-col cols="7">
-                                <v-number-input :label="$t('ShelfLife')" v-model="shelfLifeValue" :precision="0" :min="0" control-variant="hidden" clearable hide-details></v-number-input>
+                                <v-number-input :label="$t('Pantry / Fridge')" v-model="shelfLifeValue" :precision="0" :min="0" control-variant="hidden" clearable hide-details></v-number-input>
                             </v-col>
                             <v-col cols="5">
                                 <v-select :label="$t('Period')" v-model="shelfLifePeriod" hide-details
                                           :items="[{title: $t('Days'), value: 'day'}, {title: $t('Weeks'), value: 'week'}, {title: $t('Months'), value: 'month'}]"></v-select>
                             </v-col>
+                            <v-col cols="12">
+                                <expiry-preset-chips @select="(days:number) => setShelfLife('pantry', days)"></expiry-preset-chips>
+                            </v-col>
                         </v-row>
+
+                        <v-row density="compact" align="center">
+                            <v-col cols="7">
+                                <v-number-input :label="$t('Freezer')" v-model="shelfLifeFrozenValue" :precision="0" :min="0" control-variant="hidden" clearable hide-details></v-number-input>
+                            </v-col>
+                            <v-col cols="5">
+                                <v-select :label="$t('Period')" v-model="shelfLifeFrozenPeriod" hide-details
+                                          :items="[{title: $t('Days'), value: 'day'}, {title: $t('Weeks'), value: 'week'}, {title: $t('Months'), value: 'month'}]"></v-select>
+                            </v-col>
+                            <v-col cols="12">
+                                <expiry-preset-chips @select="(days:number) => setShelfLife('frozen', days)"></expiry-preset-chips>
+                            </v-col>
+                        </v-row>
+
+                        <v-row density="compact" align="center" class="mb-2">
+                            <v-col cols="7">
+                                <v-number-input :label="$t('Opened')" v-model="shelfLifeOpenedValue" :precision="0" :min="0" control-variant="hidden" clearable hide-details></v-number-input>
+                            </v-col>
+                            <v-col cols="5">
+                                <v-select :label="$t('Period')" v-model="shelfLifeOpenedPeriod" hide-details
+                                          :items="[{title: $t('Days'), value: 'day'}, {title: $t('Weeks'), value: 'week'}, {title: $t('Months'), value: 'month'}]"></v-select>
+                            </v-col>
+                            <v-col cols="12">
+                                <expiry-preset-chips @select="(days:number) => setShelfLife('opened', days)"></expiry-preset-chips>
+                            </v-col>
+                        </v-row>
+                        <div class="text-caption text-medium-emphasis mb-4">{{ $t('ShelfLifeHelp') }}</div>
 
                         <v-row density="compact" align="center" class="mb-2">
                             <v-col cols="7">
@@ -196,6 +228,7 @@ import {DateTime} from "luxon";
 import HierarchyEditor from "@/components/inputs/HierarchyEditor.vue";
 import {useRoute} from 'vue-router'
 import {shelfLifeFromDays, shelfLifeToDays, type ShelfLifePeriod} from "@/utils/pantry_utils.ts";
+import ExpiryPresetChips from "@/components/inputs/ExpiryPresetChips.vue";
 
 
 const props = defineProps({
@@ -218,26 +251,54 @@ watch([() => props.item, () => props.itemId], () => {
 
 // object specific data (for selects/display)
 
-// shelf life is stored as days but edited as a value + period (days/weeks/months)
+// shelf life is stored as days but edited as a value + period (days/weeks/months) — three
+// independent pairs, one per physical state: sealed (Pantry/Fridge), sealed & frozen, and Opened.
 const shelfLifeValue = ref<number | null>(null)
 const shelfLifePeriod = ref<ShelfLifePeriod>('day')
+const shelfLifeFrozenValue = ref<number | null>(null)
+const shelfLifeFrozenPeriod = ref<ShelfLifePeriod>('day')
+const shelfLifeOpenedValue = ref<number | null>(null)
+const shelfLifeOpenedPeriod = ref<ShelfLifePeriod>('day')
 
-// initialize the value/period pickers whenever the stored days change (e.g. on load)
-watch(() => editingObj.value?.shelfLifeDays, (days) => {
+/** Wire a {value, period} picker pair to a shelfLifeDays* field on editingObj: initializes from
+ * the stored days on load, and writes picker changes back — only when the value actually changes,
+ * so initializing on load doesn't mark a pristine food as edited (undefined and null both mean
+ * "unset"). Shared by all three rows so the three pairs don't hand-copy the same watcher logic. */
+function useShelfLifePicker(field: 'shelfLifeDays' | 'shelfLifeDaysFrozen' | 'shelfLifeDaysOpened', value: typeof shelfLifeValue, period: typeof shelfLifePeriod) {
+    watch(() => editingObj.value?.[field], (days) => {
+        const sl = shelfLifeFromDays(days)
+        value.value = sl.value
+        period.value = sl.period
+    }, {immediate: true})
+
+    watch([value, period], ([v, p]) => {
+        if (!editingObj.value) return
+        const days = shelfLifeToDays(v, p)
+        if ((days ?? null) !== (editingObj.value[field] ?? null)) {
+            editingObj.value[field] = days
+        }
+    })
+}
+
+useShelfLifePicker('shelfLifeDays', shelfLifeValue, shelfLifePeriod)
+useShelfLifePicker('shelfLifeDaysFrozen', shelfLifeFrozenValue, shelfLifeFrozenPeriod)
+useShelfLifePicker('shelfLifeDaysOpened', shelfLifeOpenedValue, shelfLifeOpenedPeriod)
+
+/** Quick-select preset chip handler: fills a row's value+period pair from a preset day count,
+ * without requiring the food to have any shelf-life field configured first. */
+function setShelfLife(row: 'pantry' | 'frozen' | 'opened', days: number) {
     const sl = shelfLifeFromDays(days)
-    shelfLifeValue.value = sl.value
-    shelfLifePeriod.value = sl.period
-}, {immediate: true})
-
-// write the pickers back to the stored days — only when it actually changes, so initializing the
-// pickers on load doesn't mark a pristine food as edited (undefined and null both mean "unset")
-watch([shelfLifeValue, shelfLifePeriod], ([value, period]) => {
-    if (!editingObj.value) return
-    const days = shelfLifeToDays(value, period)
-    if ((days ?? null) !== (editingObj.value.shelfLifeDays ?? null)) {
-        editingObj.value.shelfLifeDays = days
+    if (row === 'pantry') {
+        shelfLifeValue.value = sl.value
+        shelfLifePeriod.value = sl.period
+    } else if (row === 'frozen') {
+        shelfLifeFrozenValue.value = sl.value
+        shelfLifeFrozenPeriod.value = sl.period
+    } else {
+        shelfLifeOpenedValue.value = sl.value
+        shelfLifeOpenedPeriod.value = sl.period
     }
-})
+}
 
 /**
  * compute label for the properties amount input to show user for
