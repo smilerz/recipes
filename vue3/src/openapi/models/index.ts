@@ -142,6 +142,8 @@ export * from './PatchedUserFile';
 export * from './PatchedUserPreference';
 export * from './PatchedUserSpace';
 export * from './PatchedViewLog';
+export * from './PortableDataExportRequest';
+export * from './PortableDataImportRequest';
 export * from './Property';
 export * from './PropertyType';
 export * from './Recipe';

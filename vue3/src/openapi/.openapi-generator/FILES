@@ -144,6 +144,8 @@ models/PatchedUserFile.ts
 models/PatchedUserPreference.ts
 models/PatchedUserSpace.ts
 models/PatchedViewLog.ts
+models/PortableDataExportRequest.ts
+models/PortableDataImportRequest.ts
 models/Property.ts
 models/PropertyType.ts
 models/Recipe.ts

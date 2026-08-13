@@ -137,6 +137,8 @@ import type {
   PatchedUserPreference,
   PatchedUserSpace,
   PatchedViewLog,
+  PortableDataExportRequest,
+  PortableDataImportRequest,
   Property,
   PropertyType,
   Recipe,
@@ -424,6 +426,10 @@ import {
     PatchedUserSpaceToJSON,
     PatchedViewLogFromJSON,
     PatchedViewLogToJSON,
+    PortableDataExportRequestFromJSON,
+    PortableDataExportRequestToJSON,
+    PortableDataImportRequestFromJSON,
+    PortableDataImportRequestToJSON,
     PropertyFromJSON,
     PropertyToJSON,
     PropertyTypeFromJSON,
@@ -809,6 +815,10 @@ export interface ApiExportLogUpdateRequest {
     exportLog: Omit<ExportLog, 'createdBy'|'createdAt'>;
 }
 
+export interface ApiExportPortableDataCreateRequest {
+    portableDataExportRequest?: PortableDataExportRequest;
+}
+
 export interface ApiFdcSearchRetrieveRequest {
     dataType?: Array<string>;
     query?: string;
@@ -1001,6 +1011,10 @@ export interface ApiImportOpenDataCreateRequest {
     importOpenData: ImportOpenData;
 }
 
+export interface ApiImportPortableDataCreateRequest {
+    portableDataImportRequest: PortableDataImportRequest;
+}
+
 export interface ApiIngredientCreateRequest {
     ingredient: Omit<Ingredient, 'conversions'|'usedInRecipes'|'checked'>;
 }
@@ -1042,7 +1056,7 @@ export interface ApiInventoryEntryCascadingListRequest {
 }
 
 export interface ApiInventoryEntryCreateRequest {
-    inventoryEntry: Omit<InventoryEntry, 'label'|'createdAt'|'createdBy'>;
+    inventoryEntry: Omit<InventoryEntry, 'openedAt'|'label'|'createdAt'|'createdBy'>;
 }
 
 export interface ApiInventoryEntryDestroyRequest {
@@ -1070,9 +1084,17 @@ export interface ApiInventoryEntryNullingListRequest {
     pageSize?: number;
 }
 
+export interface ApiInventoryEntryOpenCreateRequest {
+    id: number;
+}
+
+export interface ApiInventoryEntryOpenDestroyRequest {
+    id: number;
+}
+
 export interface ApiInventoryEntryPartialUpdateRequest {
     id: number;
-    patchedInventoryEntry?: Omit<PatchedInventoryEntry, 'label'|'createdAt'|'createdBy'>;
+    patchedInventoryEntry?: Omit<PatchedInventoryEntry, 'openedAt'|'label'|'createdAt'|'createdBy'>;
 }
 
 export interface ApiInventoryEntryProtectingListRequest {
@@ -1092,7 +1114,7 @@ export interface ApiInventoryEntryStockUpCreateRequest {
 
 export interface ApiInventoryEntryUpdateRequest {
     id: number;
-    inventoryEntry: Omit<InventoryEntry, 'label'|'createdAt'|'createdBy'>;
+    inventoryEntry: Omit<InventoryEntry, 'openedAt'|'label'|'createdAt'|'createdBy'>;
 }
 
 export interface ApiInventoryLocationCascadingListRequest {
@@ -5245,6 +5267,42 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
+     * Version-agnostic Food/Keyword/RecipeBook export (Part 2 of the pantry-expiration-and- data-portability plan) — a thin, synchronous wrapper around build_portable_export. Deliberately NOT the ExportLog/background-thread pattern AppExportView uses: this is pure JSON with no images, so the async machinery that pattern exists for doesn\'t apply here.
+     */
+    async apiExportPortableDataCreateRaw(requestParameters: ApiExportPortableDataCreateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<{ [key: string]: any; }>> {
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        if (this.configuration && this.configuration.apiKey) {
+            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
+        }
+
+
+        let urlPath = `/api/export-portable-data/`;
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: PortableDataExportRequestToJSON(requestParameters['portableDataExportRequest']),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse<any>(response);
+    }
+
+    /**
+     * Version-agnostic Food/Keyword/RecipeBook export (Part 2 of the pantry-expiration-and- data-portability plan) — a thin, synchronous wrapper around build_portable_export. Deliberately NOT the ExportLog/background-thread pattern AppExportView uses: this is pure JSON with no images, so the async machinery that pattern exists for doesn\'t apply here.
+     */
+    async apiExportPortableDataCreate(requestParameters: ApiExportPortableDataCreateRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<{ [key: string]: any; }> {
+        const response = await this.apiExportPortableDataCreateRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
      */
     async apiFdcSearchRetrieveRaw(requestParameters: ApiFdcSearchRetrieveRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<FdcQuery>> {
         const queryParameters: any = {};
@@ -7116,6 +7174,49 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
+     * Import/merge for the portable-data envelope (see PortableDataExportView). Two modes: \'analyze\' (dry-run diff preview, zero writes) and \'apply\' (commit, per merge_policy).
+     */
+    async apiImportPortableDataCreateRaw(requestParameters: ApiImportPortableDataCreateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<{ [key: string]: any; }>> {
+        if (requestParameters['portableDataImportRequest'] == null) {
+            throw new runtime.RequiredError(
+                'portableDataImportRequest',
+                'Required parameter "portableDataImportRequest" was null or undefined when calling apiImportPortableDataCreate().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        if (this.configuration && this.configuration.apiKey) {
+            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
+        }
+
+
+        let urlPath = `/api/import-portable-data/`;
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: PortableDataImportRequestToJSON(requestParameters['portableDataImportRequest']),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse<any>(response);
+    }
+
+    /**
+     * Import/merge for the portable-data envelope (see PortableDataExportView). Two modes: \'analyze\' (dry-run diff preview, zero writes) and \'apply\' (commit, per merge_policy).
+     */
+    async apiImportPortableDataCreate(requestParameters: ApiImportPortableDataCreateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<{ [key: string]: any; }> {
+        const response = await this.apiImportPortableDataCreateRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
      * logs request counts to redis cache total/per user/
      */
     async apiIngredientCreateRaw(requestParameters: ApiIngredientCreateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Ingredient>> {
@@ -7706,6 +7807,88 @@ export class ApiApi extends runtime.BaseAPI {
      */
     async apiInventoryEntryNullingList(requestParameters: ApiInventoryEntryNullingListRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PaginatedGenericModelReferenceList> {
         const response = await this.apiInventoryEntryNullingListRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Mark a lot opened (POST) or undo that (DELETE) — starts/clears the Opened shelf-life clock (see recompute_lot_expiry). POST is idempotent: opening an already-opened lot is a no-op, opened_at never resets to a later date by re-tapping.
+     */
+    async apiInventoryEntryOpenCreateRaw(requestParameters: ApiInventoryEntryOpenCreateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<InventoryEntry>> {
+        if (requestParameters['id'] == null) {
+            throw new runtime.RequiredError(
+                'id',
+                'Required parameter "id" was null or undefined when calling apiInventoryEntryOpenCreate().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.apiKey) {
+            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
+        }
+
+
+        let urlPath = `/api/inventory-entry/{id}/open/`;
+        urlPath = urlPath.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id'])));
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => InventoryEntryFromJSON(jsonValue));
+    }
+
+    /**
+     * Mark a lot opened (POST) or undo that (DELETE) — starts/clears the Opened shelf-life clock (see recompute_lot_expiry). POST is idempotent: opening an already-opened lot is a no-op, opened_at never resets to a later date by re-tapping.
+     */
+    async apiInventoryEntryOpenCreate(requestParameters: ApiInventoryEntryOpenCreateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<InventoryEntry> {
+        const response = await this.apiInventoryEntryOpenCreateRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Mark a lot opened (POST) or undo that (DELETE) — starts/clears the Opened shelf-life clock (see recompute_lot_expiry). POST is idempotent: opening an already-opened lot is a no-op, opened_at never resets to a later date by re-tapping.
+     */
+    async apiInventoryEntryOpenDestroyRaw(requestParameters: ApiInventoryEntryOpenDestroyRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<InventoryEntry>> {
+        if (requestParameters['id'] == null) {
+            throw new runtime.RequiredError(
+                'id',
+                'Required parameter "id" was null or undefined when calling apiInventoryEntryOpenDestroy().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.apiKey) {
+            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
+        }
+
+
+        let urlPath = `/api/inventory-entry/{id}/open/`;
+        urlPath = urlPath.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id'])));
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'DELETE',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => InventoryEntryFromJSON(jsonValue));
+    }
+
+    /**
+     * Mark a lot opened (POST) or undo that (DELETE) — starts/clears the Opened shelf-life clock (see recompute_lot_expiry). POST is idempotent: opening an already-opened lot is a no-op, opened_at never resets to a later date by re-tapping.
+     */
+    async apiInventoryEntryOpenDestroy(requestParameters: ApiInventoryEntryOpenDestroyRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<InventoryEntry> {
+        const response = await this.apiInventoryEntryOpenDestroyRaw(requestParameters, initOverrides);
         return await response.value();
     }
 

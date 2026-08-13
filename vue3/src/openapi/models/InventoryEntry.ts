@@ -91,6 +91,12 @@ export interface InventoryEntry {
     expires?: Date | null;
     /**
      * 
+     * @type {Date}
+     * @memberof InventoryEntry
+     */
+    readonly openedAt: Date | null;
+    /**
+     * 
      * @type {string}
      * @memberof InventoryEntry
      */
@@ -122,6 +128,7 @@ export function instanceOfInventoryEntry(value: object): value is InventoryEntry
     if (!('inventoryLocation' in value) || value['inventoryLocation'] === undefined) return false;
     if (!('food' in value) || value['food'] === undefined) return false;
     if (!('unit' in value) || value['unit'] === undefined) return false;
+    if (!('openedAt' in value) || value['openedAt'] === undefined) return false;
     if (!('label' in value) || value['label'] === undefined) return false;
     if (!('createdAt' in value) || value['createdAt'] === undefined) return false;
     if (!('createdBy' in value) || value['createdBy'] === undefined) return false;
@@ -146,6 +153,7 @@ export function InventoryEntryFromJSONTyped(json: any, ignoreDiscriminator: bool
         'unit': UnitFromJSON(json['unit']),
         'amount': json['amount'] == null ? undefined : json['amount'],
         'expires': json['expires'] == null ? undefined : (new Date(json['expires'])),
+        'openedAt': (json['opened_at'] == null ? null : new Date(json['opened_at'])),
         'note': json['note'] == null ? undefined : json['note'],
         'label': json['label'],
         'createdAt': (new Date(json['created_at'])),
@@ -157,7 +165,7 @@ export function InventoryEntryToJSON(json: any): InventoryEntry {
     return InventoryEntryToJSONTyped(json, false);
 }
 
-export function InventoryEntryToJSONTyped(value?: Omit<InventoryEntry, 'label'|'created_at'|'created_by'> | null, ignoreDiscriminator: boolean = false): any {
+export function InventoryEntryToJSONTyped(value?: Omit<InventoryEntry, 'opened_at'|'label'|'created_at'|'created_by'> | null, ignoreDiscriminator: boolean = false): any {
     if (value == null) {
         return value;
     }
