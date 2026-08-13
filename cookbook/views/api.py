@@ -62,7 +62,7 @@ from rest_framework.parsers import JSONParser, MultiPartParser
 from rest_framework.renderers import JSONRenderer, TemplateHTMLRenderer, BaseRenderer
 
 from rest_framework.response import Response
-from rest_framework.serializers import CharField, IntegerField, UUIDField
+from rest_framework.serializers import BooleanField as DRFBooleanField, CharField, IntegerField, JSONField, UUIDField
 from rest_framework.throttling import AnonRateThrottle, UserRateThrottle
 from rest_framework.views import APIView
 from rest_framework.viewsets import ViewSetMixin
@@ -3808,6 +3808,68 @@ class AppExportView(APIView):
             return Response(ExportLogSerializer(context={'request': request}).to_representation(el), status=status.HTTP_200_OK)
 
         return Response({'error': True, 'msg': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+
+
+class PortableDataExportView(APIView):
+    """Version-agnostic Food/Keyword/RecipeBook export (Part 2 of the pantry-expiration-and-
+    data-portability plan) — a thin, synchronous wrapper around build_portable_export.
+    Deliberately NOT the ExportLog/background-thread pattern AppExportView uses: this is pure
+    JSON with no images, so the async machinery that pattern exists for doesn't apply here."""
+    permission_classes = [CustomIsUser & CustomTokenHasReadWriteScope]
+
+    @extend_schema(
+        request=inline_serializer(name='PortableDataExportRequest', fields={
+            'include_foods': DRFBooleanField(required=False, default=True),
+            'include_keywords': DRFBooleanField(required=False, default=True),
+            'include_books': DRFBooleanField(required=False, default=True),
+        }),
+        responses={200: OpenApiTypes.OBJECT},
+    )
+    def post(self, request, *args, **kwargs):
+        from cookbook.helper.portable_data import build_portable_export
+        export = build_portable_export(
+            request.space,
+            include_foods=request.data.get('include_foods', True),
+            include_keywords=request.data.get('include_keywords', True),
+            include_books=request.data.get('include_books', True),
+        )
+        return Response(export, status=status.HTTP_200_OK)
+
+
+class PortableDataImportView(APIView):
+    """Import/merge for the portable-data envelope (see PortableDataExportView). Two modes:
+    'analyze' (dry-run diff preview, zero writes) and 'apply' (commit, per merge_policy)."""
+    permission_classes = [CustomIsUser & CustomTokenHasReadWriteScope]
+
+    @extend_schema(
+        request=inline_serializer(name='PortableDataImportRequest', fields={
+            'mode': CharField(),
+            'export': JSONField(),
+            'merge_policy': CharField(required=False, default='fill_gaps'),
+        }),
+        responses={200: OpenApiTypes.OBJECT},
+    )
+    def post(self, request, *args, **kwargs):
+        from cookbook.helper.portable_data import FORMAT_VERSION
+        from cookbook.helper.portable_import import analyze_portable_import, apply_portable_import
+
+        export = request.data.get('export')
+        if not isinstance(export, dict) or export.get('tandoor_export_format') != FORMAT_VERSION:
+            return Response({'error': 'missing or invalid export envelope'}, status=status.HTTP_400_BAD_REQUEST)
+
+        mode = request.data.get('mode')
+        if mode == 'analyze':
+            report = analyze_portable_import(export, request.space)
+        elif mode == 'apply':
+            report = apply_portable_import(
+                export, request.space,
+                merge_policy=request.data.get('merge_policy', 'fill_gaps'),
+                user=request.user,
+            )
+        else:
+            return Response({'error': "mode must be 'analyze' or 'apply'"}, status=status.HTTP_400_BAD_REQUEST)
+
+        return Response(report, status=status.HTTP_200_OK)
 
 
 class FdcSearchView(APIView):

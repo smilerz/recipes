@@ -106,6 +106,8 @@ urlpatterns = [
 
     path('api/import/', api.AppImportView.as_view(), name='view_import'),
     path('api/export/', api.AppExportView.as_view(), name='api_export'),
+    path('api/export-portable-data/', api.PortableDataExportView.as_view(), name='api_export_portable_data'),
+    path('api/import-portable-data/', api.PortableDataImportView.as_view(), name='api_import_portable_data'),
     path('api/get_external_file_link/<int:pk>/', api.get_external_file_link, name='api_get_external_file_link'),
     path('api/get_recipe_file/<int:pk>/', api.get_recipe_file, name='api_get_recipe_file'),
     path('api/sync_all/', api.sync_all, name='api_sync'),
