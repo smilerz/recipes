@@ -1068,6 +1068,37 @@ class InventoryEntryViewSet(LoggingMixin, viewsets.ModelViewSet, DeleteRelationM
                 reduce_food_to_amount(food, household, item['amount'], **kwargs)
         return Response({'ok': True})
 
+    @extend_schema(methods=['POST'], request=None, responses={200: InventoryEntrySerializer})
+    @extend_schema(methods=['DELETE'], request=None, responses={200: InventoryEntrySerializer})
+    @decorators.action(detail=True, methods=['POST', 'DELETE'])
+    def open(self, request, pk):
+        """Mark a lot opened (POST) or undo that (DELETE) — starts/clears the Opened shelf-life
+        clock (see recompute_lot_expiry). POST is idempotent: opening an already-opened lot is a
+        no-op, opened_at never resets to a later date by re-tapping."""
+        from cookbook.helper.inventory_helper import recompute_lot_expiry
+        entry = self.get_object()
+
+        if request.method == 'DELETE':
+            entry.opened_at = None
+            entry.save(update_fields=['opened_at'])
+            recompute_lot_expiry(entry)
+            return Response(self.get_serializer(entry).data)
+
+        if entry.opened_at is None:
+            entry.opened_at = timezone.localdate()
+            entry.save(update_fields=['opened_at'])
+            recompute_lot_expiry(entry)
+            InventoryLog.objects.create(
+                space=entry.space,
+                entry=entry,
+                booking_type=InventoryLog.B_OPEN,
+                old_amount=entry.amount,
+                new_amount=entry.amount,
+                old_inventory_location=entry.inventory_location,
+                new_inventory_location=entry.inventory_location,
+            )
+        return Response(self.get_serializer(entry).data)
+
 
 @extend_schema_view(list=extend_schema(parameters=[
     OpenApiParameter(name='food_id', description=_('Returns all entries with the given food id'), type=int),

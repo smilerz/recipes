@@ -1139,7 +1139,7 @@ class FoodSerializer(UniqueFieldsMixin, WritableNestedModelSerializer, RecipeCou
             'food_onhand', 'supermarket_category', 'food_image', 'parent', 'numchild', 'numrecipe', 'inherit_fields', 'full_name', 'ignore_shopping',
             'substitute', 'substitute_siblings', 'substitute_children', 'substitute_onhand', 'available_substitutes', 'child_inherit_fields', 'open_data_slug', 'shopping_lists',
             'in_inventory', 'earliest_expiry', 'substitute_inventory', 'matched_filter',
-            'preferred_unit', 'preferred_shopping_unit', 'shelf_life_days', 'shopping_amount',
+            'preferred_unit', 'preferred_shopping_unit', 'shelf_life_days', 'shelf_life_days_frozen', 'shelf_life_days_opened', 'shopping_amount',
         )
         read_only_fields = ('id', 'numchild', 'parent', 'numrecipe')
 
@@ -2063,6 +2063,7 @@ class InventoryEntrySerializer(SpacedModelSerializer, WritableNestedModelSeriali
     def update(self, instance, validated_data):
         old_amount = instance.amount
         old_inventory_location = instance.inventory_location
+        caller_set_expires = 'expires' in validated_data
 
         instance = super().update(instance, validated_data)
 
@@ -2078,15 +2079,25 @@ class InventoryEntrySerializer(SpacedModelSerializer, WritableNestedModelSeriali
                 new_inventory_location=instance.inventory_location,
             )
 
+        # A freeze/thaw transition pauses or resumes the shelf-life clock (see recompute_lot_expiry) —
+        # scoped to an actual freezer-status FLIP, never a lateral move (pantry shelf A -> B) or a
+        # freezer-to-freezer move, either of which would otherwise clobber a custom or already-running
+        # date with a freshly-computed one. Respects an explicit expires in the same request.
+        old_is_freezer = bool(old_inventory_location and old_inventory_location.is_freezer)
+        new_is_freezer = bool(instance.inventory_location and instance.inventory_location.is_freezer)
+        if old_inventory_location != instance.inventory_location and old_is_freezer != new_is_freezer and not caller_set_expires:
+            from cookbook.helper.inventory_helper import recompute_lot_expiry
+            recompute_lot_expiry(instance)
+
         return instance
 
     class Meta:
         model = InventoryEntry
         fields = (
             'id', 'inventory_location', 'sub_location', 'code',
-            'food', 'unit', 'amount', 'expires', 'note', 'label', 'created_at', 'created_by'
+            'food', 'unit', 'amount', 'expires', 'opened_at', 'note', 'label', 'created_at', 'created_by'
         )
-        read_only_fields = ('id', 'created_at', 'created_by')
+        read_only_fields = ('id', 'created_at', 'created_by', 'opened_at')
 
 
 class InventoryLogSerializer(SpacedModelSerializer):
