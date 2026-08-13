@@ -13,14 +13,14 @@ by construction, discovered before it).
 import json
 
 from django.apps import apps
-from django.contrib.auth.models import User
+from django.contrib.auth.models import Group, User
 from django.core import serializers
 from django.core.files.base import ContentFile
 from django.core.serializers.json import DjangoJSONEncoder
 from django.utils import timezone
 from django_scopes import scope
 
-from cookbook.models import Space, SpaceBackup, UserPreference
+from cookbook.models import FoodInheritField, Space, SpaceBackup, UserPreference
 
 FORMAT_VERSION = 'space-backup-v1'
 
@@ -33,6 +33,18 @@ FORMAT_VERSION = 'space-backup-v1'
 #   field) — apparently never exercised elsewhere, since nothing else queries
 #   UserPreference.objects while a space scope is active.
 _EXCLUDED_MODELS = {UserPreference}
+
+# Models referenced by space-scoped data that are themselves global (shared instance-wide,
+# never restored) but whose pks are NOT safe to assume line up between two different
+# Tandoor instances — the real backup/restore use case is moving a space to a different
+# instance or disaster recovery, not staying on the one instance. Each maps to its natural
+# (unique) identifying field; build_space_backup records that value alongside every
+# referenced pk (same reasoning as `users`, just for these two lookup tables) so restore
+# can resolve by identity, never by blindly reusing the old pk.
+GLOBAL_NATURAL_KEY_FIELDS = {
+    Group: 'name',
+    FoodInheritField: 'field',
+}
 
 
 def _fk_fields(model):
@@ -85,6 +97,20 @@ def discover_space_scoped_models():
     return [(model, paths[model]) for model in ordered]
 
 
+def _referenced_pks(model, related_model, rows):
+    """All pks referencing `related_model` via any FK or M2M field on `model`, across `rows`."""
+    field_names = [(f.name, f.many_to_many) for f in model._meta.get_fields()
+                   if f.concrete and f.related_model is related_model and (f.many_to_one or f.many_to_many)]
+    pks = set()
+    for row in rows:
+        for field_name, is_m2m in field_names:
+            value = row['fields'].get(field_name)
+            if value is None:
+                continue
+            pks.update(value) if is_m2m else pks.add(value)
+    return pks
+
+
 def build_space_backup(space):
     """Zero-write: serializes every discovered space-scoped model's rows for `space` into a
     single JSON-able dict. Does not touch the database beyond reads.
@@ -92,28 +118,37 @@ def build_space_backup(space):
     User isn't itself space-scoped (accounts are shared instance-wide), so it's never in
     `models` — but rows elsewhere reference User by pk. `users` records username/email for
     every User pk actually referenced anywhere in this backup, so restore can re-link to an
-    *existing* target-instance account without needing the User table dumped wholesale."""
+    *existing* target-instance account without needing the User table dumped wholesale.
+    `global_refs` does the same for GLOBAL_NATURAL_KEY_FIELDS models (see its comment)."""
     discovered = discover_space_scoped_models()
 
     models_payload = {}
     referenced_user_pks = set()
+    referenced_global_pks = {model: set() for model in GLOBAL_NATURAL_KEY_FIELDS}
+
     for model, lookup_path in discovered:
         queryset = model.objects.filter(**{lookup_path: space})
         rows = serializers.serialize('python', queryset)
         models_payload[model.__name__] = rows
 
-        user_fields = [f.name for f in model._meta.get_fields()
-                       if f.concrete and f.many_to_one and f.related_model is User]
-        for row in rows:
-            for field_name in user_fields:
-                value = row['fields'].get(field_name)
-                if value is not None:
-                    referenced_user_pks.add(value)
+        referenced_user_pks |= _referenced_pks(model, User, rows)
+        for global_model in GLOBAL_NATURAL_KEY_FIELDS:
+            referenced_global_pks[global_model] |= _referenced_pks(model, global_model, rows)
 
     users_payload = {
         str(u.pk): {'username': u.username, 'email': u.email}
         for u in User.objects.filter(pk__in=referenced_user_pks)
     }
+
+    global_refs_payload = {}
+    for global_model, natural_field in GLOBAL_NATURAL_KEY_FIELDS.items():
+        pks = referenced_global_pks[global_model]
+        if not pks:
+            continue
+        global_refs_payload[global_model.__name__] = {
+            str(obj.pk): getattr(obj, natural_field)
+            for obj in global_model.objects.filter(pk__in=pks)
+        }
 
     return {
         'tandoor_backup_format': FORMAT_VERSION,
@@ -121,6 +156,7 @@ def build_space_backup(space):
         'space_name': space.name,
         'models': models_payload,
         'users': users_payload,
+        'global_refs': global_refs_payload,
     }
 
 

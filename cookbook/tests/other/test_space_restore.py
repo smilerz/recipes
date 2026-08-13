@@ -6,8 +6,10 @@ space. FK fields on restored rows are remapped to the newly-created objects (bui
 incrementally as each model's rows are created, walked in the dependency order
 discover_space_scoped_models already gives); User fields are re-linked to *existing*
 target-instance accounts by username, never recreated. M2M fields (Food.substitute,
-RecipeBook.shared, UserSpace.groups) are NOT YET covered by this sub-phase — flagged, not
-silently dropped.
+RecipeBook.shared, UserSpace.groups, Food.inherit_fields) resolve in a second pass —
+Group/FoodInheritField specifically by natural key (name/field), never by raw pk, since
+the real use case is moving a space to a *different* Tandoor instance or disaster
+recovery, not staying on the one instance where pks would happen to still line up.
 """
 import pytest
 from django.contrib import auth
@@ -17,8 +19,11 @@ from django_scopes import scopes_disabled
 from cookbook.helper.space_backup import build_space_backup
 from cookbook.helper.space_restore import assert_target_space_is_empty, preview_restore, restore_space_backup
 from cookbook.helper.permission_helper import create_space_for_user
-from cookbook.models import Food, FoodInheritField, Recipe, RecipeBook, RecipeBookEntry, Space, UserSpace
-from cookbook.tests.factories import FoodFactory, RecipeBookFactory, RecipeFactory
+from cookbook.models import (CookLog, Food, FoodInheritField, InventoryEntry, InventoryLocation, MealPlan, Recipe,
+                             RecipeBook, RecipeBookEntry, Space, UserSpace)
+from cookbook.tests.factories import (CookLogFactory, FoodFactory, InventoryEntryFactory, InventoryLocationFactory,
+                                      KeywordFactory, MealPlanFactory, RecipeBookFactory, RecipeFactory,
+                                      ShoppingListEntryFactory)
 
 
 @pytest.mark.django_db
@@ -247,6 +252,62 @@ def test_restore_recreates_userspace_groups_for_other_members(space_1, u1_s1, u2
 
 
 @pytest.mark.django_db
+def test_restore_resolves_group_by_name_even_when_pk_does_not_match_target_instance(space_1, u1_s1, u2_s1):
+    """The real use case for backup/restore is moving a space to a different instance, or
+    disaster recovery — not staying on the same instance. Group/FoodInheritField pks are
+    NOT guaranteed to line up between source and target instances (they're seeded via a
+    migration's bulk_create — the same order on a from-scratch instance, but nothing
+    actually guarantees that across every real-world instance history). The backup must
+    carry the natural key (name) and restore must resolve by it, never by blindly reusing
+    the old pk."""
+    user = auth.get_user(u1_s1)
+    other_user = auth.get_user(u2_s1)
+    with scopes_disabled():
+        other_userspace = UserSpace.objects.get(user=other_user, space=space_1)
+        other_userspace.groups.add(Group.objects.get(name='guest'))
+        backup = build_space_backup(space_1)
+
+        # Simulate a target instance where this pk means something else entirely (or
+        # nothing at all) — corrupt the recorded pk while leaving global_refs' natural-key
+        # record of what it meant on the source instance intact.
+        real_guest_pk = Group.objects.get(name='guest').pk
+        bogus_pk = real_guest_pk + 9000
+        for row in backup['models']['UserSpace']:
+            groups = row['fields'].get('groups', [])
+            if real_guest_pk in groups:
+                row['fields']['groups'] = [bogus_pk if v == real_guest_pk else v for v in groups]
+        backup['global_refs']['Group'][str(bogus_pk)] = backup['global_refs']['Group'].pop(str(real_guest_pk))
+
+        new_space, report = restore_space_backup(backup, user)
+
+        new_userspace = UserSpace.objects.get(user=other_user, space=new_space)
+        assert 'guest' in new_userspace.groups.values_list('name', flat=True)
+
+
+@pytest.mark.django_db
+def test_restore_resolves_food_inherit_field_by_field_name_even_when_pk_mismatched(space_1, u1_s1):
+    user = auth.get_user(u1_s1)
+    with scopes_disabled():
+        inherit_field, _ = FoodInheritField.objects.get_or_create(field='name', defaults={'name': 'Name'})
+        food = FoodFactory(space=space_1, name='PkMismatchTest')
+        food.inherit_fields.add(inherit_field)
+        backup = build_space_backup(space_1)
+
+        real_pk = inherit_field.pk
+        bogus_pk = real_pk + 9000
+        for row in backup['models']['Food']:
+            fields = row['fields'].get('inherit_fields', [])
+            if real_pk in fields:
+                row['fields']['inherit_fields'] = [bogus_pk if v == real_pk else v for v in fields]
+        backup['global_refs']['FoodInheritField'][str(bogus_pk)] = backup['global_refs']['FoodInheritField'].pop(str(real_pk))
+
+        new_space, report = restore_space_backup(backup, user)
+
+        new_food = Food.objects.get(space=new_space, name='PkMismatchTest')
+        assert inherit_field in new_food.inherit_fields.all()
+
+
+@pytest.mark.django_db
 def test_restore_reuses_existing_userspace_for_restoring_admin_and_merges_groups(space_1, u1_s1):
     """The person doing a restore is typically also a member of the original space —
     create_space_for_user already auto-created their UserSpace (with the 'admin' group,
@@ -266,3 +327,80 @@ def test_restore_reuses_existing_userspace_for_restoring_admin_and_merges_groups
         groups = set(matches.first().groups.values_list('name', flat=True))
         assert 'admin' in groups
         assert 'user' in groups
+
+
+@pytest.mark.django_db
+def test_restore_full_space_round_trip(space_1, u1_s1, u2_s1):
+    """Every targeted test above proves one relationship at a time. This is the actual
+    real-world shape of a backup: a broad, interconnected set of data across most of the
+    models restore touches, backed up and restored in one shot, verified as a whole —
+    including that nothing was silently skipped anywhere in the process."""
+    user = auth.get_user(u1_s1)
+    other_user = auth.get_user(u2_s1)
+    with scopes_disabled():
+        # Food hierarchy + substitute
+        fruit = FoodFactory(space=space_1, name='RT Fruit')
+        fruit.add_child(name='RT Citrus', space=space_1)
+        lime = FoodFactory(space=space_1, name='RT Lime')
+        lemon = FoodFactory(space=space_1, name='RT Lemon')
+        lime.substitute.add(lemon)
+
+        # Keyword hierarchy
+        veg = KeywordFactory(space=space_1, name='RT Veg')
+        veg.add_child(name='RT Root Veg', space=space_1)
+
+        # Recipe with steps, RecipeBook with entry + sharing
+        recipe = RecipeFactory(space=space_1, name='RT Recipe', keywords__count=0,
+                               steps__count=2, steps__ingredients__count=1)
+        book = RecipeBookFactory(space=space_1, name='RT Book')
+        RecipeBookEntry.objects.create(recipe=recipe, book=book)
+        book.shared.add(other_user)
+
+        # Meal plan, cook log, shopping list entry — all pointing at the same recipe
+        MealPlanFactory(space=space_1, recipe=recipe, created_by=user)
+        CookLogFactory(space=space_1, recipe=recipe, created_by=user, rating=5)
+        ShoppingListEntryFactory(space=space_1, food=lime, created_by=user)
+
+        # Inventory
+        location = InventoryLocationFactory(space=space_1, name='RT Pantry', created_by=user)
+        InventoryEntryFactory(space=space_1, food=lime, inventory_location=location, created_by=user, amount=3)
+
+        # Another member's group membership
+        other_userspace = UserSpace.objects.get(user=other_user, space=space_1)
+        other_userspace.groups.add(Group.objects.get(name='guest'))
+
+        backup = build_space_backup(space_1)
+
+        new_space, report = restore_space_backup(backup, user)
+
+        # Food hierarchy + substitute
+        new_fruit = Food.objects.get(space=new_space, name='RT Fruit')
+        new_citrus = Food.objects.get(space=new_space, name='RT Citrus')
+        assert new_citrus.get_parent().pk == new_fruit.pk
+        new_lime = Food.objects.get(space=new_space, name='RT Lime')
+        new_lemon = Food.objects.get(space=new_space, name='RT Lemon')
+        assert new_lemon in new_lime.substitute.all()
+
+        # Recipe + steps, RecipeBook + entry + sharing
+        new_recipe = Recipe.objects.get(space=new_space, name='RT Recipe')
+        assert new_recipe.steps.count() == 2
+        new_book = RecipeBook.objects.get(space=new_space, name='RT Book')
+        assert RecipeBookEntry.objects.filter(book=new_book, recipe=new_recipe).exists()
+        assert other_user in new_book.shared.all()
+
+        # Meal plan, cook log
+        assert MealPlan.objects.filter(space=new_space, recipe=new_recipe).exists()
+        assert CookLog.objects.filter(space=new_space, recipe=new_recipe, rating=5).exists()
+
+        # Inventory
+        new_location = InventoryLocation.objects.get(space=new_space, name='RT Pantry')
+        assert InventoryEntry.objects.filter(space=new_space, food=new_lime, inventory_location=new_location).exists()
+
+        # Group membership for the other member
+        new_other_userspace = UserSpace.objects.get(user=other_user, space=new_space)
+        assert 'guest' in new_other_userspace.groups.values_list('name', flat=True)
+
+        # No silent data loss anywhere in the whole restore
+        unexpected_skips = {name: counts for name, counts in report['models'].items() if counts['skipped'] > 0}
+        assert unexpected_skips == {}
+        assert report['unresolved_users'] == []

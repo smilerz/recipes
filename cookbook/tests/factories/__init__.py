@@ -242,8 +242,8 @@ class MealPlanFactory(factory.django.DjangoModelFactory):
     meal_type = factory.SubFactory(
         MealTypeFactory, space=factory.SelfAttribute('..space'))
     note = factory.LazyAttribute(lambda x: faker.paragraph())
-    from_date = factory.LazyAttribute(lambda x: faker.future_date())
-    to_date = factory.LazyAttribute(lambda x: faker.future_date())
+    from_date = factory.LazyAttribute(lambda x: faker.future_datetime(tzinfo=timezone.utc))
+    to_date = factory.LazyAttribute(lambda x: faker.future_datetime(tzinfo=timezone.utc))
     space = factory.SubFactory(SpaceFactory)
 
     class Params:

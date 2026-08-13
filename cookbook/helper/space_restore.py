@@ -15,8 +15,10 @@ M2M fields (Food.substitute, RecipeBook.shared, UserSpace.groups,
 Food.inherit_fields/child_inherit_fields) are resolved in a second pass after every
 model's rows exist, using the same FK/User/global-pk resolution rules — an M2M target
 that's itself a restored model resolves through its pk_maps entry, a User-target resolves
-through user_map, anything else (Group, FoodInheritField — global, same-instance,
-untouched by restore) is reattached by original pk. Uses .add() (union), never .set()
+through user_map, anything else (Group, FoodInheritField) resolves through global_refs by
+natural key (name / field) — restore's real use case is moving a space to a different
+Tandoor instance or disaster recovery, not staying on the one instance, so these pks are
+never assumed to line up between source and target. Uses .add() (union), never .set()
 (replace) — critical for UserSpace.groups specifically, see _create_row's UserSpace
 special-case below.
 """
@@ -24,7 +26,7 @@ from django.contrib.auth.models import User
 from django.db import transaction
 
 from cookbook.helper.permission_helper import create_space_for_user
-from cookbook.helper.space_backup import discover_space_scoped_models, _fk_fields
+from cookbook.helper.space_backup import GLOBAL_NATURAL_KEY_FIELDS, discover_space_scoped_models, _fk_fields
 from cookbook.models import Space, TreeModel, UserSpace
 
 
@@ -55,6 +57,27 @@ def _resolve_users(users_payload):
         else:
             unresolved.append(info['username'])
     return user_map, unresolved
+
+
+def _resolve_global_refs(backup_data):
+    """{model_name: {old_pk_str: natural_key_value}} -> {model_name: {old_pk_int: instance}}.
+    Resolves Group/FoodInheritField by their natural key (name/field), never by pk — see
+    GLOBAL_NATURAL_KEY_FIELDS. An unresolvable reference (no matching row on this
+    instance — these are meant to be fixed, always-present lookup tables, so this should
+    be rare) is simply absent from the map; the M2M pass skips it, per-value, silently."""
+    global_ref_map = {}
+    global_refs_payload = backup_data.get('global_refs', {})
+    for model, natural_field in GLOBAL_NATURAL_KEY_FIELDS.items():
+        refs = global_refs_payload.get(model.__name__, {})
+        if not refs:
+            continue
+        model_map = {}
+        for old_pk_str, natural_value in refs.items():
+            obj = model.objects.filter(**{natural_field: natural_value}).first()
+            if obj is not None:
+                model_map[int(old_pk_str)] = obj
+        global_ref_map[model.__name__] = model_map
+    return global_ref_map
 
 
 def preview_restore(backup_data):
@@ -98,6 +121,7 @@ def restore_space_backup(backup_data, admin_user):
         assert_target_space_is_empty(new_space)
 
         user_map, unresolved_users = _resolve_users(backup_data.get('users', {}))
+        global_ref_map = _resolve_global_refs(backup_data)
 
         pk_maps = {}  # model name -> {old_pk: new_object}
         report_models = {}
@@ -179,12 +203,12 @@ def restore_space_backup(backup_data, admin_user):
 
             report_models[model.__name__] = {'created': created, 'skipped': skipped}
 
-        _restore_m2m_fields(backup_data, pk_maps, user_map)
+        _restore_m2m_fields(backup_data, pk_maps, user_map, global_ref_map)
 
         return new_space, {'models': report_models, 'unresolved_users': unresolved_users}
 
 
-def _restore_m2m_fields(backup_data, pk_maps, user_map):
+def _restore_m2m_fields(backup_data, pk_maps, user_map, global_ref_map):
     """Second pass, after every model's rows exist: populate M2M fields stripped during
     creation. Always .add() (union), never .set() (replace) — a freshly-created object's
     M2M starts empty so the two are equivalent there, but UserSpace rows reused via the
@@ -212,10 +236,11 @@ def _restore_m2m_fields(backup_data, pk_maps, user_map):
                 elif related_model.__name__ in pk_maps:
                     related_pk_map = pk_maps[related_model.__name__]
                     resolved = [related_pk_map[v] for v in old_values if v in related_pk_map]
+                elif related_model.__name__ in global_ref_map:
+                    related_ref_map = global_ref_map[related_model.__name__]
+                    resolved = [related_ref_map[v] for v in old_values if v in related_ref_map]
                 else:
-                    # global/non-space-scoped M2M target (Group, FoodInheritField, ...) —
-                    # same instance, same table, original pks are still valid rows.
-                    resolved = list(related_model.objects.filter(pk__in=old_values))
+                    resolved = []
 
                 if resolved:
                     getattr(new_obj, field_name).add(*resolved)
