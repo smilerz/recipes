@@ -108,6 +108,20 @@ describe('useHierarchyTree', () => {
 
             expect(mockList).toHaveBeenCalledTimes(1)
         })
+
+        it('surfaces an error toast (and clears the loading state) instead of throwing when list() rejects', async () => {
+            const {useMessageStore, ErrorMessageType} = await import('@/stores/MessageStore')
+            const addErrorSpy = vi.spyOn(useMessageStore(), 'addError')
+            mockList.mockRejectedValue(new Error('boom'))
+
+            const tree = createTree()
+            await expect(tree.loadChildren(null)).resolves.toBeUndefined()
+
+            expect(addErrorSpy).toHaveBeenCalledWith(ErrorMessageType.FETCH_ERROR, expect.any(Error))
+            expect(tree.isLoading(null)).toBe(false)
+            // the failed fetch must not be treated as "cached" — a retry should re-fetch
+            expect(tree.flatTree.value).toHaveLength(0)
+        })
     })
 
     describe('toggleExpand', () => {
@@ -232,6 +246,34 @@ describe('useHierarchyTree', () => {
             await promise
             expect(tree.operating.value).toBe(false)
         })
+
+        it('updates the selected item\'s own parent field after a successful move, so the drawer does not keep showing the pre-move parent', async () => {
+            mockMove.mockResolvedValue({})
+            mockList.mockResolvedValue({results: [], next: null})
+
+            const tree = createTree()
+            const item = makeItem(5, 'Garlic', 3)
+            tree.selectItem(item)
+            expect(tree.selectedItem.value?.parent).toBe(3)
+
+            await tree.moveItem(item, 10)
+
+            expect(tree.selectedItem.value?.id).toBe(5)
+            expect(tree.selectedItem.value?.parent).toBe(10)
+        })
+
+        it('does not touch selectedItem when a DIFFERENT item is moved', async () => {
+            mockMove.mockResolvedValue({})
+            mockList.mockResolvedValue({results: [], next: null})
+
+            const tree = createTree()
+            const selected = makeItem(1, 'Selected', 2)
+            tree.selectItem(selected)
+
+            await tree.moveItem(makeItem(5, 'Other', 3), 10)
+
+            expect(tree.selectedItem.value?.parent).toBe(2)
+        })
     })
 
     describe('removeParent', () => {
@@ -271,6 +313,29 @@ describe('useHierarchyTree', () => {
 
             await tree.mergeItem(source, makeItem(10, 'Target', 3))
             expect(tree.selectedItem.value).toBeNull()
+        })
+
+        it('invalidates the source\'s own cache entry and the target\'s cache entry, and reloads the target', async () => {
+            const source = makeItem(5, 'Garlic', 3)
+            const target = makeItem(10, 'Garlic Powder', 3)
+            mockMerge.mockResolvedValue({})
+            mockList.mockImplementation(async (params: any) => {
+                if (params.root === 5) return {results: [makeItem(50, 'FormerChildOfSource', 5)], next: null}
+                if (params.root === 10) return {results: [makeItem(50, 'FormerChildOfSource', 10)], next: null}
+                return {results: [], next: null}
+            })
+
+            const tree = createTree()
+            // Pre-populate: source is expanded with a child, target already loaded (empty).
+            await tree.loadChildren(5)
+            await tree.loadChildren(10)
+            expect(tree.findItemInCache(50)?.parent).toBe(5)
+
+            await tree.mergeItem(source, target)
+
+            // Target's subtree must be reloaded so the newly-merged former child of source
+            // shows up under target immediately, not just after a manual collapse/re-expand.
+            expect(tree.findItemInCache(50)?.parent).toBe(10)
         })
     })
 
@@ -425,6 +490,27 @@ describe('useHierarchyTree', () => {
             ])
         })
 
+        it('drillTo a not-yet-browsed node (search-result jump) resolves drillParent and breadcrumbs', async () => {
+            // No prior loadChildren/drillInto walk for this branch at all — simulates clicking
+            // a search result for an item whose parent has never been browsed to. Keyed by the
+            // actual `root` param requested (not call order) so the test genuinely distinguishes
+            // "only loadChildren(5) ran" (the bug) from "loadChildren(1) also ran" (the fix).
+            mockRetrieve.mockResolvedValueOnce(makeItem(5, 'Mid', 1))
+            mockList.mockImplementation(async (params: any) => {
+                if (params.root === 1) return {results: [makeItem(5, 'Mid', 1)], next: null} // children of 1 — makes id=5 findable
+                if (params.root === 5) return {results: [makeItem(10, 'Leaf', 5)], next: null} // children of 5 — the drill view itself
+                return {results: [], next: null}
+            })
+
+            const tree = createTree()
+            await tree.drillTo(5)
+
+            expect(mockList).toHaveBeenCalledWith(expect.objectContaining({root: 1}))
+            expect(tree.drillParent.value).not.toBeNull()
+            expect(tree.drillParent.value?.name).toBe('Mid')
+            expect(tree.drillBreadcrumbs.value.length).toBeGreaterThan(0)
+        })
+
         it('drillHasMore reflects cache hasMore flag', async () => {
             mockList.mockResolvedValue({results: [makeItem(1, 'A', null)], next: 'page2'})
 
@@ -537,6 +623,22 @@ describe('useHierarchyTree', () => {
 
             expect(mockList).toHaveBeenCalledWith(expect.objectContaining({query: 'app', page: 1, pageSize: 20}))
             expect(tree.searchResults.value).toHaveLength(1)
+            vi.useRealTimers()
+        })
+
+        it('surfaces an error toast (and clears the searching flag) instead of throwing when list() rejects', async () => {
+            const {useMessageStore, ErrorMessageType} = await import('@/stores/MessageStore')
+            const addErrorSpy = vi.spyOn(useMessageStore(), 'addError')
+            vi.useFakeTimers()
+            mockList.mockRejectedValueOnce(new Error('boom'))
+
+            const tree = createTree()
+            tree.doSearch('app')
+            vi.advanceTimersByTime(300)
+            await vi.runAllTimersAsync()
+
+            expect(addErrorSpy).toHaveBeenCalledWith(ErrorMessageType.FETCH_ERROR, expect.any(Error))
+            expect(tree.searching.value).toBe(false)
             vi.useRealTimers()
         })
     })
