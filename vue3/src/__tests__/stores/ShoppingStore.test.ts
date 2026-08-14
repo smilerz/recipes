@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { watch, nextTick } from 'vue'
 import { setActivePinia, createPinia } from 'pinia'
-import { makeShoppingListEntry, makeFoodShopping } from '@/__tests__/factories'
+import { makeShoppingListEntry, makeFoodShopping, makeSupermarketCategory } from '@/__tests__/factories'
 import { apiMock, resetApiMock } from '@/__tests__/api-mock'
 
 vi.mock('@/openapi', async (importOriginal) => ({
@@ -150,6 +150,28 @@ describe('ShoppingStore', () => {
         it('returns empty array when no entries', () => {
             const store = useShoppingStore()
             expect(store.getFlatEntries()).toEqual([])
+        })
+    })
+
+    describe('getEntriesStructure', () => {
+        it('sorts categories alphabetically on the fallback (no-selected-supermarket) branch', async () => {
+            // shopping_selected_supermarket defaults to null, so this always hits the
+            // fallback branch (the one that lost its .sort() call) regardless of grouping mode.
+            const store = useShoppingStore()
+            const entries = [
+                makeShoppingListEntry({id: 1, food: makeFoodShopping({id: 1, supermarketCategory: makeSupermarketCategory({name: 'Zucchini'})})}),
+                makeShoppingListEntry({id: 2, food: makeFoodShopping({id: 2, supermarketCategory: makeSupermarketCategory({name: 'Apples'})})}),
+                makeShoppingListEntry({id: 3, food: makeFoodShopping({id: 3, supermarketCategory: makeSupermarketCategory({name: 'Mangoes'})})}),
+            ]
+            apiMock.apiShoppingListEntryList.mockResolvedValue({results: entries, count: 3, next: null})
+            apiMock.apiSupermarketCategoryList.mockResolvedValue({results: []})
+            apiMock.apiSupermarketList.mockResolvedValue({results: []})
+
+            store.refreshFromAPI()
+            await vi.waitFor(() => { expect(store.initialized).toBe(true) })
+
+            const structure = store.getEntriesStructure()
+            expect(structure.map(c => c.name)).toEqual(['Apples', 'Mangoes', 'Zucchini'])
         })
     })
 
