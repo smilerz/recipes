@@ -375,7 +375,7 @@ async function resolveFilterObjects() {
             const genericModel = getGenericModelFromString(MODEL_FOR_MODE[section.mode], t)
             if (genericModel) {
                 try {
-                    section._filterObj = await genericModel.retrieve(section.filter_id!)
+                    section._filterObj = await genericModel.retrieve(section.filter_id!) as LocalSection['_filterObj']
                 } catch { /* item may have been deleted */ }
             }
         })
