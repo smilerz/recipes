@@ -71,3 +71,63 @@ describe('StartPageSettings — home-settings row alignment (item 5 guard)', () 
         wrapper.unmount()
     })
 })
+
+describe('StartPageSettings — reset/delete use ActionConfirmDialog', () => {
+    beforeEach(() => { setActivePinia(createPinia()); resetApiMock(); (apiMock as any).apiUserList = vi.fn().mockResolvedValue([]) })
+
+    it('onResetClick asks for confirmation and does not reset when declined', async () => {
+        const wrapper = mountSettings()
+        await flushPromises()
+
+        const openMock = vi.fn().mockResolvedValue(false)
+        ;(wrapper.vm as any).confirmDialogRef = {open: openMock}
+        await (wrapper.vm as any).onResetClick()
+
+        expect(openMock).toHaveBeenCalled()
+        wrapper.unmount()
+    })
+
+    it('onResetClick resets to defaults once confirmed', async () => {
+        const wrapper = mountSettings()
+        await flushPromises()
+        // Force a non-default state so the reset is observable regardless of what loadFromStore
+        // derived at mount.
+        ;(wrapper.vm as any).localSections = []
+        ;(wrapper.vm as any).showMealPlan = false
+        ;(wrapper.vm as any).confirmDialogRef = {open: vi.fn().mockResolvedValue(true)}
+
+        await (wrapper.vm as any).onResetClick()
+        await flushPromises()
+
+        expect((wrapper.vm as any).showMealPlan).toBe(true)
+        expect((wrapper.vm as any).localSections.length).toBeGreaterThan(0)
+        wrapper.unmount()
+    })
+
+    it('removeSection asks for confirmation and does not remove when declined', async () => {
+        const wrapper = mountSettings()
+        await flushPromises()
+        const before = (wrapper.vm as any).localSections.length
+
+        ;(wrapper.vm as any).confirmDialogRef = {open: vi.fn().mockResolvedValue(false)}
+        await (wrapper.vm as any).removeSection((wrapper.vm as any).localSections[0]._key)
+
+        expect((wrapper.vm as any).localSections.length).toBe(before)
+        wrapper.unmount()
+    })
+
+    it('removeSection removes the section once confirmed', async () => {
+        const wrapper = mountSettings()
+        await flushPromises()
+        const before = (wrapper.vm as any).localSections.length
+        const key = (wrapper.vm as any).localSections[0]._key
+
+        const openMock = vi.fn().mockResolvedValue(true)
+        ;(wrapper.vm as any).confirmDialogRef = {open: openMock}
+        await (wrapper.vm as any).removeSection(key)
+
+        expect(openMock).toHaveBeenCalled()
+        expect((wrapper.vm as any).localSections.length).toBe(before - 1)
+        wrapper.unmount()
+    })
+})

@@ -156,37 +156,13 @@
                 variant="text"
                 color="warning"
                 prepend-icon="fa-solid fa-rotate-left"
-                @click="confirmReset = true"
+                @click="onResetClick"
             >
                 {{ $t('Reset') }}
             </v-btn>
         </div>
 
-        <!-- Reset confirmation dialog -->
-        <v-dialog v-model="confirmReset" max-width="400">
-            <v-card>
-                <v-card-title>{{ $t('Reset') }}</v-card-title>
-                <v-card-text>{{ $t('confirm_reset_sections') }}</v-card-text>
-                <v-card-actions>
-                    <v-spacer />
-                    <v-btn @click="confirmReset = false">{{ $t('Cancel') }}</v-btn>
-                    <v-btn color="warning" @click="confirmReset = false; resetToDefaults()">{{ $t('Reset') }}</v-btn>
-                </v-card-actions>
-            </v-card>
-        </v-dialog>
-
-        <!-- Delete confirmation dialog -->
-        <v-dialog v-model="confirmDelete" max-width="400">
-            <v-card>
-                <v-card-title>{{ $t('Delete') }}</v-card-title>
-                <v-card-text>{{ $t('confirm_delete_section', {name: deleteSectionName}) }}</v-card-text>
-                <v-card-actions>
-                    <v-spacer />
-                    <v-btn @click="confirmDelete = false">{{ $t('Cancel') }}</v-btn>
-                    <v-btn color="error" @click="confirmDelete = false; doRemoveSection()">{{ $t('Delete') }}</v-btn>
-                </v-card-actions>
-            </v-card>
-        </v-dialog>
+        <action-confirm-dialog ref="confirmDialogRef" />
     </v-form>
 </template>
 
@@ -199,6 +175,7 @@ import {useUserPreferenceStore} from "@/stores/UserPreferenceStore"
 import {ErrorMessageType, useMessageStore} from "@/stores/MessageStore"
 import type {StartPageSection, StartPageSectionMode} from "@/types/settings"
 import ModelSelect from "@/components/inputs/ModelSelect.vue"
+import ActionConfirmDialog from "@/components/dialogs/ActionConfirmDialog.vue"
 
 const {t} = useI18n()
 const userPrefs = useUserPreferenceStore()
@@ -278,10 +255,7 @@ const availableUsers = ref<{value: number, label: string}[]>([])
 // single-fetched {value,label} list to that shape so the created_by picker keeps the shared
 // fetch and the displayName-with-fallback label while binding by id.
 const msAvailableUsers = computed(() => availableUsers.value.map(u => ({id: u.value, displayName: u.label})))
-const confirmReset = ref(false)
-const confirmDelete = ref(false)
-const deleteSectionKey = ref<string | null>(null)
-const deleteSectionName = ref('')
+const confirmDialogRef = ref<InstanceType<typeof ActionConfirmDialog> | null>(null)
 
 const defaultPageOptions = [
     {page: 'HOME', label: t('Home')},
@@ -313,19 +287,18 @@ function toLocalSection(s: StartPageSection): LocalSection {
 
 // --- Actions (local only, no auto-save) ---
 
-function removeSection(key: string) {
+async function removeSection(key: string) {
     const idx = localSections.value.findIndex(s => s._key === key)
     if (idx === -1) return
-    deleteSectionKey.value = key
-    deleteSectionName.value = modeLabel(localSections.value[idx].mode)
-    confirmDelete.value = true
-}
-
-function doRemoveSection() {
-    if (!deleteSectionKey.value) return
-    const idx = localSections.value.findIndex(s => s._key === deleteSectionKey.value)
-    if (idx !== -1) localSections.value.splice(idx, 1)
-    deleteSectionKey.value = null
+    const confirmed = await confirmDialogRef.value?.open({
+        title: t('Delete'),
+        message: t('confirm_delete_section', {name: modeLabel(localSections.value[idx].mode)}),
+        confirmLabel: t('Delete'),
+        confirmColor: 'delete',
+        confirmIcon: '$delete',
+    })
+    if (!confirmed) return
+    localSections.value.splice(idx, 1)
 }
 
 function addSection() {
@@ -381,6 +354,17 @@ function resetToDefaults() {
     showMealPlan.value = true
 }
 
+async function onResetClick() {
+    const confirmed = await confirmDialogRef.value?.open({
+        title: t('Reset'),
+        message: t('confirm_reset_sections'),
+        confirmLabel: t('Reset'),
+        confirmColor: 'warning',
+        confirmIcon: 'fa-solid fa-rotate-left',
+    })
+    if (confirmed) resetToDefaults()
+}
+
 // --- Load & resolve ---
 
 async function resolveFilterObjects() {
@@ -424,6 +408,9 @@ onMounted(async () => {
 
     loadFromStore()
 })
+
+// Exposed for testing the reset/delete confirmation flows.
+defineExpose({confirmDialogRef, removeSection, onResetClick, resetToDefaults})
 </script>
 
 <style scoped>
