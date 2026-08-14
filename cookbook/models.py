@@ -818,16 +818,37 @@ class Food(ExportModelOperationsMixin('food'), TreeModel, PermissionModelMixin):
     def __str__(self):
         return self.name
 
+    @staticmethod
+    def sibling_path_prefix(path, depth):
+        """Materialized-path prefix identifying true tree siblings (same parent) for a
+        depth>1 node. Returns None for depth<=1 (root/uncategorized) nodes, which have no
+        real parent category and therefore no true siblings — without this guard the prefix
+        collapses to '' and a path__startswith='' filter matches every Food at that depth."""
+        if depth <= 1:
+            return None
+        return path[:Food.steplen * (depth - 1)]
+
     def get_substitutes(self):
         """Return a queryset of all substitute foods: direct M2M, tree siblings, and tree children."""
         filters = Q()
+        has_filter = False
         if self.substitute.exists():
             filters |= Q(id__in=self.substitute.values('id'))
+            has_filter = True
         if self.substitute_children:
             filters |= Q(path__startswith=self.path, depth__gt=self.depth)
+            has_filter = True
         if self.substitute_siblings:
-            sibling_path = self.path[:Food.steplen * (self.depth - 1)]
-            filters |= Q(path__startswith=sibling_path, depth=self.depth)
+            sibling_path = Food.sibling_path_prefix(self.path, self.depth)
+            if sibling_path is not None:
+                filters |= Q(path__startswith=sibling_path, depth=self.depth)
+                has_filter = True
+        # An untouched Q() is a no-op filter that matches everything, not nothing —
+        # without this guard, a food with no substitute source configured (or a
+        # root-depth food with substitute_siblings but no real parent category) would
+        # incorrectly return every other Food in the space.
+        if not has_filter:
+            return Food.objects.none()
         return Food.objects.filter(filters).exclude(id=self.id)
 
     def merge_into(self, target):

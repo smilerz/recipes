@@ -1898,6 +1898,46 @@ def test_stats_inventory_and_expired(u1_s1, space_1):
 
 # ==================== cross-space isolation ====================
 
+def test_substitutes_empty_when_no_substitute_source_configured(u1_s1, space_1):
+    """A food with substitute/substitute_children/substitute_siblings all unset returns no
+    substitutes. Regression: get_substitutes() built an untouched Q() in that case, which
+    Django's .filter() treats as an always-true no-op, matching every Food in the space
+    instead of none."""
+    with scopes_disabled():
+        food = FoodFactory(space=space_1)
+        FoodFactory(space=space_1)  # unrelated food, must never appear as a substitute
+
+    r = json.loads(u1_s1.get(reverse('api:food-substitutes', args=[food.id])).content)
+    assert r == []
+
+
+def test_substitute_siblings_does_not_match_unrelated_root_foods(u1_s1, space_1):
+    """A root-level (uncategorized) food with substitute_siblings=True must not treat every
+    other root-level food in the space as a sibling. Regression: the sibling-path prefix
+    formula collapses to '' at depth 1 (no real parent category), which previously matched
+    every depth-1 Food via path__startswith=''."""
+    with scopes_disabled():
+        food = FoodFactory(space=space_1, substitute_siblings=True)
+        unrelated = FoodFactory(space=space_1)
+
+    r = json.loads(u1_s1.get(reverse('api:food-substitutes', args=[food.id])).content)
+    ids = [f['id'] for f in r]
+    assert unrelated.id not in ids
+
+
+def test_substitute_siblings_matches_true_tree_siblings(u1_s1, space_1):
+    """Foods that share a real parent category ARE matched as siblings when
+    substitute_siblings=True — the fix must not break the legitimate case."""
+    with scopes_disabled():
+        parent = FoodFactory(space=space_1)
+        sibling_a = parent.add_child(name='sibling a', space=space_1, substitute_siblings=True)
+        sibling_b = parent.add_child(name='sibling b', space=space_1)
+
+    r = json.loads(u1_s1.get(reverse('api:food-substitutes', args=[sibling_a.id])).content)
+    ids = [f['id'] for f in r]
+    assert sibling_b.id in ids
+
+
 def test_substitute_inventory_shows_true_when_substitute_has_inventory(u1_s1, space_1):
     """substitute_inventory is True when a substitute food has inventory entries."""
     user = auth.get_user(u1_s1)

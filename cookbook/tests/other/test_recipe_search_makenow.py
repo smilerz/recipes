@@ -8,6 +8,7 @@ import pytest
 from django.contrib import auth
 from django_scopes import scope
 
+from cookbook.helper.recipe_search import MAKENOW_EXCLUDE, SearchParams
 from cookbook.models import Food, Household, InventoryEntry, UserSpace
 from cookbook.tests.factories import FoodFactory, InventoryEntryFactory, InventoryLocationFactory, RecipeFactory
 from cookbook.tests.other.conftest import _node_pos, do_search
@@ -381,3 +382,61 @@ def test_makenow_recipe_3244_data_pattern(recipes, shared_household, space_1, ma
             f"sub-recipe food (food {missing_food.id}, recipe={missing_food.recipe_id}). "
             f"This is the recipe 3244 production failure mode."
         )
+
+
+class TestParseMakenow:
+    """Direct unit tests for SearchParams._parse_makenow — no DB fixtures needed.
+
+    Regression: a saved CustomFilter's `search` JSONField round-trips tristate filters
+    as native Python booleans (the frontend's savedSearchBlob.ts writes `raw === '1'`,
+    a JS boolean, which Django's JSONField decodes back to Python True/False, not the
+    strings '1'/'0' that HTTP query params always arrive as). _parse_makenow only
+    special-cased `bool is True`; a bare `False` fell through to `int(False) == 0` —
+    the "show only cookable" code path — silently inverting a saved "Make Now: No"
+    filter into "Make Now: Yes".
+    """
+
+    def test_bool_true_means_show_only_cookable(self):
+        assert SearchParams._parse_makenow(True) == 0
+
+    def test_bool_false_means_exclude_cookable(self):
+        assert SearchParams._parse_makenow(False) == MAKENOW_EXCLUDE
+
+    def test_string_yes_means_show_only_cookable(self):
+        assert SearchParams._parse_makenow('1') == 0
+        assert SearchParams._parse_makenow('true') == 0
+        assert SearchParams._parse_makenow('yes') == 0
+
+    def test_string_no_means_exclude_cookable(self):
+        assert SearchParams._parse_makenow('0') == MAKENOW_EXCLUDE
+        assert SearchParams._parse_makenow('false') == MAKENOW_EXCLUDE
+        assert SearchParams._parse_makenow('no') == MAKENOW_EXCLUDE
+
+    def test_integer_passthrough_for_fuzzy_missing_count(self):
+        assert SearchParams._parse_makenow(2) == 2
+
+    def test_none_returns_none(self):
+        assert SearchParams._parse_makenow(None) is None
+
+
+class TestParseOptionalInt:
+    """Direct unit tests for SearchParams._parse_optional_int — no DB fixtures needed.
+
+    Regression: the 8 numeric range filters (working_time/waiting_time/servings/
+    total_time _gte/_lte) used `int(value) if value else None`, which treats an
+    explicit boundary of 0 the same as "not provided" and silently drops the filter.
+    """
+
+    def test_none_is_not_provided(self):
+        assert SearchParams._parse_optional_int(None) is None
+
+    def test_empty_string_is_not_provided(self):
+        assert SearchParams._parse_optional_int('') is None
+
+    def test_zero_is_a_real_boundary(self):
+        assert SearchParams._parse_optional_int(0) == 0
+        assert SearchParams._parse_optional_int('0') == 0
+
+    def test_nonzero_passthrough(self):
+        assert SearchParams._parse_optional_int(45) == 45
+        assert SearchParams._parse_optional_int('45') == 45
