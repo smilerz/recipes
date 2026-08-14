@@ -181,4 +181,20 @@ describe('RecipeImageEditor — import from source', () => {
         // appended (existing primary untouched)
         expect(images.map((i) => i.id)).toEqual([1, 10, 11])
     })
+
+    it('removes already-imported URLs from the selection on partial failure, so retry does not re-create them', async () => {
+        createRecipeImageFromUrlMock
+            .mockResolvedValueOnce({id: 10, file: 'http://x/1.jpg', isPrimary: false, order: 1})
+            .mockRejectedValueOnce(new Error('boom'))
+        const images = [{id: 1, file: 'http://x/2.jpg', isPrimary: true, order: 0}]
+        const w = mountEditor(images, 'http://source')
+
+        ;(w.vm as any).selectedSourceImages = ['http://x/1.jpg', 'http://x/3.jpg']
+        await (w.vm as any).importSelectedSourceImages()
+        await flushPromises()
+
+        // 1.jpg succeeded and must not remain selected (retry would re-create a duplicate);
+        // 3.jpg failed and stays selected so retry re-attempts only it.
+        expect((w.vm as any).selectedSourceImages).toEqual(['http://x/3.jpg'])
+    })
 })

@@ -156,10 +156,14 @@ async function importSelectedSourceImages() {
     sourceLoading.value = true
     try {
         // sequential; each returned image already comes back non-primary (the recipe has a
-        // primary), so the existing cover is untouched and additions simply append.
-        for (const url of selectedSourceImages.value) {
+        // primary), so the existing cover is untouched and additions simply append. Remove each
+        // URL from the selection as soon as it succeeds — on a partial failure, only the
+        // not-yet-imported URLs remain selected, so retrying doesn't re-create duplicates.
+        while (selectedSourceImages.value.length > 0) {
+            const url = selectedSourceImages.value[0]
             const result = await createRecipeImageFromUrl(props.recipeId, url)
             localImages.value.push(result)
+            selectedSourceImages.value.splice(0, 1)
         }
         showSourceImport.value = false
         useMessageStore().addPreparedMessage(PreparedMessage.CREATE_SUCCESS)
