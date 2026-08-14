@@ -28,9 +28,9 @@
                         <v-text-field :label="$t('Name')" v-model="editingObj.name"></v-text-field>
                         <v-text-field :label="$t('Plural')" v-model="editingObj.pluralName"></v-text-field>
                         <v-textarea :label="$t('Description')" v-model="editingObj.description"></v-textarea>
-                        <!-- TODO fix card overflow invisible, overflow-visible class is not working -->
-                        <model-select :label="$t('Category')" v-model="editingObj.supermarketCategory" model="SupermarketCategory" allow-create append-to-body></model-select>
-                        <model-select :label="$t('ShoppingList')" :hint="$t('DefaultShoppingListHelp')" v-model="editingObj.shoppingLists" model="ShoppingList" mode="tags" allow-create append-to-body></model-select>
+
+                        <v-model-select :label="$t('Category')" v-model="editingObj.supermarketCategory" model="SupermarketCategory" create ></v-model-select>
+                        <v-model-select :label="$t('ShoppingList')" :hint="$t('DefaultShoppingListHelp')" v-model="editingObj.shoppingLists" model="ShoppingList" create chips multiple></v-model-select>
                     </v-form>
                 </v-tabs-window-item>
 
@@ -51,12 +51,10 @@
                         </v-number-input>
 
                         <v-number-input :label="$t('Properties_Food_Amount')" v-model="editingObj.propertiesFoodAmount" :precision="2"></v-number-input>
-                        <model-select :label="$t('Properties_Food_Unit')" v-model="editingObj.propertiesFoodUnit" model="Unit"></model-select>
+                        <v-model-select :label="$t('Properties_Food_Unit')" v-model="editingObj.propertiesFoodUnit" model="Unit"></v-model-select>
 
                         <properties-editor v-model="editingObj" :amount-for="propertiesAmountFor"></properties-editor>
 
-                        <!-- TODO remove once append to body for model select is working properly -->
-                        <v-spacer style="margin-top: 80px;"></v-spacer>
                     </v-form>
                 </v-tabs-window-item>
 
@@ -85,8 +83,7 @@
                                         <v-number-input :label="$t('Amount')" :step="10" v-model="uc.baseAmount" control-variant="stacked" :precision="3" hide-details></v-number-input>
                                     </v-col>
                                     <v-col md="6">
-                                        <!-- TODO fix card overflow invisible, overflow-visible class is not working -->
-                                        <model-select v-model="uc.baseUnit" model="Unit" hide-details></model-select>
+                                        <v-model-select v-model="uc.baseUnit" model="Unit" hide-details></v-model-select>
                                     </v-col>
                                 </v-row>
                                 <v-row dense>
@@ -99,16 +96,13 @@
                                         <v-number-input :label="$t('Amount')" :step="10" v-model="uc.convertedAmount" control-variant="stacked" :precision="3"></v-number-input>
                                     </v-col>
                                     <v-col md="6">
-                                        <!-- TODO fix card overflow invisible, overflow-visible class is not working -->
-                                        <model-select v-model="uc.convertedUnit" model="Unit"></model-select>
+                                        <v-model-select v-model="uc.convertedUnit" model="Unit"></v-model-select>
                                     </v-col>
                                 </v-row>
                             </v-card-text>
 
                         </v-card>
                     </v-form>
-                    <!-- TODO remove once append to body for model select is working properly -->
-                        <v-spacer style="margin-top: 80px;"></v-spacer>
                 </v-tabs-window-item>
 
                 <v-tabs-window-item value="hierarchy">
@@ -165,6 +159,7 @@ import FdcSearchDialog from "@/components/dialogs/FdcSearchDialog.vue";
 import {openFdcPage} from "@/utils/fdc.ts";
 import {DateTime} from "luxon";
 import HierarchyEditor from "@/components/inputs/HierarchyEditor.vue";
+import VModelSelect from "@/components/inputs/VModelSelect.vue";
 
 
 const props = defineProps({

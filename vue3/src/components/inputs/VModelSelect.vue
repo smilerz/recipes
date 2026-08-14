@@ -7,7 +7,8 @@
         autocomplete="suppress"
         no-filter
         :items="items"
-        item-title="name"
+        :item-title="itemLabelAttribute"
+        item-value="id"
         :label="label"
         :hint="props.hint"
         :hide-details="props.hideDetails"
@@ -25,9 +26,13 @@
         @keydown.shift.enter="createItem(search, true); console.log('triggered shift enter keydown')"
         @keydown.shift.e.prevent="editDialog = true"
         @blur="hasFocus = false"
-        @focus="hasFocus = true; searchItems()"
+        @focus="hasFocus = true; "
     >
-        <template v-slot:chip="{ props, item }">
+        <template #prepend v-if="$slots.prepend">
+            <slot name="prepend"></slot>
+        </template>
+
+        <template v-slot:chip="{ props, item }" v-if="props.chips">
             <v-chip
                 v-bind="props"
                 :text="item.title"
@@ -76,10 +81,10 @@
             </v-list-item>
         </template>
 
-        <template #menu-footer v-if="!mobile">
+        <template #menu-footer v-if="!mobile && (!props.multiple || props.create)">
             <v-list-item>
                 <span v-if="!props.multiple">
-                    <v-chip size="x-small" class="mr-1 ml-2" label><i class="fas fa-arrow-up"></i></v-chip>
+                    <v-chip size="x-small" class="mr-1" label><i class="fas fa-arrow-up"></i></v-chip>
                     <v-chip size="x-small" class="mr-1" label>E</v-chip>
                     <span>{{ $t('Editor') }}</span>
                 </span>
@@ -94,6 +99,12 @@
                     </template>
                 </span>
             </v-list-item>
+        </template>
+
+        <template #append v-if="$slots.append">
+            <slot name="append">
+
+            </slot>
         </template>
 
     </v-autocomplete>
@@ -157,11 +168,11 @@ const search = ref<string | undefined>(undefined)
  * determine if the user should be able to create a new item based on create prop and if the item is already present
  */
 const showCreate = computed(() => {
-    const existingNames = items.value.filter(item => item.id != undefined).map(item => item.name.toLowerCase())
+    const existingNames = items.value.filter(item => item.id != undefined).map(item => item[itemLabelAttribute.value].toLowerCase())
     if (Array.isArray(modelValue.value)) {
-        existingNames.concat(modelValue.value.map(item => item.name.toLowerCase()))
+        existingNames.concat(modelValue.value.map(item => item[itemLabelAttribute.value].toLowerCase()))
     } else if (props.returnObject && modelValue.value != undefined) {
-        existingNames.push(modelValue.value.name.toLowerCase())
+        existingNames.push(modelValue.value[itemLabelAttribute.value].toLowerCase())
     }
 
     return props.create && search.value != undefined && search.value.length > 0 && !existingNames.includes(search.value.toLowerCase())
@@ -193,10 +204,21 @@ const label = computed(() => {
 })
 
 /**
+ * check if model has a non-standard label attribute defined, if not use "name" as the value attribute
+ */
+const itemLabelAttribute = computed(() => {
+    if (modelClass.value.model.itemLabel) {
+        return modelClass.value.model.itemLabel
+    }
+    return 'name'
+})
+
+/**
  * listen to search update and call debounced search
  */
 watch(search, (newValue, oldValue) => {
-    if (hasFocus.value) {
+    // without the focus check an additional load is performed when the select is collapsed as vuetify changes the search
+    if (hasFocus.value || !hasLoadedOnce.value) {
         loading.value = true
         debouncedSearchItems()
     }
@@ -244,11 +266,15 @@ function searchItems() {
         }
 
         if (showCreate.value) {
-            items.value.splice(0, 0, {name: search.value})
+            let createItem = {}
+            createItem[itemLabelAttribute.value] = search.value
+            items.value.splice(0, 0, createItem)
         }
 
         if (hasMoreItems.value) {
-            items.value.push({name: t('ModelSelectResultsHelp'), id: -1})
+            let infoItem = {id: -1}
+            infoItem[itemLabelAttribute.value] = t('ModelSelectResultsHelp')
+            items.value.push(infoItem)
         }
 
     }).catch((err: any) => {
