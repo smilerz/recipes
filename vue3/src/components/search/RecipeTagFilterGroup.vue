@@ -113,13 +113,17 @@
             </div>
         </template>
     </v-card>
+
+    <action-confirm-dialog ref="confirmDialogRef" />
 </template>
 
 <script setup lang="ts">
 import {computed, ref, watch} from 'vue'
+import {useI18n} from 'vue-i18n'
 import type {EditorSupportedModels} from '@/types/Models'
 import type {FilterValue} from '@/composables/modellist/types'
 import ModelSelect from '@/components/inputs/ModelSelect.vue'
+import ActionConfirmDialog from '@/components/dialogs/ActionConfirmDialog.vue'
 
 const props = withDefaults(defineProps<{
     label: string
@@ -143,6 +147,9 @@ const props = withDefaults(defineProps<{
     expandable: true,
     selectPlaceholder: undefined,
 })
+
+const {t} = useI18n()
+const confirmDialogRef = ref<InstanceType<typeof ActionConfirmDialog> | null>(null)
 
 function parseIds(raw: string | undefined): number[] {
     if (!raw) return []
@@ -221,19 +228,27 @@ function toggleExcludeMode() {
     excludeMode.value = excludeMode.value === 'any' ? 'all' : 'any'
 }
 
-function onCollapse() {
+async function onCollapse() {
     const row3HasData = row3Values.value.length > 0
     const row4HasData = row4Values.value.length > 0
     if (row3HasData || row4HasData) {
         const parts: string[] = []
-        if (row3HasData) parts.push(`${row3ModeLabel.value}: ${row3Values.value.length} items`)
-        if (row4HasData) parts.push(`${row4ModeLabel.value}: ${row4Values.value.length} items`)
-        if (!window.confirm(`Collapsing will remove ${parts.join(' and ')}. Continue?`)) return
+        if (row3HasData) parts.push(`${t(row3ModeLabel.value)}: ${row3Values.value.length} items`)
+        if (row4HasData) parts.push(`${t(row4ModeLabel.value)}: ${row4Values.value.length} items`)
+        const confirmed = await confirmDialogRef.value?.open({
+            title: t('Confirm'),
+            message: t('CollapseFilterConfirm', {parts: parts.join(` ${t('and')} `)}),
+            confirmLabel: t('Continue'),
+            confirmColor: 'warning',
+        })
+        if (!confirmed) return
     }
     props.clearFilter(row3Key.value)
     props.clearFilter(row4Key.value)
     expanded.value = false
 }
+
+defineExpose({onCollapse, confirmDialogRef})
 </script>
 
 <style scoped>
