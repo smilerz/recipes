@@ -69,8 +69,11 @@ class Mealie1(Integration):
                     food['supermarket_category_id'] = supermarket_categories_dict[f['label_id']]
 
                 food = Food.objects.create(**food)
-                if f['on_hand'] and (household := request_household(self.request)):
-                    add_food_to_pantry(food, self.request.user, self.request.space, household)
+                if f['on_hand']:
+                    if household := request_household(self.request):
+                        add_food_to_pantry(food, self.request.user, self.request.space, household)
+                    else:
+                        self.import_log.msg += f"Could not mark '{food.name}' as on-hand: no household set for the importing user.\n"
                 foods_dict[f['id']] = food.pk
 
         self.import_log.msg += f"Importing {len(mealie_database["ingredient_units"])} units...\n"
