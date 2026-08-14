@@ -824,6 +824,20 @@ onMounted(async () => {
             // Filter not found (e.g. deleted) — fall through to a normal search.
         }
     }
+    // Deep-link from a book's "More" link (HorizontalRecipeWindow.vue) when the book has a
+    // linked smart filter: apply its search criteria read-only, unlike ?editFilter= above which
+    // also opens edit mode - the user is browsing the book's filter, not editing a saved search.
+    const filterId = Number(route.query.filter)
+    if (filterId) {
+        try {
+            selectedCustomFilter.value = await new ApiApi().apiCustomFilterRetrieve({id: filterId})
+            loadSelectedCustomFilter()
+            loadStats()
+            return
+        } catch {
+            // Filter not found (e.g. deleted) — fall through to a normal search.
+        }
+    }
     // Deep-link from a Food/Keyword/Unit database-page "Recipes" count link (#11): that link
     // means recipes tagged with exactly that hierarchy node, not its descendants too.
     if (route.query.includeChildren !== undefined) {
