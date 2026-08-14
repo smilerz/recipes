@@ -176,6 +176,7 @@ import {ErrorMessageType, useMessageStore} from "@/stores/MessageStore"
 import type {StartPageSection, StartPageSectionMode} from "@/types/settings"
 import ModelSelect from "@/components/inputs/ModelSelect.vue"
 import ActionConfirmDialog from "@/components/dialogs/ActionConfirmDialog.vue"
+import {getGenericModelFromString, type EditorSupportedModels} from "@/types/Models"
 
 const {t} = useI18n()
 const userPrefs = useUserPreferenceStore()
@@ -232,7 +233,7 @@ const DEFAULT_SECTIONS: StartPageSection[] = [
     {mode: 'random', enabled: true, min_recipes: 25},
 ]
 
-const MODEL_FOR_MODE: Record<string, string> = {
+const MODEL_FOR_MODE: Record<string, EditorSupportedModels> = {
     keyword: 'Keyword',
     books: 'RecipeBook',
     food: 'Food',
@@ -368,14 +369,13 @@ async function onResetClick() {
 // --- Load & resolve ---
 
 async function resolveFilterObjects() {
-    const api = new ApiApi()
     const pending = localSections.value
         .filter(s => s.filter_id && MODEL_FOR_MODE[s.mode])
         .map(async (section) => {
-            const method = `api${MODEL_FOR_MODE[section.mode]}Retrieve` as keyof typeof api
-            if (typeof api[method] === 'function') {
+            const genericModel = getGenericModelFromString(MODEL_FOR_MODE[section.mode], t)
+            if (genericModel) {
                 try {
-                    section._filterObj = await (api[method] as Function)({id: section.filter_id})
+                    section._filterObj = await genericModel.retrieve(section.filter_id!)
                 } catch { /* item may have been deleted */ }
             }
         })
