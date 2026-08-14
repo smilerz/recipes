@@ -4,9 +4,16 @@ name: Publish Docker Image
 # on every push to preview; CI (ci.yml + vue-ci.yml) runs in parallel and is
 # not gated on — if a push breaks tests, revert or fix-forward.
 #
+# Every run also cuts a CalVer git tag (YYYY.MM.DD, or YYYY.MM.DD.N for a
+# same-day repeat) on the built commit and publishes it as an image tag too.
+# The tag also feeds version.py's existing `git describe --exact-match --tags`
+# stamping (Dockerfile, before the .git dir is stripped), so the running app's
+# Settings footer and /openapi/ schema show a real version instead of blank.
+#
 # Rollback handles:
 #   smilerz/recipes:latest-<short_sha>      (specific commit)
 #   smilerz/recipes:latest-YYYYMMDD         (last build of that day)
+#   smilerz/recipes:<YYYY.MM.DD[.N]>        (this run's CalVer release tag)
 
 on:
   push:
@@ -18,12 +25,32 @@ jobs:
     name: Build and Publish
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      contents: write
       packages: write
 
     steps:
       - name: Checkout
         uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Compute and create CalVer release tag
+        id: version
+        run: |
+          DATE=$(date +%Y.%m.%d)
+          COUNT=$(git tag -l "${DATE}*" | wc -l)
+          if [ "$COUNT" -eq 0 ]; then
+            VERSION="$DATE"
+          else
+            VERSION="${DATE}.${COUNT}"
+          fi
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git tag -a "$VERSION" -m "Release $VERSION"
+          if [ "${{ github.secret_source }}" = "Actions" ]; then
+            git push origin "$VERSION"
+          fi
 
       - uses: actions/setup-node@v6
         with:
@@ -65,6 +92,7 @@ jobs:
             type=raw,value=preview
             type=sha,prefix=latest-
             type=raw,value=latest-{{date 'YYYYMMDD'}}
+            type=raw,value=${{ steps.version.outputs.version }}
 
       - name: Build and Push
         uses: docker/build-push-action@v5
@@ -84,6 +112,7 @@ jobs:
           echo "## Docker Image Published" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "**Image:** \`smilerz/recipes\`" >> $GITHUB_STEP_SUMMARY
+          echo "**Version:** \`${{ steps.version.outputs.version }}\`" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Tags:" >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY
