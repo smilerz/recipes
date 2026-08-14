@@ -100,14 +100,21 @@ onMounted(async () => {
     })
 
     if (userPrefs.deviceSettings.start_showMealPlan === false) {
-        const currentSections = sections.value.map(s => ({...s}))
-        const mp = currentSections.find(s => s.mode === 'meal_plan')
-        if (mp) {
-            mp.enabled = false
-            try {
-                userPrefs.userSettings.startPageSections = currentSections
-                await userPrefs.updateUserSettings(true)
-            } catch { /* migration best-effort */ }
+        const raw = userPrefs.userSettings?.startPageSections
+        const hasSavedSections = Array.isArray(raw) && raw.length > 0
+        // only apply the migration if the user has never saved real sections - if they have,
+        // any recent explicit choice (e.g. re-enabling meal_plan via Start Page Settings) must
+        // not be overridden by this stale legacy flag.
+        if (!hasSavedSections) {
+            const currentSections = sections.value.map(s => ({...s}))
+            const mp = currentSections.find(s => s.mode === 'meal_plan')
+            if (mp) {
+                mp.enabled = false
+                try {
+                    userPrefs.userSettings.startPageSections = currentSections
+                    await userPrefs.updateUserSettings(true)
+                } catch { /* migration best-effort */ }
+            }
         }
         userPrefs.deviceSettings.start_showMealPlan = true // reset device setting
     }
