@@ -152,6 +152,48 @@ describe('useSwipeGesture', () => {
         })
     })
 
+    // An interrupted touch (incoming call, OS gesture, pull-to-refresh) fires
+    // touchcancel instead of touchend - without a handler for it, the row's drag
+    // state (activeStates + swipingId/swipingOffset) never clears and the row is
+    // left visually stuck mid-swipe.
+    describe('touchcancel', () => {
+        it('resets the row to closed instead of leaving it stuck mid-swipe', () => {
+            const g = useSwipeGesture(ref(true), ref(0), ref(2))
+            g.onTouchStart(touch(0, 0), 1)
+            g.onTouchMove(touch(30, 0), 1)
+            expect(g.isSwiping(1)).toBe(true)
+
+            g.onTouchCancel(touch(30, 0), 1)
+
+            expect(g.isSwiping(1)).toBe(false)
+            expect(g.getSwipeTransform(1)).toBe('translateX(0)')
+        })
+
+        it('does NOT fire onFullSwipe even if cancelled past the armed threshold', () => {
+            const onFullSwipe = vi.fn()
+            const g = useSwipeGesture(ref(true), ref(0), ref(1), onFullSwipe)
+            const armedDistance = VIEWPORT * ARMED_RATIO
+            g.onTouchStart(touch(0, 0), 42)
+            g.onTouchMove(touch(armedDistance + 10, 0), 42)
+
+            g.onTouchCancel(touch(armedDistance + 10, 0), 42)
+
+            expect(onFullSwipe).not.toHaveBeenCalled()
+        })
+
+        it('clears activeStates so a fresh touchstart on the same id starts clean', () => {
+            const g = useSwipeGesture(ref(true), ref(0), ref(2))
+            g.onTouchStart(touch(0, 0), 1)
+            g.onTouchMove(touch(30, 0), 1)
+            g.onTouchCancel(touch(30, 0), 1)
+
+            g.onTouchStart(touch(500, 500), 1)
+            g.onTouchMove(touch(530, 500), 1)
+            // offset should be measured from the NEW startX (500), not stale state
+            expect(g.getSwipeTransform(1)).toBe('translateX(30px)')
+        })
+    })
+
     describe('document touchstart listener install/remove', () => {
         it('installs a touchstart listener when a snap is active', async () => {
             const addSpy = vi.spyOn(document, 'addEventListener')

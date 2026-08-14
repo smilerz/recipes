@@ -117,8 +117,8 @@ class SearchParams:
         # booleans, not as the integer "allow N missing" path that previously
         # admitted near-makenow recipes. Integer callers (tests passing
         # makenow=1 or =2 directly) still get the fuzzy semantic.
-        if isinstance(value, bool) and value is True:
-            return 0
+        if isinstance(value, bool):
+            return 0 if value else MAKENOW_EXCLUDE
         if isinstance(value, str):
             low = value.lower()
             if low in ('yes', 'true', '1'):
@@ -129,6 +129,16 @@ class SearchParams:
             return int(value)
         except (ValueError, TypeError):
             return None
+
+    @staticmethod
+    def _parse_optional_int(value):
+        """Parse an optional integer range-filter param. Distinguishes 'not provided'
+        (None/empty string) from an explicit boundary of 0 — the previous `if value`
+        truthiness check treated 0 the same as absent, silently dropping any range
+        filter with a 0 boundary (e.g. saved CustomFilters persisting a JSON 0)."""
+        if value is None or value == '':
+            return None
+        return int(value)
 
     @staticmethod
     def _scalar(params, key, default=None):
@@ -188,14 +198,14 @@ class SearchParams:
             createdby=_s(params, 'createdby'),
             makenow=cls._parse_makenow(_s(params, 'makenow')),
             unrated=str2bool(_s(params, 'unrated', False)),
-            working_time_gte=int(_s(params, 'working_time_gte')) if _s(params, 'working_time_gte') else None,
-            working_time_lte=int(_s(params, 'working_time_lte')) if _s(params, 'working_time_lte') else None,
-            waiting_time_gte=int(_s(params, 'waiting_time_gte')) if _s(params, 'waiting_time_gte') else None,
-            waiting_time_lte=int(_s(params, 'waiting_time_lte')) if _s(params, 'waiting_time_lte') else None,
-            servings_gte=int(_s(params, 'servings_gte')) if _s(params, 'servings_gte') else None,
-            servings_lte=int(_s(params, 'servings_lte')) if _s(params, 'servings_lte') else None,
-            total_time_gte=int(_s(params, 'total_time_gte')) if _s(params, 'total_time_gte') else None,
-            total_time_lte=int(_s(params, 'total_time_lte')) if _s(params, 'total_time_lte') else None,
+            working_time_gte=cls._parse_optional_int(_s(params, 'working_time_gte')),
+            working_time_lte=cls._parse_optional_int(_s(params, 'working_time_lte')),
+            waiting_time_gte=cls._parse_optional_int(_s(params, 'waiting_time_gte')),
+            waiting_time_lte=cls._parse_optional_int(_s(params, 'waiting_time_lte')),
+            servings_gte=cls._parse_optional_int(_s(params, 'servings_gte')),
+            servings_lte=cls._parse_optional_int(_s(params, 'servings_lte')),
+            total_time_gte=cls._parse_optional_int(_s(params, 'total_time_gte')),
+            total_time_lte=cls._parse_optional_int(_s(params, 'total_time_lte')),
             has_photo=str2bool(_s(params, 'has_photo')),
             has_keywords=str2bool(_s(params, 'has_keywords')),
         )

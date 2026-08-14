@@ -952,7 +952,9 @@ class FoodSerializer(UniqueFieldsMixin, WritableNestedModelSerializer, RecipeCou
         """
         filter = Q(id__in=obj.substitute.all())
         if obj.substitute_siblings:
-            filter |= Q(path__startswith=obj.path[:Food.steplen * (obj.depth - 1)], depth=obj.depth)
+            sibling_path = Food.sibling_path_prefix(obj.path, obj.depth)
+            if sibling_path is not None:
+                filter |= Q(path__startswith=sibling_path, depth=obj.depth)
         if obj.substitute_children:
             filter |= Q(path__startswith=obj.path, depth__gt=obj.depth)
         return filter

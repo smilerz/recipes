@@ -176,6 +176,34 @@ describe('RecipeTagFilterGroup', () => {
             await wrapper.find('.fa-minus').trigger('click')
             expect(wrapper.findAllComponents(ModelSelectStub).length).toBe(2)
         })
+
+        it('asks for confirmation (not window.confirm) before collapsing when secondary rows have data', async () => {
+            const confirmSpy = vi.spyOn(window, 'confirm')
+            // keywordsAnd (row3, includeMode='any' default) is a secondary/expanded-only row —
+            // populating it auto-expands the widget (existing watch) and is what should trigger
+            // the confirm on collapse.
+            const {wrapper, clearFilter} = mountWidget({keywords: '1,2', keywordsAnd: '3'})
+
+            const openMock = vi.fn().mockResolvedValue(false)
+            ;(wrapper.vm as any).confirmDialogRef = {open: openMock}
+            await (wrapper.vm as any).onCollapse()
+
+            expect(openMock).toHaveBeenCalled()
+            expect(confirmSpy).not.toHaveBeenCalled()
+            expect(clearFilter).not.toHaveBeenCalled()
+            confirmSpy.mockRestore()
+        })
+
+        it('clears the secondary rows and collapses once the user confirms', async () => {
+            const {wrapper, clearFilter} = mountWidget({keywords: '1,2', keywordsAnd: '3'})
+
+            const openMock = vi.fn().mockResolvedValue(true)
+            ;(wrapper.vm as any).confirmDialogRef = {open: openMock}
+            await (wrapper.vm as any).onCollapse()
+
+            expect(openMock).toHaveBeenCalled()
+            expect(clearFilter).toHaveBeenCalledWith('keywordsAnd')
+        })
     })
 
     describe('badge', () => {

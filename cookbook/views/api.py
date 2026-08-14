@@ -1485,16 +1485,18 @@ class FoodViewSet(OrderingMixin, LoggingMixin, TreeMixin, DeleteRelationMixing):
         # Build each food's full substitute ID set (direct + siblings + children)
         food_sub_ids = {f.id: set(s.id for s in f.substitute.all()) for f in foods}
 
-        # Batch-fetch sibling IDs (1 query for all foods with substitute_siblings)
-        sibling_foods = [f for f in foods if f.substitute_siblings]
+        # Batch-fetch sibling IDs (1 query for all foods with substitute_siblings). Root-depth
+        # foods (no real parent category) have no true siblings — sibling_path_prefix returns
+        # None for them, so they're excluded here rather than matching every root-level Food.
+        sibling_foods = [f for f in foods if f.substitute_siblings and Food.sibling_path_prefix(f.path, f.depth) is not None]
         if sibling_foods:
             sibling_q = Q()
             for f in sibling_foods:
-                parent_path = f.path[:Food.steplen * (f.depth - 1)]
+                parent_path = Food.sibling_path_prefix(f.path, f.depth)
                 sibling_q |= Q(path__startswith=parent_path, depth=f.depth)
             candidates = list(Food.objects.filter(sibling_q).values_list('id', 'path', 'depth'))
             for f in sibling_foods:
-                parent_path = f.path[:Food.steplen * (f.depth - 1)]
+                parent_path = Food.sibling_path_prefix(f.path, f.depth)
                 for cid, cpath, cdepth in candidates:
                     if cdepth == f.depth and cpath.startswith(parent_path) and cid != f.id:
                         food_sub_ids[f.id].add(cid)

@@ -1330,6 +1330,26 @@ export class GenericModel {
     }
 
     /**
+     * partially updates a model instance with only the given fields, via the generated
+     * client's PATCH endpoint — safer than update() for single-field writes (e.g. a list-row
+     * toggle) since it can't clobber fields another tab/user changed concurrently.
+     * throws error if updating is not supported for given model
+     * @param id id of object to update
+     * @param obj partial object containing only the fields to change
+     * @return promise of request
+     */
+    partialUpdate(id: number, obj: Partial<EditorSupportedTypes>) {
+        if (this.model.disableUpdate) {
+            throw new Error('Cannot update on this model!')
+        } else {
+            let updateRequestParams: any = {}
+            updateRequestParams['id'] = id
+            updateRequestParams[`patched${this.model.name}`] = obj
+            return this.api[`api${this.model.name}PartialUpdate`](updateRequestParams)
+        }
+    }
+
+    /**
      * retrieves the given model
      * throws error if retrieving is not supported for given model
      * @param id object id to retrieve

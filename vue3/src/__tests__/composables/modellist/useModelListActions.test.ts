@@ -28,7 +28,8 @@ function setup(actions: ActionDef[], hooks: Partial<{
 }> = {}) {
     const model = computed(() => ({actionDefs: actions} as any))
     const gmUpdate = vi.fn().mockResolvedValue({})
-    const genericModel = ref({update: gmUpdate} as any)
+    const gmPartialUpdate = vi.fn().mockResolvedValue({})
+    const genericModel = ref({update: gmUpdate, partialUpdate: gmPartialUpdate} as any)
     const modelName = ref('food')
     const h = useModelListActions(
         model as any,
@@ -38,7 +39,7 @@ function setup(actions: ActionDef[], hooks: Partial<{
         hooks.onToggleComplete,
         hooks.onReload,
     )
-    return {...h, gmUpdate}
+    return {...h, gmUpdate, gmPartialUpdate}
 }
 
 describe('useModelListActions', () => {
@@ -134,28 +135,28 @@ describe('useModelListActions', () => {
     })
 
     describe('executeAction — toggle without handler (optimistic update)', () => {
-        it('flips the field optimistically and calls genericModel.update with the cleaned payload', async () => {
+        it('flips the field optimistically and calls genericModel.partialUpdate with ONLY the toggled field', async () => {
             const def: ActionDef = {
                 key: 'toggle', labelKey: 'T', isToggle: true, toggleField: 'onhand',
             } as any
-            const {executeAction, gmUpdate} = setup([def])
+            const {executeAction, gmPartialUpdate, gmUpdate} = setup([def])
             const item: ModelItem = {id: 7, onhand: false, name: 'X', _tempFlag: 'strip-me'} as any
             await executeAction('toggle', item)
             expect(item.onhand).toBe(true)
-            // _-prefixed fields stripped
-            const [id, payload] = gmUpdate.mock.calls[0]
+            // Must use the PATCH-backed partialUpdate, not a full PUT via update() — a full PUT
+            // of the whole row risks clobbering a concurrent change to any other field.
+            expect(gmUpdate).not.toHaveBeenCalled()
+            const [id, payload] = gmPartialUpdate.mock.calls[0]
             expect(id).toBe(7)
-            expect(payload).not.toHaveProperty('_tempFlag')
-            expect(payload.name).toBe('X')
-            expect(payload.onhand).toBe(true)
+            expect(payload).toEqual({onhand: true})
         })
 
-        it('rolls back the optimistic flip when update() rejects', async () => {
+        it('rolls back the optimistic flip when partialUpdate() rejects', async () => {
             const def: ActionDef = {
                 key: 'toggle', labelKey: 'T', isToggle: true, toggleField: 'onhand',
             } as any
-            const {executeAction, gmUpdate} = setup([def])
-            gmUpdate.mockRejectedValueOnce(new Error('server rejected'))
+            const {executeAction, gmPartialUpdate} = setup([def])
+            gmPartialUpdate.mockRejectedValueOnce(new Error('server rejected'))
             const item: ModelItem = {id: 3, onhand: false} as any
             await executeAction('toggle', item)
             expect(item.onhand).toBe(false)  // rolled back

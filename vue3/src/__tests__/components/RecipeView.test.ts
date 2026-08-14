@@ -30,6 +30,7 @@ vi.mock('@/utils/cookie', () => ({
 }))
 
 import RecipeView from '@/components/display/RecipeView.vue'
+import ImageLightbox from '@/components/display/ImageLightbox.vue'
 
 describe('RecipeView', () => {
     beforeEach(() => {
@@ -147,6 +148,28 @@ describe('RecipeView', () => {
         const wrapper = mountRecipeView(recipe)
         await flushPromises()
         expect(wrapper.find('.stub-keywords').exists()).toBe(true)
+    })
+
+    // Hero image click must open the lightbox at the PRIMARY image's actual position in
+    // recipe.images, not hardcoded index 0 - the primary image isn't guaranteed to be gallery
+    // position 0 since `order` is an independent, user-reorderable field.
+    it('opens the lightbox at the primary image\'s index, not always 0', async () => {
+        const recipe = makeRecipe({
+            id: 1,
+            image: 'https://example.com/primary.jpg',
+            images: [
+                { id: 1, recipe: 1, file: 'https://example.com/secondary.jpg', order: 0, isPrimary: false, createdBy: 1, createdAt: new Date('2026-01-01') },
+                { id: 2, recipe: 1, file: 'https://example.com/primary.jpg', order: 1, isPrimary: true, createdBy: 1, createdAt: new Date('2026-01-01') },
+            ],
+        })
+        const wrapper = mountRecipeView(recipe)
+        await flushPromises()
+
+        await wrapper.find('.stub-recipe-image').trigger('click')
+        await flushPromises()
+
+        const lightbox = wrapper.findComponent(ImageLightbox)
+        expect(lightbox.props('startIndex')).toBe(1)
     })
 })
 

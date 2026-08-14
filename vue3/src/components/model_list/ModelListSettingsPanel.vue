@@ -296,7 +296,7 @@
             <!-- Swipe action picker dialog -->
             <v-dialog v-model="swipePickerOpen" max-width="320">
                 <v-card>
-                    <v-card-title class="text-subtitle-1">{{ $t('SelectAction') }}</v-card-title>
+                    <v-closable-card-title v-model="swipePickerOpen" :title="$t('SelectAction')" />
                     <v-list density="compact">
                         <v-list-item
                             v-for="action in availableSwipeActions"
@@ -341,6 +341,7 @@ import {useTouchDetect} from '@/composables/useTouchDetect'
 import TabbedDrawer from '@/components/common/TabbedDrawer.vue'
 import CollapsibleSection from '@/components/common/CollapsibleSection.vue'
 import FilterPanel from '@/components/model_list/FilterPanel.vue'
+import VClosableCardTitle from '@/components/dialogs/VClosableCardTitle.vue'
 
 const {t} = useI18n()
 const {mobile} = useDisplay()
@@ -514,4 +515,7 @@ function removeSwipeAction(side: 'left' | 'right', idx: number) {
         swipeRightKeys.value = keys
     }
 }
+
+// Exposed for testing the swipe-action picker dialog.
+defineExpose({swipePickerOpen, openSwipePicker})
 </script>

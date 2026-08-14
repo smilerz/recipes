@@ -73,6 +73,8 @@ export function useHierarchyTree(options: UseHierarchyTreeOptions) {
                 hasMore: !!response.next,
                 page: 1,
             })
+        } catch (err: any) {
+            messageStore.addError(ErrorMessageType.FETCH_ERROR, err)
         } finally {
             removeFromLoadingIds(key)
         }
@@ -95,6 +97,8 @@ export function useHierarchyTree(options: UseHierarchyTreeOptions) {
                 hasMore: !!response.next,
                 page: nextPage,
             })
+        } catch (err: any) {
+            messageStore.addError(ErrorMessageType.FETCH_ERROR, err)
         } finally {
             removeFromLoadingIds(key)
         }
@@ -277,6 +281,8 @@ export function useHierarchyTree(options: UseHierarchyTreeOptions) {
                 const gm = getModel()
                 const response = await gm.list({query, page: 1, pageSize: 20} as any)
                 searchResults.value = response.results ?? []
+            } catch (err: any) {
+                messageStore.addError(ErrorMessageType.FETCH_ERROR, err)
             } finally {
                 searching.value = false
             }
@@ -308,6 +314,14 @@ export function useHierarchyTree(options: UseHierarchyTreeOptions) {
             } else {
                 await loadChildren(parentId)
             }
+
+            // Keep the moved item's own parent field in sync if it's currently selected — the
+            // drawer's Parent field reads selectedItem directly, not the cache, so without this
+            // it keeps showing the pre-move parent even though the move succeeded.
+            if (selectedItem.value?.id === item.id) {
+                const newParentId = parentId === 0 ? null : parentId
+                selectedItem.value = {...selectedItem.value, parent: newParentId} as EditorSupportedTypes
+            }
         } catch (err: any) {
             messageStore.addError(ErrorMessageType.UPDATE_ERROR, err)
         } finally {
@@ -330,6 +344,14 @@ export function useHierarchyTree(options: UseHierarchyTreeOptions) {
             const sourceParentId = (source as any).parent ?? null
             invalidateParent(sourceParentId)
             await loadChildren(sourceParentId)
+
+            // The source's own cache entry (if it had children/was expanded) and the merge
+            // target's cache entry both need invalidating — a merge re-parents the source's
+            // former children onto the target, so target's already-expanded subtree would
+            // otherwise keep showing an incomplete hierarchy until a manual collapse/re-expand.
+            invalidateParent(source.id!)
+            invalidateParent(target.id!)
+            await loadChildren(target.id!)
 
             // Clear selection since the source item no longer exists
             if (selectedItem.value?.id === source.id) {
@@ -390,8 +412,29 @@ export function useHierarchyTree(options: UseHierarchyTreeOptions) {
         await loadChildren(grandparentId)
     }
 
+    /**
+     * If `itemId` isn't resolvable via findItemInCache (i.e. its parent's children were never
+     * loaded), fetch it and load its parent's children so it becomes findable. expandToItem()/
+     * initDrill() get this for free by walking the full ancestor chain; a direct jump (e.g.
+     * drillTo() from a search result) does not, unless this is called first.
+     */
+    async function ensureItemResolvable(itemId: number): Promise<void> {
+        if (findItemInCache(itemId)) return
+        try {
+            const gm = getModel()
+            const item = await gm.retrieve(itemId)
+            const parentId = (item as any).parent ?? null
+            await loadChildren(parentId)
+        } catch (err: any) {
+            messageStore.addError(ErrorMessageType.FETCH_ERROR, err)
+        }
+    }
+
     async function drillTo(parentId: number | null): Promise<void> {
         drillParentId.value = parentId
+        if (parentId !== null) {
+            await ensureItemResolvable(parentId)
+        }
         await loadChildren(parentId)
     }
 

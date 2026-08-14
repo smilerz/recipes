@@ -32,17 +32,24 @@ def pytest_fixture_setup(fixturedef, request):
             yield
 
 
-def pytest_sessionfinish(session, exitstatus):
-    """Stop ConnectorManager worker thread before database teardown."""
-    if ConnectorManager.is_initialized():
-        ConnectorManager().stop()
-
-
 @pytest.fixture(scope='session')
 def django_db_setup(django_db_setup, django_db_blocker):
-    """Force-terminate stale DB connections after all tests so teardown can DROP the test database."""
+    """
+    Force-terminate stale DB connections after all tests so teardown can DROP the test database.
+
+    ConnectorManager runs a background worker thread with its own DB connection
+    (django.db.connection is thread-local). pytest_sessionfinish fires AFTER all
+    fixture teardown is complete (pytest's own docs: "called after whole test run
+    finished") - by then the real django_db_setup's DROP DATABASE has already run,
+    so stopping the worker there is too late to prevent it from racing the DROP.
+    Stop it HERE instead, before terminating any other stray backends, so its
+    connection is deterministically closed before DROP DATABASE ever runs.
+    """
     yield
     with django_db_blocker.unblock():
+        if ConnectorManager.is_initialized():
+            ConnectorManager().stop()
+
         from django.db import connections
         for alias in connections:
             conn = connections[alias]

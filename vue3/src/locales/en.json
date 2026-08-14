@@ -120,6 +120,7 @@
   "Code": "Code",
   "CodeHelp": "When using barcodes their value can be entered here. If not a code will automatically be generated and can be written onto items (e.g. Zip Lock Bags, Labels, ...).",
   "CollapseAll": "Collapse All",
+  "CollapseFilterConfirm": "Collapsing will remove {parts}. Continue?",
   "Color": "Color",
   "Columns": "Columns",
   "Combine_All_Steps": "Combine all steps into a single field.",

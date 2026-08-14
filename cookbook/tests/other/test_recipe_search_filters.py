@@ -887,6 +887,26 @@ class TestRecipePropertyFilters:
         assert s.r1.id in ids
         assert s.r2.id not in ids
 
+    def test_working_time_lte_zero_boundary_not_dropped(self, search_recipes, u1_s1, space_1, make_search_request):
+        """Regression: a saved CustomFilter's range boundary of 0 (persisted as a native
+        JSON int via _resolve_params' filter-base merge, not an HTTP query string) must
+        not be silently dropped. The prior `if value else None` truthiness check treated
+        0 the same as absent, widening the search to match everything instead of only
+        working_time<=0."""
+        s = search_recipes
+        with scopes_disabled():
+            s.r1.working_time = 0
+            s.r1.save()
+            s.r2.working_time = 30
+            s.r2.save()
+        req = make_search_request(u1_s1)
+        # int 0, not the string '0' — simulates a resolved CustomFilter.search dict value,
+        # not an HTTP query param (which would always already arrive as a non-empty string).
+        results = do_search(req, space_1, working_time_lte=0)
+        ids = set(results.values_list('id', flat=True))
+        assert s.r1.id in ids
+        assert s.r2.id not in ids
+
     def test_servings_range(self, search_recipes, u1_s1, space_1, make_search_request):
         s = search_recipes
         with scopes_disabled():

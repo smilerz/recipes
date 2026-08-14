@@ -71,3 +71,117 @@ describe('StartPageSettings — home-settings row alignment (item 5 guard)', () 
         wrapper.unmount()
     })
 })
+
+describe('StartPageSettings — reset/delete use ActionConfirmDialog', () => {
+    beforeEach(() => { setActivePinia(createPinia()); resetApiMock(); (apiMock as any).apiUserList = vi.fn().mockResolvedValue([]) })
+
+    it('onResetClick asks for confirmation and does not reset when declined', async () => {
+        const wrapper = mountSettings()
+        await flushPromises()
+
+        const openMock = vi.fn().mockResolvedValue(false)
+        ;(wrapper.vm as any).confirmDialogRef = {open: openMock}
+        await (wrapper.vm as any).onResetClick()
+
+        expect(openMock).toHaveBeenCalled()
+        wrapper.unmount()
+    })
+
+    it('onResetClick resets to defaults once confirmed', async () => {
+        const wrapper = mountSettings()
+        await flushPromises()
+        // Force a non-default state so the reset is observable regardless of what loadFromStore
+        // derived at mount.
+        ;(wrapper.vm as any).localSections = []
+        ;(wrapper.vm as any).showMealPlan = false
+        ;(wrapper.vm as any).confirmDialogRef = {open: vi.fn().mockResolvedValue(true)}
+
+        await (wrapper.vm as any).onResetClick()
+        await flushPromises()
+
+        expect((wrapper.vm as any).showMealPlan).toBe(true)
+        expect((wrapper.vm as any).localSections.length).toBeGreaterThan(0)
+        wrapper.unmount()
+    })
+
+    it('removeSection asks for confirmation and does not remove when declined', async () => {
+        const wrapper = mountSettings()
+        await flushPromises()
+        const before = (wrapper.vm as any).localSections.length
+
+        ;(wrapper.vm as any).confirmDialogRef = {open: vi.fn().mockResolvedValue(false)}
+        await (wrapper.vm as any).removeSection((wrapper.vm as any).localSections[0]._key)
+
+        expect((wrapper.vm as any).localSections.length).toBe(before)
+        wrapper.unmount()
+    })
+
+    it('removeSection removes the section once confirmed', async () => {
+        const wrapper = mountSettings()
+        await flushPromises()
+        const before = (wrapper.vm as any).localSections.length
+        const key = (wrapper.vm as any).localSections[0]._key
+
+        const openMock = vi.fn().mockResolvedValue(true)
+        ;(wrapper.vm as any).confirmDialogRef = {open: openMock}
+        await (wrapper.vm as any).removeSection(key)
+
+        expect(openMock).toHaveBeenCalled()
+        expect((wrapper.vm as any).localSections.length).toBe(before - 1)
+        wrapper.unmount()
+    })
+})
+
+// Characterization coverage for resolveFilterObjects(), which is being refactored to use
+// GenericModel.retrieve(id) (types/Models.ts) instead of hand-rolled reflection
+// (`api[`api${MODEL_FOR_MODE[mode]}Retrieve`]`) - locks in the existing resolve-by-id and
+// deleted-item-tolerance behavior so the refactor can't silently change it.
+describe('StartPageSettings — resolveFilterObjects resolves a section\'s saved filter_id', () => {
+    function mountWithSection(section: any) {
+        const prePopulate: PiniaPlugin = ({ store }) => {
+            if (store.$id === 'user_preference_store') {
+                store.initCompleted = true
+                store.userSettings = {
+                    startPageSections: [{ mode: 'meal_plan', enabled: true }, section],
+                    defaultPage: 'HOME',
+                } as any
+            }
+        }
+        const pinia = createPinia()
+        pinia.use(prePopulate)
+        const i18n = createI18n({ legacy: false, locale: 'en', messages: { en: {} }, missingWarn: false, fallbackWarn: false })
+        const vuetify = createVuetify()
+        return mount(StartPageSettings, {
+            global: {
+                plugins: [pinia, i18n, vuetify],
+                stubs: {
+                    VueDraggable: { template: '<div><slot /></div>' },
+                    ModelSelect: { template: '<div class="model-select-stub" />' },
+                },
+            },
+        })
+    }
+
+    beforeEach(() => { setActivePinia(createPinia()); resetApiMock(); (apiMock as any).apiUserList = vi.fn().mockResolvedValue([]) })
+
+    it('populates _filterObj by retrieving the saved filter_id for the section\'s model', async () => {
+        (apiMock as any).apiKeywordRetrieve = vi.fn().mockResolvedValue({ id: 7, name: 'Dessert' })
+        const wrapper = mountWithSection({ mode: 'keyword', enabled: true, filter_id: 7 })
+        await flushPromises()
+
+        expect((apiMock as any).apiKeywordRetrieve).toHaveBeenCalledWith({ id: 7 })
+        const section = (wrapper.vm as any).localSections.find((s: any) => s.mode === 'keyword')
+        expect(section._filterObj).toEqual({ id: 7, name: 'Dessert' })
+        wrapper.unmount()
+    })
+
+    it('tolerates a filter_id that no longer exists (deleted item) without throwing', async () => {
+        (apiMock as any).apiFoodRetrieve = vi.fn().mockRejectedValue(new Error('404'))
+        const wrapper = mountWithSection({ mode: 'food', enabled: true, filter_id: 99 })
+        await flushPromises()
+
+        const section = (wrapper.vm as any).localSections.find((s: any) => s.mode === 'food')
+        expect(section._filterObj).toBeNull()
+        wrapper.unmount()
+    })
+})

@@ -234,7 +234,14 @@ async function createShoppingListRecipe() {
  * instead of staging it for a later bulk commit. Reuses the shopping store's create/delete so
  * the change also gets undo-stack support and stays consistent with the rest of the app.
  */
+// Re-entrancy guard: a rapid double-tap on the same row before its in-flight create/delete
+// settles would otherwise build a delete payload from entry.entryId while it's still unset
+// (the create hasn't resolved yet), firing a broken DELETE and orphaning the entry the create
+// eventually returns. Tracks by row object reference — stable across renders for a given entry.
+const pendingToggle = new WeakSet<ShoppingDialogRecipeEntry>()
+
 function toggleEntry(entry: ShoppingDialogRecipeEntry) {
+    if (pendingToggle.has(entry)) return
     if (entry.checked) {
         const toDelete = {
             id: entry.entryId,
@@ -245,7 +252,8 @@ function toggleEntry(entry: ShoppingDialogRecipeEntry) {
         } as ShoppingListEntry
         entry.checked = false
         entry.entryId = undefined
-        useShoppingStore().deleteObject(toDelete, true)
+        pendingToggle.add(entry)
+        useShoppingStore().deleteObject(toDelete, true).finally(() => pendingToggle.delete(entry))
     } else {
         const toCreate = {
             amount: entry.amount * ingredientFactor.value,
@@ -255,9 +263,10 @@ function toggleEntry(entry: ShoppingDialogRecipeEntry) {
         } as ShoppingListEntry
         if (props.mealPlan?.id) toCreate.mealplanId = props.mealPlan.id
         entry.checked = true
+        pendingToggle.add(entry)
         useShoppingStore().createObject(toCreate, true).then(r => {
             entry.entryId = r?.id
-        })
+        }).finally(() => pendingToggle.delete(entry))
     }
 }
 

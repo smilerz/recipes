@@ -18,7 +18,7 @@
                     <recipe-image :recipe="recipe" width="100%" height="25vh" disable-lightbox
                                   :class="{'cursor-pointer': recipe.image}"
                                   :aria-label="$t('Recipe_Image')"
-                                  @click="recipe.image && openGalleryLightbox(0)" />
+                                  @click="recipe.image && openGalleryLightbox(heroImageIndex)" />
                     <v-btn v-if="useUserPreferenceStore().isAuthenticated" icon="$edit" color="white" size="small"
                            variant="text" class="photo-edit-overlay-btn" data-test="photo-edit-overlay-btn"
                            :aria-label="$t('Edit_Photo')" :title="$t('Edit_Photo')"
@@ -74,7 +74,7 @@
                         <recipe-image :recipe="recipe" width="100%" height="40vh" :rounded="true" disable-lightbox
                                       :class="{'cursor-pointer': recipe.image}"
                                       :aria-label="$t('Recipe_Image')"
-                                      @click="recipe.image && openGalleryLightbox(0)" />
+                                      @click="recipe.image && openGalleryLightbox(heroImageIndex)" />
                         <v-btn v-if="useUserPreferenceStore().isAuthenticated" icon="$edit" color="white" size="small"
                                variant="text" class="photo-edit-overlay-btn" data-test="photo-edit-overlay-btn"
                                :aria-label="$t('Edit_Photo')" :title="$t('Edit_Photo')"
@@ -277,6 +277,11 @@ const galleryLightboxIndex = ref(0)
 const galleryImageUrls = computed(() =>
     (recipe.value.images ?? []).map(img => typeof img.file === 'string' ? img.file : '').filter(Boolean)
 )
+
+const heroImageIndex = computed(() => {
+    const index = (recipe.value.images ?? []).findIndex(img => img.isPrimary)
+    return index === -1 ? 0 : index
+})
 
 function openGalleryLightbox(index: number) {
     galleryLightboxIndex.value = index

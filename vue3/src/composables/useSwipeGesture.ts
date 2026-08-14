@@ -202,6 +202,21 @@ export function useSwipeGesture(
         }
     }
 
+    // touchcancel fires instead of touchend when the gesture is interrupted
+    // (incoming call, OS gesture, pull-to-refresh). Unlike touchend, it never
+    // snaps open or fires a full-swipe - it just aborts the in-progress drag,
+    // leaving the row wherever it was before this touch started (snapped-open
+    // or closed) instead of stuck mid-drag.
+    function onTouchCancel(_e: TouchEvent, id: number) {
+        if (!enabled.value) return
+        activeStates.delete(id)
+        if (swipingId.value === id) {
+            swipingId.value = null
+            swipingOffset.value = 0
+        }
+        resetFlags()
+    }
+
     /** True when the drag has passed the button area (visual expansion) */
     function isExpanded(id: number): boolean {
         return swipingId.value === id && expandedFlag.value
@@ -263,6 +278,7 @@ export function useSwipeGesture(
         onTouchStart,
         onTouchMove,
         onTouchEnd,
+        onTouchCancel,
         getSwipeTransform,
         isSwiping,
         isExpanded,

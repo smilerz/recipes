@@ -197,6 +197,28 @@ describe('MealPlanEditor', () => {
         w.unmount()
     })
 
+    // If the user already made a genuine unsaved edit (e.g. changed the note) before creating the
+    // shopping list from the preview, onShoppingCreated must not silently discard that dirty state -
+    // it should restore whatever editingObjChanged was before its own nested mutation, not hardcode false.
+    it('preserves a pre-existing unsaved change when creating the shopping list from the preview', async () => {
+        const item = makeMealPlan({id: 11, shopping: false})
+        ;(apiMock as any).apiShoppingListEntryList = vi.fn().mockResolvedValue({count: 0, next: null, previous: null, results: [], timestamp: new Date()})
+        const w = mountEditor(item)
+        await flushPromises()
+
+        ;(w.vm as any).editingObj.note = 'unsaved note edit'
+        await flushPromises()
+        expect((w.vm as any).editingObjChanged).toBe(true)
+
+        ;(w.vm as any).onShoppingCreated()
+        await flushPromises()
+
+        expect((w.vm as any).editingObj.shopping).toBe(true)
+        expect((w.vm as any).editingObjChanged).toBe(true)
+
+        w.unmount()
+    })
+
     // The Shopping tab used to embed the global ShoppingListView (loading the whole household
     // list); it now fetches just this plan's entries directly for the shared preview component.
     describe('loading scoped shopping entries', () => {

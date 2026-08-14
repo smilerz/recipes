@@ -380,5 +380,29 @@ describe('RecipeShoppingPreview', () => {
             expect((wrapper.vm as any).dialogRecipes[0].entries[0].checked).toBe(false)
             expect((wrapper.vm as any).dialogRecipes[0].entries[0].entryId).toBeUndefined()
         })
+
+        it('a rapid double-tap while the create is still in flight does not fire a broken delete (re-entrancy guard)', async () => {
+            let resolveCreate: (v: any) => void
+            ;(apiMock as any).apiShoppingListEntryCreate.mockReturnValue(new Promise(r => { resolveCreate = r }))
+            const wrapper = setupLivePreview([])
+            await flushPromises()
+
+            const entry = (wrapper.vm as any).dialogRecipes[0].entries[0]
+            // Tap 1: unchecked -> checked; the create call is in flight, entryId still unset.
+            ;(wrapper.vm as any).toggleEntry(entry)
+            await flushPromises()
+            expect(entry.checked).toBe(true)
+            expect(entry.entryId).toBeUndefined()
+
+            // Tap 2: immediately, before the create resolves. Without a guard this builds a
+            // delete payload with id: undefined (entryId still unset) and fires it.
+            ;(wrapper.vm as any).toggleEntry(entry)
+            await flushPromises()
+            expect(apiMock.apiShoppingListEntryDestroy).not.toHaveBeenCalled()
+
+            resolveCreate!(makeShoppingListEntry({id: 900, ingredient: 11}))
+            await flushPromises()
+            expect(entry.entryId).toBe(900)
+        })
     })
 })

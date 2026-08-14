@@ -588,7 +588,7 @@ function openSettingsPanel(tab: 'settings' | 'filters') {
 }
 
 // Exposed for component tests — script setup doesn't auto-expose bindings.
-defineExpose({openSettingsPanel, settingsActiveTab, settingsPanelOpen, onTableUpdate, filterParams, pageSize, applyStatFilter, inlineGroups, drawerFilterDefs, editMode, selectedCustomFilter, saveCustomFilter, cancelEdit, deleteCustomFilter, confirmDialogRef})
+defineExpose({openSettingsPanel, settingsActiveTab, settingsPanelOpen, onTableUpdate, filterParams, pageSize, applyStatFilter, inlineGroups, drawerFilterDefs, editMode, selectedCustomFilter, saveCustomFilter, cancelEdit, deleteCustomFilter, confirmDialogRef, unknownStash, loadSelectedCustomFilter, resetAll, createCustomFilter, filtersToJson})
 
 function resetAll() {
     query.value = ''
@@ -755,8 +755,17 @@ async function deleteCustomFilter() {
 }
 
 // Deselecting the saved search while editing must not strand the user in edit
-// mode with the pencil (v-if selectedCustomFilter) gone.
-watch(selectedCustomFilter, (v) => { if (!v) editMode.value = false })
+// mode with the pencil (v-if selectedCustomFilter) gone. Also clear unknownStash
+// (foreign/legacy keys preserved from the just-deselected filter) here — every
+// path that nulls selectedCustomFilter (resetAll, deleteCustomFilter, or the
+// ModelSelect's own clear button) funnels through this watcher, so this is the
+// single place that must not leak stash data into whatever gets built next.
+watch(selectedCustomFilter, (v) => {
+    if (!v) {
+        editMode.value = false
+        unknownStash.value = {}
+    }
+})
 
 function createCustomFilter() {
     const api = new ApiApi()

@@ -192,6 +192,26 @@ describe('useModelEditorFunctions', () => {
 
             expect(window.onbeforeunload).toBeNull()
         })
+
+        // A nested editor (e.g. a create dialog opened from inside another editor's page)
+        // mounting on top of an outer editor overwrites window.onbeforeunload with its own
+        // handler. Unmounting the nested editor must restore the OUTER editor's still-active
+        // handler, not unconditionally null it out - the outer editor is still mounted and may
+        // still have unsaved changes.
+        it('restores the outer editor\'s warning when a nested editor unmounts, instead of clobbering it', () => {
+            const outer = mountWithComposable()
+            const outerHandler = window.onbeforeunload
+            expect(typeof outerHandler).toBe('function')
+
+            const inner = mountWithComposable()
+            expect(window.onbeforeunload).not.toBe(outerHandler)
+
+            inner.wrapper.unmount()
+            expect(window.onbeforeunload).toBe(outerHandler)
+
+            outer.wrapper.unmount()
+            expect(window.onbeforeunload).toBeNull()
+        })
     })
 
     describe('deleteObject', () => {
