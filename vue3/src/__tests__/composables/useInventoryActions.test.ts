@@ -85,6 +85,20 @@ describe('markOutToList', () => {
         expect(ok).toBe(false)
         expect(apiMock.apiShoppingListEntryCreate).not.toHaveBeenCalled()
     })
+
+    it('rolls back the zeroed amount when adding to the shopping list fails', async () => {
+        apiMock.apiInventoryEntryPartialUpdate.mockResolvedValueOnce({})
+        apiMock.apiShoppingListEntryCreate.mockRejectedValue(new Error('boom'))
+
+        const {markOutToList} = useInventoryActions()
+        const ok = await markOutToList({id: 7, food: {id: 42, name: 'Flour'}, amount: 3}, t)
+
+        expect(ok).toBe(false)
+        // the lot must not be left permanently zeroed just because the shopping-list step failed
+        expect(apiMock.apiInventoryEntryPartialUpdate).toHaveBeenLastCalledWith(
+            expect.objectContaining({id: 7, patchedInventoryEntry: expect.objectContaining({amount: 3})}),
+        )
+    })
 })
 
 describe('quickPantryAdd (FR-H3 check-off → pantry)', () => {

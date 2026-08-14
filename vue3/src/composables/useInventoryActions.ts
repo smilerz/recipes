@@ -370,6 +370,11 @@ export function useInventoryActions() {
         try {
             // TODO: regenerate OpenAPI schema — PatchedInventoryEntry.amount accepts a plain number
             await api.apiInventoryEntryPartialUpdate({id: entry.id, patchedInventoryEntry: {amount: 0} as any})
+        } catch (err) {
+            useMessageStore().addError(ErrorMessageType.UPDATE_ERROR, err)
+            return false
+        }
+        try {
             const created = await api.apiShoppingListEntryCreate({
                 shoppingListEntry: {food: {id: entry.food.id, name: entry.food.name}, amount: 1, unit: entry.unit ?? undefined} as any,
             })
@@ -388,6 +393,9 @@ export function useInventoryActions() {
             )
             return true
         } catch (err) {
+            // the lot was already zeroed — restore it so the food doesn't silently vanish
+            // from on-hand inventory just because the shopping-list step failed
+            await undoMarkOut(entry.id, originalAmount)
             useMessageStore().addError(ErrorMessageType.UPDATE_ERROR, err)
             return false
         }
