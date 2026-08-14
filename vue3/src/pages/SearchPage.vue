@@ -42,13 +42,13 @@
                                                 @update:model-value="(item:string) =>{ filters[item].enabled = true; nextTick(() => {addFilterSelect = null})}" density="compact"
                                                 :label="$t('AddFilter')" v-model="addFilterSelect"></v-autocomplete>
 
-                                <model-select model="CustomFilter" v-model="selectedCustomFilter" density="compact">
+                                <v-model-select model="CustomFilter" v-model="selectedCustomFilter" density="compact">
                                     <template #append>
                                         <v-btn icon="fa-solid fa-upload" color="warning" :disabled="selectedCustomFilter == null"
                                                @click="loadSelectedCustomFilter()"></v-btn>
                                         <v-btn icon="$save" class="ms-1" color="save" @click="saveCustomFilter()"></v-btn>
                                     </template>
-                                </model-select>
+                                </v-model-select>
                             </v-form>
                             <v-row>
                                 <v-col cols="6">
@@ -141,7 +141,8 @@
                               @update:modelValue="searchRecipes({page: page})" class="ms-2 me-2" size="small"
                               v-if="filters['sortOrder'].modelValue != 'random'"
                 ></v-pagination>
-                <v-btn size="x-large" rounded="xl" prepend-icon="fa-solid fa-dice" variant="tonal" v-if="filters['sortOrder'].modelValue == 'random'" @click="searchRecipes({page: 1})">
+                <v-btn size="x-large" rounded="xl" prepend-icon="fa-solid fa-dice" variant="tonal" v-if="filters['sortOrder'].modelValue == 'random'"
+                       @click="searchRecipes({page: 1})">
                     {{ $t('Random Recipes') }}
                 </v-btn>
             </v-col>
@@ -191,6 +192,7 @@ import RatingField from "@/components/inputs/RatingField.vue";
 import BatchDeleteDialog from "@/components/dialogs/BatchDeleteDialog.vue";
 import {EditorSupportedTypes} from "@/types/Models.ts";
 import BatchEditRecipeDialog from "@/components/dialogs/BatchEditRecipeDialog.vue";
+import VModelSelect from "@/components/inputs/VModelSelect.vue";
 
 const {t} = useI18n()
 const router = useRouter()
@@ -287,7 +289,7 @@ function searchRecipes(options: VDataTableUpdateOptions) {
         pageSize: pageSize.value,
     } as ApiRecipeListRequest
 
-     useUserPreferenceStore().deviceSettings.search_itemsPerPage = pageSize.value
+    useUserPreferenceStore().deviceSettings.search_itemsPerPage = pageSize.value
 
     Object.values(filters.value).forEach((filter) => {
         if (!isFilterDefaultValue(filter)) {
@@ -561,11 +563,12 @@ const filters = ref({
         hint: t('searchFilterObjectsHelp', {type: t('Keywords')}),
         enabled: false,
         default: [],
-        is: ModelSelect,
+        is: VModelSelect,
         model: 'Keyword',
         modelValue: useRouteQuery('keywords', [], {transform: toNumberArray}),
-        mode: 'tags',
-        object: false,
+        multiple: true,
+        chips: true,
+        returnObject: false,
         searchOnLoad: true
     },
     keywordsAnd: {
@@ -574,11 +577,12 @@ const filters = ref({
         hint: t('searchFilterObjectsAndHelp', {type: t('Keywords')}),
         enabled: false,
         default: [],
-        is: ModelSelect,
+        is: VModelSelect,
         model: 'Keyword',
         modelValue: useRouteQuery('keywordsAnd', [], {transform: toNumberArray}),
-        mode: 'tags',
-        object: false,
+        multiple: true,
+        chips: true,
+        returnObject: false,
         searchOnLoad: true
     },
     keywordsOrNot: {
@@ -587,11 +591,12 @@ const filters = ref({
         hint: t('searchFilterObjectsOrNotHelp', {type: t('Keywords')}),
         enabled: false,
         default: [],
-        is: ModelSelect,
+        is: VModelSelect,
         model: 'Keyword',
         modelValue: useRouteQuery('keywordsOrNot', [], {transform: toNumberArray}),
-        mode: 'tags',
-        object: false,
+        multiple: true,
+        chips: true,
+        returnObject: false,
         searchOnLoad: true
     },
     keywordsAndNot: {
@@ -600,11 +605,12 @@ const filters = ref({
         hint: t('searchFilterObjectsAndNotHelp', {type: t('Keywords')}),
         enabled: false,
         default: [],
-        is: ModelSelect,
+        is: VModelSelect,
         model: 'Keyword',
         modelValue: useRouteQuery('keywordsAndNot', [], {transform: toNumberArray}),
-        mode: 'tags',
-        object: false,
+        multiple: true,
+        chips: true,
+        returnObject: false,
         searchOnLoad: true
     },
     foods: {
@@ -613,11 +619,12 @@ const filters = ref({
         hint: t('searchFilterObjectsHelp', {type: t('Foods')}),
         enabled: false,
         default: [],
-        is: ModelSelect,
+        is: VModelSelect,
         model: 'Food',
         modelValue: useRouteQuery('foods', [], {transform: toNumberArray}),
-        mode: 'tags',
-        object: false,
+        multiple: true,
+        chips: true,
+        returnObject: false,
         searchOnLoad: true
     },
     foodsAnd: {
@@ -626,11 +633,12 @@ const filters = ref({
         hint: t('searchFilterObjectsAndHelp', {type: t('Foods')}),
         enabled: false,
         default: [],
-        is: ModelSelect,
+        is: VModelSelect,
         model: 'Food',
         modelValue: useRouteQuery('foodsAnd', [], {transform: toNumberArray}),
-        mode: 'tags',
-        object: false,
+        multiple: true,
+        chips: true,
+        returnObject: false,
         searchOnLoad: true
     },
     foodsOrNot: {
@@ -639,11 +647,12 @@ const filters = ref({
         hint: t('searchFilterObjectsOrNotHelp', {type: t('Foods')}),
         enabled: false,
         default: [],
-        is: ModelSelect,
+        is: VModelSelect,
         model: 'Food',
         modelValue: useRouteQuery('foodsOrNot', [], {transform: toNumberArray}),
-        mode: 'tags',
-        object: false,
+        multiple: true,
+        chips: true,
+        returnObject: false,
         searchOnLoad: true
     },
     foodsAndNot: {
@@ -652,11 +661,12 @@ const filters = ref({
         hint: t('searchFilterObjectsAndNotHelp', {type: t('Foods')}),
         enabled: false,
         default: [],
-        is: ModelSelect,
+        is: VModelSelect,
         model: 'Food',
         modelValue: useRouteQuery('foodsAndNot', [], {transform: toNumberArray}),
-        mode: 'tags',
-        object: false,
+        multiple: true,
+        chips: true,
+        returnObject: false,
         searchOnLoad: true
     },
     books: {
@@ -665,11 +675,12 @@ const filters = ref({
         hint: t('searchFilterObjectsHelp', {type: t('Books')}),
         enabled: false,
         default: [],
-        is: ModelSelect,
+        is: VModelSelect,
         model: 'RecipeBook',
         modelValue: useRouteQuery('books', [], {transform: toNumberArray}),
-        mode: 'tags',
-        object: false,
+        multiple: true,
+        chips: true,
+        returnObject: false,
         searchOnLoad: true
     },
     booksAnd: {
@@ -678,11 +689,12 @@ const filters = ref({
         hint: t('searchFilterObjectsAndHelp', {type: t('Books')}),
         enabled: false,
         default: [],
-        is: ModelSelect,
+        is: VModelSelect,
         model: 'RecipeBook',
         modelValue: useRouteQuery('booksAnd', [], {transform: toNumberArray}),
-        mode: 'tags',
-        object: false,
+        multiple: true,
+        chips: true,
+        returnObject: false,
         searchOnLoad: true
     },
     booksOrNot: {
@@ -691,11 +703,12 @@ const filters = ref({
         hint: t('searchFilterObjectsOrNotHelp', {type: t('Books')}),
         enabled: false,
         default: [],
-        is: ModelSelect,
+        is: VModelSelect,
         model: 'RecipeBook',
         modelValue: useRouteQuery('booksOrNot', [], {transform: toNumberArray}),
-        mode: 'tags',
-        object: false,
+        multiple: true,
+        chips: true,
+        returnObject: false,
         searchOnLoad: true
     },
     booksAndNot: {
@@ -704,11 +717,12 @@ const filters = ref({
         hint: t('searchFilterObjectsAndNotHelp', {type: t('Books')}),
         enabled: false,
         default: [],
-        is: ModelSelect,
+        is: VModelSelect,
         model: 'RecipeBook',
         modelValue: useRouteQuery('booksAndNot', [], {transform: toNumberArray}),
-        mode: 'tags',
-        object: false,
+        multiple: true,
+        chips: true,
+        returnObject: false,
         searchOnLoad: true
     },
     createdby: {
@@ -717,7 +731,7 @@ const filters = ref({
         hint: t('searchFilterCreatedByHelp'),
         enabled: false,
         default: undefined,
-        is: ModelSelect,
+        is: VModelSelect,
         model: 'User',
         modelValue: useRouteQuery('createdby', undefined, {transform: Number}),
         mode: 'single',
@@ -730,11 +744,12 @@ const filters = ref({
         hint: t('searchFilterObjectsHelp', {type: t('Units')}),
         enabled: false,
         default: [],
-        is: ModelSelect,
+        is: VModelSelect,
         model: 'Unit',
         modelValue: useRouteQuery('units', [], {transform: toNumberArray}),
-        mode: 'tags',
-        object: false,
+        multiple: true,
+        chips: true,
+        returnObject: false,
         searchOnLoad: true
     },
     internal: {

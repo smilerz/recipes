@@ -160,11 +160,11 @@
             <v-card-text>
                 <p>{{ $t('Update_Existing_Data') }}</p>
 
-                <model-select model="Unit" :label="$t('Properties_Food_Unit')" v-model="dialogUnit">
+                <v-model-select model="Unit" :label="$t('Properties_Food_Unit')" v-model="dialogUnit">
                     <template v-slot:append>
                         <v-btn @click="changeAllUnits(dialogUnit)" icon="$save" color="save" :disabled="dialogUnit == undefined"></v-btn>
                     </template>
-                </model-select>
+                </v-model-select>
 
                 <v-text-field type="number" :label="$t('Properties_Food_Amount')" v-model="dialogAmount">
                     <template v-slot:append>

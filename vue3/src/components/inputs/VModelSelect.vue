@@ -42,7 +42,7 @@
 
         <template #no-data>
             <v-list-item v-if="hasLoadedOnce">
-                {{$t('No_Results')}}
+                {{ $t('No_Results') }}
             </v-list-item>
         </template>
 
@@ -169,10 +169,14 @@ const search = ref<string | undefined>(undefined)
  */
 const showCreate = computed(() => {
     const existingNames = items.value.filter(item => item.id != undefined).map(item => item[itemLabelAttribute.value].toLowerCase())
-    if (Array.isArray(modelValue.value)) {
-        existingNames.concat(modelValue.value.map(item => item[itemLabelAttribute.value].toLowerCase()))
-    } else if (props.returnObject && modelValue.value != undefined) {
-        existingNames.push(modelValue.value[itemLabelAttribute.value].toLowerCase())
+    if (props.returnObject) {
+        if (Array.isArray(modelValue.value)) {
+            existingNames.concat(modelValue.value.map(item => item[itemLabelAttribute.value].toLowerCase()))
+        } else if (modelValue.value != undefined) {
+            existingNames.push(modelValue.value[itemLabelAttribute.value].toLowerCase())
+        }
+    } else {
+        //TODO implement a method to check for presence in selection when returnObject is false
     }
 
     return props.create && search.value != undefined && search.value.length > 0 && !existingNames.includes(search.value.toLowerCase())
@@ -278,6 +282,7 @@ function searchItems() {
         }
 
     }).catch((err: any) => {
+        debugger
         useMessageStore().addError(ErrorMessageType.FETCH_ERROR, err)
     }).finally(() => {
         console.log('search items finished')

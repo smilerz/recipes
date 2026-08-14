@@ -250,13 +250,13 @@
 
                                 <v-row>
                                     <v-col>
-                                        <model-select model="Keyword" v-model="keywordSelect" allow-create>
+                                        <v-model-select model="Keyword" v-model="keywordSelect" create>
                                             <template #append>
                                                 <v-btn icon="$add" color="success"
                                                        @click="keywordSelect.importKeyword = true; importResponse.recipe.keywords.push(keywordSelect); keywordSelect= null"
                                                        :disabled="keywordSelect == null"></v-btn>
                                             </template>
-                                        </model-select>
+                                        </v-model-select>
                                     </v-col>
                                 </v-row>
 
@@ -585,6 +585,7 @@ import {useDjangoUrls} from "@/composables/useDjangoUrls";
 import bookmarkletJs from '@/assets/bookmarklet_v3?url'
 import StepIngredientSorterDialog from "@/components/dialogs/StepIngredientSorterDialog.vue";
 import {mergeAllSteps, splitAllSteps, splitStep} from "@/utils/step_utils.ts";
+import VModelSelect from "@/components/inputs/VModelSelect.vue";
 
 function doListImport() {
     urlList.value = urlListImportInput.value.split('\n')
