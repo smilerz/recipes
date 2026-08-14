@@ -181,9 +181,21 @@ export function useUrlFilters(
         if (flushScheduled) return
         flushScheduled = true
         nextTick(() => {
+            // Legacy {key}_gte/{key}_lte params (see initFromRoute's back-compat read) must be
+            // stripped on every flush, not just carried through — otherwise a cleared range
+            // filter that arrived via a legacy-format link resurrects itself on the next load,
+            // since initFromRoute falls back to reading them whenever the new combined key is
+            // absent from the URL.
+            const legacyRangeKeys = new Set<string>()
+            for (const def of filterDefs.value) {
+                if (def.type === 'date-range' || def.type === 'number-range') {
+                    legacyRangeKeys.add(`${def.key}_gte`)
+                    legacyRangeKeys.add(`${def.key}_lte`)
+                }
+            }
             const query: Record<string, string | string[]> = {}
             for (const [k, v] of Object.entries(route.query)) {
-                if (!filterDefs.value.some(d => d.key === k)) {
+                if (!filterDefs.value.some(d => d.key === k) && !legacyRangeKeys.has(k)) {
                     query[k] = v as string | string[]
                 }
             }

@@ -139,6 +139,17 @@ describe('useUrlFilters (multi-param)', () => {
             expect(gte.toISOString().slice(0, 10)).toBe('2026-04-16')
         })
 
+        it('clearing a filter loaded from legacy _gte/_lte params strips them from the URL, so they do not resurrect the filter on the next load', async () => {
+            mockQuery.value = {createdon_gte: '2026-04-16', createdon_lte: '2026-04-20'}
+            const defs = computed(() => makeDefs([{key: 'createdon', type: 'date-range'}]))
+            const {clearFilter} = useUrlFilters(defs)
+            clearFilter('createdon')
+            await nextTick()
+            const last = replacedQueries[replacedQueries.length - 1]
+            expect(last).not.toHaveProperty('createdon_gte')
+            expect(last).not.toHaveProperty('createdon_lte')
+        })
+
         // The OpenAPI client types date-range params as Date and serializes
         // via .toISOString(). If filterParams emits a plain string the client
         // throws "error while fetching" on apiRecipeList. Coerce to Date so
