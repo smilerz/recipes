@@ -56,14 +56,19 @@ export function useModelEditorFunctions<T>(modelName: EditorSupportedModels, emi
     // effect closed over this instance's editingObjChanged, orphaned once the
     // editor itself is gone. The next unrelated hard navigation then gets an
     // unexplained "leave site?" prompt with no editing UI on screen to explain it.
+    // Restoring the previous handler (rather than nulling unconditionally) also
+    // keeps a nested editor's unmount from clobbering an outer editor's own
+    // still-active warning.
+    let previousOnBeforeUnload: typeof window.onbeforeunload = null
     onBeforeUnmount(() => {
-        window.onbeforeunload = null
+        window.onbeforeunload = previousOnBeforeUnload
     })
 
     /**
      * add event listener to page unload event to prevent accidentally closing with unsaved changes
      */
     function setupPageLeaveWarning() {
+        previousOnBeforeUnload = window.onbeforeunload
         window.onbeforeunload = (event) => {
             if (editingObjChanged.value) {
                 event.returnValue = "this_string_cant_be_empty_because_of_firefox"
