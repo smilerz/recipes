@@ -21,16 +21,17 @@ vi.mock('@/stores/MessageStore', () => ({
     ErrorMessageType: {CREATE_ERROR: 'CREATE_ERROR', UPDATE_ERROR: 'UPDATE_ERROR', DELETE_ERROR: 'DELETE_ERROR'},
     PreparedMessage: {CREATE_SUCCESS: 'CREATE_SUCCESS', UPDATE_SUCCESS: 'UPDATE_SUCCESS'},
 }))
-const {patchRecipeImageMock, scrapeSourceImagesMock, createRecipeImageFromUrlMock} = vi.hoisted(() => ({
+const {patchRecipeImageMock, scrapeSourceImagesMock, createRecipeImageFromUrlMock, deleteRecipeImageMock} = vi.hoisted(() => ({
     patchRecipeImageMock: vi.fn(),
     scrapeSourceImagesMock: vi.fn(),
     createRecipeImageFromUrlMock: vi.fn(),
+    deleteRecipeImageMock: vi.fn(),
 }))
 vi.mock('@/composables/useFileApi', () => ({
     useFileApi: () => ({
         createRecipeImage: vi.fn().mockResolvedValue({}),
         updateRecipeImageCropData: vi.fn().mockResolvedValue({}),
-        deleteRecipeImage: vi.fn().mockResolvedValue({}),
+        deleteRecipeImage: deleteRecipeImageMock,
         patchRecipeImage: patchRecipeImageMock,
         scrapeSourceImages: scrapeSourceImagesMock,
         createRecipeImageFromUrl: createRecipeImageFromUrlMock,
@@ -59,6 +60,7 @@ describe('RecipeImageEditor', () => {
     beforeEach(() => {
         setActivePinia(createPinia())
         patchRecipeImageMock.mockReset().mockResolvedValue({})
+        deleteRecipeImageMock.mockReset().mockResolvedValue({})
     })
 
     it('mounts without error with empty images', () => {
@@ -111,6 +113,28 @@ describe('RecipeImageEditor', () => {
 
         expect(patchRecipeImageMock).toHaveBeenCalledWith(10, {order: 0})
         expect(patchRecipeImageMock).toHaveBeenCalledWith(11, {order: 1})
+    })
+
+    it('removeImage asks for confirmation before deleting a persisted image', async () => {
+        const imgs = [{id: 1, file: '/a.jpg', isPrimary: false, order: 0}]
+        const w = mountEditor(imgs)
+        ;(w.vm as any).confirmDialogRef = {open: vi.fn().mockResolvedValue(false)}
+
+        await (w.vm as any).removeImage(0)
+        await flushPromises()
+
+        expect(deleteRecipeImageMock).not.toHaveBeenCalled()
+    })
+
+    it('removeImage deletes the image once the user confirms', async () => {
+        const imgs = [{id: 1, file: '/a.jpg', isPrimary: false, order: 0}]
+        const w = mountEditor(imgs)
+        ;(w.vm as any).confirmDialogRef = {open: vi.fn().mockResolvedValue(true)}
+
+        await (w.vm as any).removeImage(0)
+        await flushPromises()
+
+        expect(deleteRecipeImageMock).toHaveBeenCalledWith(1)
     })
 })
 

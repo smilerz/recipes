@@ -79,6 +79,8 @@
                 </v-card-actions>
             </v-card>
         </v-dialog>
+
+        <action-confirm-dialog ref="confirmDialogRef" />
     </div>
 </template>
 
@@ -92,6 +94,8 @@ import {ErrorMessageType, PreparedMessage, useMessageStore} from "@/stores/Messa
 import ImageEditor from "@/components/inputs/ImageEditor.vue"
 import SourceImagePicker from "@/components/inputs/SourceImagePicker.vue"
 import VClosableCardTitle from "@/components/dialogs/VClosableCardTitle.vue"
+import ActionConfirmDialog from "@/components/dialogs/ActionConfirmDialog.vue"
+import {useI18n} from "vue-i18n"
 
 const props = defineProps<{
     recipeId: number
@@ -101,6 +105,9 @@ const props = defineProps<{
 const localImages = defineModel<RecipeImageType[]>('images', {default: () => []})
 
 const {createRecipeImage, createRecipeImageFromUrl, scrapeSourceImages, updateRecipeImageCropData, deleteRecipeImage, patchRecipeImage} = useFileApi()
+const {t} = useI18n()
+
+const confirmDialogRef = ref<InstanceType<typeof ActionConfirmDialog> | null>(null)
 
 const uploading = ref(false)
 const showUpload = ref(false)
@@ -200,6 +207,13 @@ async function removeImage(idx: number) {
         localImages.value.splice(idx, 1)
         return
     }
+    const confirmed = await confirmDialogRef.value?.open({
+        title: t('Delete'),
+        confirmLabel: t('Delete'),
+        confirmColor: 'delete',
+        confirmIcon: '$delete',
+    })
+    if (!confirmed) return
     try {
         await deleteRecipeImage(img.id)
         const wasPrimary = img.isPrimary
@@ -269,8 +283,8 @@ function onReorder() {
     })
 }
 
-// Exposed for testing the primary/reorder API calls and the source-import flow.
-defineExpose({setPrimary, onReorder, canImportFromSource, openSourceImport, importSelectedSourceImages, sourceImages, selectedSourceImages})
+// Exposed for testing the primary/reorder/delete API calls and the source-import flow.
+defineExpose({setPrimary, onReorder, removeImage, confirmDialogRef, canImportFromSource, openSourceImport, importSelectedSourceImages, sourceImages, selectedSourceImages})
 </script>
 
 <style scoped>
