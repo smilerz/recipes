@@ -62,10 +62,9 @@ export function useModelListActions(
                 item[field] = !oldValue
                 onToggleComplete?.(item, field)
                 try {
-                    const cleanItem = Object.fromEntries(
-                        Object.entries(item).filter(([k]) => !k.startsWith('_'))
-                    )
-                    await genericModel.value.update(item.id, cleanItem)
+                    // Partial update — only the toggled field is sent, so a concurrent change
+                    // to any other field on this row (another tab/user) can't be clobbered.
+                    await genericModel.value.partialUpdate(item.id, {[field]: item[field]})
                     useMessageStore().addPreparedMessage(PreparedMessage.UPDATE_SUCCESS)
                 } catch (e) {
                     item[field] = oldValue
