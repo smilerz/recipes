@@ -129,6 +129,7 @@
                     @touchstart.passive="swipeActive && swipe.onTouchStart($event, item.id)"
                     @touchmove.passive="swipeActive && swipe.onTouchMove($event, item.id)"
                     @touchend.passive="swipeActive && swipe.onTouchEnd($event, item.id)"
+                    @touchcancel.passive="swipeActive && swipe.onTouchCancel($event, item.id)"
                 >
                     <v-list-item density="compact">
                         <template #prepend>
