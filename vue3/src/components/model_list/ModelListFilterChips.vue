@@ -100,7 +100,7 @@ watch(activeFilters, (filters) => {
         if (f.def.type === 'model-select') {
             fetchName(f.def.modelName, f.value)
         } else if (f.def.type === 'tag-select') {
-            for (const id of f.value.split('|').filter(s => s.length > 0)) {
+            for (const id of f.value.split(',').filter(s => s.length > 0)) {
                 fetchName(f.def.modelName, id)
             }
         }
@@ -120,7 +120,7 @@ function chipLabel(def: FilterDef, value: string): string {
         return `${t(def.labelKey)}: ${value}${suffix}`
     }
     if (def.type === 'tag-select') {
-        const items = value.split('|').filter(s => s.length > 0)
+        const items = value.split(',').filter(s => s.length > 0)
         if (items.length === 0) return t(def.labelKey)
         if (def.modelName) {
             const names = items.map(id => {

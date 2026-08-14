@@ -52,7 +52,7 @@ describe('ModelListFilterChips', () => {
         it('renders a chip for tag-select with loading ellipsis while names resolve', () => {
             const wrapper = mountChips(
                 [{key: 'keywords', labelKey: 'Keywords', type: 'tag-select', modelName: 'Keyword' as any}],
-                {keywords: '1|2|3'},
+                {keywords: '1,2,3'},
             )
             const chip = wrapper.find('.v-chip')
             expect(chip.exists()).toBe(true)
@@ -88,7 +88,7 @@ describe('ModelListFilterChips', () => {
 
             const wrapper = mountChips(
                 [{key: 'keywords', labelKey: 'Keywords', type: 'tag-select', modelName: 'Keyword' as any}],
-                {keywords: '1|2'},
+                {keywords: '1,2'},
             )
             await flushPromises()
             await flushPromises()
@@ -104,7 +104,7 @@ describe('ModelListFilterChips', () => {
 
             const wrapper = mountChips(
                 [{key: 'keywords', labelKey: 'Keywords', type: 'tag-select', modelName: 'Keyword' as any}],
-                {keywords: '99|100|101'},
+                {keywords: '99,100,101'},
             )
             // While names are resolving (or after fetch failure), ellipsis.
             const chip = wrapper.find('.v-chip')
