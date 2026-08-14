@@ -30,25 +30,7 @@
             </v-card>
         </v-col>
 
-        <v-col cols="12" md="6">
-            <v-card :to="{name: 'ModelListPage', params: {model: 'AiLog'}}">
-                <v-card-title><i class="fa-solid hand-holding-dollar"></i> {{ $t('MonthlyCredits') }}</v-card-title>
-                <v-card-text>{{ $n(props.space.aiMonthlyCreditsUsed) }} / {{ $n(props.space.aiCreditsMonthly) }} {{ $t('Credits') }}
-                </v-card-text>
-                <v-progress-linear :model-value="props.space.aiMonthlyCreditsUsed" :max="props.space.aiCreditsMonthly" height="10"
-                ></v-progress-linear>
-            </v-card>
-        </v-col>
-
-        <v-col cols="12" md="6">
-            <v-card :to="{name: 'ModelListPage', params: {model: 'AiLog'}}">
-                <v-card-title><i class="fa-solid hand-holding-dollar"></i> {{ $t('AiCreditsBalance') }}</v-card-title>
-                <v-card-text>{{ $n(props.space.aiCreditsBalance) }} {{ $t('Credits') }}
-                </v-card-text>
-                <v-progress-linear height="10"
-                ></v-progress-linear>
-            </v-card>
-        </v-col>
+        <ai-credits-cards :space="props.space" />
     </v-row>
 
 </template>
@@ -60,6 +42,7 @@ import {PropType} from "vue";
 import {Space} from "@/openapi";
 import {isSpaceAboveRecipeLimit, isSpaceAboveStorageLimit, isSpaceAboveUserLimit} from "@/utils/logic_utils.ts";
 import {useUserPreferenceStore} from "@/stores/UserPreferenceStore.ts";
+import AiCreditsCards from "@/components/display/AiCreditsCards.vue";
 
 const props = defineProps({
     space: {type: {} as PropType<Space>, required: true},
