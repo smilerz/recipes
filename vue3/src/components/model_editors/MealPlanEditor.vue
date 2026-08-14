@@ -282,10 +282,11 @@ watch(() => tab.value, (newVal) => {
  * next tick's flush, so it must be reset after that flush, not synchronously here.
  */
 function onShoppingCreated() {
+    const changed = editingObjChanged.value
     editingObj.value.shopping = true
     loadShoppingEntries()
     nextTick(() => {
-        editingObjChanged.value = false
+        editingObjChanged.value = changed
     })
 }
 
