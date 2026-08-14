@@ -216,7 +216,7 @@ export function useInventoryActions() {
         if (failures.length > 0) {
             useMessageStore().addError(ErrorMessageType.DELETE_ERROR, new Error(`Failed to remove ${failures.length} entries`))
         }
-        return true
+        return failures.length < idsToDelete.length
     }
 
     /**

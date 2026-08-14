@@ -101,6 +101,45 @@ describe('markOutToList', () => {
     })
 })
 
+describe('removeFromInventory', () => {
+    beforeEach(() => {
+        setActivePinia(createPinia())
+        resetApiMock()
+    })
+
+    const t = (k: string) => k
+
+    function mockConfirmDialog(confirmResult: boolean, selectedIds: number[]) {
+        return {
+            open: vi.fn().mockResolvedValue(confirmResult),
+            setEntries: vi.fn(),
+            selectedEntryIds: ref(selectedIds),
+        } as any
+    }
+
+    it('returns false when every delete in the confirmed batch fails', async () => {
+        apiMock.apiInventoryEntryList.mockResolvedValue({results: [{id: 1, amount: 2}, {id: 2, amount: 1}]})
+        apiMock.apiInventoryEntryDestroy.mockRejectedValue(new Error('boom'))
+
+        const confirmDialog = mockConfirmDialog(true, [1, 2])
+        const {removeFromInventory} = useInventoryActions()
+        const result = await removeFromInventory({id: 42, name: 'Flour'}, confirmDialog, t)
+
+        expect(result).toBe(false)
+    })
+
+    it('returns true when at least one delete succeeds', async () => {
+        apiMock.apiInventoryEntryList.mockResolvedValue({results: [{id: 1, amount: 2}]})
+        apiMock.apiInventoryEntryDestroy.mockResolvedValue({})
+
+        const confirmDialog = mockConfirmDialog(true, [1])
+        const {removeFromInventory} = useInventoryActions()
+        const result = await removeFromInventory({id: 42, name: 'Flour'}, confirmDialog, t)
+
+        expect(result).toBe(true)
+    })
+})
+
 describe('quickPantryAdd (FR-H3 check-off → pantry)', () => {
     beforeEach(() => {
         setActivePinia(createPinia())
