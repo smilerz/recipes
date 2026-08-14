@@ -4,6 +4,22 @@ import {useUserPreferenceStore} from "@/stores/UserPreferenceStore.ts";
 import {useDjangoUrls} from "@/composables/useDjangoUrls.ts";
 import {TANDOOR_PLUGINS} from "@/plugin_registry.ts";
 import {plugin} from "@/plugins/open_data_plugin/plugin.ts";
+import type {Component} from "vue";
+
+/**
+ * a navigation entry rendered via `<component :is="item.component" v-bind="...">` -
+ * href/onClick are optional since most entries only use `to`, but plugins (and the
+ * built-in Admin/Logout/space-switcher entries) rely on them being valid on every
+ * navigation list, not just getUserNavigation's.
+ */
+interface NavigationItem {
+    component: Component
+    prependIcon?: string
+    title?: string
+    to?: any
+    href?: string
+    onClick?: () => void
+}
 
 /**
  * manages configuration and loading of navigation entries for tandoor main app and plugins
@@ -12,7 +28,7 @@ export function useNavigation() {
     const {t} = useI18n()
 
     function getNavigationDrawer() {
-        let navigation = [
+        let navigation: NavigationItem[] = [
             {component: VListItem, prependIcon: '$recipes', title: 'Home', to: {name: 'StartPage', params: {}}},
             {component: VListItem, prependIcon: '$search', title: t('Search'), to: {name: 'SearchPage', params: {}}},
             {component: VListItem, prependIcon: '$mealplan', title: t('Meal_Plan'), to: {name: 'MealPlanPage', params: {}}},
@@ -37,7 +53,7 @@ export function useNavigation() {
     }
 
     function getBottomNavigation() {
-        let navigation = [
+        let navigation: NavigationItem[] = [
             {component: VListItem, prependIcon: 'fa-solid fa-sliders', title: t('Settings'), to: {name: 'SettingsPage', params: {}}},
             {component: VListItem, prependIcon: 'fas fa-globe', title: t('Import'), to: {name: 'RecipeImportPage', params: {}}},
             {component: VListItem, prependIcon: 'fa-solid fa-folder-tree', title: t('Database'), to: {name: 'DatabasePage', params: {}}},
@@ -60,7 +76,7 @@ export function useNavigation() {
     }
 
     function getUserNavigation() {
-        let navigation = []
+        let navigation: NavigationItem[] = []
 
         navigation.push({component: VListItem, prependIcon: 'fa-solid fa-sliders', title: t('Settings'), to: {name: 'SettingsPage', params: {}}})
         navigation.push({component: VListItem, prependIcon: 'fa-solid fa-question', title: t('Help'), to: {name: 'HelpPage', params: {}}})
