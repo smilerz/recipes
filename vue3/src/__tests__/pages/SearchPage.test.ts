@@ -616,6 +616,34 @@ describe('SearchPage (Phase 3 rewrite)', () => {
             wrapper.unmount()
         })
 
+        it('deselecting a filter clears unknownStash — a leftover stashed key must not leak into the next-created filter', async () => {
+            const {wrapper, vm} = await mountEditing()
+            // Simulate what loadSelectedCustomFilter() does when the loaded filter's search
+            // blob contains an unrecognized (legacy/foreign) key.
+            vm.unknownStash = {legacy_key: 'from-filter-A'}
+            vm.selectedCustomFilter = null
+            await flushPromises()
+            expect(vm.unknownStash).toEqual({})
+
+            // End-to-end: building a brand-new filter after deselecting must not carry the
+            // stale stash through filtersToJson().
+            apiMock.apiCustomFilterCreate = vi.fn().mockResolvedValue({id: 9, name: 'B', search: {}})
+            await vm.createCustomFilter()
+            await flushPromises()
+            const createCall = (apiMock.apiCustomFilterCreate as any).mock.calls[0][0]
+            expect(createCall.customFilter.search).not.toHaveProperty('legacy_key')
+            wrapper.unmount()
+        })
+
+        it('resetAll clears unknownStash', async () => {
+            const {wrapper, vm} = await mountEditing()
+            vm.unknownStash = {legacy_key: 'stale'}
+            vm.resetAll()
+            await flushPromises()
+            expect(vm.unknownStash).toEqual({})
+            wrapper.unmount()
+        })
+
         it('mounting with ?editFilter=<id> fetches the filter, loads it, and enters edit mode', async () => {
             apiMock.apiCustomFilterRetrieve = vi.fn().mockResolvedValue({id: 7, name: 'F', search: {keywords: [1]}})
             const {wrapper} = await mountSearchPage({editFilter: '7'})
