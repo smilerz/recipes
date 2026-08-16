@@ -521,6 +521,7 @@ def setup_database(db_url=None, db_options=None, db_engine=None, pg_host=None, p
                 'PASSWORD': settings['password'],
                 'NAME': settings['database'],
                 'CONN_MAX_AGE': 600,
+                'CONN_HEALTH_CHECKS': True,
             }
         }
     else:
@@ -534,6 +535,7 @@ def setup_database(db_url=None, db_options=None, db_engine=None, pg_host=None, p
                 'PASSWORD': POSTGRES_PASSWORD,
                 'NAME': POSTGRES_DB if POSTGRES_DB else 'db.sqlite3',
                 'CONN_MAX_AGE': 60,
+                'CONN_HEALTH_CHECKS': True,
             }
         }
     return DATABASES
