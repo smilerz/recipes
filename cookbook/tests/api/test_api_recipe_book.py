@@ -2,10 +2,11 @@ import json
 
 import pytest
 from django.contrib import auth
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.urls import reverse
 from django_scopes import scopes_disabled
 
-from cookbook.models import Household, RecipeBook, UserSpace
+from cookbook.models import Household, RecipeBook, UserFile, UserSpace
 
 LIST_URL = 'api:recipebook-list'
 DETAIL_URL = 'api:recipebook-detail'
@@ -100,6 +101,23 @@ def test_update(arg, request, obj_1):
     assert r.status_code == arg[1]
     if r.status_code == 200:
         assert response['name'] == 'new'
+
+
+def test_book_image_set_and_read(u1_s1, obj_1, space_1):
+    """image (restoration of the same feature dropped alongside food_image during a
+    chain rebaseline, see commit 386adfe19) is writable via a nested {id} write and
+    read back with a preview link."""
+    user = auth.get_user(u1_s1)
+    with scopes_disabled():
+        uf = UserFile.objects.create(name='book_cover', file=SimpleUploadedFile('c.txt', b'x'), created_by=user, space=space_1)
+
+    r = u1_s1.patch(reverse(DETAIL_URL, args={obj_1.id}), {'image': {'id': uf.id}}, content_type='application/json')
+    assert r.status_code == 200
+    assert json.loads(r.content)['image']['id'] == uf.id
+
+    fetched = json.loads(u1_s1.get(reverse(DETAIL_URL, args={obj_1.id})).content)
+    assert fetched['image']['id'] == uf.id
+    assert 'preview' in fetched['image']
 
 
 @pytest.mark.parametrize("arg", [
