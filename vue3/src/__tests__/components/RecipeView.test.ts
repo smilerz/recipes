@@ -286,3 +286,61 @@ describe('photo edit icon overlay on the hero image (#10 follow-up)', () => {
         expect(wrapper.find('[data-test="photo-edit-overlay-btn"]').exists()).toBe(false)
     })
 })
+
+// RecipeContextMenu refetches and emits `update:recipe` when the photo editor dialog closes, but
+// RecipeView never listened for it - the hero image and thumbnail strip stayed stale until a full
+// page reload even though the upload/primary-image change was saved correctly. Since `recipe` is a
+// defineModel, RecipeView must apply the emitted recipe and propagate it back via update:modelValue.
+describe('recipe refresh after the photo editor closes', () => {
+    beforeEach(() => {
+        resetApiMock()
+    })
+
+    it('applies an update:recipe from RecipeContextMenu to its own model', async () => {
+        const original = makeRecipe({ id: 1, name: 'Test Recipe', servings: 4, steps: [], image: null })
+        const updated = makeRecipe({ id: 1, name: 'Test Recipe', servings: 4, steps: [], image: { id: 99 } as any })
+
+        const prePopulate: PiniaPlugin = ({ store }) => {
+            if (store.$id === 'user_preference_store') {
+                store.userSettings = makeUserPreference() as any
+                store.activeSpace = makeSpace() as any
+                store.isAuthenticated = true
+            }
+        }
+        const pinia = createPinia()
+        pinia.use(prePopulate)
+        const i18n = createI18n({ legacy: false, locale: 'en', messages: { en: {} }, missingWarn: false, fallbackWarn: false })
+        const router = createRouter({
+            history: createMemoryHistory(),
+            routes: [
+                { path: '/', name: 'StartPage', component: { template: '<div/>' } },
+                { path: '/recipe/:id', name: 'RecipeViewPage', component: { template: '<div/>' } },
+                { path: '/advanced-search', name: 'SearchPage', component: { template: '<div/>' } },
+            ],
+        })
+
+        const wrapper = mount(RecipeView, {
+            props: { modelValue: original, servings: undefined },
+            global: {
+                plugins: [pinia, i18n, router],
+                stubs: {
+                    StepsOverview: { template: '<div/>' }, RecipeActivity: { template: '<div/>' },
+                    RecipeContextMenu: { name: 'RecipeContextMenu', emits: ['update:recipe'], template: '<div/>' },
+                    KeywordsBar: { template: '<div/>' },
+                    KeywordsComponent: { template: '<div/>' }, RecipeImage: { template: '<div/>' },
+                    ExternalRecipeViewer: { template: '<div/>' }, StepView: { template: '<div/>' },
+                    PropertyView: { template: '<div/>' }, PrivateRecipeBadge: { template: '<div/>' },
+                    ModelSelect: { template: '<div/>' }, NumberScalerDialog: { template: '<div/>' },
+                    RecipeScalingDialog: { template: '<div/>' }, AddToShoppingDialog: { template: '<div/>' },
+                    RecipeShareDialog: { template: '<div/>' }, AiActionButton: { template: '<div/>' },
+                },
+            },
+        })
+        await flushPromises()
+
+        wrapper.findComponent({ name: 'RecipeContextMenu' }).vm.$emit('update:recipe', updated)
+        await flushPromises()
+
+        expect(wrapper.emitted('update:modelValue')?.at(-1)?.[0]).toEqual(updated)
+    })
+})
