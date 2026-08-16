@@ -604,6 +604,28 @@ def test_open_while_frozen_does_not_shorten_expiry_until_moved_out(u1_s1, space_
 
 
 @pytest.mark.django_db
+def test_thawing_a_long_opened_lot_restarts_the_opened_clock_from_the_thaw_date(u1_s1, space_1):
+    """A lot opened weeks before being frozen must not come out of the freezer already "expired"
+    on paper — freezing arrests decay for the opened clock too, not just the sealed one. The
+    opened countdown restarts from the thaw date, not the original (long-past) opened_at."""
+    hh, loc = _household_with_location(u1_s1, space_1)
+    with scopes_disabled():
+        freezer = InventoryLocationFactory(space=space_1, household=hh, is_freezer=True)
+        food = FoodFactory(space=space_1, shelf_life_days_frozen=180, shelf_life_days_opened=3)
+        entry = InventoryEntryFactory(
+            space=space_1, food=food, inventory_location=freezer, amount=1,
+            opened_at=date.today() - timedelta(days=30), expires=date.today() + timedelta(days=180))
+
+    r = u1_s1.patch(
+        reverse('api:inventoryentry-detail', args=[entry.id]),
+        {'inventory_location': {'id': loc.id, 'name': loc.name, 'household': {'id': hh.id, 'name': hh.name}}},
+        content_type='application/json')
+    assert r.status_code == 200
+    # NOT opened_at (30 days ago) + 3 days, which would already be 27 days in the past
+    assert r.json()['expires'] == (date.today() + timedelta(days=3)).isoformat()
+
+
+@pytest.mark.django_db
 def test_open_is_idempotent(u1_s1, space_1):
     """Opening an already-opened lot a second time is a no-op — opened_at doesn't reset."""
     hh, loc = _household_with_location(u1_s1, space_1)

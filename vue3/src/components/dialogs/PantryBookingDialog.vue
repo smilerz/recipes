@@ -111,7 +111,7 @@
 import VClosableCardTitle from "@/components/dialogs/VClosableCardTitle.vue";
 import {DateTime} from "luxon";
 import {ingredientToString} from "@/utils/model_utils.ts";
-import {ApiApi, Food, Ingredient, InventoryEntry, InventoryLocation, Unit} from "@/openapi";
+import {ApiApi, Food, Ingredient, InventoryEntry, InventoryLocation, PatchedInventoryEntry, Unit} from "@/openapi";
 import FreezerExpiryDialog from "@/components/dialogs/FreezerExpiryDialog.vue";
 import ClosableHelpAlert from "@/components/display/ClosableHelpAlert.vue";
 import {VDateInput} from "vuetify/components";
@@ -310,22 +310,25 @@ function moveInventory() {
 
     if (inventoryEntry.value != null) {
         formLoading.value = true
-        let changed = false
         // a freeze/thaw transition (see recompute_lot_expiry) may recompute expires server-side;
         // compare against the pre-move value so that surfaces via its own toast, never silently
         const expiresBeforeMove = inventoryEntry.value.expires
 
+        // Patch only the fields that actually changed — omitting `expires` entirely (not just
+        // leaving it unchanged) matters: the backend's freeze/thaw recompute only runs when the
+        // caller didn't set `expires` at all (caller_set_expires). A full PUT of the whole entry
+        // always resends the old `expires`, which looks like "the caller set it" and permanently
+        // defeats the recompute, even on a genuine freezer<->fridge move.
+        const patch: PatchedInventoryEntry = {}
         if (inventoryLocation.value != null && inventoryEntry.value.inventoryLocation != inventoryLocation.value) {
-            inventoryEntry.value.inventoryLocation = inventoryLocation.value
-            changed = true
+            patch.inventoryLocation = inventoryLocation.value
         }
         if (subLocation.value != null && inventoryEntry.value.subLocation != subLocation.value) {
-            inventoryEntry.value.subLocation = subLocation.value
-            changed = true
+            patch.subLocation = subLocation.value
         }
 
-        if (changed) {
-            api.apiInventoryEntryUpdate({id: inventoryEntry.value.id!, inventoryEntry: inventoryEntry.value}).then(r => {
+        if (Object.keys(patch).length > 0) {
+            api.apiInventoryEntryPartialUpdate({id: inventoryEntry.value.id!, patchedInventoryEntry: patch}).then(r => {
                 useMessageStore().addPreparedMessage(PreparedMessage.UPDATE_SUCCESS)
                 if (r.expires && (r.expires?.getTime() ?? null) !== (expiresBeforeMove?.getTime() ?? null)) {
                     useMessageStore().addMessage(MessageType.INFO,

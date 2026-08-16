@@ -17,17 +17,17 @@ describe('expiry is timezone-safe for date-only values (DEFECT-01)', () => {
     const utcDate = (iso: string) => new Date(iso + 'T00:00:00Z')
     const nowAt = (iso: string) => new Date(iso + 'T12:00:00Z')  // midday UTC → same calendar day in Chicago
 
-    it('a lot expiring 4 days out is ok, not soon (no -1 shift)', () => {
-        expect(expiryStatus(utcDate('2026-07-18'), nowAt('2026-07-14'))).toBe('ok')
+    it('a lot expiring well beyond the window is ok, not soon (no -1 shift)', () => {
+        expect(expiryStatus(utcDate('2026-07-22'), nowAt('2026-07-14'))).toBe('ok')
     })
-    it('a lot expiring exactly 3 days out is soon (boundary intact)', () => {
-        expect(expiryStatus(utcDate('2026-07-17'), nowAt('2026-07-14'))).toBe('soon')
+    it(`a lot expiring exactly ${EXPIRING_SOON_DAYS} days out is soon (boundary intact)`, () => {
+        expect(expiryStatus(utcDate('2026-07-19'), nowAt('2026-07-14'))).toBe('soon')
     })
     it('a lot expiring today is expired, not counted as tomorrow', () => {
         expect(expiryStatus(utcDate('2026-07-16'), nowAt('2026-07-16'))).toBe('expired')
     })
     it('pantryGroup follows the same calendar-date logic', () => {
-        expect(pantryGroup(utcDate('2026-07-18'), nowAt('2026-07-14'))).toBe('instock')
+        expect(pantryGroup(utcDate('2026-07-22'), nowAt('2026-07-14'))).toBe('instock')
     })
     it('expiryDateLabel shows the stored calendar day, not the day before', () => {
         const label = expiryDateLabel(utcDate('2026-07-16'))
@@ -42,8 +42,8 @@ describe('expiryStatus', () => {
     it('expired today', () => expect(expiryStatus(day('2026-07-15T00:00:00'), NOW)).toBe('expired'))
     it('expired in the past', () => expect(expiryStatus(day('2026-07-10'), NOW)).toBe('expired'))
     it('soon within the window', () => expect(expiryStatus(day('2026-07-17'), NOW)).toBe('soon'))
-    it(`soon at exactly ${EXPIRING_SOON_DAYS} days`, () => expect(expiryStatus(day('2026-07-18T00:00:00'), NOW)).toBe('soon'))
-    it('ok beyond the window', () => expect(expiryStatus(day('2026-07-20'), NOW)).toBe('ok'))
+    it(`soon at exactly ${EXPIRING_SOON_DAYS} days`, () => expect(expiryStatus(day('2026-07-20T00:00:00'), NOW)).toBe('soon'))
+    it('ok beyond the window', () => expect(expiryStatus(day('2026-07-22'), NOW)).toBe('ok'))
 })
 
 describe('expiryColor', () => {
@@ -54,7 +54,11 @@ describe('expiryColor', () => {
 })
 
 describe('pantryGroup', () => {
-    it('expired -> expiring', () => expect(pantryGroup(day('2026-07-10'), NOW)).toBe('expiring'))
+    // Expired and expiring-soon are DISTINCT buckets (not merged) — a lot weeks past its date
+    // needs a different signal than one merely approaching it. Regression coverage for the bug
+    // where both statuses collapsed into a single 'expiring' group.
+    it('expired -> expired (not merged into expiring)', () => expect(pantryGroup(day('2026-07-10'), NOW)).toBe('expired'))
+    it('expired today -> expired', () => expect(pantryGroup(day('2026-07-15T00:00:00'), NOW)).toBe('expired'))
     it('soon -> expiring', () => expect(pantryGroup(day('2026-07-17'), NOW)).toBe('expiring'))
     it('ok -> instock', () => expect(pantryGroup(day('2026-07-25'), NOW)).toBe('instock'))
     it('none -> instock', () => expect(pantryGroup(null, NOW)).toBe('instock'))

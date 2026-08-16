@@ -23,7 +23,7 @@ import InventoryEntryTable from '@/components/display/InventoryEntryTable.vue'
 function entry(over: Record<string, any>) {
     return {
         id: 1, amount: 1, unit: null, subLocation: null,
-        food: { id: 10, name: 'Food' },
+        food: { id: 10, name: 'Food', shelfLifeDaysOpened: 5 },
         inventoryLocation: { id: 1, name: 'Pantry', isFreezer: false },
         expires: null,
         openedAt: null,
@@ -68,6 +68,38 @@ describe('InventoryEntryTable — grouped pantry view', () => {
         expect(text).toContain('ExpiringSoon')
         expect(text).toContain('InStock')
     })
+
+    // Regression: an already-expired lot was previously lumped into the "Expiring Soon" section
+    // instead of getting its own "Expired" section, understating how overdue it actually was.
+    it('puts an already-expired lot under Expired, separate from Expiring Soon', async () => {
+        const expired = new Date(); expired.setDate(expired.getDate() - 20)
+        const soon = new Date(); soon.setDate(soon.getDate() + 1)
+        apiMock.apiInventoryEntryList.mockResolvedValue({
+            results: [
+                entry({ id: 1, food: { id: 10, name: 'Old Yogurt' }, expires: expired }),
+                entry({ id: 2, food: { id: 11, name: 'Fresh Milk' }, expires: soon }),
+            ],
+            count: 2,
+        })
+
+        const wrapper = mountPage(InventoryEntryTable)
+        await flushPromises()
+
+        const text = wrapper.text()
+        expect(text).toContain('Expired')
+        expect(text).toContain('ExpiringSoon')
+
+        const expiredSectionIndex = text.indexOf('Expired')
+        const expiringSectionIndex = text.indexOf('ExpiringSoon')
+        const oldYogurtIndex = text.indexOf('Old Yogurt')
+        const freshMilkIndex = text.indexOf('Fresh Milk')
+
+        // "Old Yogurt" (expired) falls between the Expired heading and the ExpiringSoon heading
+        expect(oldYogurtIndex).toBeGreaterThan(expiredSectionIndex)
+        expect(oldYogurtIndex).toBeLessThan(expiringSectionIndex)
+        // "Fresh Milk" (soon) falls after the ExpiringSoon heading
+        expect(freshMilkIndex).toBeGreaterThan(expiringSectionIndex)
+    })
 })
 
 describe('InventoryEntryTable — opened lifecycle', () => {
@@ -80,19 +112,33 @@ describe('InventoryEntryTable — opened lifecycle', () => {
         const wrapper = mountPage(InventoryEntryTable)
         await flushPromises()
 
-        expect(wrapper.find('[data-test="open-lot-1"]').exists()).toBe(true)
+        expect(wrapper.find('[data-test="open-lot-1"]').isVisible()).toBe(true)
         expect(wrapper.find('[data-test="opened-chip-1"]').exists()).toBe(false)
     })
 
-    it('shows an Opened chip (not the Open action) for an already-opened lot', async () => {
+    // The Open button stays in the DOM (visibility toggled, not v-if) so the other row actions
+    // (History/Remove/Move) don't shift position row to row depending on whether Open applies.
+    it('shows an Opened chip and hides (not removes) the Open action for an already-opened lot', async () => {
         apiMock.apiInventoryEntryList.mockResolvedValue({
             results: [entry({ id: 1, openedAt: new Date('2026-08-01') })], count: 1,
         })
         const wrapper = mountPage(InventoryEntryTable)
         await flushPromises()
 
-        expect(wrapper.find('[data-test="open-lot-1"]').exists()).toBe(false)
+        expect(wrapper.find('[data-test="open-lot-1"]').exists()).toBe(true)
+        expect(wrapper.find('[data-test="open-lot-1"]').isVisible()).toBe(false)
         expect(wrapper.find('[data-test="opened-chip-1"]').exists()).toBe(true)
+    })
+
+    it('hides the Open action for a food with no configured opened shelf life', async () => {
+        apiMock.apiInventoryEntryList.mockResolvedValue({
+            results: [entry({ id: 1, food: { id: 10, name: 'Salt', shelfLifeDaysOpened: null } })], count: 1,
+        })
+        const wrapper = mountPage(InventoryEntryTable)
+        await flushPromises()
+
+        expect(wrapper.find('[data-test="open-lot-1"]').exists()).toBe(true)
+        expect(wrapper.find('[data-test="open-lot-1"]').isVisible()).toBe(false)
     })
 
     it('clicking Open calls the open action and updates the row', async () => {
@@ -108,7 +154,50 @@ describe('InventoryEntryTable — opened lifecycle', () => {
 
         expect(apiMock.apiInventoryEntryOpenCreate).toHaveBeenCalledWith({ id: 1 })
         expect(wrapper.find('[data-test="opened-chip-1"]').exists()).toBe(true)
-        expect(wrapper.find('[data-test="open-lot-1"]').exists()).toBe(false)
+        expect(wrapper.find('[data-test="open-lot-1"]').isVisible()).toBe(false)
+    })
+
+    // Regression: the "still frozen" message used to be keyed off r.expires truthiness instead of
+    // actual freezer status, so it could fire for a non-frozen item too (e.g. opening a food with
+    // no configured opened shelf life, back when Open was still shown for those).
+    it('shows the still-frozen message when opening a lot that is actually in the freezer', async () => {
+        apiMock.apiInventoryEntryList.mockResolvedValue({
+            results: [entry({ id: 1, inventoryLocation: { id: 1, name: 'Freezer', isFreezer: true } })], count: 1,
+        })
+        apiMock.apiInventoryEntryOpenCreate.mockResolvedValue(
+            entry({ id: 1, openedAt: new Date('2026-08-10'), expires: new Date('2027-08-10'), inventoryLocation: { id: 1, name: 'Freezer', isFreezer: true } }),
+        )
+        const wrapper = mountPage(InventoryEntryTable)
+        await flushPromises()
+
+        await wrapper.find('[data-test="open-lot-1"]').trigger('click')
+        await flushPromises()
+
+        expect(addMessageMock).toHaveBeenLastCalledWith(
+            expect.anything(),
+            expect.objectContaining({ text: 'OpenedStillFrozen' }),
+            expect.anything(),
+        )
+    })
+
+    it('shows the expiry-updated message (not still-frozen) when opening a lot in a non-freezer location', async () => {
+        apiMock.apiInventoryEntryList.mockResolvedValue({
+            results: [entry({ id: 1, inventoryLocation: { id: 1, name: 'Fridge', isFreezer: false } })], count: 1,
+        })
+        apiMock.apiInventoryEntryOpenCreate.mockResolvedValue(
+            entry({ id: 1, openedAt: new Date('2026-08-10'), expires: new Date('2026-08-15'), inventoryLocation: { id: 1, name: 'Fridge', isFreezer: false } }),
+        )
+        const wrapper = mountPage(InventoryEntryTable)
+        await flushPromises()
+
+        await wrapper.find('[data-test="open-lot-1"]').trigger('click')
+        await flushPromises()
+
+        expect(addMessageMock).toHaveBeenLastCalledWith(
+            expect.anything(),
+            expect.objectContaining({ text: expect.stringContaining('OpenedExpiryUpdated') }),
+            expect.anything(),
+        )
     })
 
     it('clicking the Opened chip close icon calls the un-open action and updates the row', async () => {
@@ -126,6 +215,6 @@ describe('InventoryEntryTable — opened lifecycle', () => {
 
         expect(apiMock.apiInventoryEntryOpenDestroy).toHaveBeenCalledWith({ id: 1 })
         expect(wrapper.find('[data-test="opened-chip-1"]').exists()).toBe(false)
-        expect(wrapper.find('[data-test="open-lot-1"]').exists()).toBe(true)
+        expect(wrapper.find('[data-test="open-lot-1"]').isVisible()).toBe(true)
     })
 })

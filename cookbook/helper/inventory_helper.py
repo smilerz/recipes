@@ -48,7 +48,7 @@ def apply_shelf_life_expiry(food, expires, location):
     return _suggest_expiry(food, location, None, timezone.localdate())
 
 
-def recompute_lot_expiry(entry, *, as_of=None):
+def recompute_lot_expiry(entry, *, as_of=None, just_thawed=False):
     """Re-suggest ``expires`` for an EXISTING lot after a state change (location move in/out of a
     freezer, or the opened/un-opened toggle) — always overwrites, unlike ``apply_shelf_life_expiry``
     which only fills a blank. The lot's old expiry belonged to its old state and is no longer
@@ -57,11 +57,19 @@ def recompute_lot_expiry(entry, *, as_of=None):
     clearing a lot's date would be worse than leaving a stale one for the user to notice and fix).
 
     ``as_of`` defaults to today (the day the state changed) and only matters for the non-opened
-    branch — an opened lot's clock is always counted from its own ``opened_at``, never from when a
-    later move happened to trigger this recompute.
+    branch — an opened lot's clock is normally counted from its own ``opened_at``, never from when
+    a later move happened to trigger this recompute.
+
+    ``just_thawed`` — True specifically for a freezer -> non-freezer transition on an already-opened
+    lot. Freezing arrests decay for the opened clock too, not just the unopened one: without this,
+    a lot opened months ago, then frozen, then thawed today would still count from its original
+    ``opened_at`` and could come out of the freezer already "expired" on paper, even though the
+    opened clock was never actually running while frozen. When true, the opened countdown restarts
+    from ``as_of`` (the thaw date) instead of the lot's original ``opened_at``.
     """
     as_of = as_of or timezone.localdate()
-    suggested = _suggest_expiry(entry.food, entry.inventory_location, entry.opened_at, as_of)
+    effective_opened_at = as_of if (just_thawed and entry.opened_at is not None) else entry.opened_at
+    suggested = _suggest_expiry(entry.food, entry.inventory_location, effective_opened_at, as_of)
     if suggested is not None and suggested != entry.expires:
         entry.expires = suggested
         entry.save(update_fields=['expires'])

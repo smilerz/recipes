@@ -41,7 +41,9 @@
                             <td class="text-end">
                                 <v-btn-group divided border density="comfortable">
                                     <v-btn icon="fa-solid fa-clock-rotate-left" :title="t('History')" @click="openLog(item)"></v-btn>
-                                    <v-btn v-if="!item.openedAt" icon="fa-solid fa-box-open" :title="t('Open')" :data-test="`open-lot-${item.id}`" @click="openLot(item)"></v-btn>
+                                    <v-btn icon="fa-solid fa-lock-open" :title="t('Open')" :data-test="`open-lot-${item.id}`" @click="openLot(item)"
+                                           :style="canOpen(item) ? undefined : {visibility: 'hidden'}" :tabindex="canOpen(item) ? undefined : -1"
+                                           :aria-hidden="!canOpen(item)"></v-btn>
                                     <v-btn icon="fa-solid fa-minus" :title="t('Remove')" @click="openBooking('remove', item)"></v-btn>
                                     <v-btn icon="fa-solid fa-arrow-right" :title="t('Move')" @click="openBooking('move', item)"></v-btn>
                                 </v-btn-group>
@@ -70,7 +72,7 @@
                                 <v-menu activator="parent">
                                     <v-list density="compact">
                                         <v-list-item :title="t('History')" prepend-icon="fa-solid fa-clock-rotate-left" @click="openLog(item)"></v-list-item>
-                                        <v-list-item v-if="!item.openedAt" :title="t('Open')" prepend-icon="fa-solid fa-box-open" :data-test="`open-lot-${item.id}`"
+                                        <v-list-item v-if="canOpen(item)" :title="t('Open')" prepend-icon="fa-solid fa-lock-open" :data-test="`open-lot-${item.id}`"
                                                      @click="openLot(item)"></v-list-item>
                                         <v-list-item :title="t('Remove')" prepend-icon="fa-solid fa-minus" @click="openBooking('remove', item)"></v-list-item>
                                         <v-list-item :title="t('Move')" prepend-icon="fa-solid fa-arrow-right" @click="openBooking('move', item)"></v-list-item>
@@ -123,6 +125,11 @@ const byName = (a: InventoryEntry, b: InventoryEntry) => a.food.name.localeCompa
 
 const groups = computed(() => [
     {
+        key: 'expired',
+        title: t('Expired'),
+        items: items.value.filter(i => pantryGroup(i.expires, now) === 'expired').sort(byExpiry),
+    },
+    {
         key: 'expiring',
         title: t('ExpiringSoon'),
         items: items.value.filter(i => pantryGroup(i.expires, now) === 'expiring').sort(byExpiry),
@@ -138,6 +145,12 @@ function qtyLabel(item: InventoryEntry): string {
     return item.unit?.name ? `${item.amount} ${item.unit.name}` : String(item.amount)
 }
 
+/** "Open" only applies to a food that has an opened shelf life configured — otherwise the concept
+ * doesn't mean anything for it (e.g. non-perishables with no opened-vs-sealed distinction). */
+function canOpen(item: InventoryEntry): boolean {
+    return !item.openedAt && item.food.shelfLifeDaysOpened != null
+}
+
 
 function openLog(item: InventoryEntry) {
     entryLogEntry.value = item
@@ -148,11 +161,16 @@ function openLog(item: InventoryEntry) {
  * Opened shelf-life clock. Surfaces the result via a toast rather than a pre-commit preview
  * dialog, since the suggested date can only be computed server-side (it depends on the food's
  * three shelf-life fields and the lot's current freezer status) — same "never silent" spirit as
- * the move-triggered recompute, just after the fact instead of before. */
+ * the move-triggered recompute, just after the fact instead of before.
+ *
+ * The message is keyed directly off the lot's actual freezer status, not `r.expires` truthiness —
+ * the Open action is only ever reachable (see canOpen) for a food with an opened shelf life
+ * configured, so a non-frozen lot always gets a real recomputed date; freezer status is the only
+ * remaining reason the clock wouldn't start yet. */
 function openLot(item: InventoryEntry) {
     new ApiApi().apiInventoryEntryOpenCreate({id: item.id!}).then(r => {
         Object.assign(item, r)
-        const text = r.expires ? t('OpenedExpiryUpdated', {date: expiryDateLabel(r.expires)}) : t('OpenedStillFrozen')
+        const text = item.inventoryLocation.isFreezer ? t('OpenedStillFrozen') : t('OpenedExpiryUpdated', {date: expiryDateLabel(r.expires!)})
         useMessageStore().addMessage(MessageType.SUCCESS, {title: t('Opened'), text} as StructuredMessage, 4000)
     }).catch(err => {
         useMessageStore().addError(ErrorMessageType.UPDATE_ERROR, err)

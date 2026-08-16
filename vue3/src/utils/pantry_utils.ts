@@ -18,10 +18,10 @@ export function substituteAvailableLabel(
 }
 
 /** A lot expiring within this many days (inclusive) is "expiring soon". */
-export const EXPIRING_SOON_DAYS = 3
+export const EXPIRING_SOON_DAYS = 5
 
 export type ExpiryStatus = 'expired' | 'soon' | 'ok' | 'none'
-export type PantryGroup = 'expiring' | 'instock'
+export type PantryGroup = 'expired' | 'expiring' | 'instock'
 
 /**
  * Classify an inventory lot's expiry relative to `now` (day-granular):
@@ -60,10 +60,14 @@ export function expiryColor(status: ExpiryStatus): string {
     }
 }
 
-/** Which pantry group a lot belongs to: expiring-soon (expired or soon) vs in-stock. */
+/** Which pantry group a lot belongs to: already expired, expiring soon, or in-stock. Kept as three
+ * distinct buckets rather than merging expired into "expiring soon" — a lot weeks past its date
+ * needs a visibly different signal than one that's merely approaching it. */
 export function pantryGroup(expires: Date | null | undefined, now: Date = new Date()): PantryGroup {
     const status = expiryStatus(expires, now)
-    return status === 'expired' || status === 'soon' ? 'expiring' : 'instock'
+    if (status === 'expired') return 'expired'
+    if (status === 'soon') return 'expiring'
+    return 'instock'
 }
 
 export type ShelfLifePeriod = 'day' | 'week' | 'month'

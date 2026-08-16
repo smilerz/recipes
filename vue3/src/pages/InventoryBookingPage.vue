@@ -194,7 +194,7 @@
 
 import ModelSelect from "@/components/inputs/ModelSelect.vue";
 import {computed, onMounted, ref, watch} from "vue";
-import {ApiApi, ApiInventoryEntryListRequest, Food, Ingredient, InventoryEntry, InventoryLocation, Unit} from "@/openapi";
+import {ApiApi, ApiInventoryEntryListRequest, Food, Ingredient, InventoryEntry, InventoryLocation, PatchedInventoryEntry, Unit} from "@/openapi";
 import {useUserPreferenceStore} from "@/stores/UserPreferenceStore.ts";
 import {VDateInput} from "vuetify/components";
 import {ErrorMessageType, PreparedMessage, useMessageStore} from "@/stores/MessageStore.ts";
@@ -365,19 +365,20 @@ function moveInventory() {
 
     if (inventoryEntry.value != null) {
         formLoading.value = true
-        let changed = false
 
+        // Patch only the fields that actually changed — a full PUT of the whole entry always
+        // resends the old `expires`, which defeats the backend's freeze/thaw recompute (see the
+        // same fix in PantryBookingDialog.vue's moveInventory for the full explanation).
+        const patch: PatchedInventoryEntry = {}
         if (inventoryLocation.value != null && inventoryEntry.value.inventoryLocation != inventoryLocation.value) {
-            inventoryEntry.value.inventoryLocation = inventoryLocation.value
-            changed = true
+            patch.inventoryLocation = inventoryLocation.value
         }
         if (subLocation.value != null && inventoryEntry.value.subLocation != subLocation.value) {
-            inventoryEntry.value.subLocation = subLocation.value
-            changed = true
+            patch.subLocation = subLocation.value
         }
 
-        if (changed) {
-            api.apiInventoryEntryUpdate({id: inventoryEntry.value.id!, inventoryEntry: inventoryEntry.value}).then(r => {
+        if (Object.keys(patch).length > 0) {
+            api.apiInventoryEntryPartialUpdate({id: inventoryEntry.value.id!, patchedInventoryEntry: patch}).then(r => {
                 useMessageStore().addPreparedMessage(PreparedMessage.UPDATE_SUCCESS)
                 inventoryEntrySelected()
             }).catch(err => {

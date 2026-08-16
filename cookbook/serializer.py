@@ -2101,7 +2101,7 @@ class InventoryEntrySerializer(SpacedModelSerializer, WritableNestedModelSeriali
         new_is_freezer = bool(instance.inventory_location and instance.inventory_location.is_freezer)
         if old_inventory_location != instance.inventory_location and old_is_freezer != new_is_freezer and not caller_set_expires:
             from cookbook.helper.inventory_helper import recompute_lot_expiry
-            recompute_lot_expiry(instance)
+            recompute_lot_expiry(instance, just_thawed=old_is_freezer and not new_is_freezer)
 
         return instance
 

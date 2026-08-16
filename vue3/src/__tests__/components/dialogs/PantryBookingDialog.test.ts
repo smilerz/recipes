@@ -87,11 +87,41 @@ describe('PantryBookingDialog - move recompute toast', () => {
         await flushPromises()
 
         ;(w.vm as any).inventoryLocation = {id: 2, name: 'Pantry', isFreezer: false}
-        apiMock.apiInventoryEntryUpdate.mockResolvedValue({...entry, inventoryLocation: {id: 2, name: 'Pantry', isFreezer: false}, expires: new Date('2026-08-13')})
+        apiMock.apiInventoryEntryPartialUpdate.mockResolvedValue({...entry, inventoryLocation: {id: 2, name: 'Pantry', isFreezer: false}, expires: new Date('2026-08-13')})
         ;(w.vm as any).moveInventory()
         await flushPromises()
 
         expect(addMessageMock).toHaveBeenCalled()
+
+        w.unmount()
+    })
+
+    // Regression: a full PUT of the whole entry always resent the old `expires`, which the
+    // backend reads as "the caller explicitly set it" and permanently defeats the freeze/thaw
+    // recompute — even on a genuine freezer<->fridge move. The fix moved this to a partial
+    // update that sends only the fields that changed, with `expires` never present in the payload.
+    it('sends a partial update that omits expires, not a full PUT of the whole entry', async () => {
+        const entry = {
+            id: 5, food: {id: 1, name: 'Peas'}, unit: null, amount: 1,
+            inventoryLocation: {id: 1, name: 'Freezer', isFreezer: true},
+            expires: new Date('2027-01-01'), subLocation: '',
+        }
+        apiMock.apiInventoryEntryRetrieve.mockResolvedValue(entry)
+        apiMock.apiInventoryEntryList.mockResolvedValue({results: []})
+        const w = mountDialog(5)
+        await flushPromises()
+
+        ;(w.vm as any).inventoryLocation = {id: 2, name: 'Pantry', isFreezer: false}
+        apiMock.apiInventoryEntryPartialUpdate.mockResolvedValue({...entry, inventoryLocation: {id: 2, name: 'Pantry', isFreezer: false}, expires: new Date('2026-08-13')})
+        ;(w.vm as any).moveInventory()
+        await flushPromises()
+
+        expect(apiMock.apiInventoryEntryUpdate).not.toHaveBeenCalled()
+        expect(apiMock.apiInventoryEntryPartialUpdate).toHaveBeenCalledTimes(1)
+        const [call] = apiMock.apiInventoryEntryPartialUpdate.mock.calls
+        expect(call[0].id).toBe(5)
+        expect(call[0].patchedInventoryEntry).not.toHaveProperty('expires')
+        expect(call[0].patchedInventoryEntry.inventoryLocation).toEqual({id: 2, name: 'Pantry', isFreezer: false})
 
         w.unmount()
     })
@@ -108,7 +138,7 @@ describe('PantryBookingDialog - move recompute toast', () => {
         await flushPromises()
 
         ;(w.vm as any).inventoryLocation = {id: 2, name: 'Pantry B', isFreezer: false}
-        apiMock.apiInventoryEntryUpdate.mockResolvedValue({...entry, inventoryLocation: {id: 2, name: 'Pantry B', isFreezer: false}, expires: new Date('2026-08-13')})
+        apiMock.apiInventoryEntryPartialUpdate.mockResolvedValue({...entry, inventoryLocation: {id: 2, name: 'Pantry B', isFreezer: false}, expires: new Date('2026-08-13')})
         ;(w.vm as any).moveInventory()
         await flushPromises()
 

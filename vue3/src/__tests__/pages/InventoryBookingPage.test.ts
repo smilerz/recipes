@@ -81,4 +81,32 @@ describe('InventoryBookingPage', () => {
 
         w.unmount()
     })
+
+    // Same fix as PantryBookingDialog's moveInventory: a full PUT of the whole entry always
+    // resent the old `expires`, defeating the backend's freeze/thaw recompute on a genuine move.
+    it('moveInventory sends a partial update that omits expires, not a full PUT', async () => {
+        const w = mountPage()
+        await flushPromises()
+
+        const entry = {
+            id: 5, food: {id: 1, name: 'Peas'}, unit: null, amount: 1,
+            inventoryLocation: {id: 1, name: 'Freezer', isFreezer: true},
+            expires: new Date('2027-01-01'), subLocation: '',
+        }
+        ;(w.vm as any).inventoryEntry = entry
+        ;(w.vm as any).inventoryLocation = {id: 2, name: 'Pantry', isFreezer: false}
+        apiMock.apiInventoryEntryPartialUpdate.mockResolvedValue({...entry, inventoryLocation: {id: 2, name: 'Pantry', isFreezer: false}, expires: new Date('2026-08-13')})
+
+        ;(w.vm as any).moveInventory()
+        await flushPromises()
+
+        expect(apiMock.apiInventoryEntryUpdate).not.toHaveBeenCalled()
+        expect(apiMock.apiInventoryEntryPartialUpdate).toHaveBeenCalledTimes(1)
+        const [call] = apiMock.apiInventoryEntryPartialUpdate.mock.calls
+        expect(call[0].id).toBe(5)
+        expect(call[0].patchedInventoryEntry).not.toHaveProperty('expires')
+        expect(call[0].patchedInventoryEntry.inventoryLocation).toEqual({id: 2, name: 'Pantry', isFreezer: false})
+
+        w.unmount()
+    })
 })
