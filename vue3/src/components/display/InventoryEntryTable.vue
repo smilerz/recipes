@@ -41,9 +41,8 @@
                             <td class="text-end">
                                 <v-btn-group divided border density="comfortable">
                                     <v-btn icon="fa-solid fa-clock-rotate-left" :title="t('History')" @click="openLog(item)"></v-btn>
-                                    <v-btn icon="fa-solid fa-lock-open" :title="t('Open')" :data-test="`open-lot-${item.id}`" @click="openLot(item)"
-                                           :style="canOpen(item) ? undefined : {visibility: 'hidden'}" :tabindex="canOpen(item) ? undefined : -1"
-                                           :aria-hidden="!canOpen(item)"></v-btn>
+                                    <v-btn icon="fa-solid fa-lock-open" :title="openTitle(item)" :data-test="`open-lot-${item.id}`" @click="openLot(item)"
+                                           :disabled="!canOpen(item)"></v-btn>
                                     <v-btn icon="fa-solid fa-minus" :title="t('Remove')" @click="openBooking('remove', item)"></v-btn>
                                     <v-btn icon="fa-solid fa-arrow-right" :title="t('Move')" @click="openBooking('move', item)"></v-btn>
                                 </v-btn-group>
@@ -72,8 +71,8 @@
                                 <v-menu activator="parent">
                                     <v-list density="compact">
                                         <v-list-item :title="t('History')" prepend-icon="fa-solid fa-clock-rotate-left" @click="openLog(item)"></v-list-item>
-                                        <v-list-item v-if="canOpen(item)" :title="t('Open')" prepend-icon="fa-solid fa-lock-open" :data-test="`open-lot-${item.id}`"
-                                                     @click="openLot(item)"></v-list-item>
+                                        <v-list-item :title="openTitle(item)" prepend-icon="fa-solid fa-lock-open" :data-test="`open-lot-${item.id}`"
+                                                     :disabled="!canOpen(item)" @click="openLot(item)"></v-list-item>
                                         <v-list-item :title="t('Remove')" prepend-icon="fa-solid fa-minus" @click="openBooking('remove', item)"></v-list-item>
                                         <v-list-item :title="t('Move')" prepend-icon="fa-solid fa-arrow-right" @click="openBooking('move', item)"></v-list-item>
                                     </v-list>
@@ -146,9 +145,21 @@ function qtyLabel(item: InventoryEntry): string {
 }
 
 /** "Open" only applies to a food that has an opened shelf life configured — otherwise the concept
- * doesn't mean anything for it (e.g. non-perishables with no opened-vs-sealed distinction). */
+ * doesn't mean anything for it (e.g. non-perishables with no opened-vs-sealed distinction). The
+ * button stays visible but disabled in both cases below (never hidden/removed) so the row's action
+ * icons never shift position or count depending on the food — a disabled control with an
+ * explanatory tooltip is a continuous, expected UI state; an invisible gap in a button group reads
+ * as a rendering glitch. */
 function canOpen(item: InventoryEntry): boolean {
     return !item.openedAt && item.food.shelfLifeDaysOpened != null
+}
+
+/** Tooltip/label text explaining the Open button's current state — always says something, even
+ * when disabled, rather than leaving the user to guess why it doesn't respond. */
+function openTitle(item: InventoryEntry): string {
+    if (item.openedAt) return t('Opened')
+    if (item.food.shelfLifeDaysOpened == null) return t('OpenNotApplicable')
+    return t('Open')
 }
 
 

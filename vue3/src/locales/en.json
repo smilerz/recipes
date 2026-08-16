@@ -549,6 +549,7 @@
   "OnHand": "Currently On Hand",
   "OnHand_help": "Food is in inventory and will not be automatically added to a shopping list.  Onhand status is shared with shopping users.",
   "Open": "Open",
+  "OpenNotApplicable": "Not applicable — no opened shelf life configured for this food",
   "Open_Data_Import": "Open Data Import",
   "OpenDataImportPermissionDenied": "You do not have permission to import Open Data. Contact a space administrator if you need this feature.",
   "Open_Data_Slug": "Open Data Slug",

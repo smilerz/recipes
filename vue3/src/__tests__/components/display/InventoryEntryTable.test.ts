@@ -107,38 +107,43 @@ describe('InventoryEntryTable — opened lifecycle', () => {
         resetApiMock()
     })
 
-    it('shows an Open action for a lot that has not been opened', async () => {
+    it('shows an enabled Open action for a lot that has not been opened', async () => {
         apiMock.apiInventoryEntryList.mockResolvedValue({ results: [entry({ id: 1 })], count: 1 })
         const wrapper = mountPage(InventoryEntryTable)
         await flushPromises()
 
         expect(wrapper.find('[data-test="open-lot-1"]').isVisible()).toBe(true)
+        expect(wrapper.find('[data-test="open-lot-1"]').classes()).not.toContain('v-btn--disabled')
         expect(wrapper.find('[data-test="opened-chip-1"]').exists()).toBe(false)
     })
 
-    // The Open button stays in the DOM (visibility toggled, not v-if) so the other row actions
-    // (History/Remove/Move) don't shift position row to row depending on whether Open applies.
-    it('shows an Opened chip and hides (not removes) the Open action for an already-opened lot', async () => {
+    // The Open button always stays visible AND present (disabled, not hidden or removed) so the
+    // row's action icons never shift position or count row to row, and a disabled control reads as
+    // a clear, continuous UI state rather than an unexplained gap in the button group.
+    it('shows an Opened chip and a disabled (not hidden) Open action for an already-opened lot', async () => {
         apiMock.apiInventoryEntryList.mockResolvedValue({
             results: [entry({ id: 1, openedAt: new Date('2026-08-01') })], count: 1,
         })
         const wrapper = mountPage(InventoryEntryTable)
         await flushPromises()
 
-        expect(wrapper.find('[data-test="open-lot-1"]').exists()).toBe(true)
-        expect(wrapper.find('[data-test="open-lot-1"]').isVisible()).toBe(false)
+        const openBtn = wrapper.find('[data-test="open-lot-1"]')
+        expect(openBtn.isVisible()).toBe(true)
+        expect(openBtn.classes()).toContain('v-btn--disabled')
         expect(wrapper.find('[data-test="opened-chip-1"]').exists()).toBe(true)
     })
 
-    it('hides the Open action for a food with no configured opened shelf life', async () => {
+    it('shows a disabled Open action, with an explanatory title, for a food with no configured opened shelf life', async () => {
         apiMock.apiInventoryEntryList.mockResolvedValue({
             results: [entry({ id: 1, food: { id: 10, name: 'Salt', shelfLifeDaysOpened: null } })], count: 1,
         })
         const wrapper = mountPage(InventoryEntryTable)
         await flushPromises()
 
-        expect(wrapper.find('[data-test="open-lot-1"]').exists()).toBe(true)
-        expect(wrapper.find('[data-test="open-lot-1"]').isVisible()).toBe(false)
+        const openBtn = wrapper.find('[data-test="open-lot-1"]')
+        expect(openBtn.isVisible()).toBe(true)
+        expect(openBtn.classes()).toContain('v-btn--disabled')
+        expect(openBtn.attributes('title')).toBe('OpenNotApplicable')
     })
 
     it('clicking Open calls the open action and updates the row', async () => {
@@ -154,7 +159,7 @@ describe('InventoryEntryTable — opened lifecycle', () => {
 
         expect(apiMock.apiInventoryEntryOpenCreate).toHaveBeenCalledWith({ id: 1 })
         expect(wrapper.find('[data-test="opened-chip-1"]').exists()).toBe(true)
-        expect(wrapper.find('[data-test="open-lot-1"]').isVisible()).toBe(false)
+        expect(wrapper.find('[data-test="open-lot-1"]').classes()).toContain('v-btn--disabled')
     })
 
     // Regression: the "still frozen" message used to be keyed off r.expires truthiness instead of
