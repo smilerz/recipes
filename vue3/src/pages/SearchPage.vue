@@ -27,7 +27,7 @@
 
                                 <div v-for="filter in Object.values(filters)" :key="filter.id">
                                     <template v-if="filter.enabled">
-                                        <component :="filter" :is="filter.is" density="compact" v-model="filter.modelValue">
+                                        <component :="getPropsFromFilter(filter)" :is="filter.is" density="compact" v-model:modelValueId="filter.modelValueId">
                                             <template #append>
                                                 <v-btn icon="fa-solid fa-times" size="small" variant="plain"
                                                        @click="filter.enabled = false; filter.modelValue = filter.default"></v-btn>
@@ -169,7 +169,7 @@
 
 <script setup lang="ts">
 
-import {computed, nextTick, onMounted, ref, toRaw, watch} from "vue";
+import {computed, markRaw, nextTick, onMounted, ref, toRaw, watch} from "vue";
 import {ApiApi, ApiRecipeListRequest, CustomFilter, RecipeOverview} from "@/openapi";
 import {useI18n} from "vue-i18n";
 import {ErrorMessageType, useMessageStore} from "@/stores/MessageStore";
@@ -358,6 +358,22 @@ function isFilterDefaultValue(filter: any) {
     } else {
         return toRaw(filter.default) === filter.modelValue
     }
+}
+
+/**
+ * to prevent browser warnings from unused/wrong props on the target component
+ * @param filter
+ */
+function getPropsFromFilter(filter: any){
+    const {
+        id,
+        enabled,
+        is,
+        default: defaultValue,
+        ...props
+    } = filter
+
+    return props
 }
 
 // -------------------------------------------
@@ -563,13 +579,12 @@ const filters = ref({
         hint: t('searchFilterObjectsHelp', {type: t('Keywords')}),
         enabled: false,
         default: [],
-        is: VModelSelect,
+        is: markRaw(VModelSelect),
         model: 'Keyword',
-        modelValue: useRouteQuery('keywords', [], {transform: toNumberArray}),
+        modelValue: [],
+        modelValueId: useRouteQuery('keywords', [], {transform: toNumberArray}),
         multiple: true,
         chips: true,
-        returnObject: false,
-        searchOnLoad: true
     },
     keywordsAnd: {
         id: 'keywordsAnd',

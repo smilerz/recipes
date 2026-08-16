@@ -108,8 +108,10 @@
         </template>
 
     </v-autocomplete>
+    modelvalue: {{ modelValue }} <br/>
+    id: {{ modelValueId }}
 
-    <model-edit-dialog :model="props.model" v-model="editDialog" :item-id="modelValueId" @save="handleModelEditorUpdate" @create="handleModelEditorUpdate"></model-edit-dialog>
+    <model-edit-dialog :model="props.model" v-model="editDialog" :item-id="editingItemId" @save="handleModelEditorUpdate" @create="handleModelEditorUpdate"></model-edit-dialog>
 
 
 </template>
@@ -152,10 +154,19 @@ const props = defineProps({
 })
 
 const modelValue = defineModel<EditorSupportedTypes | EditorSupportedTypes[]>()
+/**
+ * model that contains just the IDs of the selected items
+ * synced with modelValue
+ * initial ids are loaded into modelValue in onMounted
+ */
+const modelValueId = defineModel<number | number[]>('modelValueId')
+
+
 const modelClass = ref({} as GenericModel)
 const loading = ref(false)
 const hasFocus = ref(false)
 const hasLoadedOnce = ref(false)
+const hasInitializedId = ref(false)
 const editDialog = ref(false)
 const hasMoreItems = ref(false)
 const lastAddedItem = ref<EditorSupportedTypes>(undefined)
@@ -169,14 +180,11 @@ const search = ref<string | undefined>(undefined)
  */
 const showCreate = computed(() => {
     const existingNames = items.value.filter(item => item.id != undefined).map(item => item[itemLabelAttribute.value].toLowerCase())
-    if (props.returnObject) {
-        if (Array.isArray(modelValue.value)) {
-            existingNames.concat(modelValue.value.map(item => item[itemLabelAttribute.value].toLowerCase()))
-        } else if (modelValue.value != undefined) {
-            existingNames.push(modelValue.value[itemLabelAttribute.value].toLowerCase())
-        }
-    } else {
-        //TODO implement a method to check for presence in selection when returnObject is false
+
+    if (Array.isArray(modelValue.value)) {
+        existingNames.concat(modelValue.value.map(item => item[itemLabelAttribute.value].toLowerCase()))
+    } else if (modelValue.value != undefined) {
+        existingNames.push(modelValue.value[itemLabelAttribute.value].toLowerCase())
     }
 
     return props.create && search.value != undefined && search.value.length > 0 && !existingNames.includes(search.value.toLowerCase())
@@ -185,8 +193,7 @@ const showCreate = computed(() => {
 /**
  * modelValue id or undefined if nothing is selected or its props.multiple is set
  */
-const modelValueId = computed(() => {
-    console.log(modelValue.value)
+const editingItemId = computed(() => {
     if (props.multiple && lastAddedItem.value) {
         return lastAddedItem.value.id
     } else if (modelValue.value) {
@@ -229,6 +236,21 @@ watch(search, (newValue, oldValue) => {
 })
 
 /**
+ * allows binding an id array instead of an object array to the VModelSelect component
+ * initial values are added in the mounted function
+ */
+watch(modelValue, (newValue, oldValue) => {
+    if (modelValue.value != undefined && hasInitializedId.value) {
+        console.log('updating ids', modelValue.value)
+        if (Array.isArray(modelValue.value)) {
+            modelValueId.value = modelValue.value.flatMap((item) => item.id!)
+        } else {
+            modelValueId.value = modelValue.value.id
+        }
+    }
+})
+
+/**
  * create instance of model class before mounting
  */
 onBeforeMount(() => {
@@ -239,6 +261,10 @@ onMounted(() => {
     if (props.searchOnLoad) {
         searchItems()
     }
+
+
+    initializeFromIds()
+
 })
 
 /**
@@ -282,7 +308,7 @@ function searchItems() {
         }
 
     }).catch((err: any) => {
-        debugger
+
         useMessageStore().addError(ErrorMessageType.FETCH_ERROR, err)
     }).finally(() => {
         console.log('search items finished')
@@ -349,6 +375,43 @@ function handleModelEditorUpdate(event: EditorSupportedTypes) {
         }
     } else {
         modelValue.value = event
+    }
+}
+
+/**
+ * load initial values when IDs are given
+ * this will automatically discard nonexisting ids
+ */
+function initializeFromIds() {
+    if (!hasInitializedId.value) {
+        console.log('loading initial modelValue from ids', modelValueId.value)
+
+        let promises = []
+        loading.value = true
+
+        if (Array.isArray(modelValueId.value)) {
+            console.log('modelValueId is array')
+            modelValue.value = []
+            modelValueId.value.forEach((id) => {
+                console.log('loading id', id)
+                promises.push(modelClass.value.retrieve(id).then((r: EditorSupportedTypes) => {
+                    console.log('pushing', r)
+                    // should always be the case but prevents TypeScript from complaining
+                    if (Array.isArray(modelValue.value)) {
+                        modelValue.value.push(r)
+                    }
+                }))
+            })
+        } else if (modelValueId.value) {
+            promises.push(modelClass.value.retrieve(modelValueId.value).then((r: EditorSupportedTypes) => {
+                modelValue.value = r
+            }))
+        }
+
+        Promise.all(promises).then(() => {
+            loading.value = false
+             hasInitializedId.value = true
+        })
     }
 }
 
