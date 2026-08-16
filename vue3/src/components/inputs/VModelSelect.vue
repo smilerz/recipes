@@ -383,35 +383,35 @@ function handleModelEditorUpdate(event: EditorSupportedTypes) {
  * this will automatically discard nonexisting ids
  */
 function initializeFromIds() {
-    if (!hasInitializedId.value) {
+    if (!hasInitializedId.value && modelValueId.value) {
         console.log('loading initial modelValue from ids', modelValueId.value)
 
-        let promises = []
         loading.value = true
 
         if (Array.isArray(modelValueId.value)) {
             console.log('modelValueId is array')
-            modelValue.value = []
+            let promises: Promise<EditorSupportedTypes>[] = []
             modelValueId.value.forEach((id) => {
                 console.log('loading id', id)
-                promises.push(modelClass.value.retrieve(id).then((r: EditorSupportedTypes) => {
-                    console.log('pushing', r)
-                    // should always be the case but prevents TypeScript from complaining
-                    if (Array.isArray(modelValue.value)) {
-                        modelValue.value.push(r)
-                    }
-                }))
+                promises.push(modelClass.value.retrieve(id))
             })
-        } else if (modelValueId.value) {
-            promises.push(modelClass.value.retrieve(modelValueId.value).then((r: EditorSupportedTypes) => {
-                modelValue.value = r
-            }))
-        }
 
-        Promise.all(promises).then(() => {
-            loading.value = false
-             hasInitializedId.value = true
-        })
+            Promise.all(promises).then((results: EditorSupportedTypes[]) => {
+                console.log('results', results)
+                modelValue.value = results
+            }).finally(() => {
+                loading.value = false
+                hasInitializedId.value = true
+            })
+        } else {
+
+            modelClass.value.retrieve(modelValueId.value).then((r: EditorSupportedTypes) => {
+                modelValue.value = r
+            }).finally(() => {
+                loading.value = false
+                hasInitializedId.value = true
+            })
+        }
     }
 }
 

@@ -594,11 +594,10 @@ const filters = ref({
         default: [],
         is: VModelSelect,
         model: 'Keyword',
-        modelValue: useRouteQuery('keywordsAnd', [], {transform: toNumberArray}),
+        modelValue: [],
+        modelValueId: useRouteQuery('keywordsAnd', [], {transform: toNumberArray}),
         multiple: true,
         chips: true,
-        returnObject: false,
-        searchOnLoad: true
     },
     keywordsOrNot: {
         id: 'keywordsOrNot',
