@@ -100,6 +100,56 @@ describe('InventoryEntryTable — grouped pantry view', () => {
         // "Fresh Milk" (soon) falls after the ExpiringSoon heading
         expect(freshMilkIndex).toBeGreaterThan(expiringSectionIndex)
     })
+
+    // #11: an opened (or otherwise dated) lot moved into a freezer whose food has no
+    // shelf_life_days_frozen configured keeps whatever stale pre-freeze date it had — the backend
+    // deliberately never clears it (nothing better to suggest), but the display must not treat that
+    // stale date as live: it should read as "no known expiry", not silently count down (or even show
+    // "Expired") for something that's actually safely frozen.
+    it('shows no date (not a stale one) for a frozen lot whose food has no frozen shelf life configured', async () => {
+        const staleExpired = new Date(); staleExpired.setDate(staleExpired.getDate() - 20)
+        apiMock.apiInventoryEntryList.mockResolvedValue({
+            results: [
+                entry({
+                    id: 1, food: { id: 10, name: 'Salsa', shelfLifeDaysFrozen: null },
+                    inventoryLocation: { id: 1, name: 'Freezer', isFreezer: true },
+                    expires: staleExpired,
+                }),
+            ],
+            count: 1,
+        })
+
+        const wrapper = mountPage(InventoryEntryTable)
+        await flushPromises()
+
+        const text = wrapper.text()
+        expect(text).toContain('Salsa')
+        expect(text).toContain('InStock')  // not Expired, not ExpiringSoon
+        expect(text).not.toContain('Expired')
+        expect(text).not.toContain('ExpiringSoon')
+    })
+
+    it('still shows the real computed date for a frozen lot whose food DOES have a frozen shelf life configured', async () => {
+        const frozenDate = new Date(); frozenDate.setDate(frozenDate.getDate() + 180)
+        apiMock.apiInventoryEntryList.mockResolvedValue({
+            results: [
+                entry({
+                    id: 1, food: { id: 10, name: 'Peas', shelfLifeDaysFrozen: 180 },
+                    inventoryLocation: { id: 1, name: 'Freezer', isFreezer: true },
+                    expires: frozenDate,
+                }),
+            ],
+            count: 1,
+        })
+
+        const wrapper = mountPage(InventoryEntryTable)
+        await flushPromises()
+
+        const text = wrapper.text()
+        expect(text).toContain('Peas')
+        expect(text).toContain('InStock')
+        expect(text).not.toContain('—')
+    })
 })
 
 describe('InventoryEntryTable — opened lifecycle', () => {

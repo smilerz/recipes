@@ -29,8 +29,8 @@
                                 <span v-if="item.subLocation" class="text-body-2 text-disabled">· {{ item.subLocation }}</span>
                             </td>
                             <td>
-                                <v-chip v-if="item.expires" size="small" label :color="expiryColor(expiryStatus(item.expires, now))">
-                                    {{ expiryDateLabel(item.expires) }}
+                                <v-chip v-if="effectiveExpires(item)" size="small" label :color="expiryColor(expiryStatus(effectiveExpires(item), now))">
+                                    {{ expiryDateLabel(effectiveExpires(item)!) }}
                                 </v-chip>
                                 <span v-else class="text-disabled">—</span>
                                 <v-chip v-if="item.openedAt" size="x-small" variant="tonal" color="warning" class="ms-1" closable
@@ -59,8 +59,8 @@
                             {{ qtyLabel(item) }} · {{ item.inventoryLocation.name }}
                         </v-list-item-subtitle>
                         <template #append>
-                            <v-chip v-if="item.expires" size="small" label class="me-2" :color="expiryColor(expiryStatus(item.expires, now))">
-                                {{ expiryDateLabel(item.expires) }}
+                            <v-chip v-if="effectiveExpires(item)" size="small" label class="me-2" :color="expiryColor(expiryStatus(effectiveExpires(item), now))">
+                                {{ expiryDateLabel(effectiveExpires(item)!) }}
                             </v-chip>
                             <v-chip v-if="item.openedAt" size="x-small" variant="tonal" color="warning" class="me-2" closable
                                     :data-test="`opened-chip-${item.id}`" @click:close="unopenLot(item)">
@@ -126,22 +126,39 @@ const groups = computed(() => [
     {
         key: 'expired',
         title: t('Expired'),
-        items: items.value.filter(i => pantryGroup(i.expires, now) === 'expired').sort(byExpiry),
+        items: items.value.filter(i => pantryGroup(effectiveExpires(i), now) === 'expired').sort(byExpiry),
     },
     {
         key: 'expiring',
         title: t('ExpiringSoon'),
-        items: items.value.filter(i => pantryGroup(i.expires, now) === 'expiring').sort(byExpiry),
+        items: items.value.filter(i => pantryGroup(effectiveExpires(i), now) === 'expiring').sort(byExpiry),
     },
     {
         key: 'instock',
         title: t('InStock'),
-        items: items.value.filter(i => pantryGroup(i.expires, now) === 'instock').sort(byName),
+        items: items.value.filter(i => pantryGroup(effectiveExpires(i), now) === 'instock').sort(byName),
     },
 ])
 
 function qtyLabel(item: InventoryEntry): string {
     return item.unit?.name ? `${item.amount} ${item.unit.name}` : String(item.amount)
+}
+
+/** True when a lot is currently frozen but its food has no frozen shelf-life number configured —
+ * "nothing to suggest" server-side (see recompute_lot_expiry), so any expires value still on the
+ * entry predates being frozen and is no longer meaningful. Freezing arrests decay; without this, a
+ * stale pre-freeze date keeps counting down (or can even show as already "Expired") for an item
+ * that's actually safely frozen — the backend deliberately never clears the stale value itself, but
+ * the display shouldn't treat it as live either. */
+function isFrozenWithoutSuggestion(item: InventoryEntry): boolean {
+    return !!item.inventoryLocation.isFreezer && item.food.shelfLifeDaysFrozen == null
+}
+
+/** The expiry date to actually treat a lot as having, for both grouping and display — null (no
+ * known expiry, same as a lot that was never dated) while frozen with nothing to suggest,
+ * regardless of whatever stale value the entry still carries from before it was frozen. */
+function effectiveExpires(item: InventoryEntry): Date | null | undefined {
+    return isFrozenWithoutSuggestion(item) ? null : item.expires
 }
 
 /** "Open" only applies to a food that has an opened shelf life configured — otherwise the concept
