@@ -86,7 +86,7 @@ function localeCoveragePlugin(): Plugin {
             if (id !== resolvedId) return
 
             // Frontend coverage: count non-empty keys vs en.json
-            const localesDir = resolve(__dirname, 'src/locales')
+            const localesDir = resolve(import.meta.dirname, 'src/locales')
             const en = JSON.parse(readFileSync(join(localesDir, 'en.json'), 'utf-8'))
             const totalKeys = Object.keys(en).length
 
@@ -110,7 +110,7 @@ function localeCoveragePlugin(): Plugin {
                 'hu_HU': 'hu',
                 'zh_CN': 'zh_Hans',
             }
-            const beLocaleDir = resolve(__dirname, '..', 'cookbook', 'locale')
+            const beLocaleDir = resolve(import.meta.dirname, '..', 'cookbook', 'locale')
             if (existsSync(beLocaleDir)) {
                 for (const entry of readdirSync(beLocaleDir)) {
                     if (entry === 'en') continue  // skip source language
@@ -174,7 +174,7 @@ function localeCoveragePlugin(): Plugin {
 
 async function collectBuildInputs() {
     try {
-        const pluginsDir = resolve(__dirname, "src/plugins")
+        const pluginsDir = resolve(import.meta.dirname, "src/plugins")
         const buildInputs: string[] = []
 
         for (const dir of readdirSync(pluginsDir, {withFileTypes: true})) {
