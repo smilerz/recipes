@@ -31,6 +31,7 @@ import type {
     FdcQueryFoods,
     Food,
     FoodBatchUpdate,
+    FoodFromRecipe,
     FoodInheritField,
     FoodShopping,
     FoodSimple,
@@ -778,6 +779,7 @@ export function makeFood(overrides: Partial<Food> = {}): Food {
         fdcId: 1,
         foodOnhand: false,
         supermarketCategory: undefined as any,
+        foodImage: undefined as any,
         parent: 0,
         numchild: 0,
         numrecipe: 0,
@@ -838,6 +840,7 @@ export function makeEdgeCaseFood(overrides: Partial<Food> = {}): Food {
         fdcId: null,
         foodOnhand: null,
         supermarketCategory: null,
+        foodImage: null,
         parent: 0,
         numchild: 0,
         numrecipe: 0,
@@ -940,6 +943,29 @@ export function makeEdgeCaseFoodBatchUpdate(overrides: Partial<FoodBatchUpdate> 
     } as FoodBatchUpdate
 }
 
+export function makeFoodFromRecipe(overrides: Partial<FoodFromRecipe> = {}): FoodFromRecipe {
+    return {
+        recipe: 0,
+        name: 'Test name',
+        ...overrides,
+    } as FoodFromRecipe
+}
+
+export function makeMinimalFoodFromRecipe(overrides: Partial<FoodFromRecipe> = {}): FoodFromRecipe {
+    return {
+        recipe: 0,
+        ...overrides,
+    } as FoodFromRecipe
+}
+
+export function makeEdgeCaseFoodFromRecipe(overrides: Partial<FoodFromRecipe> = {}): FoodFromRecipe {
+    return {
+        recipe: 0,
+        name: '',
+        ...overrides,
+    } as FoodFromRecipe
+}
+
 export function makeFoodInheritField(overrides: Partial<FoodInheritField> = {}): FoodInheritField {
     return {
         id: 1,
@@ -974,6 +1000,11 @@ export function makeFoodShopping(overrides: Partial<FoodShopping> = {}): FoodSho
         shoppingLists: [],
         inInventory: '',
         earliestExpiry: new Date('2026-01-01T00:00:00Z'),
+        shoppingAmount: 1,
+        shelfLifeDays: 0,
+        preferredShoppingUnit: undefined as any,
+        foodImage: undefined as any,
+        substituteOnhand: false,
         ...overrides,
     } as FoodShopping
 }
@@ -986,6 +1017,8 @@ export function makeMinimalFoodShopping(overrides: Partial<FoodShopping> = {}): 
         shoppingLists: [],
         inInventory: '',
         earliestExpiry: new Date('2026-01-01T00:00:00Z'),
+        foodImage: undefined as any,
+        substituteOnhand: false,
         ...overrides,
     } as FoodShopping
 }
@@ -999,6 +1032,11 @@ export function makeEdgeCaseFoodShopping(overrides: Partial<FoodShopping> = {}):
         shoppingLists: [],
         inInventory: null,
         earliestExpiry: null,
+        shoppingAmount: null,
+        shelfLifeDays: null,
+        preferredShoppingUnit: null,
+        foodImage: null,
+        substituteOnhand: false,
         ...overrides,
     } as FoodShopping
 }
@@ -2145,6 +2183,7 @@ export function makeRecipeBook(overrides: Partial<RecipeBook> = {}): RecipeBook 
         id: 1,
         name: 'Test name',
         description: '',
+        image: undefined as any,
         shared: [],
         createdBy: undefined as any,
         filter: undefined as any,
@@ -2168,6 +2207,7 @@ export function makeEdgeCaseRecipeBook(overrides: Partial<RecipeBook> = {}): Rec
         id: 0,
         name: '',
         description: '',
+        image: null,
         shared: [],
         createdBy: undefined as any,
         filter: null,
@@ -2716,7 +2756,7 @@ export function makeShoppingListEntry(overrides: Partial<ShoppingListEntry> = {}
         id: 1,
         listRecipe: 0,
         shoppingLists: [],
-        food: undefined as any,
+        food: makeFoodShopping(),
         unit: undefined as any,
         amount: 1,
         order: 0,
@@ -2751,7 +2791,7 @@ export function makeEdgeCaseShoppingListEntry(overrides: Partial<ShoppingListEnt
         id: 0,
         listRecipe: null,
         shoppingLists: [],
-        food: null,
+        food: makeMinimalFoodShopping(),
         unit: null,
         amount: 0,
         order: 0,
@@ -3097,6 +3137,7 @@ export function makeEdgeCaseSourceImportRecipe(overrides: Partial<SourceImportRe
 
 export function makeSourceImportStep(overrides: Partial<SourceImportStep> = {}): SourceImportStep {
     return {
+        name: 'Test name',
         instruction: '',
         ingredients: [],
         showIngredientsTable: false,
@@ -3114,6 +3155,7 @@ export function makeMinimalSourceImportStep(overrides: Partial<SourceImportStep>
 
 export function makeEdgeCaseSourceImportStep(overrides: Partial<SourceImportStep> = {}): SourceImportStep {
     return {
+        name: '',
         instruction: '',
         ingredients: [],
         showIngredientsTable: false,
@@ -3678,6 +3720,7 @@ export function makeUserFile(overrides: Partial<UserFile> = {}): UserFile {
         fileDownload: '',
         preview: '',
         fileSizeKb: 0,
+        cropData: undefined as any,
         createdBy: undefined as any,
         createdAt: new Date('2026-01-01T00:00:00Z'),
         ...overrides,
@@ -3705,6 +3748,7 @@ export function makeEdgeCaseUserFile(overrides: Partial<UserFile> = {}): UserFil
         fileDownload: '',
         preview: '',
         fileSizeKb: 0,
+        cropData: null,
         createdBy: undefined as any,
         createdAt: new Date(0),
         ...overrides,
@@ -3718,6 +3762,7 @@ export function makeUserFileView(overrides: Partial<UserFileView> = {}): UserFil
         fileDownload: '',
         preview: '',
         fileSizeKb: 0,
+        cropData: undefined as any,
         createdBy: undefined as any,
         createdAt: new Date('2026-01-01T00:00:00Z'),
         ...overrides,
@@ -3731,6 +3776,7 @@ export function makeMinimalUserFileView(overrides: Partial<UserFileView> = {}): 
         fileDownload: '',
         preview: '',
         fileSizeKb: 0,
+        cropData: undefined as any,
         createdBy: undefined as any,
         createdAt: new Date('2026-01-01T00:00:00Z'),
         ...overrides,
@@ -3744,6 +3790,7 @@ export function makeEdgeCaseUserFileView(overrides: Partial<UserFileView> = {}):
         fileDownload: '',
         preview: '',
         fileSizeKb: 0,
+        cropData: null,
         createdBy: undefined as any,
         createdAt: new Date(0),
         ...overrides,

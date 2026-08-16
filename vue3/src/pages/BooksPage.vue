@@ -15,6 +15,7 @@
         <v-row>
             <v-col cols="12" md="3" v-for="(b, i) in books">
                 <v-card>
+                    <crop-image v-if="b.image?.preview" :src="b.image.preview" :crop-data="b.image?.cropData" height="150px" />
                     <v-card-title>
                         <v-icon icon="$books" size="small"></v-icon>
                         {{ b.name }}
@@ -46,6 +47,7 @@ import {onMounted, ref, watch} from "vue";
 import {ApiApi, RecipeBook, RecipeBookEntry} from "@/openapi";
 import {ErrorMessageType, useMessageStore} from "@/stores/MessageStore";
 import ModelEditDialog from "@/components/dialogs/ModelEditDialog.vue";
+import CropImage from "@/components/display/CropImage.vue";
 import {useDebouncedSearch} from "@/composables/useDebouncedSearch";
 
 const loading = ref(false)
