@@ -33,6 +33,7 @@
                                                        @click="filter.enabled = false; filter.modelValue = filter.default"></v-btn>
                                             </template>
                                         </component>
+                                        {{filter.is.__name}}
                                     </template>
                                 </div>
 
@@ -435,7 +436,11 @@ function loadSelectedCustomFilter() {
     Object.values(filters.value).forEach((filter) => {
         let filterName = filter.id.replace(/([a-z])([A-Z])/g, '$1_$2').toLowerCase()
         if (customFilterParams[filterName] != null) {
-            filter.modelValue = customFilterParams[filterName]
+            if (filter.is.__name == 'VModelSelect'){
+                filter.modelValueId = customFilterParams[filterName]
+            } else {
+                filter.modelValue = customFilterParams[filterName]
+            }
             filter.enabled = true
         }
     })
@@ -455,7 +460,11 @@ function filtersToCustomFilterFormat() {
     Object.values(filters.value).forEach((filter) => {
         if (!isFilterDefaultValue(filter)) {
             let filterName = filter.id.replace(/([a-z])([A-Z])/g, '$1_$2').toLowerCase()
-            customFilterParams[filterName] = filter.modelValue
+            if (filter.is.__name == 'VModelSelect'){
+                customFilterParams[filterName] = filter.modelValueId
+            } else {
+                customFilterParams[filterName] = filter.modelValue
+            }
         }
     })
 
@@ -592,7 +601,7 @@ const filters = ref({
         hint: t('searchFilterObjectsAndHelp', {type: t('Keywords')}),
         enabled: false,
         default: [],
-        is: VModelSelect,
+        is: markRaw(VModelSelect),
         model: 'Keyword',
         modelValue: [],
         modelValueId: useRouteQuery('keywordsAnd', [], {transform: toNumberArray}),
@@ -605,13 +614,12 @@ const filters = ref({
         hint: t('searchFilterObjectsOrNotHelp', {type: t('Keywords')}),
         enabled: false,
         default: [],
-        is: VModelSelect,
+        is: markRaw(VModelSelect),
         model: 'Keyword',
-        modelValue: useRouteQuery('keywordsOrNot', [], {transform: toNumberArray}),
+        modelValue: [],
+        modelValueId: useRouteQuery('keywordsOrNot', [], {transform: toNumberArray}),
         multiple: true,
         chips: true,
-        returnObject: false,
-        searchOnLoad: true
     },
     keywordsAndNot: {
         id: 'keywordsAndNot',
@@ -619,13 +627,12 @@ const filters = ref({
         hint: t('searchFilterObjectsAndNotHelp', {type: t('Keywords')}),
         enabled: false,
         default: [],
-        is: VModelSelect,
+        is: markRaw(VModelSelect),
         model: 'Keyword',
-        modelValue: useRouteQuery('keywordsAndNot', [], {transform: toNumberArray}),
+        modelValue: [],
+        modelValueId: useRouteQuery('keywordsAndNot', [], {transform: toNumberArray}),
         multiple: true,
         chips: true,
-        returnObject: false,
-        searchOnLoad: true
     },
     foods: {
         id: 'foods',
@@ -633,13 +640,12 @@ const filters = ref({
         hint: t('searchFilterObjectsHelp', {type: t('Foods')}),
         enabled: false,
         default: [],
-        is: VModelSelect,
+        is: markRaw(VModelSelect),
         model: 'Food',
-        modelValue: useRouteQuery('foods', [], {transform: toNumberArray}),
+        modelValue: [],
+        modelValueId: useRouteQuery('foods', [], {transform: toNumberArray}),
         multiple: true,
         chips: true,
-        returnObject: false,
-        searchOnLoad: true
     },
     foodsAnd: {
         id: 'foodsAnd',
@@ -647,13 +653,12 @@ const filters = ref({
         hint: t('searchFilterObjectsAndHelp', {type: t('Foods')}),
         enabled: false,
         default: [],
-        is: VModelSelect,
+        is: markRaw(VModelSelect),
         model: 'Food',
-        modelValue: useRouteQuery('foodsAnd', [], {transform: toNumberArray}),
+        modelValue: [],
+        modelValueId: useRouteQuery('foodsAnd', [], {transform: toNumberArray}),
         multiple: true,
         chips: true,
-        returnObject: false,
-        searchOnLoad: true
     },
     foodsOrNot: {
         id: 'foodsOrNot',
@@ -661,13 +666,12 @@ const filters = ref({
         hint: t('searchFilterObjectsOrNotHelp', {type: t('Foods')}),
         enabled: false,
         default: [],
-        is: VModelSelect,
+        is: markRaw(VModelSelect),
         model: 'Food',
-        modelValue: useRouteQuery('foodsOrNot', [], {transform: toNumberArray}),
+        modelValue: [],
+        modelValueId: useRouteQuery('foodsOrNot', [], {transform: toNumberArray}),
         multiple: true,
         chips: true,
-        returnObject: false,
-        searchOnLoad: true
     },
     foodsAndNot: {
         id: 'foodsAndNot',
@@ -675,13 +679,12 @@ const filters = ref({
         hint: t('searchFilterObjectsAndNotHelp', {type: t('Foods')}),
         enabled: false,
         default: [],
-        is: VModelSelect,
+        is: markRaw(VModelSelect),
         model: 'Food',
-        modelValue: useRouteQuery('foodsAndNot', [], {transform: toNumberArray}),
+        modelValue: [],
+        modelValueId: useRouteQuery('foodsAndNot', [], {transform: toNumberArray}),
         multiple: true,
         chips: true,
-        returnObject: false,
-        searchOnLoad: true
     },
     books: {
         id: 'books',
@@ -689,13 +692,12 @@ const filters = ref({
         hint: t('searchFilterObjectsHelp', {type: t('Books')}),
         enabled: false,
         default: [],
-        is: VModelSelect,
+        is: markRaw(VModelSelect),
         model: 'RecipeBook',
-        modelValue: useRouteQuery('books', [], {transform: toNumberArray}),
+        modelValue: [],
+        modelValueId: useRouteQuery('books', [], {transform: toNumberArray}),
         multiple: true,
         chips: true,
-        returnObject: false,
-        searchOnLoad: true
     },
     booksAnd: {
         id: 'booksAnd',
@@ -703,13 +705,12 @@ const filters = ref({
         hint: t('searchFilterObjectsAndHelp', {type: t('Books')}),
         enabled: false,
         default: [],
-        is: VModelSelect,
+        is: markRaw(VModelSelect),
         model: 'RecipeBook',
-        modelValue: useRouteQuery('booksAnd', [], {transform: toNumberArray}),
+        modelValue: [],
+        modelValueId: useRouteQuery('booksAnd', [], {transform: toNumberArray}),
         multiple: true,
         chips: true,
-        returnObject: false,
-        searchOnLoad: true
     },
     booksOrNot: {
         id: 'booksOrNot',
@@ -717,13 +718,12 @@ const filters = ref({
         hint: t('searchFilterObjectsOrNotHelp', {type: t('Books')}),
         enabled: false,
         default: [],
-        is: VModelSelect,
+        is: markRaw(VModelSelect),
         model: 'RecipeBook',
-        modelValue: useRouteQuery('booksOrNot', [], {transform: toNumberArray}),
+        modelValue: [],
+        modelValueId: useRouteQuery('booksOrNot', [], {transform: toNumberArray}),
         multiple: true,
         chips: true,
-        returnObject: false,
-        searchOnLoad: true
     },
     booksAndNot: {
         id: 'booksAndNot',
@@ -731,13 +731,12 @@ const filters = ref({
         hint: t('searchFilterObjectsAndNotHelp', {type: t('Books')}),
         enabled: false,
         default: [],
-        is: VModelSelect,
+        is: markRaw(VModelSelect),
         model: 'RecipeBook',
-        modelValue: useRouteQuery('booksAndNot', [], {transform: toNumberArray}),
+        modelValue: [],
+        modelValueId: useRouteQuery('booksAndNot', [], {transform: toNumberArray}),
         multiple: true,
         chips: true,
-        returnObject: false,
-        searchOnLoad: true
     },
     createdby: {
         id: 'createdby',
@@ -745,12 +744,10 @@ const filters = ref({
         hint: t('searchFilterCreatedByHelp'),
         enabled: false,
         default: undefined,
-        is: VModelSelect,
+        is: markRaw(VModelSelect),
         model: 'User',
-        modelValue: useRouteQuery('createdby', undefined, {transform: Number}),
-        mode: 'single',
-        object: false,
-        searchOnLoad: true
+        modelValue: undefined,
+        modelValueId: useRouteQuery('createdby', undefined, {transform: numberOrUndefinedTransformer}),
     },
     units: {
         id: 'units',
@@ -758,13 +755,12 @@ const filters = ref({
         hint: t('searchFilterObjectsHelp', {type: t('Units')}),
         enabled: false,
         default: [],
-        is: VModelSelect,
+        is: markRaw(VModelSelect),
         model: 'Unit',
-        modelValue: useRouteQuery('units', [], {transform: toNumberArray}),
+        modelValue: [],
+        modelValueId: useRouteQuery('units', [], {transform: toNumberArray}),
         multiple: true,
         chips: true,
-        returnObject: false,
-        searchOnLoad: true
     },
     internal: {
         id: 'internal',
@@ -772,7 +768,7 @@ const filters = ref({
         hint: t('searchFilterHideExternalHelp'),
         enabled: false,
         default: undefined,
-        is: VSelect,
+        is: markRaw(VSelect),
         items: [{value: true, title: 'Yes'}, {value: false, title: 'No'}],
         modelValue: useRouteQuery('internal', undefined, {transform: boolOrUndefinedTransformer})
     },
@@ -793,7 +789,7 @@ const filters = ref({
         enabled: false,
         clearable: true,
         default: undefined,
-        is: RatingField,
+        is: markRaw(RatingField),
         modelValue: useRouteQuery('rating', undefined, {transform: numberOrUndefinedTransformer}),
     },
     ratingGte: {
@@ -803,7 +799,7 @@ const filters = ref({
         enabled: false,
         clearable: true,
         default: undefined,
-        is: RatingField,
+        is: markRaw(RatingField),
         modelValue: useRouteQuery('ratingGte', undefined, {transform: numberOrUndefinedTransformer}),
     },
     ratingLte: {
@@ -813,7 +809,7 @@ const filters = ref({
         enabled: false,
         clearable: true,
         default: undefined,
-        is: RatingField,
+        is: markRaw(RatingField),
         modelValue: useRouteQuery('ratingLte', undefined, {transform: numberOrUndefinedTransformer}),
     },
     timescooked: {
@@ -823,7 +819,7 @@ const filters = ref({
         enabled: false,
         default: undefined,
         clearable: true,
-        is: VNumberInput,
+        is: markRaw(VNumberInput),
         modelValue: useRouteQuery('timescooked', undefined, {transform: numberOrUndefinedTransformer}),
     },
     timescookedGte: {
@@ -833,7 +829,7 @@ const filters = ref({
         enabled: false,
         clearable: true,
         default: undefined,
-        is: VNumberInput,
+        is: markRaw(VNumberInput),
         modelValue: useRouteQuery('timescookedGte', undefined, {transform: numberOrUndefinedTransformer}),
     },
     timescookedLte: {
@@ -843,7 +839,7 @@ const filters = ref({
         enabled: false,
         clearable: true,
         default: undefined,
-        is: VNumberInput,
+        is: markRaw(VNumberInput),
         modelValue: useRouteQuery('timescookedLte', undefined, {transform: numberOrUndefinedTransformer}),
     },
     makenow: {
@@ -852,7 +848,7 @@ const filters = ref({
         hint: t('searchFilterOnHandHelp'),
         enabled: false,
         default: "false",
-        is: VSelect,
+        is: markRaw(VSelect),
         items: [{value: "true", title: 'Yes'}, {value: "false", title: 'No'}],
         modelValue: useRouteQuery('makenow', "false"),
     },
@@ -862,7 +858,7 @@ const filters = ref({
         hint: '',
         enabled: false,
         default: null,
-        is: VDateInput,
+        is: markRaw(VDateInput),
         modelValue: useRouteQuery('cookedonGte', null, {transform: routeQueryDateTransformer}),
     },
     cookedonLte: {
@@ -871,7 +867,7 @@ const filters = ref({
         hint: '',
         enabled: false,
         default: null,
-        is: VDateInput,
+        is: markRaw(VDateInput),
         modelValue: useRouteQuery('cookedonLte', null, {transform: routeQueryDateTransformer}),
     },
     viewedonGte: {
@@ -880,7 +876,7 @@ const filters = ref({
         hint: '',
         enabled: false,
         default: null,
-        is: VDateInput,
+        is: markRaw(VDateInput),
         modelValue: useRouteQuery('viewedonGte', null, {transform: routeQueryDateTransformer}),
     },
     viewedonLte: {
@@ -889,7 +885,7 @@ const filters = ref({
         hint: '',
         enabled: false,
         default: null,
-        is: VDateInput,
+        is: markRaw(VDateInput),
         modelValue: useRouteQuery('viewedonLte', null, {transform: routeQueryDateTransformer}),
     },
     createdon: {
@@ -898,7 +894,7 @@ const filters = ref({
         hint: '',
         enabled: false,
         default: null,
-        is: VDateInput,
+        is: markRaw(VDateInput),
         modelValue: useRouteQuery('createdon', null, {transform: routeQueryDateTransformer}),
     },
     createdonGte: {
@@ -907,7 +903,7 @@ const filters = ref({
         hint: '',
         enabled: false,
         default: null,
-        is: VDateInput,
+        is: markRaw(VDateInput),
         modelValue: useRouteQuery('createdonGte', null, {transform: routeQueryDateTransformer}),
     },
     createdonLte: {
@@ -916,7 +912,7 @@ const filters = ref({
         hint: '',
         enabled: false,
         default: null,
-        is: VDateInput,
+        is: markRaw(VDateInput),
         modelValue: useRouteQuery('createdonLte', null, {transform: routeQueryDateTransformer}),
     },
     updatedon: {
@@ -925,7 +921,7 @@ const filters = ref({
         hint: '',
         enabled: false,
         default: null,
-        is: VDateInput,
+        is: markRaw(VDateInput),
         modelValue: useRouteQuery('updatedon', null, {transform: routeQueryDateTransformer}),
     },
     updatedonGte: {
@@ -934,7 +930,7 @@ const filters = ref({
         hint: '',
         enabled: false,
         default: null,
-        is: VDateInput,
+        is: markRaw(VDateInput),
         modelValue: useRouteQuery('updatedonGte', null, {transform: routeQueryDateTransformer}),
     },
     updatedonLte: {
@@ -943,7 +939,7 @@ const filters = ref({
         hint: '',
         enabled: false,
         default: null,
-        is: VDateInput,
+        is: markRaw(VDateInput),
         modelValue: useRouteQuery('updatedonLte', null, {transform: routeQueryDateTransformer}),
     },
     includeChildren: {
@@ -952,7 +948,7 @@ const filters = ref({
         hint: t('Include child keywords and foods in search results'),
         enabled: false,
         default: true,  // Default enabled like v1
-        is: VSelect,
+        is: markRaw(VSelect),
         items: [{value: true, title: 'Yes'}, {value: false, title: 'No'}],
         modelValue: useRouteQuery('includeChildren', 'true', {transform: stringToBool})
     },
