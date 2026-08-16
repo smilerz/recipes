@@ -1,5 +1,6 @@
 import re
 
+from django.db import Error as DatabaseError
 from django.http import HttpResponseRedirect
 from django.urls import reverse
 from django_scopes import scope, scopes_disabled
@@ -88,7 +89,7 @@ class ScopeMiddleware:
                             request.user_space = user_space
                             with scope(space=request.space):
                                 return self.get_response(request)
-                except AuthenticationFailed:
+                except (AuthenticationFailed, DatabaseError):
                     pass
 
             with scopes_disabled():
