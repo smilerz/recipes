@@ -109,4 +109,59 @@ describe('InventoryBookingPage', () => {
 
         w.unmount()
     })
+
+    // #13: the Current Stock table only had 3 icon buttons per row - no way to act on a row
+    // without hitting one of them precisely. click:row now starts a Remove on that entry.
+    it('clicking a Current Stock row starts a Remove on that entry (#13)', async () => {
+        apiMock.apiInventoryEntryList.mockResolvedValue({
+            results: [{
+                id: 9, food: {id: 1, name: 'Peas'}, unit: null, amount: 2,
+                inventoryLocation: {id: 1, name: 'Pantry', isFreezer: false},
+                expires: null, code: 'ABC', subLocation: '',
+            }],
+            count: 1,
+        })
+        const w = mountPage()
+        ;(w.vm as any).food = {id: 1, name: 'Peas'}
+        ;(w.vm as any).loadItems({page: 1, itemsPerPage: 10})
+        await flushPromises()
+
+        const row = w.find('tbody tr')
+        expect(row.exists()).toBe(true)
+        await row.trigger('click')
+        await flushPromises()
+
+        expect((w.vm as any).bookingMode).toBe('remove')
+        expect((w.vm as any).inventoryEntry?.id).toBe(9)
+
+        w.unmount()
+    })
+
+    // Regression guard: without stopping propagation on the row's own action buttons, clicking
+    // History would also bubble into the new row-click handler and silently flip bookingMode to
+    // 'remove' as an unwanted side effect.
+    it('clicking the History button does not also trigger the row click handler (#13)', async () => {
+        apiMock.apiInventoryEntryList.mockResolvedValue({
+            results: [{
+                id: 9, food: {id: 1, name: 'Peas'}, unit: null, amount: 2,
+                inventoryLocation: {id: 1, name: 'Pantry', isFreezer: false},
+                expires: null, code: 'ABC', subLocation: '',
+            }],
+            count: 1,
+        })
+        const w = mountPage()
+        ;(w.vm as any).food = {id: 1, name: 'Peas'}
+        ;(w.vm as any).loadItems({page: 1, itemsPerPage: 10})
+        await flushPromises()
+
+        const historyBtn = w.find('[data-test="stock-history-btn"]')
+        expect(historyBtn.exists()).toBe(true)
+        await historyBtn.trigger('click')
+        await flushPromises()
+
+        expect((w.vm as any).bookingMode).toBe('add')
+        expect((w.vm as any).entryLogDialog).toBe(true)
+
+        w.unmount()
+    })
 })

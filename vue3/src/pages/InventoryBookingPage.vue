@@ -90,7 +90,10 @@
                     <v-card-text>
                         <v-data-table-server
                             return-object
+                            hover
+                            class="clickable-rows"
                             @update:options="loadItems"
+                            @click:row="(_event: MouseEvent, {item}: {item: InventoryEntry}) => selectRowForRemove(item)"
                             :items="items"
                             :items-length="itemCount"
                             :loading="tableLoading"
@@ -126,11 +129,11 @@
                             </template>
                             <template #item.action="{item}">
                                 <v-btn-group divided border density="comfortable">
-                                      <v-btn  icon="fa-solid fa-clock-rotate-left"  @click="entryLogDialog = true; entryLogEntry = item"></v-btn>
-                                <v-btn  icon="fa-solid fa-minus"
-                                       @click="bookingMode='remove'; inventoryEntry = item; inventoryEntrySelected()"></v-btn>
-                                <v-btn  icon="fa-solid fa-arrow-right"
-                                       @click="bookingMode='move'; inventoryEntry = item; inventoryEntrySelected()"></v-btn>
+                                      <v-btn  icon="fa-solid fa-clock-rotate-left" data-test="stock-history-btn" @click.stop="entryLogDialog = true; entryLogEntry = item"></v-btn>
+                                <v-btn  icon="fa-solid fa-minus" data-test="stock-remove-btn"
+                                       @click.stop="bookingMode='remove'; inventoryEntry = item; inventoryEntrySelected()"></v-btn>
+                                <v-btn  icon="fa-solid fa-arrow-right" data-test="stock-move-btn"
+                                       @click.stop="bookingMode='move'; inventoryEntry = item; inventoryEntrySelected()"></v-btn>
                                 </v-btn-group>
 
                             </template>
@@ -418,6 +421,20 @@ function resetForm(resetFood: boolean = true, resetInventoryLocation: boolean = 
 /**
  * when an inventory entry is selected, fill form with values from inventory entry
  */
+/**
+ * #13: clicking anywhere on a Current Stock row (not just its action buttons) starts a Remove on
+ * that entry — the most common single-row action — while Move stays a deliberate button click
+ * (relocating a lot shouldn't be one accidental row tap away). Already-Move mode is left alone so
+ * clicking a different row while mid-move doesn't silently switch you back to Remove.
+ */
+function selectRowForRemove(item: InventoryEntry) {
+    if (!['move'].includes(bookingMode.value)) {
+        bookingMode.value = 'remove'
+    }
+    inventoryEntry.value = item
+    inventoryEntrySelected()
+}
+
 function inventoryEntrySelected() {
     if (inventoryEntry.value) {
         food.value = inventoryEntry.value.food
@@ -467,5 +484,7 @@ function loadItems(options: VDataTableUpdateOptions) {
 </script>
 
 <style scoped>
-
+.clickable-rows :deep(tbody tr) {
+    cursor: pointer;
+}
 </style>
