@@ -273,3 +273,28 @@ describe('InventoryEntryTable — opened lifecycle', () => {
         expect(wrapper.find('[data-test="open-lot-1"]').isVisible()).toBe(true)
     })
 })
+
+// #9: History/Open/Remove/Move were the only row actions — no way to directly correct an
+// existing lot's amount/unit without subtract-then-re-add. Edit opens the shared
+// PantryBookingDialog in its new 'edit' mode (see PantryBookingDialog.test.ts for the actual
+// PATCH behavior); this only proves the row wires the click through to the right dialog state.
+describe('InventoryEntryTable — direct edit action (#9)', () => {
+    beforeEach(() => {
+        resetApiMock()
+    })
+
+    it('clicking Edit opens the booking dialog in edit mode for the correct entry', async () => {
+        apiMock.apiInventoryEntryList.mockResolvedValue({ results: [entry({ id: 1 })], count: 1 })
+        // opening PantryBookingDialog with an inventoryEntryId re-fetches the entry
+        apiMock.apiInventoryEntryRetrieve.mockResolvedValue(entry({ id: 1 }))
+        const wrapper = mountPage(InventoryEntryTable)
+        await flushPromises()
+
+        await wrapper.find('[data-test="edit-lot-1"]').trigger('click')
+        await flushPromises()
+
+        expect((wrapper.vm as any).bookingMode).toBe('edit')
+        expect((wrapper.vm as any).bookingEntry?.id).toBe(1)
+        expect((wrapper.vm as any).bookingDialog).toBe(true)
+    })
+})

@@ -45,6 +45,7 @@
                                            :disabled="!canOpen(item)"></v-btn>
                                     <v-btn icon="fa-solid fa-minus" :title="t('Remove')" @click="openBooking('remove', item)"></v-btn>
                                     <v-btn icon="fa-solid fa-arrow-right" :title="t('Move')" @click="openBooking('move', item)"></v-btn>
+                                    <v-btn icon="$edit" :title="t('Edit')" :data-test="`edit-lot-${item.id}`" @click="openBooking('edit', item)"></v-btn>
                                 </v-btn-group>
                             </td>
                         </tr>
@@ -75,6 +76,7 @@
                                                      :disabled="!canOpen(item)" @click="openLot(item)"></v-list-item>
                                         <v-list-item :title="t('Remove')" prepend-icon="fa-solid fa-minus" @click="openBooking('remove', item)"></v-list-item>
                                         <v-list-item :title="t('Move')" prepend-icon="fa-solid fa-arrow-right" @click="openBooking('move', item)"></v-list-item>
+                                        <v-list-item :title="t('Edit')" prepend-icon="$edit" @click="openBooking('edit', item)"></v-list-item>
                                     </v-list>
                                 </v-menu>
                             </v-btn>
@@ -215,8 +217,8 @@ function unopenLot(item: InventoryEntry) {
     })
 }
 
-// Remove / move a lot through the shared PantryBookingDialog (upstream's row-action flow).
-function openBooking(mode: 'remove' | 'move', item: InventoryEntry) {
+// Remove / move / edit a lot through the shared PantryBookingDialog (upstream's row-action flow).
+function openBooking(mode: 'remove' | 'move' | 'edit', item: InventoryEntry) {
     bookingEntry.value = item
     bookingMode.value = mode
     bookingDialog.value = true

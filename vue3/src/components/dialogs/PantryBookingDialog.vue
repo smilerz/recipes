@@ -6,10 +6,10 @@
 
             <v-card-text>
 
-                <v-row v-if="['add','remove','move'].includes(bookingMode)">
+                <v-row v-if="['add','remove','move','edit'].includes(bookingMode)">
                     <v-col>
                         <v-form>
-                            <model-select model="InventoryEntry" :label="$t('InventoryEntry')" v-model="inventoryEntry" v-if="['remove','move'].includes(bookingMode)"
+                            <model-select model="InventoryEntry" :label="$t('InventoryEntry')" v-model="inventoryEntry" v-if="['remove','move','edit'].includes(bookingMode)"
                                           @update:modelValue="inventoryEntrySelected()">
                             </model-select>
 
@@ -24,8 +24,8 @@
                                 </template>
                             </model-select>
 
-                            <v-number-input :label="$t('Amount')" :precision="2" v-model="amount" v-if="['add', 'remove'].includes(bookingMode)"></v-number-input>
-                            <model-select model="Unit" :label="$t('Unit')" allow-create v-model="unit" v-if="['add'].includes(bookingMode)" hide-details>
+                            <v-number-input :label="$t('Amount')" :precision="2" v-model="amount" v-if="['add', 'remove', 'edit'].includes(bookingMode)"></v-number-input>
+                            <model-select model="Unit" :label="$t('Unit')" allow-create v-model="unit" v-if="['add', 'edit'].includes(bookingMode)" hide-details>
                                 <template #append-inner>
                                     <v-chip v-for="u in commonUnits" :key="u.id" @click="unit = u" size="small" class="mr-1">
                                         {{ u.name }}
@@ -168,6 +168,8 @@ const dialogTitle = computed(() => {
         return t('Remove')
     } else if (bookingMode.value == 'move') {
         return t('Move')
+    } else if (bookingMode.value == 'edit') {
+        return t('Edit')
     } else if (bookingMode.value == 'confirm') {
         return t('Confirm')
     } else {
@@ -236,8 +238,47 @@ function save() {
         removeInventory()
     } else if (bookingMode.value == 'move') {
         moveInventory()
+    } else if (bookingMode.value == 'edit') {
+        editInventory()
     }
 
+}
+
+/**
+ * Directly correct an existing lot's amount/unit (#9) — Move already handles relocating a lot and
+ * Remove already handles subtracting from it, but neither lets you fix a typo'd amount or unit
+ * without going through subtract-then-re-add. Same never-touch-`expires` pattern as moveInventory:
+ * a full PUT would resend the old `expires` and permanently defeat the backend's freeze/thaw
+ * recompute (caller_set_expires), so this only ever patches the fields that actually changed.
+ */
+function editInventory() {
+    let api = new ApiApi()
+
+    if (inventoryEntry.value != null) {
+        const patch: PatchedInventoryEntry = {}
+        if (amount.value != null && inventoryEntry.value.amount !== amount.value) {
+            patch.amount = amount.value
+        }
+        if (inventoryEntry.value.unit !== unit.value) {
+            patch.unit = unit.value ?? null
+        }
+
+        if (Object.keys(patch).length === 0) {
+            dialog.value = false
+            return
+        }
+
+        formLoading.value = true
+        api.apiInventoryEntryPartialUpdate({id: inventoryEntry.value.id!, patchedInventoryEntry: patch}).then(() => {
+            useMessageStore().addPreparedMessage(PreparedMessage.UPDATE_SUCCESS)
+        }).catch(err => {
+            useMessageStore().addError(ErrorMessageType.UPDATE_ERROR, err)
+        }).finally(() => {
+            formLoading.value = false
+            dialog.value = false
+            emits('update')
+        })
+    }
 }
 
 /**

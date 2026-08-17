@@ -147,3 +147,62 @@ describe('PantryBookingDialog - move recompute toast', () => {
         w.unmount()
     })
 })
+
+// #9: a pantry entry could only be subtracted from (remove) or relocated (move) — there was no
+// way to directly correct its amount or unit. editInventory() PATCHes only those two fields,
+// reusing the same never-touch-expires pattern as moveInventory (a full PUT would defeat the
+// backend's freeze/thaw recompute — see the tests above).
+describe('PantryBookingDialog - edit mode (#9: direct amount/unit edit)', () => {
+    beforeEach(() => {
+        resetApiMock()
+        addMessageMock.mockClear()
+    })
+
+    it('sends a partial update with only the changed amount/unit, omitting expires and location', async () => {
+        const entry = {
+            id: 7, food: {id: 1, name: 'Flour'}, unit: {id: 1, name: 'g'}, amount: 2,
+            inventoryLocation: {id: 1, name: 'Pantry', isFreezer: false},
+            expires: new Date('2027-01-01'), subLocation: '',
+        }
+        apiMock.apiInventoryEntryRetrieve.mockResolvedValue(entry)
+        apiMock.apiInventoryEntryList.mockResolvedValue({results: []})
+        const w = mountDialog(7)
+        ;(w.vm as any).bookingMode = 'edit'
+        await flushPromises()
+
+        expect((w.vm as any).amount).toBe(2)
+
+        ;(w.vm as any).amount = 5
+        apiMock.apiInventoryEntryPartialUpdate.mockResolvedValue({...entry, amount: 5})
+        ;(w.vm as any).editInventory()
+        await flushPromises()
+
+        expect(apiMock.apiInventoryEntryUpdate).not.toHaveBeenCalled()
+        expect(apiMock.apiInventoryEntryPartialUpdate).toHaveBeenCalledTimes(1)
+        const [call] = apiMock.apiInventoryEntryPartialUpdate.mock.calls
+        expect(call[0].id).toBe(7)
+        expect(call[0].patchedInventoryEntry).toEqual({amount: 5})
+
+        w.unmount()
+    })
+
+    it('sends nothing (no API call) when neither amount nor unit changed', async () => {
+        const entry = {
+            id: 7, food: {id: 1, name: 'Flour'}, unit: {id: 1, name: 'g'}, amount: 2,
+            inventoryLocation: {id: 1, name: 'Pantry', isFreezer: false},
+            expires: new Date('2027-01-01'), subLocation: '',
+        }
+        apiMock.apiInventoryEntryRetrieve.mockResolvedValue(entry)
+        apiMock.apiInventoryEntryList.mockResolvedValue({results: []})
+        const w = mountDialog(7)
+        ;(w.vm as any).bookingMode = 'edit'
+        await flushPromises()
+
+        ;(w.vm as any).editInventory()
+        await flushPromises()
+
+        expect(apiMock.apiInventoryEntryPartialUpdate).not.toHaveBeenCalled()
+
+        w.unmount()
+    })
+})
