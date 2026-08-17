@@ -129,7 +129,7 @@ import {useI18n} from 'vue-i18n'
 import {ApiApi, type InventoryEntry, type Unit} from '@/openapi'
 import {ErrorMessageType, useMessageStore} from '@/stores/MessageStore'
 import {announcePantryAdd} from '@/composables/useInventoryActions'
-import {isoDateToApiDate} from '@/utils/pantry_utils'
+import {isoDateToApiDate, suggestedExpiryForNewLot} from '@/utils/pantry_utils'
 
 export type InventoryQuickAddResult = {
     locationId: number
@@ -150,9 +150,29 @@ const amount = ref(1)
 const selectedUnit = ref<Unit | null>(null)
 const expires = ref<string | null>(null)
 const freezerDialog = ref(false)
+const foodShelfLifeDays = ref<number | null>(null)
+const foodShelfLifeDaysFrozen = ref<number | null>(null)
+// The suggestion `expires` was last seeded to — lets a location change re-seed the field without
+// clobbering a date the user typed themselves (mirrors StockUpDialog's onRowLocationChange).
+const seedExpires = ref<string | null>(null)
 
 const selectedLocationIsFreezer = computed(() =>
     locationItems.value.find(l => l.value === selectedLocationId.value)?.isFreezer ?? false)
+
+/** #5: preview what a brand-new lot's expiry would be for `locationId`, so the suggestion is
+ * visible before saving instead of only revealed after (via the post-save toast). */
+function seedExpiryForLocation(locationId: number | null): string | null {
+    if (foodShelfLifeDays.value == null && foodShelfLifeDaysFrozen.value == null) return null
+    const isFreezer = locationItems.value.find(l => l.value === locationId)?.isFreezer ?? false
+    const suggested = suggestedExpiryForNewLot({shelfLifeDays: foodShelfLifeDays.value, shelfLifeDaysFrozen: foodShelfLifeDaysFrozen.value}, isFreezer)
+    return suggested ? DateTime.fromJSDate(suggested).toISODate() : null
+}
+
+watch(selectedLocationId, () => {
+    const iso = seedExpiryForLocation(selectedLocationId.value)
+    if (expires.value === seedExpires.value) expires.value = iso
+    seedExpires.value = iso
+})
 
 // ModelSelect derives its option label/value from the InventoryLocation model (name/id). The
 // caller supplies {value,label} items, so reshape them to {id,name} while keeping the id-based
@@ -196,13 +216,17 @@ function open(opts: {
     defaultLocationId?: number | null,
     amount?: number,
     unit?: Unit | null,
+    shelfLifeDays?: number | null,
+    shelfLifeDaysFrozen?: number | null,
 }): Promise<InventoryQuickAddResult | null> {
     title.value = opts.title
     locationItems.value = opts.locations
     selectedLocationId.value = opts.defaultLocationId ?? (opts.locations.length === 1 ? opts.locations[0].value : null)
     amount.value = opts.amount ?? 1
     selectedUnit.value = opts.unit ?? null
-    expires.value = null
+    foodShelfLifeDays.value = opts.shelfLifeDays ?? null
+    foodShelfLifeDaysFrozen.value = opts.shelfLifeDaysFrozen ?? null
+    expires.value = seedExpires.value = seedExpiryForLocation(selectedLocationId.value)
     isManageMode.value = false
     dialog.value = true
 
@@ -239,13 +263,17 @@ async function openManage(opts: {
     defaultLocationId?: number | null,
     amount?: number,
     unit?: Unit | null,
+    shelfLifeDays?: number | null,
+    shelfLifeDaysFrozen?: number | null,
 }): Promise<{hasEntries: boolean}> {
     title.value = opts.title
     locationItems.value = opts.locations
     selectedLocationId.value = opts.defaultLocationId ?? (opts.locations.length === 1 ? opts.locations[0].value : null)
     amount.value = opts.amount ?? 1
     selectedUnit.value = opts.unit ?? null
-    expires.value = null
+    foodShelfLifeDays.value = opts.shelfLifeDays ?? null
+    foodShelfLifeDaysFrozen.value = opts.shelfLifeDaysFrozen ?? null
+    expires.value = seedExpires.value = seedExpiryForLocation(selectedLocationId.value)
     isManageMode.value = true
     manageFoodId.value = opts.foodId
     manageFoodName.value = opts.foodName
@@ -318,7 +346,7 @@ async function handleManageAdd() {
         announcePantryAdd(manageFoodName.value, entry.expires, t)  // FR-D6: surface the (auto-set) expiry
         amount.value = 1
         selectedUnit.value = null
-        expires.value = null
+        expires.value = seedExpires.value = seedExpiryForLocation(selectedLocationId.value)
     } catch (err) {
         useMessageStore().addError(ErrorMessageType.CREATE_ERROR, err)
     } finally {

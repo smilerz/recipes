@@ -35,6 +35,8 @@ export type InventoryQuickAddDialogInstance = {
         defaultLocationId?: number | null,
         amount?: number,
         unit?: Unit | null,
+        shelfLifeDays?: number | null,
+        shelfLifeDaysFrozen?: number | null,
     }) => Promise<InventoryQuickAddResult | null>
     openManage: (opts: {
         title: string,
@@ -44,6 +46,8 @@ export type InventoryQuickAddDialogInstance = {
         defaultLocationId?: number | null,
         amount?: number,
         unit?: Unit | null,
+        shelfLifeDays?: number | null,
+        shelfLifeDaysFrozen?: number | null,
     }) => Promise<{hasEntries: boolean}>
 }
 
@@ -114,6 +118,8 @@ export function useInventoryActions() {
             defaultLocationId: saved?.id ?? null,
             amount: defaults?.amount ?? 1,
             unit: defaults?.unit ?? null,
+            shelfLifeDays: food.shelfLifeDays,
+            shelfLifeDaysFrozen: food.shelfLifeDaysFrozen,
         })
 
         if (!dialogResult) return false
@@ -325,6 +331,8 @@ export function useInventoryActions() {
             defaultLocationId: saved?.id ?? null,
             amount: defaults?.amount ?? 1,
             unit: defaults?.unit ?? null,
+            shelfLifeDays: food.shelfLifeDays,
+            shelfLifeDaysFrozen: food.shelfLifeDaysFrozen,
         })
 
         return result.hasEntries

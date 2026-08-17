@@ -71,7 +71,10 @@ const quickAddDialog = ref<InstanceType<typeof InventoryQuickAddDialog> | null>(
 async function quickAdd() {
     if (!food.value || !quickAddDialog.value) return
     const {quickAddToInventory} = useInventoryActions()
-    const added = await quickAddToInventory({id: food.value.id!, name: food.value.name}, quickAddDialog.value, t)
+    const added = await quickAddToInventory(
+        {id: food.value.id!, name: food.value.name, shelfLifeDays: food.value.shelfLifeDays, shelfLifeDaysFrozen: food.value.shelfLifeDaysFrozen},
+        quickAddDialog.value, t,
+    )
     if (added) entryTable.value?.load()
 }
 

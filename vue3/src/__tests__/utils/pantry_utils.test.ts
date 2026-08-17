@@ -1,6 +1,6 @@
 import {describe, it, expect, beforeEach, afterEach} from 'vitest'
 import {DateTime, Settings} from 'luxon'
-import {expiryStatus, expiryColor, expiryDateLabel, pantryGroup, EXPIRING_SOON_DAYS, shelfLifeToDays, shelfLifeFromDays, isoDateToApiDate, stockUpRowFromFood, stockUpRowsFromEntries, stockUpItemsFromRows, useUpItemsFromRows, groupInventoryByFoodUnit, groupUseUpBySubstituteSlot, distinctRecentRecipes, foodRecipeUsageMap, recipeFoodIds, recipePantryRows, partitionUseUpRows, groupUseUpRowsByRecipe, pantryJarState, EXPIRY_PRESET_DAYS, formatShelfLifeDuration, daysFromNow} from '@/utils/pantry_utils'
+import {expiryStatus, expiryColor, expiryDateLabel, pantryGroup, EXPIRING_SOON_DAYS, shelfLifeToDays, shelfLifeFromDays, isoDateToApiDate, stockUpRowFromFood, stockUpRowsFromEntries, stockUpItemsFromRows, useUpItemsFromRows, groupInventoryByFoodUnit, groupUseUpBySubstituteSlot, distinctRecentRecipes, foodRecipeUsageMap, recipeFoodIds, recipePantryRows, partitionUseUpRows, groupUseUpRowsByRecipe, pantryJarState, EXPIRY_PRESET_DAYS, formatShelfLifeDuration, daysFromNow, suggestedExpiryForNewLot} from '@/utils/pantry_utils'
 
 const NOW = new Date('2026-07-15T12:00:00')
 const day = (iso: string) => new Date(iso)
@@ -111,6 +111,32 @@ describe('daysFromNow', () => {
         const after = new Date()
         expect(result.getTime()).toBeGreaterThan(before.getTime())
         expect(result.getTime()).toBeLessThanOrEqual(after.getTime() + 25 * 60 * 60 * 1000)
+    })
+})
+
+describe('suggestedExpiryForNewLot (#5: client-side mirror of the backend _suggest_expiry for a new unopened lot)', () => {
+    const from = new Date('2026-07-15T12:00:00')
+
+    it('uses the frozen number for a freezer location', () => {
+        const food = {shelfLifeDays: 5, shelfLifeDaysFrozen: 90}
+        const result = suggestedExpiryForNewLot(food, true, from)
+        expect(result?.toISOString().slice(0, 10)).toBe('2026-10-13')
+    })
+
+    it('uses the plain shelf life for a non-freezer location', () => {
+        const food = {shelfLifeDays: 5, shelfLifeDaysFrozen: 90}
+        const result = suggestedExpiryForNewLot(food, false, from)
+        expect(result?.toISOString().slice(0, 10)).toBe('2026-07-20')
+    })
+
+    it('never falls back to the plain shelf life for a freezer location with no frozen number', () => {
+        const food = {shelfLifeDays: 5, shelfLifeDaysFrozen: null}
+        expect(suggestedExpiryForNewLot(food, true, from)).toBeNull()
+    })
+
+    it('returns null for a non-freezer location with no shelf life configured', () => {
+        const food = {shelfLifeDays: null, shelfLifeDaysFrozen: 90}
+        expect(suggestedExpiryForNewLot(food, false, from)).toBeNull()
     })
 })
 

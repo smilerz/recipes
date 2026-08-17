@@ -112,6 +112,24 @@ export function daysFromNow(days: number, from: Date = new Date()): Date {
     return DateTime.fromJSDate(from).plus({days}).toJSDate()
 }
 
+/**
+ * The expiry a brand-new, unopened lot would get, for the given location — the client-side mirror
+ * of the backend's `_suggest_expiry`/`apply_shelf_life_expiry` for a lot that was never opened
+ * (`opened_at=None`): a freezer location always uses the Frozen number (never falls back to the
+ * plain shelf life), any other location uses the ordinary Pantry/Fridge number. `null` when the
+ * food has no default configured for that state — "nothing to suggest," not zero.
+ */
+export function suggestedExpiryForNewLot(
+    food: {shelfLifeDays?: number | null, shelfLifeDaysFrozen?: number | null},
+    isFreezer: boolean,
+    now: Date = new Date(),
+): Date | null {
+    if (isFreezer) {
+        return food.shelfLifeDaysFrozen ? daysFromNow(food.shelfLifeDaysFrozen, now) : null
+    }
+    return food.shelfLifeDays ? daysFromNow(food.shelfLifeDays, now) : null
+}
+
 export interface StockUpRowDefaults {
     amount: number
     unit: Unit | null
