@@ -298,3 +298,61 @@ describe('InventoryEntryTable — direct edit action (#9)', () => {
         expect((wrapper.vm as any).bookingDialog).toBe(true)
     })
 })
+
+// #12: the pantry table had no user-controllable sort — each group used a fixed comparator
+// (name for In Stock). onSortSelect() lets the user override every group uniformly.
+describe('InventoryEntryTable — sort control (#12)', () => {
+    beforeEach(() => {
+        resetApiMock()
+    })
+
+    function foodNames(wrapper: ReturnType<typeof mountPage>) {
+        return wrapper.findAll('tbody tr').map(r => r.find('td').text())
+    }
+
+    it('defaults to sorting In Stock alphabetically by name, unchanged from before #12', async () => {
+        apiMock.apiInventoryEntryList.mockResolvedValue({
+            results: [
+                entry({ id: 1, food: { id: 10, name: 'Zucchini' } }),
+                entry({ id: 2, food: { id: 11, name: 'Apple' } }),
+            ], count: 2,
+        })
+        const wrapper = mountPage(InventoryEntryTable)
+        await flushPromises()
+
+        expect(foodNames(wrapper)).toEqual(['Apple', 'Zucchini'])
+    })
+
+    it('selecting Amount sorts all groups by amount ascending', async () => {
+        apiMock.apiInventoryEntryList.mockResolvedValue({
+            results: [
+                entry({ id: 1, amount: 5, food: { id: 10, name: 'Zucchini' } }),
+                entry({ id: 2, amount: 1, food: { id: 11, name: 'Apple' } }),
+            ], count: 2,
+        })
+        const wrapper = mountPage(InventoryEntryTable)
+        await flushPromises()
+
+        ;(wrapper.vm as any).onSortSelect('amount')
+        await flushPromises()
+
+        expect(foodNames(wrapper)).toEqual(['Apple', 'Zucchini'])
+    })
+
+    it('selecting the same field again toggles to descending order', async () => {
+        apiMock.apiInventoryEntryList.mockResolvedValue({
+            results: [
+                entry({ id: 1, amount: 5, food: { id: 10, name: 'Zucchini' } }),
+                entry({ id: 2, amount: 1, food: { id: 11, name: 'Apple' } }),
+            ], count: 2,
+        })
+        const wrapper = mountPage(InventoryEntryTable)
+        await flushPromises()
+
+        ;(wrapper.vm as any).onSortSelect('amount')
+        ;(wrapper.vm as any).onSortSelect('amount')
+        await flushPromises()
+
+        expect(foodNames(wrapper)).toEqual(['Zucchini', 'Apple'])
+    })
+})

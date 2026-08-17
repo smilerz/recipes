@@ -4,6 +4,24 @@
             {{ t('NoPantryEntries') }}
         </div>
 
+        <div v-if="items.length" class="d-flex justify-end mb-2">
+            <v-btn variant="text" size="small" class="text-none"
+                   :append-icon="!sortField ? 'fa-solid fa-sort' : (sortDescending ? 'fa-solid fa-arrow-down-short-wide' : 'fa-solid fa-arrow-up-short-wide')">
+                {{ sortField ? `${t('sort_by')} ${t(sortLabelKey!)}` : t('Sort') }}
+                <v-menu activator="parent" close-on-content-click>
+                    <v-list density="compact">
+                        <v-list-item v-for="opt in SORT_OPTIONS" :key="opt.key" :active="sortField === opt.key" color="primary"
+                                     @click="onSortSelect(opt.key)">
+                            <template #append v-if="sortField === opt.key">
+                                <v-icon size="small" :icon="sortDescending ? 'fa-solid fa-arrow-down-short-wide' : 'fa-solid fa-arrow-up-short-wide'"></v-icon>
+                            </template>
+                            {{ t(opt.labelKey) }}
+                        </v-list-item>
+                    </v-list>
+                </v-menu>
+            </v-btn>
+        </div>
+
         <template v-for="group in groups" :key="group.key">
             <div v-if="group.items.length" class="mb-6">
                 <div class="text-overline text-medium-emphasis px-1 mb-1">{{ group.title }}</div>
@@ -123,22 +141,64 @@ const bookingEntry = ref<InventoryEntry | null>(null)
 const byExpiry = (a: InventoryEntry, b: InventoryEntry) =>
     (a.expires ? a.expires.getTime() : Infinity) - (b.expires ? b.expires.getTime() : Infinity)
 const byName = (a: InventoryEntry, b: InventoryEntry) => a.food.name.localeCompare(b.food.name)
+const byAmount = (a: InventoryEntry, b: InventoryEntry) => (a.amount ?? 0) - (b.amount ?? 0)
+const byLocation = (a: InventoryEntry, b: InventoryEntry) => a.inventoryLocation.name.localeCompare(b.inventoryLocation.name)
+
+/** #12: the pantry table had no user-controllable sort — each group used a fixed comparator
+ * (expires for Expired/Expiring, name for In Stock). Picking a field here overrides ALL groups
+ * uniformly; leaving nothing picked (the common case) keeps each group's original default sort
+ * exactly as before, so the initial view is unchanged. */
+const SORT_OPTIONS = [
+    {key: 'expires', labelKey: 'Expires'},
+    {key: 'name', labelKey: 'Food'},
+    {key: 'amount', labelKey: 'Amount'},
+    {key: 'location', labelKey: 'InventoryLocation'},
+] as const
+type SortKey = typeof SORT_OPTIONS[number]['key']
+
+const sortField = ref<SortKey | null>(null)
+const sortDescending = ref(false)
+const sortLabelKey = computed(() => SORT_OPTIONS.find(o => o.key === sortField.value)?.labelKey)
+
+function comparatorFor(key: SortKey): (a: InventoryEntry, b: InventoryEntry) => number {
+    switch (key) {
+        case 'name': return byName
+        case 'amount': return byAmount
+        case 'location': return byLocation
+        case 'expires': return byExpiry
+    }
+}
+
+function onSortSelect(key: SortKey) {
+    if (sortField.value === key) {
+        sortDescending.value = !sortDescending.value
+    } else {
+        sortField.value = key
+        sortDescending.value = false
+    }
+}
+
+function sortGroup(entries: InventoryEntry[], fallback: (a: InventoryEntry, b: InventoryEntry) => number): InventoryEntry[] {
+    const cmp = sortField.value ? comparatorFor(sortField.value) : fallback
+    const sorted = [...entries].sort(cmp)
+    return sortField.value && sortDescending.value ? sorted.reverse() : sorted
+}
 
 const groups = computed(() => [
     {
         key: 'expired',
         title: t('Expired'),
-        items: items.value.filter(i => pantryGroup(effectiveExpires(i), now) === 'expired').sort(byExpiry),
+        items: sortGroup(items.value.filter(i => pantryGroup(effectiveExpires(i), now) === 'expired'), byExpiry),
     },
     {
         key: 'expiring',
         title: t('ExpiringSoon'),
-        items: items.value.filter(i => pantryGroup(effectiveExpires(i), now) === 'expiring').sort(byExpiry),
+        items: sortGroup(items.value.filter(i => pantryGroup(effectiveExpires(i), now) === 'expiring'), byExpiry),
     },
     {
         key: 'instock',
         title: t('InStock'),
-        items: items.value.filter(i => pantryGroup(effectiveExpires(i), now) === 'instock').sort(byName),
+        items: sortGroup(items.value.filter(i => pantryGroup(effectiveExpires(i), now) === 'instock'), byName),
     },
 ])
 
