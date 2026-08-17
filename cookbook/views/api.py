@@ -956,7 +956,14 @@ class InventoryEntryViewSet(LoggingMixin, viewsets.ModelViewSet, DeleteRelationM
     pagination_class = DefaultPagination
 
     def get_queryset(self):
-        queryset = self.queryset.filter(space=self.request.space)
+        queryset = self.queryset.filter(space=self.request.space).select_related(
+            'unit', 'inventory_location', 'inventory_location__household',
+            'food', 'food__recipe', 'food__food_image', 'food__supermarket_category',
+            'food__properties_food_unit', 'food__preferred_unit', 'food__preferred_shopping_unit',
+        ).prefetch_related(
+            'food__shopping_lists', 'food__inherit_fields', 'food__child_inherit_fields',
+            'food__substitute', 'food__properties',
+        )
 
         # the pantry is household-scoped (FR-B4) — never leak another household's lots in a shared space
         household = getattr(self.request.user_space, 'household', None)
