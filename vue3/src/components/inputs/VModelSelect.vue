@@ -2,7 +2,7 @@
 
     <v-autocomplete
         :ref="`ref_${props.id}`"
-        v-model="modelValue"
+        v-model="autoselectValue"
         v-model:search="search"
         autocomplete="suppress"
         no-filter
@@ -15,13 +15,12 @@
         :density="props.density"
         :clearable="props.clearable"
         :disabled="props.disabled"
-        :return-object="props.returnObject"
         :chips="props.chips"
         :closable-chips="props.chips"
         :multiple="props.multiple"
         :placeholder="props.placeholder"
         :loading="loading"
-
+        return-object
         @keydown.enter.exact="createItem(search, false); console.log('triggered enter keydown')"
         @keydown.shift.enter="createItem(search, true); console.log('triggered shift enter keydown')"
         @keydown.shift.e.prevent="editDialog = true"
@@ -108,8 +107,6 @@
         </template>
 
     </v-autocomplete>
-    modelvalue: {{ modelValue }} <br/>
-    id: {{ modelValueId }}
 
     <model-edit-dialog :model="props.model" v-model="editDialog" :item-id="editingItemId" @save="handleModelEditorUpdate" @create="handleModelEditorUpdate"></model-edit-dialog>
 
@@ -151,22 +148,18 @@ const props = defineProps({
     chips: {type: Boolean, default: false},
     multiple: {type: Boolean, default: false},
     placeholder: {type: String, default: undefined},
+
+    // model
+    modelValue: {type: [Object, Array, Number] as PropType<EditorSupportedTypes | EditorSupportedTypes[] | number | number[] | undefined>, default: undefined},
 })
 
-const modelValue = defineModel<EditorSupportedTypes | EditorSupportedTypes[]>()
-/**
- * model that contains just the IDs of the selected items
- * synced with modelValue
- * initial ids are loaded into modelValue in onMounted
- */
-const modelValueId = defineModel<number | number[]>('modelValueId')
 
+const autoselectValue = ref<EditorSupportedTypes | EditorSupportedTypes[] | undefined>(undefined)
 
 const modelClass = ref({} as GenericModel)
 const loading = ref(false)
 const hasFocus = ref(false)
 const hasLoadedOnce = ref(false)
-const hasInitializedId = ref(false)
 const editDialog = ref(false)
 const hasMoreItems = ref(false)
 const lastAddedItem = ref<EditorSupportedTypes>(undefined)
@@ -181,10 +174,10 @@ const search = ref<string | undefined>(undefined)
 const showCreate = computed(() => {
     const existingNames = items.value.filter(item => item.id != undefined).map(item => item[itemLabelAttribute.value].toLowerCase())
 
-    if (Array.isArray(modelValue.value)) {
-        existingNames.concat(modelValue.value.map(item => item[itemLabelAttribute.value].toLowerCase()))
-    } else if (modelValue.value != undefined) {
-        existingNames.push(modelValue.value[itemLabelAttribute.value].toLowerCase())
+    if (Array.isArray(autoselectValue.value)) {
+        existingNames.concat(autoselectValue.value.map(item => item[itemLabelAttribute.value].toLowerCase()))
+    } else if (autoselectValue.value != undefined) {
+        existingNames.push(autoselectValue.value[itemLabelAttribute.value].toLowerCase())
     }
 
     return props.create && search.value != undefined && search.value.length > 0 && !existingNames.includes(search.value.toLowerCase())
@@ -196,8 +189,8 @@ const showCreate = computed(() => {
 const editingItemId = computed(() => {
     if (props.multiple && lastAddedItem.value) {
         return lastAddedItem.value.id
-    } else if (modelValue.value) {
-        return modelValue.value.id
+    } else if (autoselectValue.value) {
+        return autoselectValue.value.id
     }
 
     return undefined
@@ -225,6 +218,23 @@ const itemLabelAttribute = computed(() => {
 })
 
 /**
+ * watcher to update external model value
+ */
+watch(autoselectValue, (newValue, oldValue) => {
+    console.log('AUTOSELECT value changed', oldValue, ' ==>', newValue)
+    updateModelValue(newValue)
+})
+
+/**
+ * watcher to update internal autoselectValue
+ */
+watch(() => props.modelValue, (newValue, oldValue) => {
+    console.log('MODEL value changed', oldValue, ' ==>', newValue)
+    updateAutoselectValue(newValue)
+})
+
+
+/**
  * listen to search update and call debounced search
  */
 watch(search, (newValue, oldValue) => {
@@ -232,21 +242,6 @@ watch(search, (newValue, oldValue) => {
     if (hasFocus.value || !hasLoadedOnce.value) {
         loading.value = true
         debouncedSearchItems()
-    }
-})
-
-/**
- * allows binding an id array instead of an object array to the VModelSelect component
- * initial values are added in the mounted function
- */
-watch(modelValue, (newValue, oldValue) => {
-    if (modelValue.value != undefined && hasInitializedId.value) {
-        console.log('updating ids', modelValue.value)
-        if (Array.isArray(modelValue.value)) {
-            modelValueId.value = modelValue.value.flatMap((item) => item.id!)
-        } else {
-            modelValueId.value = modelValue.value.id
-        }
     }
 })
 
@@ -262,9 +257,7 @@ onMounted(() => {
         searchItems()
     }
 
-
-    initializeFromIds()
-
+    updateAutoselectValue(props.modelValue)
 })
 
 /**
@@ -334,15 +327,15 @@ async function createItem(name: string | undefined, edit: boolean) {
             items.value = items.value.filter((item: any) => item.id != undefined)
 
             if (props.multiple) {
-                if (Array.isArray(modelValue.value)) {
-                    modelValue.value.push(createdObj)
+                if (Array.isArray(autoselectValue.value)) {
+                    autoselectValue.value.push(createdObj)
                 } else {
-                    modelValue.value = [createdObj]
+                    autoselectValue.value = [createdObj]
                 }
 
                 search.value = ''
             } else {
-                modelValue.value = createdObj
+                autoselectValue.value = createdObj
             }
 
             lastAddedItem.value = createdObj
@@ -366,52 +359,78 @@ async function createItem(name: string | undefined, edit: boolean) {
 function handleModelEditorUpdate(event: EditorSupportedTypes) {
     if (props.multiple) {
         console.log('is multiple')
-        if (Array.isArray(modelValue.value) && modelValue.value.length > 0) {
-            let existingIndex = modelValue.value.findIndex((item: any) => item.id == event.id)
+        if (Array.isArray(autoselectValue.value) && autoselectValue.value.length > 0) {
+            let existingIndex = autoselectValue.value.findIndex((item: any) => item.id == event.id)
             console.log('splicing at', existingIndex)
-            modelValue.value.splice(existingIndex, 1, event)
+            autoselectValue.value.splice(existingIndex, 1, event)
         } else {
-            modelValue.value = [event]
+            autoselectValue.value = [event]
         }
     } else {
-        modelValue.value = event
+        autoselectValue.value = event
     }
 }
 
 /**
- * load initial values when IDs are given
- * this will automatically discard nonexisting ids
+ * updates the internal autoselectValue from the external modelValue which might use IDs when return object is set to false
+ * @param newValue
  */
-function initializeFromIds() {
-    if (!hasInitializedId.value) {
-        console.log('loading initial modelValue from ids', modelValueId.value)
+function updateAutoselectValue(newValue: EditorSupportedTypes | EditorSupportedTypes[] | number | number[] | undefined) {
+    console.log('updating autoselect value', newValue)
+    if (typeof newValue === 'number') {
+        if((autoselectValue.value && autoselectValue.value.id! != newValue) || !autoselectValue.value)
+        modelClass.value.retrieve(newValue).then((r: EditorSupportedTypes) => {
+            autoselectValue.value = r
+        })
+    } else if ((Array.isArray(newValue) && newValue.every(item => typeof item === 'number'))) {
+        let missingIds = newValue
 
-        let promises = []
-        loading.value = true
+        if (autoselectValue.value && Array.isArray(autoselectValue.value)) {
+            // remove existing items no longer in external model
+            autoselectValue.value = autoselectValue.value.filter((item: EditorSupportedTypes) => newValue.includes(item.id!))
 
-        if (Array.isArray(modelValueId.value)) {
-            console.log('modelValueId is array')
-            modelValue.value = []
-            modelValueId.value.forEach((id) => {
-                console.log('loading id', id)
-                promises.push(modelClass.value.retrieve(id).then((r: EditorSupportedTypes) => {
-                    console.log('pushing', r)
-                    // should always be the case but prevents TypeScript from complaining
-                    if (Array.isArray(modelValue.value)) {
-                        modelValue.value.push(r)
-                    }
-                }))
-            })
-        } else if (modelValueId.value) {
-            promises.push(modelClass.value.retrieve(modelValueId.value).then((r: EditorSupportedTypes) => {
-                modelValue.value = r
-            }))
+            const existingIds = new Set(autoselectValue.value.map(item => item.id))
+            missingIds = newValue.filter(id => !existingIds.has(id))
         }
 
-        Promise.all(promises).then(() => {
-            loading.value = false
-             hasInitializedId.value = true
-        })
+        if (missingIds.length > 0) {
+            loading.value = true
+
+            Promise.all(
+                missingIds.map(id => modelClass.value.retrieve(id))
+            ).then((missingItems: EditorSupportedTypes[]) => {
+                if (autoselectValue.value && Array.isArray(autoselectValue.value)) {
+                    autoselectValue.value = autoselectValue.value.concat(missingItems)
+                } else {
+                    autoselectValue.value = missingItems
+                }
+            }).catch((err: any) => {
+                useMessageStore().addError(ErrorMessageType.FETCH_ERROR, err)
+            }).finally(() => {
+                loading.value = false
+            })
+        }
+    } else {
+        autoselectValue.value = newValue
+    }
+}
+
+/**
+ * updates external model value when changes to the internal autoselectValue occur
+ * supports returning ids or objects
+ * @param newValue
+ */
+function updateModelValue(newValue: EditorSupportedTypes | EditorSupportedTypes[] | undefined) {
+    if (!props.returnObject) {
+        console.log('returning value as ID(s)', newValue)
+        if (Array.isArray(newValue)) {
+            console.log('as flat array', newValue.flatMap(item => item.id))
+            emit('update:modelValue', newValue.flatMap(item => item.id))
+        } else if (newValue) {
+            emit('update:modelValue', newValue.id)
+        }
+    } else {
+        emit('update:modelValue', newValue)
     }
 }
 

@@ -27,13 +27,12 @@
 
                                 <div v-for="filter in Object.values(filters)" :key="filter.id">
                                     <template v-if="filter.enabled">
-                                        <component :="getPropsFromFilter(filter)" :is="filter.is" density="compact" v-model:modelValueId="filter.modelValueId">
+                                        <component :="getPropsFromFilter(filter)" :is="filter.is" density="compact" v-model:modelValue="filter.modelValue">
                                             <template #append>
                                                 <v-btn icon="fa-solid fa-times" size="small" variant="plain"
                                                        @click="filter.enabled = false; filter.modelValue = filter.default"></v-btn>
                                             </template>
                                         </component>
-                                        {{filter.is.__name}}
                                     </template>
                                 </div>
 
@@ -436,11 +435,7 @@ function loadSelectedCustomFilter() {
     Object.values(filters.value).forEach((filter) => {
         let filterName = filter.id.replace(/([a-z])([A-Z])/g, '$1_$2').toLowerCase()
         if (customFilterParams[filterName] != null) {
-            if (filter.is.__name == 'VModelSelect'){
-                filter.modelValueId = customFilterParams[filterName]
-            } else {
-                filter.modelValue = customFilterParams[filterName]
-            }
+            filter.modelValue = customFilterParams[filterName]
             filter.enabled = true
         }
     })
@@ -460,11 +455,7 @@ function filtersToCustomFilterFormat() {
     Object.values(filters.value).forEach((filter) => {
         if (!isFilterDefaultValue(filter)) {
             let filterName = filter.id.replace(/([a-z])([A-Z])/g, '$1_$2').toLowerCase()
-            if (filter.is.__name == 'VModelSelect'){
-                customFilterParams[filterName] = filter.modelValueId
-            } else {
-                customFilterParams[filterName] = filter.modelValue
-            }
+            customFilterParams[filterName] = filter.modelValue
         }
     })
 
@@ -590,8 +581,8 @@ const filters = ref({
         default: [],
         is: markRaw(VModelSelect),
         model: 'Keyword',
-        modelValue: [],
-        modelValueId: useRouteQuery('keywords', [], {transform: toNumberArray}),
+        modelValue: useRouteQuery('keywords', [], {transform: toNumberArray}),
+        returnObject: false,
         multiple: true,
         chips: true,
     },
@@ -603,8 +594,8 @@ const filters = ref({
         default: [],
         is: markRaw(VModelSelect),
         model: 'Keyword',
-        modelValue: [],
-        modelValueId: useRouteQuery('keywordsAnd', [], {transform: toNumberArray}),
+        modelValue: useRouteQuery('keywordsAnd', [], {transform: toNumberArray}),
+        returnObject: false,
         multiple: true,
         chips: true,
     },
@@ -616,8 +607,8 @@ const filters = ref({
         default: [],
         is: markRaw(VModelSelect),
         model: 'Keyword',
-        modelValue: [],
-        modelValueId: useRouteQuery('keywordsOrNot', [], {transform: toNumberArray}),
+        modelValue: useRouteQuery('keywordsOrNot', [], {transform: toNumberArray}),
+        returnObject: false,
         multiple: true,
         chips: true,
     },
@@ -629,8 +620,8 @@ const filters = ref({
         default: [],
         is: markRaw(VModelSelect),
         model: 'Keyword',
-        modelValue: [],
-        modelValueId: useRouteQuery('keywordsAndNot', [], {transform: toNumberArray}),
+        modelValue: useRouteQuery('keywordsAndNot', [], {transform: toNumberArray}),
+        returnObject: false,
         multiple: true,
         chips: true,
     },
@@ -642,8 +633,8 @@ const filters = ref({
         default: [],
         is: markRaw(VModelSelect),
         model: 'Food',
-        modelValue: [],
-        modelValueId: useRouteQuery('foods', [], {transform: toNumberArray}),
+        modelValue: useRouteQuery('foods', [], {transform: toNumberArray}),
+        returnObject: false,
         multiple: true,
         chips: true,
     },
@@ -655,8 +646,8 @@ const filters = ref({
         default: [],
         is: markRaw(VModelSelect),
         model: 'Food',
-        modelValue: [],
-        modelValueId: useRouteQuery('foodsAnd', [], {transform: toNumberArray}),
+        modelValue: useRouteQuery('foodsAnd', [], {transform: toNumberArray}),
+        returnObject: false,
         multiple: true,
         chips: true,
     },
@@ -668,8 +659,8 @@ const filters = ref({
         default: [],
         is: markRaw(VModelSelect),
         model: 'Food',
-        modelValue: [],
-        modelValueId: useRouteQuery('foodsOrNot', [], {transform: toNumberArray}),
+        modelValue:  useRouteQuery('foodsOrNot', [], {transform: toNumberArray}),
+        returnObject: false,
         multiple: true,
         chips: true,
     },
@@ -681,8 +672,8 @@ const filters = ref({
         default: [],
         is: markRaw(VModelSelect),
         model: 'Food',
-        modelValue: [],
-        modelValueId: useRouteQuery('foodsAndNot', [], {transform: toNumberArray}),
+        modelValue: useRouteQuery('foodsAndNot', [], {transform: toNumberArray}),
+        returnObject: false,
         multiple: true,
         chips: true,
     },
@@ -694,8 +685,8 @@ const filters = ref({
         default: [],
         is: markRaw(VModelSelect),
         model: 'RecipeBook',
-        modelValue: [],
-        modelValueId: useRouteQuery('books', [], {transform: toNumberArray}),
+        modelValue: useRouteQuery('books', [], {transform: toNumberArray}),
+        returnObject: false,
         multiple: true,
         chips: true,
     },
@@ -707,8 +698,8 @@ const filters = ref({
         default: [],
         is: markRaw(VModelSelect),
         model: 'RecipeBook',
-        modelValue: [],
-        modelValueId: useRouteQuery('booksAnd', [], {transform: toNumberArray}),
+        modelValue: useRouteQuery('booksAnd', [], {transform: toNumberArray}),
+        returnObject: false,
         multiple: true,
         chips: true,
     },
@@ -720,8 +711,8 @@ const filters = ref({
         default: [],
         is: markRaw(VModelSelect),
         model: 'RecipeBook',
-        modelValue: [],
-        modelValueId: useRouteQuery('booksOrNot', [], {transform: toNumberArray}),
+        modelValue: useRouteQuery('booksOrNot', [], {transform: toNumberArray}),
+        returnObject: false,
         multiple: true,
         chips: true,
     },
@@ -733,8 +724,8 @@ const filters = ref({
         default: [],
         is: markRaw(VModelSelect),
         model: 'RecipeBook',
-        modelValue: [],
-        modelValueId: useRouteQuery('booksAndNot', [], {transform: toNumberArray}),
+        modelValue: useRouteQuery('booksAndNot', [], {transform: toNumberArray}),
+        returnObject: false,
         multiple: true,
         chips: true,
     },
@@ -746,8 +737,8 @@ const filters = ref({
         default: undefined,
         is: markRaw(VModelSelect),
         model: 'User',
-        modelValue: undefined,
-        modelValueId: useRouteQuery('createdby', undefined, {transform: numberOrUndefinedTransformer}),
+        modelValue: useRouteQuery('createdby', undefined, {transform: numberOrUndefinedTransformer}),
+        returnObject: false,
     },
     units: {
         id: 'units',
