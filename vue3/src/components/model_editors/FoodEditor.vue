@@ -80,7 +80,7 @@
                                 <v-number-input :label="$t('ShoppingAmount')" v-model="editingObj.shoppingAmount" :precision="2" :min="0" control-variant="hidden" clearable hide-details></v-number-input>
                             </v-col>
                             <v-col cols="5">
-                                <model-select :label="$t('ShoppingUnit')" v-model="editingObj.preferredShoppingUnit" model="Unit" append-to-body inline hide-details></model-select>
+                                <model-select :label="$t('ShoppingUnit')" v-model="editingObj.preferredShoppingUnit" model="Unit" append-to-body hide-details></model-select>
                             </v-col>
                         </v-row>
 
