@@ -127,14 +127,28 @@ describe('FoodEditor - freezer-aware shelf-life defaults', () => {
         w.unmount()
     })
 
-    it('a Freezer preset chip click fills the Freezer row value+period', async () => {
+    // #19: the Freezer row moved from the generic, category-blind ExpiryPresetChips ("3 Days /
+    // 1 Week / ...") to FreezerCategoryChips (real USDA-style guidance, e.g. "Poultry: 9 months") -
+    // Pantry/Fridge and Opened have no such category guidance and keep the generic chips.
+    it('Pantry/Fridge and Opened rows still use the generic ExpiryPresetChips, Freezer does not', async () => {
         const item = makeFood({id: 5, name: 'Chicken Breast'})
         const w = mountEditor(item)
         await flushPromises()
 
-        const chipRows = w.findAllComponents({name: 'ExpiryPresetChips'})
-        expect(chipRows.length).toBe(3)
-        chipRows[1].vm.$emit('select', 180)  // Freezer row is the second of the three
+        expect(w.findAllComponents({name: 'ExpiryPresetChips'}).length).toBe(2)
+        expect(w.findAllComponents({name: 'FreezerCategoryChips'}).length).toBe(1)
+
+        w.unmount()
+    })
+
+    it('a Freezer category chip click fills the Freezer row value+period', async () => {
+        const item = makeFood({id: 5, name: 'Chicken Breast'})
+        const w = mountEditor(item)
+        await flushPromises()
+
+        const freezerChips = w.findComponent({name: 'FreezerCategoryChips'})
+        expect(freezerChips.exists()).toBe(true)
+        freezerChips.vm.$emit('select', 180)
         await flushPromises()
 
         expect((w.vm as any).shelfLifeFrozenValue).toBe(6)

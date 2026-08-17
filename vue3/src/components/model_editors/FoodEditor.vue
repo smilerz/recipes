@@ -57,7 +57,7 @@
                                           :items="[{title: $t('Days'), value: 'day'}, {title: $t('Weeks'), value: 'week'}, {title: $t('Months'), value: 'month'}]"></v-select>
                             </v-col>
                             <v-col cols="12">
-                                <expiry-preset-chips @select="(days:number) => setShelfLife('frozen', days)"></expiry-preset-chips>
+                                <freezer-category-chips @select="(days:number) => setShelfLife('frozen', days)"></freezer-category-chips>
                             </v-col>
                         </v-row>
 
@@ -229,6 +229,7 @@ import HierarchyEditor from "@/components/inputs/HierarchyEditor.vue";
 import {useRoute} from 'vue-router'
 import {shelfLifeFromDays, shelfLifeToDays, type ShelfLifePeriod} from "@/utils/pantry_utils.ts";
 import ExpiryPresetChips from "@/components/inputs/ExpiryPresetChips.vue";
+import FreezerCategoryChips from "@/components/inputs/FreezerCategoryChips.vue";
 
 
 const props = defineProps({

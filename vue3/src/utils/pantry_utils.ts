@@ -99,6 +99,25 @@ export function shelfLifeFromDays(days: number | null | undefined): {value: numb
  */
 export const EXPIRY_PRESET_DAYS = [3, 7, 14, 30, 90, 180, 365]
 
+/**
+ * Freezer shelf-life guidance by food category (USDA-style rules of thumb), in months. The single
+ * source of truth for both FreezerExpiryDialog (pick an absolute date for a lot) and FoodEditor's
+ * Frozen shelf-life row (#19: reuse these instead of the generic, category-blind day chips —
+ * "3 Days / 1 Week / ..." carries no food-safety guidance the way "Poultry: 9 months" does).
+ */
+export const FREEZER_CATEGORY_PRESETS = [
+    {labelKey: 'Meat (Beef/Pork)', months: 12, icon: 'fa-solid fa-drumstick-bite'},
+    {labelKey: 'Poultry', months: 9, icon: 'fa-solid fa-dove'},
+    {labelKey: 'Ground Meat', months: 4, icon: 'fa-solid fa-hamburger'},
+    {labelKey: 'Fish (Lean)', months: 6, icon: 'fa-solid fa-fish'},
+    {labelKey: 'Fish (Fatty)', months: 3, icon: 'fa-solid fa-fish-fins'},
+    {labelKey: 'Vegetables', months: 10, icon: 'fa-solid fa-carrot'},
+    {labelKey: 'Fruit', months: 12, icon: 'fa-solid fa-apple-whole'},
+    {labelKey: 'Bread', months: 3, icon: 'fa-solid fa-bread-slice'},
+    {labelKey: 'Pre-cooked Meals', months: 3, icon: 'fa-solid fa-utensils'},
+    {labelKey: 'Soup/Stew', months: 3, icon: 'fa-solid fa-bowl-food'},
+] as const
+
 /** Human-readable label for a preset duration, e.g. "2 Weeks" — reuses the same Days/Weeks/Months
  * period labels already shown in the shelf-life period selector, for one consistent vocabulary. */
 export function formatShelfLifeDuration(days: number, t: (key: string) => string): string {
