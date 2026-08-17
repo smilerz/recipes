@@ -24,8 +24,11 @@
                     <v-col cols="12" md="6">
                         <model-select model="Food" v-model="food" hide-details></model-select>
                     </v-col>
-                    <v-col cols="12" md="6">
+                    <v-col cols="12" md="5">
                         <model-select model="InventoryLocation" v-model="inventoryLocation" hide-details></model-select>
+                    </v-col>
+                    <v-col cols="12" md="1" class="d-flex align-center">
+                        <v-btn icon="$pantry" color="create" variant="tonal" :disabled="!food" :title="$t('Add')" :aria-label="$t('Add')" @click="quickAdd"></v-btn>
                     </v-col>
                 </v-row>
 
@@ -35,6 +38,7 @@
 
         <stock-up-dialog ref="stockUpDialog" @stocked="entryTable?.load()"></stock-up-dialog>
         <use-up-dialog ref="useUpDialog" @used="entryTable?.load()"></use-up-dialog>
+        <inventory-quick-add-dialog ref="quickAddDialog"></inventory-quick-add-dialog>
     </v-container>
 </template>
 
@@ -43,20 +47,33 @@
 import InventoryEntryTable from "@/components/display/InventoryEntryTable.vue";
 import StockUpDialog from "@/components/dialogs/StockUpDialog.vue";
 import UseUpDialog from "@/components/dialogs/UseUpDialog.vue";
+import InventoryQuickAddDialog from "@/components/dialogs/InventoryQuickAddDialog.vue";
 import ModelSelect from "@/components/inputs/ModelSelect.vue";
 import {onMounted, ref} from "vue";
 import {useDisplay} from "vuetify";
+import {useI18n} from "vue-i18n";
 import {ApiApi, Food, InventoryLocation} from "@/openapi";
 import {useRoute} from "vue-router";
 import {ErrorMessageType, useMessageStore} from "@/stores/MessageStore";
+import {useInventoryActions} from "@/composables/useInventoryActions";
 
 const route = useRoute()
 const {mobile} = useDisplay()
+const {t} = useI18n()
 const food = ref<Food | undefined>(undefined)
 const inventoryLocation = ref<InventoryLocation | undefined>(undefined)
 const entryTable = ref<InstanceType<typeof InventoryEntryTable> | null>(null)
 const stockUpDialog = ref<InstanceType<typeof StockUpDialog> | null>(null)
 const useUpDialog = ref<InstanceType<typeof UseUpDialog> | null>(null)
+const quickAddDialog = ref<InstanceType<typeof InventoryQuickAddDialog> | null>(null)
+
+// #4: quick-add a lot for the food currently selected in the filter above, without leaving the page.
+async function quickAdd() {
+    if (!food.value || !quickAddDialog.value) return
+    const {quickAddToInventory} = useInventoryActions()
+    const added = await quickAddToInventory({id: food.value.id!, name: food.value.name}, quickAddDialog.value, t)
+    if (added) entryTable.value?.load()
+}
 
 // Header actions, rendered in the card append on desktop and a wrapping row on mobile (DEFECT-02).
 const headerActions = [
