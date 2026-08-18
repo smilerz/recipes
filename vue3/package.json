@@ -35,7 +35,7 @@
     "@playwright/test": "^1.62.1",
     "@tsconfig/node22": "^22.0.6",
     "@types/jsdom": "^28.0.3",
-    "@types/node": "^26.1.2",
+    "@types/node": "^26.2.0",
     "@vitejs/plugin-vue": "^6.0.8",
     "@vitest/coverage-v8": "^4.1.10",
     "@vue/test-utils": "^2.4.11",
