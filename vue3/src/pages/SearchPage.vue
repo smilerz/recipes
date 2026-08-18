@@ -938,10 +938,10 @@ const filters = ref({
         label: t('Include Children'),
         hint: t('Include child keywords and foods in search results'),
         enabled: false,
-        default: true,  // Default enabled like v1
+        default: "true",  // Default enabled like v1
         is: markRaw(VSelect),
-        items: [{value: true, title: 'Yes'}, {value: false, title: 'No'}],
-        modelValue: useRouteQuery('includeChildren', 'true', {transform: stringToBool})
+        items: [{value: "true", title: 'Yes'}, {value: "false", title: 'No'}],
+        modelValue: useRouteQuery('includeChildren', 'true')
     },
 })
 

@@ -18,6 +18,8 @@
         <br/>
 
         <v-model-select model="Keyword" v-model="value" :return-object="false" multiple chips label="Keyword (id)"></v-model-select>
+        <v-model-select model="Keyword" v-model="value" :return-object="false" multiple chips label="Keyword (id)"></v-model-select>
+
 
 
         {{value}}

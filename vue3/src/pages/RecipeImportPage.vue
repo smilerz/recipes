@@ -142,11 +142,11 @@
                                 <div v-if="importType == 'ai'">
                                     <v-row>
                                         <v-col cols="12" md="6">
-                                            <ModelSelect model="AiProvider" v-model="selectedAiProvider" hide-details>
+                                            <v-model-select model="AiProvider" v-model="selectedAiProvider" hide-details>
                                                 <template #append>
                                                     <v-btn icon="$settings" :to="{name:'ModelListPage', params: {model: 'AiProvider'}}" color="success"></v-btn>
                                                 </template>
-                                            </ModelSelect>
+                                            </v-model-select>
                                         </v-col>
                                         <v-col cols="12" md="6">
                                             <v-btn-toggle class="mb-2" border divided v-model="aiMode">

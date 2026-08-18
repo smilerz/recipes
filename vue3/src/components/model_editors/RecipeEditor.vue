@@ -264,6 +264,15 @@ function initializeEditor() {
         itemDefaults: props.itemDefaults,
         onAfterSave: () => {
             saveRecipeImage()
+        },
+        onBeforeSave: () => {
+            editingObj.value.steps.forEach(step => {
+                step.ingredients.forEach(ingredient => {
+                    if (!ingredient.amount) {
+                        ingredient.amount = 0
+                    }
+                })
+            })
         }
     })
 }

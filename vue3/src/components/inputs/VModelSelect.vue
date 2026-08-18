@@ -109,8 +109,6 @@
     </v-autocomplete>
 
     <model-edit-dialog :model="props.model" v-model="editDialog" :item-id="editingItemId" @save="handleModelEditorUpdate" @create="handleModelEditorUpdate"></model-edit-dialog>
-
-
 </template>
 
 <script setup lang="ts">
@@ -150,11 +148,11 @@ const props = defineProps({
     placeholder: {type: String, default: undefined},
 
     // model
-    modelValue: {type: [Object, Array, Number] as PropType<EditorSupportedTypes | EditorSupportedTypes[] | number | number[] | undefined>, default: undefined},
+    modelValue: {type: [Object, Array, Number] as PropType<EditorSupportedTypes | EditorSupportedTypes[] | number | number[] | undefined | null>, default: undefined},
 })
 
 
-const autoselectValue = ref<EditorSupportedTypes | EditorSupportedTypes[] | undefined>(undefined)
+const autoselectValue = ref<EditorSupportedTypes | EditorSupportedTypes[] | undefined | null>(undefined)
 
 const modelClass = ref({} as GenericModel)
 const loading = ref(false)
@@ -229,7 +227,14 @@ watch(autoselectValue, (newValue, oldValue) => {
  * watcher to update internal autoselectValue
  */
 watch(() => props.modelValue, (newValue, oldValue) => {
+    // do not trigger update if value has not actually changed
+    if(newValue == oldValue ||
+        (Array.isArray(newValue) && Array.isArray(oldValue) && newValue.length === oldValue.length && newValue.every((item:number) => oldValue.includes(item)))){
+        return
+    }
+
     console.log('MODEL value changed', oldValue, ' ==>', newValue)
+
     updateAutoselectValue(newValue)
 })
 
@@ -257,6 +262,7 @@ onMounted(() => {
         searchItems()
     }
 
+    //watcher does not trigger on initial load so trigger once when mounted (do not use immediate as that is to early/before everything else is initialiezd)
     updateAutoselectValue(props.modelValue)
 })
 
@@ -375,23 +381,29 @@ function handleModelEditorUpdate(event: EditorSupportedTypes) {
  * updates the internal autoselectValue from the external modelValue which might use IDs when return object is set to false
  * @param newValue
  */
-function updateAutoselectValue(newValue: EditorSupportedTypes | EditorSupportedTypes[] | number | number[] | undefined) {
+function updateAutoselectValue(newValue: EditorSupportedTypes | EditorSupportedTypes[] | number | number[] | undefined | null) {
     console.log('updating autoselect value', newValue)
     if (typeof newValue === 'number') {
-        if((autoselectValue.value && autoselectValue.value.id! != newValue) || !autoselectValue.value)
-        modelClass.value.retrieve(newValue).then((r: EditorSupportedTypes) => {
-            autoselectValue.value = r
-        })
+        if ((autoselectValue.value && autoselectValue.value.id! != newValue) || !autoselectValue.value) {
+            modelClass.value.retrieve(newValue).then((r: EditorSupportedTypes) => {
+                autoselectValue.value = r
+            })
+        }
     } else if ((Array.isArray(newValue) && newValue.every(item => typeof item === 'number'))) {
         let missingIds = newValue
 
         if (autoselectValue.value && Array.isArray(autoselectValue.value)) {
             // remove existing items no longer in external model
-            autoselectValue.value = autoselectValue.value.filter((item: EditorSupportedTypes) => newValue.includes(item.id!))
+            // check before filtering because filtering triggers an update which causes an infinite loop
+            if (autoselectValue.value.findIndex((item: EditorSupportedTypes) => !newValue.includes(item.id!)) != -1) {
+                autoselectValue.value = autoselectValue.value.filter((item: EditorSupportedTypes) => newValue.includes(item.id!))
+            }
 
+            // remove already existing values from missingIds
             const existingIds = new Set(autoselectValue.value.map(item => item.id))
             missingIds = newValue.filter(id => !existingIds.has(id))
         }
+        console.log('missingIds', missingIds)
 
         if (missingIds.length > 0) {
             loading.value = true
@@ -400,6 +412,10 @@ function updateAutoselectValue(newValue: EditorSupportedTypes | EditorSupportedT
                 missingIds.map(id => modelClass.value.retrieve(id))
             ).then((missingItems: EditorSupportedTypes[]) => {
                 if (autoselectValue.value && Array.isArray(autoselectValue.value)) {
+                    // check again items were not already added (might occur with race conditions)
+                    const existingIds = new Set(autoselectValue.value.map(item => item.id))
+                    missingItems = missingItems.filter(item => !existingIds.has(item.id))
+
                     autoselectValue.value = autoselectValue.value.concat(missingItems)
                 } else {
                     autoselectValue.value = missingItems
@@ -420,7 +436,7 @@ function updateAutoselectValue(newValue: EditorSupportedTypes | EditorSupportedT
  * supports returning ids or objects
  * @param newValue
  */
-function updateModelValue(newValue: EditorSupportedTypes | EditorSupportedTypes[] | undefined) {
+function updateModelValue(newValue: EditorSupportedTypes | EditorSupportedTypes[] | undefined | null) {
     if (!props.returnObject) {
         console.log('returning value as ID(s)', newValue)
         if (Array.isArray(newValue)) {

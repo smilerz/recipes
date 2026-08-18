@@ -111,10 +111,10 @@
                     <v-checkbox :label="$t('substitute_siblings')" :hint="$t('substitute_siblings_help')" v-model="editingObj.substituteSiblings" persistent-hint></v-checkbox>
                     <v-checkbox :label="$t('substitute_children')" :hint="$t('substitute_children_help')" v-model="editingObj.substituteChildren" persistent-hint></v-checkbox>
 
-                    <ModelSelect model="FoodInheritField" v-model="editingObj.inheritFields" :label="$t('InheritFields')" :hint="$t('InheritFields_help')"
-                                 mode="tags"></ModelSelect>
-                    <ModelSelect model="FoodInheritField" v-model="editingObj.childInheritFields" :label="$t('ChildInheritFields')" :hint="$t('ChildInheritFields_help')"
-                                 mode="tags"></ModelSelect>
+                    <v-model-select model="FoodInheritField" v-model="editingObj.inheritFields" :label="$t('InheritFields')" :hint="$t('InheritFields_help')"
+                                 chips multiple></v-model-select>
+                    <v-model-select model="FoodInheritField" v-model="editingObj.childInheritFields" :label="$t('ChildInheritFields')" :hint="$t('ChildInheritFields_help')"
+                                 chips multiple></v-model-select>
 
                     <!-- TODO remove once append to body for model select is working properly -->
                         <v-spacer style="margin-top: 100px;"></v-spacer>
@@ -122,12 +122,12 @@
 
                 <v-tabs-window-item value="misc">
                     <v-form :disabled="loading" class="mt-5">
-                        <ModelSelect model="Recipe" v-model="editingObj.recipe" :label="$t('Recipe')"></ModelSelect>
+                        <v-model-select model="Recipe" v-model="editingObj.recipe"></v-model-select>
                         <v-text-field :label="$t('Website')" v-model="editingObj.url"></v-text-field>
                         <v-checkbox :label="$t('OnHand')" :hint="$t('OnHand_help')" v-model="editingObj.foodOnhand" persistent-hint></v-checkbox>
                         <v-checkbox :label="$t('Ignore_Shopping')" :hint="$t('ignore_shopping_help')" v-model="editingObj.ignoreShopping" persistent-hint></v-checkbox>
                         <v-divider class="mt-2 mb-2"></v-divider>
-                        <ModelSelect model="Food" v-model="editingObj.substitute" :label="$t('Substitutes')" :hint="$t('substitute_help')" mode="tags"></ModelSelect>
+                        <v-model-select model="Food" v-model="editingObj.substitute" :label="$t('Substitutes')" :hint="$t('substitute_help')" multiple chips></v-model-select>
 
                         <!-- TODO re-add reset inheritance button/api call /function (previously annotated field on food -->
                         <v-text-field :label="$t('Open_Data_Slug')" :hint="$t('open_data_help_text')" persistent-hint v-model="editingObj.openDataSlug" disabled></v-text-field>
