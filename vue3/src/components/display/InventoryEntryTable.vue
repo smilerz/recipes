@@ -61,9 +61,7 @@
                                     <v-btn icon="fa-solid fa-clock-rotate-left" :title="t('History')" @click="openLog(item)"></v-btn>
                                     <v-btn icon="fa-solid fa-lock-open" :title="openTitle(item)" :data-test="`open-lot-${item.id}`" @click="openLot(item)"
                                            :disabled="!canOpen(item)"></v-btn>
-                                    <v-btn icon="fa-solid fa-minus" :title="t('Remove')" @click="openBooking('remove', item)"></v-btn>
-                                    <v-btn icon="fa-solid fa-arrow-right" :title="t('Move')" @click="openBooking('move', item)"></v-btn>
-                                    <v-btn icon="$edit" :title="t('Edit')" :data-test="`edit-lot-${item.id}`" @click="openBooking('edit', item)"></v-btn>
+                                    <v-btn icon="$edit" :title="t('Edit')" :data-test="`edit-lot-${item.id}`" @click="openBooking(item)"></v-btn>
                                 </v-btn-group>
                             </td>
                         </tr>
@@ -92,9 +90,7 @@
                                         <v-list-item :title="t('History')" prepend-icon="fa-solid fa-clock-rotate-left" @click="openLog(item)"></v-list-item>
                                         <v-list-item :title="openTitle(item)" prepend-icon="fa-solid fa-lock-open" :data-test="`open-lot-${item.id}`"
                                                      :disabled="!canOpen(item)" @click="openLot(item)"></v-list-item>
-                                        <v-list-item :title="t('Remove')" prepend-icon="fa-solid fa-minus" @click="openBooking('remove', item)"></v-list-item>
-                                        <v-list-item :title="t('Move')" prepend-icon="fa-solid fa-arrow-right" @click="openBooking('move', item)"></v-list-item>
-                                        <v-list-item :title="t('Edit')" prepend-icon="$edit" @click="openBooking('edit', item)"></v-list-item>
+                                        <v-list-item :title="t('Edit')" prepend-icon="$edit" @click="openBooking(item)"></v-list-item>
                                     </v-list>
                                 </v-menu>
                             </v-btn>
@@ -135,7 +131,7 @@ const loading = ref(false)
 const entryLogDialog = ref(false)
 const entryLogEntry = ref<InventoryEntry | null>(null)
 const bookingDialog = ref(false)
-const bookingMode = ref('move')
+const bookingMode = ref('edit')
 const bookingEntry = ref<InventoryEntry | null>(null)
 
 const byExpiry = (a: InventoryEntry, b: InventoryEntry) =>
@@ -277,10 +273,11 @@ function unopenLot(item: InventoryEntry) {
     })
 }
 
-// Remove / move / edit a lot through the shared PantryBookingDialog (upstream's row-action flow).
-function openBooking(mode: 'remove' | 'move' | 'edit', item: InventoryEntry) {
+// #2: Remove/Move/Edit collapsed into a single Edit mode (tabbed Amount/Location) on the shared
+// PantryBookingDialog.
+function openBooking(item: InventoryEntry) {
     bookingEntry.value = item
-    bookingMode.value = mode
+    bookingMode.value = 'edit'
     bookingDialog.value = true
 }
 

@@ -6,16 +6,22 @@
 
             <v-card-text>
 
-                <v-row v-if="['add','remove','move','edit'].includes(bookingMode)">
+                <v-row v-if="['add','edit'].includes(bookingMode)">
                     <v-col>
                         <v-form>
-                            <model-select model="InventoryEntry" :label="$t('InventoryEntry')" v-model="inventoryEntry" v-if="['remove','move','edit'].includes(bookingMode)"
+                            <model-select model="InventoryEntry" :label="$t('InventoryEntry')" v-model="inventoryEntry" v-if="bookingMode === 'edit'"
                                           @update:modelValue="inventoryEntrySelected()">
                             </model-select>
 
-                            <model-select model="Food" :label="$t('Food')" allow-create v-model="food" v-if="['add'].includes(bookingMode)"></model-select>
+                            <model-select model="Food" :label="$t('Food')" allow-create v-model="food" v-if="bookingMode === 'add'"></model-select>
 
-                            <model-select model="InventoryLocation" :label="$t('InventoryLocation')" v-model="inventoryLocation" v-if="['add','move'].includes(bookingMode)">
+                            <v-tabs v-if="bookingMode === 'edit'" v-model="editTab" class="mb-4" density="compact">
+                                <v-tab value="amount">{{ $t('Amount') }}</v-tab>
+                                <v-tab value="location">{{ $t('InventoryLocation') }}</v-tab>
+                            </v-tabs>
+
+                            <model-select model="InventoryLocation" :label="$t('InventoryLocation')" v-model="inventoryLocation"
+                                          v-if="bookingMode === 'add' || (bookingMode === 'edit' && editTab === 'location')">
                                 <template #append>
                                     <v-btn icon>
                                         <v-icon icon="$create"></v-icon>
@@ -23,22 +29,31 @@
                                     </v-btn>
                                 </template>
                             </model-select>
+                            <v-text-field :label="$t('SubLocation')" :hint="$t('SubLocationHelp')" v-model="subLocation"
+                                          v-if="bookingMode === 'add' || (bookingMode === 'edit' && editTab === 'location')"></v-text-field>
 
-                            <v-number-input :label="$t('Amount')" :precision="2" v-model="amount" v-if="['add', 'remove', 'edit'].includes(bookingMode)"></v-number-input>
-                            <model-select model="Unit" :label="$t('Unit')" allow-create v-model="unit" v-if="['add', 'edit'].includes(bookingMode)" hide-details>
+                            <div v-if="bookingMode === 'edit' && editTab === 'amount'" class="text-caption text-medium-emphasis mb-2">
+                                {{ $t('InStock') }}: {{ entryOriginalAmount }} {{ entryOriginalUnit?.name || '' }}
+                                <span v-if="amountChanged" class="text-warning">→ {{ amount }} {{ unit?.name || '' }}</span>
+                            </div>
+
+                            <v-number-input :label="$t('Amount')" :precision="2" v-model="amount"
+                                            v-if="bookingMode === 'add' || (bookingMode === 'edit' && editTab === 'amount')"></v-number-input>
+                            <model-select model="Unit" :label="$t('Unit')" allow-create v-model="unit" hide-details
+                                          v-if="bookingMode === 'add' || (bookingMode === 'edit' && editTab === 'amount')">
                                 <template #append-inner>
                                     <v-chip v-for="u in commonUnits" :key="u.id" @click="unit = u" size="small" class="mr-1">
                                         {{ u.name }}
                                     </v-chip>
                                 </template>
                             </model-select>
-                            <v-chip-group v-if="['add'].includes(bookingMode)" class="mb-2">
+                            <v-chip-group v-if="bookingMode === 'add'" class="mb-2">
                                 <v-chip v-for="u in commonUnits" :key="u.id" @click="unit = u" size="small" class="mr-1">
                                     {{ u.name }}
                                 </v-chip>
                             </v-chip-group>
 
-                            <v-date-input :label="$t('Expires')" v-model="expires" v-if="['add'].includes(bookingMode)">
+                            <v-date-input :label="$t('Expires')" v-model="expires" v-if="bookingMode === 'add'">
                                 <template #append-inner>
                                     <v-btn variant="text" @click.stop="freezerExpiryDialog = true">
                                         <v-icon icon="fa-solid fa-snowflake"></v-icon>
@@ -47,10 +62,8 @@
                                 </template>
                             </v-date-input>
 
-                            <v-text-field :label="$t('SubLocation')" :hint="$t('SubLocationHelp')" v-model="subLocation" v-if="['add','move'].includes(bookingMode)"></v-text-field>
-
-                            <closable-help-alert :text="$t('CodeHelp')" class="mb-2"></closable-help-alert>
-                            <v-text-field :label="$t('Code')" v-model="code" v-if="['add'].includes(bookingMode)"></v-text-field>
+                            <closable-help-alert :text="$t('CodeHelp')" class="mb-2" v-if="bookingMode === 'add'"></closable-help-alert>
+                            <v-text-field :label="$t('Code')" v-model="code" v-if="bookingMode === 'add'"></v-text-field>
 
                             <v-btn block @click="save" prepend-icon="$save" color="save">{{ $t('Save') }}</v-btn>
                         </v-form>
@@ -137,6 +150,7 @@ const formLoading = ref(false)
 const freezerExpiryDialog = ref(false)
 
 const bookingMode = ref('add')
+const editTab = ref<'amount' | 'location'>('amount')
 const food = ref<Food | null>(null)
 const inventoryEntry = ref<InventoryEntry | null>(null)
 const inventoryLocation = ref<InventoryLocation | null>(null)
@@ -145,6 +159,12 @@ const code = ref('')
 const amount = ref<number | undefined>(1)
 const unit = ref<Unit | undefined | null>(useUserPreferenceStore().defaultUnitObj)
 const expires = ref<Date | undefined>(undefined)
+
+// tracked so the Amount tab can show an "In Stock: X → Y" before/after caption (#2), matching
+// UseUpDialog's absolute-value editing pattern
+const entryOriginalAmount = ref<number | undefined>(undefined)
+const entryOriginalUnit = ref<Unit | undefined | null>(undefined)
+const amountChanged = computed(() => amount.value !== entryOriginalAmount.value || unit.value !== entryOriginalUnit.value)
 
 const commonUnits = ref<Unit[]>([])
 
@@ -164,10 +184,6 @@ const selectedCopyOptions = ref<string[]>(['food', 'inventoryLocation', 'amount'
 const dialogTitle = computed(() => {
     if (bookingMode.value == 'add') {
         return t('Add')
-    } else if (bookingMode.value == 'remove') {
-        return t('Remove')
-    } else if (bookingMode.value == 'move') {
-        return t('Move')
     } else if (bookingMode.value == 'edit') {
         return t('Edit')
     } else if (bookingMode.value == 'confirm') {
@@ -234,10 +250,6 @@ onMounted(() => {
 function save() {
     if (bookingMode.value == 'add') {
         addInventory()
-    } else if (bookingMode.value == 'remove') {
-        removeInventory()
-    } else if (bookingMode.value == 'move') {
-        moveInventory()
     } else if (bookingMode.value == 'edit') {
         editInventory()
     }
@@ -245,22 +257,30 @@ function save() {
 }
 
 /**
- * Directly correct an existing lot's amount/unit (#9) — Move already handles relocating a lot and
- * Remove already handles subtracting from it, but neither lets you fix a typo'd amount or unit
- * without going through subtract-then-re-add. Same never-touch-`expires` pattern as moveInventory:
- * a full PUT would resend the old `expires` and permanently defeat the backend's freeze/thaw
- * recompute (caller_set_expires), so this only ever patches the fields that actually changed.
+ * Directly correct an existing lot (#2) — Remove, Move, and the original #9 amount/unit Edit were
+ * three separate modes with duplicated "which fields changed" PATCH logic; a single Save now
+ * patches whichever fields actually changed, on either the Amount or Location tab. Never a full
+ * PUT: that would resend the old `expires` and permanently defeat the backend's freeze/thaw
+ * recompute (caller_set_expires) on a genuine freezer<->fridge move.
  */
 function editInventory() {
     let api = new ApiApi()
 
     if (inventoryEntry.value != null) {
+        const expiresBeforeEdit = inventoryEntry.value.expires
+
         const patch: PatchedInventoryEntry = {}
         if (amount.value != null && inventoryEntry.value.amount !== amount.value) {
             patch.amount = amount.value
         }
         if (inventoryEntry.value.unit !== unit.value) {
             patch.unit = unit.value ?? null
+        }
+        if (inventoryLocation.value != null && inventoryEntry.value.inventoryLocation != inventoryLocation.value) {
+            patch.inventoryLocation = inventoryLocation.value
+        }
+        if (subLocation.value != null && inventoryEntry.value.subLocation != subLocation.value) {
+            patch.subLocation = subLocation.value
         }
 
         if (Object.keys(patch).length === 0) {
@@ -269,8 +289,13 @@ function editInventory() {
         }
 
         formLoading.value = true
-        api.apiInventoryEntryPartialUpdate({id: inventoryEntry.value.id!, patchedInventoryEntry: patch}).then(() => {
+        api.apiInventoryEntryPartialUpdate({id: inventoryEntry.value.id!, patchedInventoryEntry: patch}).then(r => {
             useMessageStore().addPreparedMessage(PreparedMessage.UPDATE_SUCCESS)
+            if (r.expires && (r.expires?.getTime() ?? null) !== (expiresBeforeEdit?.getTime() ?? null)) {
+                useMessageStore().addMessage(MessageType.INFO,
+                    {title: t('Expires'), text: t('OpenedExpiryUpdated', {date: DateTime.fromJSDate(r.expires).toLocaleString(DateTime.DATE_MED)})} as StructuredMessage,
+                    4000)
+            }
         }).catch(err => {
             useMessageStore().addError(ErrorMessageType.UPDATE_ERROR, err)
         }).finally(() => {
@@ -316,84 +341,6 @@ function addInventory() {
 }
 
 /**
- * subtract amount from inventory entry and save to DB
- */
-function removeInventory() {
-    let api = new ApiApi()
-
-    if (inventoryEntry.value != null) {
-        formLoading.value = true
-
-        if (inventoryEntry.value.amount != undefined && amount.value != undefined) {
-            inventoryEntry.value.amount = Math.max(inventoryEntry.value.amount - amount.value, 0)
-        }
-
-        api.apiInventoryEntryUpdate({id: inventoryEntry.value.id!, inventoryEntry: inventoryEntry.value}).then(r => {
-            useMessageStore().addPreparedMessage(PreparedMessage.UPDATE_SUCCESS)
-            if (inventoryEntry.value && inventoryEntry.value.amount == 0) {
-                bookingMode.value = 'add'
-                resetForm(true, true)
-            } else {
-                inventoryEntrySelected()
-            }
-        }).catch(err => {
-            useMessageStore().addError(ErrorMessageType.UPDATE_ERROR, err)
-        }).finally(() => {
-            formLoading.value = false
-            dialog.value = false
-            emits('update')
-        })
-    }
-}
-
-function moveInventory() {
-    let api = new ApiApi()
-
-    if (inventoryEntry.value != null) {
-        formLoading.value = true
-        // a freeze/thaw transition (see recompute_lot_expiry) may recompute expires server-side;
-        // compare against the pre-move value so that surfaces via its own toast, never silently
-        const expiresBeforeMove = inventoryEntry.value.expires
-
-        // Patch only the fields that actually changed — omitting `expires` entirely (not just
-        // leaving it unchanged) matters: the backend's freeze/thaw recompute only runs when the
-        // caller didn't set `expires` at all (caller_set_expires). A full PUT of the whole entry
-        // always resends the old `expires`, which looks like "the caller set it" and permanently
-        // defeats the recompute, even on a genuine freezer<->fridge move.
-        const patch: PatchedInventoryEntry = {}
-        if (inventoryLocation.value != null && inventoryEntry.value.inventoryLocation != inventoryLocation.value) {
-            patch.inventoryLocation = inventoryLocation.value
-        }
-        if (subLocation.value != null && inventoryEntry.value.subLocation != subLocation.value) {
-            patch.subLocation = subLocation.value
-        }
-
-        if (Object.keys(patch).length > 0) {
-            api.apiInventoryEntryPartialUpdate({id: inventoryEntry.value.id!, patchedInventoryEntry: patch}).then(r => {
-                useMessageStore().addPreparedMessage(PreparedMessage.UPDATE_SUCCESS)
-                if (r.expires && (r.expires?.getTime() ?? null) !== (expiresBeforeMove?.getTime() ?? null)) {
-                    useMessageStore().addMessage(MessageType.INFO,
-                        {title: t('Expires'), text: t('OpenedExpiryUpdated', {date: DateTime.fromJSDate(r.expires).toLocaleString(DateTime.DATE_MED)})} as StructuredMessage,
-                        4000)
-                }
-                inventoryEntrySelected()
-            }).catch(err => {
-                useMessageStore().addError(ErrorMessageType.UPDATE_ERROR, err)
-            }).finally(() => {
-                formLoading.value = false
-                dialog.value = false
-                emits('update')
-            })
-        } else {
-            formLoading.value = false
-            dialog.value = false
-        }
-
-    }
-}
-
-
-/**
  * reset form to default values
  */
 function resetForm() {
@@ -405,6 +352,9 @@ function resetForm() {
     unit.value = useUserPreferenceStore().defaultUnitObj
     expires.value = undefined
     code.value = ''
+    editTab.value = 'amount'
+    entryOriginalAmount.value = undefined
+    entryOriginalUnit.value = undefined
 }
 
 /**
@@ -418,6 +368,8 @@ function inventoryEntrySelected() {
         //subLocation.value = inventoryEntry.value.subLocation
         amount.value = inventoryEntry.value.amount
         //expires.value = inventoryEntry.value.expires
+        entryOriginalAmount.value = inventoryEntry.value.amount
+        entryOriginalUnit.value = inventoryEntry.value.unit
     }
 }
 

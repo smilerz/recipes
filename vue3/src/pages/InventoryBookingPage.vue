@@ -25,11 +25,10 @@
                         <v-form>
                             <v-btn-toggle v-model="bookingMode" class="mb-5" border divided>
                                 <v-btn value="add" prepend-icon="$create">{{ $t('Add') }}</v-btn>
-                                <v-btn value="remove" prepend-icon="fa-solid fa-minus">{{ $t('Remove') }}</v-btn>
-                                <v-btn value="move" prepend-icon="fa-solid fa-arrow-right">{{ $t('Move') }}</v-btn>
+                                <v-btn value="edit" prepend-icon="$edit">{{ $t('Edit') }}</v-btn>
                             </v-btn-toggle>
 
-                            <model-select model="InventoryEntry" :label="$t('InventoryEntry')" v-model="inventoryEntry" v-if="['remove','move'].includes(bookingMode)"
+                            <model-select model="InventoryEntry" :label="$t('InventoryEntry')" v-model="inventoryEntry" v-if="['edit'].includes(bookingMode)"
                                           @update:modelValue="inventoryEntrySelected()">
                             </model-select>
 
@@ -49,7 +48,13 @@
                                 </v-card-text>
                             </v-card>
 
-                            <model-select model="InventoryLocation" :label="$t('InventoryLocation')" v-model="inventoryLocation" v-if="['add','move'].includes(bookingMode)">
+                            <v-tabs v-if="['edit'].includes(bookingMode)" v-model="editTab" class="mb-4" density="compact">
+                                <v-tab value="amount">{{ $t('Amount') }}</v-tab>
+                                <v-tab value="location">{{ $t('InventoryLocation') }}</v-tab>
+                            </v-tabs>
+
+                            <model-select model="InventoryLocation" :label="$t('InventoryLocation')" v-model="inventoryLocation"
+                                          v-if="['add'].includes(bookingMode) || (['edit'].includes(bookingMode) && editTab === 'location')">
                                 <template #append>
                                     <v-btn icon>
                                         <v-icon icon="$create"></v-icon>
@@ -57,13 +62,21 @@
                                     </v-btn>
                                 </template>
                             </model-select>
-                            <v-text-field :label="$t('SubLocation')" :hint="$t('SubLocationHelp')" v-model="subLocation" v-if="['add','move'].includes(bookingMode)"></v-text-field>
+                            <v-text-field :label="$t('SubLocation')" :hint="$t('SubLocationHelp')" v-model="subLocation"
+                                          v-if="['add'].includes(bookingMode) || (['edit'].includes(bookingMode) && editTab === 'location')"></v-text-field>
 
-                            <closable-help-alert :text="$t('CodeHelp')" class="mb-2"></closable-help-alert>
+                            <closable-help-alert :text="$t('CodeHelp')" class="mb-2" v-if="['add'].includes(bookingMode)"></closable-help-alert>
                             <v-text-field :label="$t('Code')" v-model="code" v-if="['add'].includes(bookingMode)"></v-text-field>
 
-                            <v-number-input :label="$t('Amount')" :precision="2" v-model="amount" v-if="['add', 'remove'].includes(bookingMode)"></v-number-input>
-                            <model-select model="Unit" :label="$t('Unit')" allow-create v-model="unit" v-if="['add'].includes(bookingMode)"></model-select>
+                            <div v-if="['edit'].includes(bookingMode) && editTab === 'amount'" class="text-caption text-medium-emphasis mb-2">
+                                {{ $t('InStock') }}: {{ entryOriginalAmount }} {{ entryOriginalUnit?.name || '' }}
+                                <span v-if="amountChanged" class="text-warning">→ {{ amount }} {{ unit?.name || '' }}</span>
+                            </div>
+
+                            <v-number-input :label="$t('Amount')" :precision="2" v-model="amount"
+                                            v-if="['add'].includes(bookingMode) || (['edit'].includes(bookingMode) && editTab === 'amount')"></v-number-input>
+                            <model-select model="Unit" :label="$t('Unit')" allow-create v-model="unit"
+                                          v-if="['add'].includes(bookingMode) || (['edit'].includes(bookingMode) && editTab === 'amount')"></model-select>
 
                             <v-date-input :label="$t('Expires')" v-model="expires" v-if="['add'].includes(bookingMode)">
                                 <template #append-inner>
@@ -93,7 +106,7 @@
                             hover
                             class="clickable-rows"
                             @update:options="loadItems"
-                            @click:row="(_event: MouseEvent, {item}: {item: InventoryEntry}) => selectRowForRemove(item)"
+                            @click:row="(_event: MouseEvent, {item}: {item: InventoryEntry}) => selectRowForEdit(item)"
                             :items="items"
                             :items-length="itemCount"
                             :loading="tableLoading"
@@ -130,10 +143,8 @@
                             <template #item.action="{item}">
                                 <v-btn-group divided border density="comfortable">
                                       <v-btn  icon="fa-solid fa-clock-rotate-left" data-test="stock-history-btn" @click.stop="entryLogDialog = true; entryLogEntry = item"></v-btn>
-                                <v-btn  icon="fa-solid fa-minus" data-test="stock-remove-btn"
-                                       @click.stop="bookingMode='remove'; inventoryEntry = item; inventoryEntrySelected()"></v-btn>
-                                <v-btn  icon="fa-solid fa-arrow-right" data-test="stock-move-btn"
-                                       @click.stop="bookingMode='move'; inventoryEntry = item; inventoryEntrySelected()"></v-btn>
+                                <v-btn  icon="$edit" data-test="stock-edit-btn"
+                                       @click.stop="bookingMode='edit'; inventoryEntry = item; inventoryEntrySelected()"></v-btn>
                                 </v-btn-group>
 
                             </template>
@@ -200,7 +211,7 @@ import {computed, onMounted, ref, watch} from "vue";
 import {ApiApi, ApiInventoryEntryListRequest, Food, Ingredient, InventoryEntry, InventoryLocation, PatchedInventoryEntry, Unit} from "@/openapi";
 import {useUserPreferenceStore} from "@/stores/UserPreferenceStore.ts";
 import {VDateInput} from "vuetify/components";
-import {ErrorMessageType, PreparedMessage, useMessageStore} from "@/stores/MessageStore.ts";
+import {ErrorMessageType, MessageType, PreparedMessage, StructuredMessage, useMessageStore} from "@/stores/MessageStore.ts";
 import {useI18n} from "vue-i18n";
 import {useRoute} from "vue-router";
 import {VDataTableUpdateOptions} from "@/vuetify.ts";
@@ -235,6 +246,7 @@ const formLoading = ref(false)
 const freezerExpiryDialog = ref(false)
 
 const bookingMode = useRouteQuery('bookingMode', 'add')
+const editTab = ref<'amount' | 'location'>('amount')
 const food = ref<Food | null>(null)
 const inventoryEntry = ref<InventoryEntry | null>(null)
 const inventoryLocation = ref<InventoryLocation | null>(null)
@@ -243,6 +255,12 @@ const code = ref('')
 const amount = ref<number | undefined>(1)
 const unit = ref<Unit | undefined | null>(useUserPreferenceStore().defaultUnitObj)
 const expires = ref<Date | undefined>(undefined)
+
+// tracked so the Amount tab can show an "In Stock: X → Y" before/after caption (#2), matching
+// UseUpDialog's absolute-value editing pattern
+const entryOriginalAmount = ref<number | undefined>(undefined)
+const entryOriginalUnit = ref<Unit | undefined | null>(undefined)
+const amountChanged = computed(() => amount.value !== entryOriginalAmount.value || unit.value !== entryOriginalUnit.value)
 
 // table
 const tableLoading = ref(false)
@@ -292,10 +310,8 @@ function save() {
     if (formLoading.value) return
     if (bookingMode.value == 'add') {
         addInventory()
-    } else if (bookingMode.value == 'remove') {
-        removeInventory()
-    } else if (bookingMode.value == 'move') {
-        moveInventory()
+    } else if (bookingMode.value == 'edit') {
+        editEntry()
     }
 }
 
@@ -334,45 +350,26 @@ function addInventory() {
 }
 
 /**
- * subtract amount from inventory entry and save to DB
+ * Directly correct an existing lot (#2) — Remove, Move, and the original #9 amount/unit Edit were
+ * three separate modes with duplicated "which fields changed" PATCH logic; a single Save now
+ * patches whichever fields actually changed, on either the Amount or Location tab. Never a full
+ * PUT: that would resend the old `expires` and permanently defeat the backend's freeze/thaw
+ * recompute (caller_set_expires) on a genuine freezer<->fridge move.
  */
-function removeInventory() {
+function editEntry() {
     let api = new ApiApi()
 
     if (inventoryEntry.value != null) {
         formLoading.value = true
+        const expiresBeforeEdit = inventoryEntry.value.expires
 
-        if (inventoryEntry.value.amount != undefined && amount.value != undefined) {
-            inventoryEntry.value.amount = Math.max(inventoryEntry.value.amount - amount.value, 0)
-        }
-
-        api.apiInventoryEntryUpdate({id: inventoryEntry.value.id!, inventoryEntry: inventoryEntry.value}).then(r => {
-            useMessageStore().addPreparedMessage(PreparedMessage.UPDATE_SUCCESS)
-            if (inventoryEntry.value && inventoryEntry.value.amount == 0) {
-                bookingMode.value = 'add'
-                resetForm(true, true)
-            } else {
-                inventoryEntrySelected()
-            }
-        }).catch(err => {
-            useMessageStore().addError(ErrorMessageType.UPDATE_ERROR, err)
-        }).finally(() => {
-            formLoading.value = false
-            logUpdateTrigger.value = !logUpdateTrigger.value
-        })
-    }
-}
-
-function moveInventory() {
-    let api = new ApiApi()
-
-    if (inventoryEntry.value != null) {
-        formLoading.value = true
-
-        // Patch only the fields that actually changed — a full PUT of the whole entry always
-        // resends the old `expires`, which defeats the backend's freeze/thaw recompute (see the
-        // same fix in PantryBookingDialog.vue's moveInventory for the full explanation).
         const patch: PatchedInventoryEntry = {}
+        if (amount.value != null && inventoryEntry.value.amount !== amount.value) {
+            patch.amount = amount.value
+        }
+        if (inventoryEntry.value.unit !== unit.value) {
+            patch.unit = unit.value ?? null
+        }
         if (inventoryLocation.value != null && inventoryEntry.value.inventoryLocation != inventoryLocation.value) {
             patch.inventoryLocation = inventoryLocation.value
         }
@@ -380,20 +377,28 @@ function moveInventory() {
             patch.subLocation = subLocation.value
         }
 
-        if (Object.keys(patch).length > 0) {
-            api.apiInventoryEntryPartialUpdate({id: inventoryEntry.value.id!, patchedInventoryEntry: patch}).then(r => {
-                useMessageStore().addPreparedMessage(PreparedMessage.UPDATE_SUCCESS)
-                inventoryEntrySelected()
-            }).catch(err => {
-                useMessageStore().addError(ErrorMessageType.UPDATE_ERROR, err)
-            }).finally(() => {
-                formLoading.value = false
-            })
-        } else {
+        if (Object.keys(patch).length === 0) {
             formLoading.value = false
-            logUpdateTrigger.value = !logUpdateTrigger.value
+            return
         }
 
+        api.apiInventoryEntryPartialUpdate({id: inventoryEntry.value.id!, patchedInventoryEntry: patch}).then(r => {
+            useMessageStore().addPreparedMessage(PreparedMessage.UPDATE_SUCCESS)
+            if (r.expires && (r.expires?.getTime() ?? null) !== (expiresBeforeEdit?.getTime() ?? null)) {
+                useMessageStore().addMessage(MessageType.INFO,
+                    {title: t('Expires'), text: t('OpenedExpiryUpdated', {date: DateTime.fromJSDate(r.expires).toLocaleString(DateTime.DATE_MED)})} as StructuredMessage,
+                    4000)
+            }
+            if (inventoryEntry.value) {
+                Object.assign(inventoryEntry.value, r)
+            }
+            inventoryEntrySelected()
+        }).catch(err => {
+            useMessageStore().addError(ErrorMessageType.UPDATE_ERROR, err)
+        }).finally(() => {
+            formLoading.value = false
+            logUpdateTrigger.value = !logUpdateTrigger.value
+        })
     }
 }
 
@@ -415,6 +420,9 @@ function resetForm(resetFood: boolean = true, resetInventoryLocation: boolean = 
     unit.value = useUserPreferenceStore().defaultUnitObj
     expires.value = undefined
     code.value = ''
+    editTab.value = 'amount'
+    entryOriginalAmount.value = undefined
+    entryOriginalUnit.value = undefined
     loadItems({page: 1, itemsPerPage: 10})
 }
 
@@ -422,15 +430,11 @@ function resetForm(resetFood: boolean = true, resetInventoryLocation: boolean = 
  * when an inventory entry is selected, fill form with values from inventory entry
  */
 /**
- * #13: clicking anywhere on a Current Stock row (not just its action buttons) starts a Remove on
- * that entry — the most common single-row action — while Move stays a deliberate button click
- * (relocating a lot shouldn't be one accidental row tap away). Already-Move mode is left alone so
- * clicking a different row while mid-move doesn't silently switch you back to Remove.
+ * #13/#2: clicking anywhere on a Current Stock row (not just its action buttons) starts an Edit
+ * on that entry — the most common single-row action, and now the only booking mode besides Add.
  */
-function selectRowForRemove(item: InventoryEntry) {
-    if (!['move'].includes(bookingMode.value)) {
-        bookingMode.value = 'remove'
-    }
+function selectRowForEdit(item: InventoryEntry) {
+    bookingMode.value = 'edit'
     inventoryEntry.value = item
     inventoryEntrySelected()
 }
@@ -443,6 +447,9 @@ function inventoryEntrySelected() {
         //subLocation.value = inventoryEntry.value.subLocation
         amount.value = inventoryEntry.value.amount
         //expires.value = inventoryEntry.value.expires
+        entryOriginalAmount.value = inventoryEntry.value.amount
+        entryOriginalUnit.value = inventoryEntry.value.unit
+        editTab.value = 'amount'
     }
 }
 
