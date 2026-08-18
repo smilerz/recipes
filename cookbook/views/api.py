@@ -75,7 +75,7 @@ from cookbook.helper.HelperFunctions import str2bool, safe_request
 from cookbook.helper.ai_helper import can_perform_ai_request, AiCallbackHandler
 from cookbook.helper.batch_edit_helper import add_to_relation, remove_from_relation, remove_all_from_relation, set_relation
 from cookbook.helper.food_availability_helper import (
-    _is_available, annotate_food_inventory, annotate_food_substitute_availability, request_household,
+    _is_available, annotate_food_inventory, annotate_food_substitute_availability, compute_substitute_flags, request_household,
 )
 from cookbook.helper.image_processing import handle_image, set_primary_recipe_image
 from cookbook.helper.inventory_helper import add_food_to_pantry, get_or_create_default_inventory_location, reduce_food_to_amount, set_food_onhand
@@ -991,6 +991,32 @@ class InventoryEntryViewSet(LoggingMixin, viewsets.ModelViewSet, DeleteRelationM
         queryset = queryset.order_by('expires')
         return queryset
 
+    def list(self, request, *args, **kwargs):
+        """Batch-compute substitute_onhand/substitute_inventory for the page's nested foods
+        (same pattern as FoodViewSet.list()) instead of letting FoodSerializer fall back to a
+        per-food query for each — that fallback only skips when this context is pre-populated,
+        and nothing did that for this endpoint until now."""
+        queryset = self.filter_queryset(self.get_queryset())
+        page = self.paginate_queryset(queryset)
+        entries = page if page is not None else list(queryset)
+
+        serializer = self.get_serializer(entries, many=True)
+
+        foods_by_id = {}
+        for entry in entries:
+            if entry.food_id is not None and entry.food_id not in foods_by_id:
+                foods_by_id[entry.food_id] = entry.food
+        if foods_by_id:
+            household = getattr(self.request.user_space, 'household', None)
+            shared_users = get_household_user_ids(self.request.user_space)
+            sub_onhand, sub_inventory = compute_substitute_flags(list(foods_by_id.values()), household, shared_users)
+            serializer.context['_substitute_onhand'] = sub_onhand
+            serializer.context['_substitute_inventory'] = sub_inventory
+
+        if page is not None:
+            return self.get_paginated_response(serializer.data)
+        return Response(serializer.data)
+
     @extend_schema(request=StockUpSerializer, responses=None)
     @decorators.action(detail=False, methods=['POST'], serializer_class=StockUpSerializer)
     def stock_up(self, request):
@@ -1510,74 +1536,6 @@ class FoodViewSet(OrderingMixin, LoggingMixin, TreeMixin, DeleteRelationMixing):
         params = self.request.query_params
         return any(params.get(k) not in (None, '') for k in keys)
 
-    def _compute_substitute_flags(self, foods):
-        """
-        Batch-compute substitute_onhand and substitute_inventory for a page of foods.
-        Replaces per-food N+1 queries in the serializer with 2–4 batch queries.
-        """
-        shared_users = self._shared_users
-        try:
-            household = self.request.user_space.household
-        except AttributeError:
-            household = None
-
-        # Build each food's full substitute ID set (direct + siblings + children)
-        food_sub_ids = {f.id: set(s.id for s in f.substitute.all()) for f in foods}
-
-        # Batch-fetch sibling IDs (1 query for all foods with substitute_siblings). Root-depth
-        # foods (no real parent category) have no true siblings — sibling_path_prefix returns
-        # None for them, so they're excluded here rather than matching every root-level Food.
-        sibling_foods = [f for f in foods if f.substitute_siblings and Food.sibling_path_prefix(f.path, f.depth) is not None]
-        if sibling_foods:
-            sibling_q = Q()
-            for f in sibling_foods:
-                parent_path = Food.sibling_path_prefix(f.path, f.depth)
-                sibling_q |= Q(path__startswith=parent_path, depth=f.depth)
-            candidates = list(Food.objects.filter(sibling_q).values_list('id', 'path', 'depth'))
-            for f in sibling_foods:
-                parent_path = Food.sibling_path_prefix(f.path, f.depth)
-                for cid, cpath, cdepth in candidates:
-                    if cdepth == f.depth and cpath.startswith(parent_path) and cid != f.id:
-                        food_sub_ids[f.id].add(cid)
-
-        # Batch-fetch child IDs (1 query for all foods with substitute_children)
-        children_foods = [f for f in foods if f.substitute_children]
-        if children_foods:
-            children_q = Q()
-            for f in children_foods:
-                children_q |= Q(path__startswith=f.path, depth__gt=f.depth)
-            candidates = list(Food.objects.filter(children_q).values_list('id', 'path', 'depth'))
-            for f in children_foods:
-                for cid, cpath, cdepth in candidates:
-                    if cpath.startswith(f.path) and cdepth > f.depth:
-                        food_sub_ids[f.id].add(cid)
-
-        all_sub_ids = set()
-        for sids in food_sub_ids.values():
-            all_sub_ids |= sids
-
-        if not all_sub_ids:
-            empty = {f.id: False for f in foods}
-            return empty, empty.copy()
-
-        # 1 query: which substitutes are available (household inventory, amount>0)?
-        available_ids = set(
-            Food.objects.filter(id__in=all_sub_ids).filter(_is_available(household, shared_users))
-            .values_list('id', flat=True)
-        )
-
-        # 1 query: which substitutes have inventory only? (drives substitute_inventory)
-        # Strictly household-scoped (FR-B4): household=None → IS NULL → no inventory (no space-wide fallback).
-        inventory_q = Q(inventoryentry__amount__gt=0, inventoryentry__inventory_location__household=household)
-        inventory_ids = set(
-            Food.objects.filter(id__in=all_sub_ids).filter(inventory_q)
-            .values_list('id', flat=True)
-        )
-
-        sub_onhand = {f.id: bool(food_sub_ids[f.id] & available_ids) for f in foods}
-        sub_inventory = {f.id: bool(food_sub_ids[f.id] & inventory_ids) for f in foods}
-        return sub_onhand, sub_inventory
-
     def list(self, request, *args, **kwargs):
         queryset = self.filter_queryset(self.get_queryset())
         page = self.paginate_queryset(queryset)
@@ -1587,7 +1545,11 @@ class FoodViewSet(OrderingMixin, LoggingMixin, TreeMixin, DeleteRelationMixing):
 
         # Batch-compute substitute flags for the full serializer (skip for ?simple=true)
         if not request.query_params.get('simple', False):
-            sub_onhand, sub_inventory = self._compute_substitute_flags(foods)
+            try:
+                household = self.request.user_space.household
+            except AttributeError:
+                household = None
+            sub_onhand, sub_inventory = compute_substitute_flags(foods, household, self._shared_users)
             serializer.context['_substitute_onhand'] = sub_onhand
             serializer.context['_substitute_inventory'] = sub_inventory
 

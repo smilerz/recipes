@@ -1,5 +1,6 @@
 import json
 from datetime import date, timedelta
+from unittest.mock import patch
 
 import pytest
 from django.contrib import auth
@@ -38,6 +39,55 @@ def test_list_household_scoped(u1_s1, u2_s1, space_1):
     ids = get_result_ids(u1_s1.get(reverse(LIST_URL)))
     assert mine.id in ids
     assert theirs.id not in ids
+
+
+@pytest.mark.django_db
+def test_entry_food_carries_substitute_onhand(u1_s1, space_1):
+    """The pantry list's nested food surfaces substitute_onhand via the same batch-computed
+    context FoodViewSet.list() uses (compute_substitute_flags), not the serializer's per-food
+    fallback query - this locks in that InventoryEntryViewSet.list() actually populates that
+    context instead of silently relying on the (correct but N+1) fallback path."""
+    user = auth.get_user(u1_s1)
+    with scopes_disabled():
+        household = Household.objects.create(name='hh', space=space_1)
+        UserSpace.objects.filter(user=user, space=space_1).update(household=household)
+
+        food = FoodFactory(space=space_1)
+        substitute_food = FoodFactory(space=space_1)
+        food.substitute.add(substitute_food)
+        no_substitute_food = FoodFactory(space=space_1)
+
+        loc = InventoryLocationFactory(space=space_1, household=household)
+        InventoryEntryFactory(space=space_1, food=food, inventory_location=loc, amount=1)
+        InventoryEntryFactory(space=space_1, food=no_substitute_food, inventory_location=loc, amount=1)
+        InventoryEntryFactory(space=space_1, food=substitute_food, inventory_location=loc, amount=1)
+
+    results = json.loads(u1_s1.get(reverse(LIST_URL)).content)['results']
+    row = next(r for r in results if r['food']['id'] == food.id)
+    other_row = next(r for r in results if r['food']['id'] == no_substitute_food.id)
+    assert row['food']['substitute_onhand'] is True
+    assert other_row['food']['substitute_onhand'] is False
+
+
+@pytest.mark.django_db
+def test_list_batches_substitute_flags_instead_of_per_food_fallback(u1_s1, space_1):
+    """FoodSerializer.get_substitute_onhand/get_substitute_inventory only skip their per-food
+    fallback query when serializer.context['_substitute_onhand'/'_substitute_inventory'] is
+    pre-populated - the fallback computes the same correct answer either way, so a pure
+    correctness assertion wouldn't catch a regression back to the N+1 path. Assert
+    compute_substitute_flags is actually called by this endpoint's list(), the same way
+    FoodViewSet.list() already does it."""
+    user = auth.get_user(u1_s1)
+    with scopes_disabled():
+        household = Household.objects.create(name='hh', space=space_1)
+        UserSpace.objects.filter(user=user, space=space_1).update(household=household)
+        loc = InventoryLocationFactory(space=space_1, household=household)
+        InventoryEntryFactory(space=space_1, food=FoodFactory(space=space_1), inventory_location=loc, amount=1)
+
+    with patch('cookbook.views.api.compute_substitute_flags', return_value=({}, {})) as mock_compute:
+        u1_s1.get(reverse(LIST_URL))
+
+    assert mock_compute.called
 
 
 @pytest.mark.django_db

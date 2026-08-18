@@ -106,6 +106,72 @@ def sibling_substitute_filter(household, shopping_users):
     )
 
 
+def compute_substitute_flags(foods, household, shared_users):
+    """
+    Batch-compute substitute_onhand and substitute_inventory for a page of foods.
+    Replaces per-food N+1 queries in the serializer (FoodSerializer.get_substitute_onhand /
+    get_substitute_inventory) with 2-4 batch queries. Shared by every viewset whose serializer
+    nests FoodSerializer over a page of foods — populate serializer.context['_substitute_onhand']
+    / ['_substitute_inventory'] with the two dicts this returns.
+    """
+    # Build each food's full substitute ID set (direct + siblings + children)
+    food_sub_ids = {f.id: set(s.id for s in f.substitute.all()) for f in foods}
+
+    # Batch-fetch sibling IDs (1 query for all foods with substitute_siblings). Root-depth
+    # foods (no real parent category) have no true siblings — sibling_path_prefix returns
+    # None for them, so they're excluded here rather than matching every root-level Food.
+    sibling_foods = [f for f in foods if f.substitute_siblings and Food.sibling_path_prefix(f.path, f.depth) is not None]
+    if sibling_foods:
+        sibling_q = Q()
+        for f in sibling_foods:
+            parent_path = Food.sibling_path_prefix(f.path, f.depth)
+            sibling_q |= Q(path__startswith=parent_path, depth=f.depth)
+        candidates = list(Food.objects.filter(sibling_q).values_list('id', 'path', 'depth'))
+        for f in sibling_foods:
+            parent_path = Food.sibling_path_prefix(f.path, f.depth)
+            for cid, cpath, cdepth in candidates:
+                if cdepth == f.depth and cpath.startswith(parent_path) and cid != f.id:
+                    food_sub_ids[f.id].add(cid)
+
+    # Batch-fetch child IDs (1 query for all foods with substitute_children)
+    children_foods = [f for f in foods if f.substitute_children]
+    if children_foods:
+        children_q = Q()
+        for f in children_foods:
+            children_q |= Q(path__startswith=f.path, depth__gt=f.depth)
+        candidates = list(Food.objects.filter(children_q).values_list('id', 'path', 'depth'))
+        for f in children_foods:
+            for cid, cpath, cdepth in candidates:
+                if cpath.startswith(f.path) and cdepth > f.depth:
+                    food_sub_ids[f.id].add(cid)
+
+    all_sub_ids = set()
+    for sids in food_sub_ids.values():
+        all_sub_ids |= sids
+
+    if not all_sub_ids:
+        empty = {f.id: False for f in foods}
+        return empty, empty.copy()
+
+    # 1 query: which substitutes are available (household inventory, amount>0)?
+    available_ids = set(
+        Food.objects.filter(id__in=all_sub_ids).filter(_is_available(household, shared_users))
+        .values_list('id', flat=True)
+    )
+
+    # 1 query: which substitutes have inventory only? (drives substitute_inventory)
+    # Strictly household-scoped (FR-B4): household=None -> IS NULL -> no inventory (no space-wide fallback).
+    inventory_q = Q(inventoryentry__amount__gt=0, inventoryentry__inventory_location__household=household)
+    inventory_ids = set(
+        Food.objects.filter(id__in=all_sub_ids).filter(inventory_q)
+        .values_list('id', flat=True)
+    )
+
+    sub_onhand = {f.id: bool(food_sub_ids[f.id] & available_ids) for f in foods}
+    sub_inventory = {f.id: bool(food_sub_ids[f.id] & inventory_ids) for f in foods}
+    return sub_onhand, sub_inventory
+
+
 def annotate_food_substitute_availability(qs, household):
     """Annotate a Food queryset with ``has_substitute_available``: True when a direct substitute,
     or an available one via substitute_children/substitute_siblings, has household stock - the
