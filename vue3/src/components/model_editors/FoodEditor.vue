@@ -37,7 +37,7 @@
 
                         <v-row density="compact" align="center">
                             <v-col cols="7">
-                                <v-number-input :label="$t('Pantry / Fridge')" v-model="shelfLifeValue" :precision="0" :min="0" control-variant="hidden" clearable hide-details></v-number-input>
+                                <v-number-input :label="$t('Unopened')" v-model="shelfLifeValue" :precision="0" :min="0" control-variant="hidden" clearable hide-details></v-number-input>
                             </v-col>
                             <v-col cols="5">
                                 <v-select :label="$t('Period')" v-model="shelfLifePeriod" hide-details
@@ -48,9 +48,14 @@
                             </v-col>
                         </v-row>
 
-                        <v-row density="compact" align="center">
+                        <!-- #16/18: Frozen and Opened are opt-in — most foods only ever need Unopened
+                             (+ at most one of these). Genuinely everyday foods DO need both (USDA:
+                             hot dogs/lunch meat have distinct unopened/opened/frozen numbers), so
+                             both stay independently toggleable rather than a single either/or pick. -->
+                        <v-checkbox :label="$t('Frozen')" v-model="frozenEnabled" hide-details density="compact"></v-checkbox>
+                        <v-row density="compact" align="center" v-if="frozenEnabled">
                             <v-col cols="7">
-                                <v-number-input :label="$t('Freezer')" v-model="shelfLifeFrozenValue" :precision="0" :min="0" control-variant="hidden" clearable hide-details></v-number-input>
+                                <v-number-input :label="$t('Frozen')" v-model="shelfLifeFrozenValue" :precision="0" :min="0" control-variant="hidden" clearable hide-details></v-number-input>
                             </v-col>
                             <v-col cols="5">
                                 <v-select :label="$t('Period')" v-model="shelfLifeFrozenPeriod" hide-details
@@ -61,7 +66,8 @@
                             </v-col>
                         </v-row>
 
-                        <v-row density="compact" align="center" class="mb-2">
+                        <v-checkbox :label="$t('Opened')" v-model="openedEnabled" hide-details density="compact"></v-checkbox>
+                        <v-row density="compact" align="center" class="mb-2" v-if="openedEnabled">
                             <v-col cols="7">
                                 <v-number-input :label="$t('Opened')" v-model="shelfLifeOpenedValue" :precision="0" :min="0" control-variant="hidden" clearable hide-details></v-number-input>
                             </v-col>
@@ -284,6 +290,29 @@ function useShelfLifePicker(field: 'shelfLifeDays' | 'shelfLifeDaysFrozen' | 'sh
 useShelfLifePicker('shelfLifeDays', shelfLifeValue, shelfLifePeriod)
 useShelfLifePicker('shelfLifeDaysFrozen', shelfLifeFrozenValue, shelfLifeFrozenPeriod)
 useShelfLifePicker('shelfLifeDaysOpened', shelfLifeOpenedValue, shelfLifeOpenedPeriod)
+
+// #16/18: Frozen and Opened are opt-in exceptions — starts checked whenever the food already has
+// a value (existing data is never hidden by default), independent of one another (a food can
+// need both, e.g. hot dogs/lunch meat per USDA guidance).
+const frozenEnabled = ref(false)
+const openedEnabled = ref(false)
+
+watch(() => editingObj.value?.shelfLifeDaysFrozen, (days) => {
+    frozenEnabled.value = days != null
+}, {immediate: true})
+watch(() => editingObj.value?.shelfLifeDaysOpened, (days) => {
+    openedEnabled.value = days != null
+}, {immediate: true})
+
+// Unchecking clears the value — the checkbox's meaning stays unambiguous (checked = has a value,
+// unchecked = doesn't). Reuses the existing shelfLife*Value watcher above, which already writes
+// null back to editingObj when the picker value clears.
+watch(frozenEnabled, (enabled, wasEnabled) => {
+    if (!enabled && wasEnabled) shelfLifeFrozenValue.value = null
+})
+watch(openedEnabled, (enabled, wasEnabled) => {
+    if (!enabled && wasEnabled) shelfLifeOpenedValue.value = null
+})
 
 /** Quick-select preset chip handler: fills a row's value+period pair from a preset day count,
  * without requiring the food to have any shelf-life field configured first. */

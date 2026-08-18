@@ -129,9 +129,10 @@ describe('FoodEditor - freezer-aware shelf-life defaults', () => {
 
     // #19: the Freezer row moved from the generic, category-blind ExpiryPresetChips ("3 Days /
     // 1 Week / ...") to FreezerCategoryChips (real USDA-style guidance, e.g. "Poultry: 9 months") -
-    // Pantry/Fridge and Opened have no such category guidance and keep the generic chips.
-    it('Pantry/Fridge and Opened rows still use the generic ExpiryPresetChips, Freezer does not', async () => {
-        const item = makeFood({id: 5, name: 'Chicken Breast'})
+    // Unopened and Opened have no such category guidance and keep the generic chips.
+    it('Unopened and Opened rows still use the generic ExpiryPresetChips, Frozen does not', async () => {
+        // frozen+opened both need an existing value so their opt-in rows are visible (#16/18)
+        const item = makeFood({id: 5, name: 'Chicken Breast', shelfLifeDaysFrozen: 180, shelfLifeDaysOpened: 3})
         const w = mountEditor(item)
         await flushPromises()
 
@@ -146,6 +147,10 @@ describe('FoodEditor - freezer-aware shelf-life defaults', () => {
         const w = mountEditor(item)
         await flushPromises()
 
+        // user checks the opt-in Frozen box first (#16/18) — the row/chips aren't rendered until then
+        ;(w.vm as any).frozenEnabled = true
+        await flushPromises()
+
         const freezerChips = w.findComponent({name: 'FreezerCategoryChips'})
         expect(freezerChips.exists()).toBe(true)
         freezerChips.vm.$emit('select', 180)
@@ -153,6 +158,68 @@ describe('FoodEditor - freezer-aware shelf-life defaults', () => {
 
         expect((w.vm as any).shelfLifeFrozenValue).toBe(6)
         expect((w.vm as any).shelfLifeFrozenPeriod).toBe('month')
+        expect((w.vm as any).editingObj.shelfLifeDaysFrozen).toBe(180)
+
+        w.unmount()
+    })
+})
+
+describe('FoodEditor - Frozen/Opened opt-in toggles (#16/18)', () => {
+    beforeEach(() => {
+        resetApiMock()
+    })
+
+    it('both toggles start unchecked, and the rows are not rendered, for a food with no existing values', async () => {
+        const item = makeFood({id: 5, name: 'Chicken Breast'})
+        const w = mountEditor(item)
+        await flushPromises()
+
+        expect((w.vm as any).frozenEnabled).toBe(false)
+        expect((w.vm as any).openedEnabled).toBe(false)
+        expect(w.findComponent({name: 'FreezerCategoryChips'}).exists()).toBe(false)
+        // only Unopened's ExpiryPresetChips renders — Opened's is hidden
+        expect(w.findAllComponents({name: 'ExpiryPresetChips'}).length).toBe(1)
+
+        w.unmount()
+    })
+
+    it('a toggle starts checked when the food already has a value, so existing data is never hidden', async () => {
+        const item = makeFood({id: 5, name: 'Chicken Breast', shelfLifeDaysFrozen: 180, shelfLifeDaysOpened: 3})
+        const w = mountEditor(item)
+        await flushPromises()
+
+        expect((w.vm as any).frozenEnabled).toBe(true)
+        expect((w.vm as any).openedEnabled).toBe(true)
+
+        w.unmount()
+    })
+
+    it('unchecking Frozen clears shelfLifeDaysFrozen', async () => {
+        const item = makeFood({id: 5, name: 'Chicken Breast', shelfLifeDaysFrozen: 180})
+        const w = mountEditor(item)
+        await flushPromises()
+        expect((w.vm as any).editingObj.shelfLifeDaysFrozen).toBe(180)
+
+        ;(w.vm as any).frozenEnabled = false
+        await flushPromises()
+
+        expect((w.vm as any).shelfLifeFrozenValue).toBe(null)
+        expect((w.vm as any).editingObj.shelfLifeDaysFrozen).toBe(null)
+
+        w.unmount()
+    })
+
+    it('unchecking Opened clears shelfLifeDaysOpened, independently of Frozen', async () => {
+        const item = makeFood({id: 5, name: 'Chicken Breast', shelfLifeDaysFrozen: 180, shelfLifeDaysOpened: 3})
+        const w = mountEditor(item)
+        await flushPromises()
+
+        ;(w.vm as any).openedEnabled = false
+        await flushPromises()
+
+        expect((w.vm as any).editingObj.shelfLifeDaysOpened).toBe(null)
+        // Frozen untouched — the two toggles are independent (#16/18: a food can need both)
+        expect((w.vm as any).frozenEnabled).toBe(true)
         expect((w.vm as any).editingObj.shelfLifeDaysFrozen).toBe(180)
 
         w.unmount()
