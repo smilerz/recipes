@@ -15,6 +15,19 @@ def _make_file(filename):
     return SimpleUploadedFile(filename, b'x', content_type='text/plain')
 
 
+# UserFileViewSet extended StandardFilterModelViewSet (bare icontains) — fuzzy-matching UAT batch
+# swapped it onto FuzzyFilterMixin for real search.
+def test_query_param_filters_by_name(u1_s1, space_1):
+    user = auth.get_user(u1_s1)
+    match = UserFile.objects.create(name='Sodium Chart', file=_make_file('m.txt'), created_by=user, space=space_1)
+    other = UserFile.objects.create(name='Fiber Chart', file=_make_file('o.txt'), created_by=user, space=space_1)
+
+    names = [e['name'] for e in json.loads(u1_s1.get(reverse(LIST_URL), {'query': 'Sodium'}).content)['results']]
+
+    assert match.name in names
+    assert other.name not in names
+
+
 def test_ordering_name(u1_s1, space_1):
     user = auth.get_user(u1_s1)
     UserFile.objects.create(name='zzz_file', file=_make_file('zzz.txt'), created_by=user, space=space_1)

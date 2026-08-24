@@ -193,6 +193,8 @@ class OrderingMixin:
     * ``ordering_plain_fields`` — params that order by their own name as-is.
 
     Any ``ordering`` value not in the union of these is ignored (no ordering applied).
+    Ignored entirely while a ``query`` search is active, so relevance ordering wins (every
+    consuming viewset's OpenAPI doc already documents this contract).
     """
     ordering_lower_fields: dict = {}
     ordering_field_map: dict = {}
@@ -200,7 +202,7 @@ class OrderingMixin:
 
     def _apply_ordering(self, qs):
         ordering_param = self.request.query_params.get('ordering', None)
-        if not ordering_param:
+        if not ordering_param or self.request.query_params.get('query', None):
             return qs
         allowed = self.ordering_lower_fields.keys() | self.ordering_field_map.keys() | self.ordering_plain_fields
         if ordering_param in allowed:
@@ -330,6 +332,12 @@ class ExtendedRecipeMixin():
 ]))
 class FuzzyFilterMixin(viewsets.ModelViewSet, ExtendedRecipeMixin):
 
+    def _default_ordering(self):
+        """Ordering applied when no relevance search is active. Override for models with their
+        own user-controlled manual sort field (e.g. PropertyType/RecipeBook's ``order``) instead
+        of alphabetical name ordering."""
+        return (Lower('name').asc(),)
+
     def _apply_tristate(self, qs, param, true_q, false_q, distinct=False):
         value = self.request.query_params.get(param, None)
         if value is None:
@@ -343,7 +351,7 @@ class FuzzyFilterMixin(viewsets.ModelViewSet, ExtendedRecipeMixin):
         return qs
 
     def get_queryset(self):
-        self.queryset = self.queryset.filter(space=self.request.space).order_by(Lower('name').asc())
+        self.queryset = self.queryset.filter(space=self.request.space).order_by(*self._default_ordering())
         query = self.request.query_params.get('query', None)
         if self.request.user.is_authenticated:
             fuzzy = self.request.user.searchpreference.lookup or any(
@@ -932,14 +940,12 @@ class StorageViewSet(ProtectedDestroyMixin, LoggingMixin, viewsets.ModelViewSet,
         return self.queryset.filter(space=self.request.space)
 
 
-class InventoryLocationViewSet(LoggingMixin, viewsets.ModelViewSet, DeleteRelationMixing):
+class InventoryLocationViewSet(LoggingMixin, FuzzyFilterMixin, DeleteRelationMixing):
     queryset = InventoryLocation.objects
+    model = InventoryLocation
     serializer_class = InventoryLocationSerializer
     permission_classes = [CustomIsUser & CustomTokenHasReadWriteScope]
     pagination_class = DefaultPagination
-
-    def get_queryset(self):
-        return self.queryset.filter(space=self.request.space)
 
 
 @extend_schema_view(list=extend_schema(parameters=[
@@ -1227,15 +1233,12 @@ class ConnectorConfigViewSet(LoggingMixin, viewsets.ModelViewSet, DeleteRelation
         return self.queryset.filter(space=self.request.space)
 
 
-class SupermarketViewSet(LoggingMixin, StandardFilterModelViewSet, DeleteRelationMixing):
+class SupermarketViewSet(LoggingMixin, FuzzyFilterMixin, DeleteRelationMixing):
     queryset = Supermarket.objects
+    model = Supermarket
     serializer_class = SupermarketSerializer
     permission_classes = [CustomIsUser & CustomTokenHasReadWriteScope]
     pagination_class = DefaultPagination
-
-    def get_queryset(self):
-        self.queryset = self.queryset.filter(space=self.request.space)
-        return super().get_queryset()
 
 
 # TODO does supermarket category have settings to support fuzzy filtering and/or merge?
@@ -1961,15 +1964,17 @@ class FoodViewSet(OrderingMixin, LoggingMixin, TreeMixin, DeleteRelationMixing):
     OpenApiParameter(name='order_direction', description='Order ascending or descending', type=str,
                      enum=['asc', 'desc']),
 ]))
-class RecipeBookViewSet(LoggingMixin, StandardFilterModelViewSet, DeleteRelationMixing):
+class RecipeBookViewSet(LoggingMixin, FuzzyFilterMixin, DeleteRelationMixing):
     queryset = RecipeBook.objects
+    model = RecipeBook
     serializer_class = RecipeBookSerializer
     permission_classes = [(CustomIsOwner | (CustomIsShared & IsReadOnlyDRF)) & CustomTokenHasReadWriteScope]
     pagination_class = DefaultPagination
 
-    def get_queryset(self):
+    def _default_ordering(self):
+        # RecipeBook.order is a user-controlled manual sort field (drag-to-reorder), not
+        # alphabetical; order_field/order_direction let the frontend override it explicitly.
         ALLOWED_ORDER_FIELDS = ['id', 'name', 'order']
-
         order_field = self.request.GET.get('order_field')
         order_direction = self.request.GET.get('order_direction')
 
@@ -1980,9 +1985,11 @@ class RecipeBookViewSet(LoggingMixin, StandardFilterModelViewSet, DeleteRelation
         ordering = [primary_ordering]
         if order_field != 'id':
             ordering.append('id')
+        return ordering
 
+    def get_queryset(self):
         self.queryset = self.queryset.filter(Q(created_by=self.request.user) | Q(shared=self.request.user)).filter(
-            space=self.request.space).distinct().order_by(*ordering)
+            space=self.request.space).distinct()
         return super().get_queryset()
 
 
@@ -2740,18 +2747,23 @@ class UnitConversionViewSet(LoggingMixin, viewsets.ModelViewSet):
         enum=[m[0] for m in PropertyType.CHOICES])
     ]
 ))
-class PropertyTypeViewSet(LoggingMixin, viewsets.ModelViewSet, DeleteRelationMixing):
+class PropertyTypeViewSet(LoggingMixin, FuzzyFilterMixin, DeleteRelationMixing):
     queryset = PropertyType.objects
+    model = PropertyType
     serializer_class = PropertyTypeSerializer
     permission_classes = [CustomIsUser & CustomTokenHasReadWriteScope]
     pagination_class = DefaultPagination
 
+    def _default_ordering(self):
+        # PropertyType.order is a user-controlled manual sort field (drag-to-reorder), not
+        # alphabetical.
+        return ('order',)
+
     def get_queryset(self):
-        # TODO add tests for filter
         category = self.request.query_params.getlist('category', [])
         if category:
-            self.queryset.filter(category__in=category)
-        return self.queryset.filter(space=self.request.space)
+            self.queryset = self.queryset.filter(category__in=category)
+        return super().get_queryset()
 
 
 class PropertyViewSet(LoggingMixin, viewsets.ModelViewSet):
@@ -2828,15 +2840,12 @@ class ShoppingListRecipeViewSet(LoggingMixin, viewsets.ModelViewSet):
             return Response(serializer.errors, 400)
 
 
-class ShoppingListViewSet(LoggingMixin, StandardFilterModelViewSet, DeleteRelationMixing):
+class ShoppingListViewSet(LoggingMixin, FuzzyFilterMixin, DeleteRelationMixing):
     queryset = ShoppingList.objects
+    model = ShoppingList
     serializer_class = ShoppingListSerializer
     permission_classes = [CustomIsUser & CustomTokenHasReadWriteScope]
     pagination_class = DefaultPagination
-
-    def get_queryset(self):
-        self.queryset = self.queryset.filter(space=self.request.space).all()
-        return super().get_queryset()
 
 
 @extend_schema_view(
@@ -3135,8 +3144,9 @@ class BookmarkletImportViewSet(LoggingMixin, viewsets.ModelViewSet):
     ),
 ]))
 # destroy() 403s (not 500s) when a protected FK — e.g. Step.file — blocks deletion
-class UserFileViewSet(ProtectedDestroyMixin, OrderingMixin, LoggingMixin, StandardFilterModelViewSet, DeleteRelationMixing):
+class UserFileViewSet(ProtectedDestroyMixin, OrderingMixin, LoggingMixin, FuzzyFilterMixin, DeleteRelationMixing):
     queryset = UserFile.objects
+    model = UserFile
     serializer_class = UserFileSerializer
     permission_classes = [CustomIsUser & CustomTokenHasReadWriteScope]
     pagination_class = DefaultPagination
@@ -3248,8 +3258,9 @@ class RecipeImageViewSet(LoggingMixin, viewsets.ModelViewSet):
         description='Order results by field. Allowed: name, -name, type, -type, order, -order. Ignored when query is active.'
     ),
 ]))
-class AutomationViewSet(OrderingMixin, LoggingMixin, StandardFilterModelViewSet):
+class AutomationViewSet(OrderingMixin, LoggingMixin, FuzzyFilterMixin):
     queryset = Automation.objects
+    model = Automation
     serializer_class = AutomationSerializer
     permission_classes = [CustomIsUser & CustomTokenHasReadWriteScope]
     pagination_class = DefaultPagination
@@ -3261,7 +3272,7 @@ class AutomationViewSet(OrderingMixin, LoggingMixin, StandardFilterModelViewSet)
         automation_type = self.request.query_params.getlist('type', [])
         if automation_type:
             self.queryset = self.queryset.filter(type__in=automation_type)
-        return self._apply_ordering(self.queryset.filter(space=self.request.space).all())
+        return self._apply_ordering(super().get_queryset())
 
     @decorators.action(detail=False, pagination_class=None, methods=['GET'], serializer_class=AutomationStatsSerializer, url_path='stats', url_name='stats')
     def stats(self, request):
@@ -3313,8 +3324,9 @@ class InviteLinkViewSet(LoggingMixin, StandardFilterModelViewSet):
         description='Order results by field. Allowed: name, -name, type, -type, created_at, -created_at. Ignored when query is active.'
     ),
 ]))
-class CustomFilterViewSet(OrderingMixin, LoggingMixin, StandardFilterModelViewSet):
+class CustomFilterViewSet(OrderingMixin, LoggingMixin, FuzzyFilterMixin):
     queryset = CustomFilter.objects
+    model = CustomFilter
     serializer_class = CustomFilterSerializer
     permission_classes = [CustomIsOwner & CustomTokenHasReadWriteScope]
     pagination_class = DefaultPagination

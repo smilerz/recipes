@@ -107,6 +107,17 @@ def test_add(arg, request, u1_s2):
         assert r.status_code == 404
 
 
+def test_list_is_deterministically_ordered_by_name(u1_s1, space_1):
+    with scopes_disabled():
+        Supermarket.objects.get_or_create(name='Zinc', space=space_1)
+        Supermarket.objects.get_or_create(name='Ash', space=space_1)
+        Supermarket.objects.get_or_create(name='Magnesium', space=space_1)
+
+    names = [e['name'] for e in json.loads(u1_s1.get(reverse(LIST_URL), {'page_size': 100}).content)['results']]
+
+    assert names == sorted(names, key=str.lower)
+
+
 def test_delete(u1_s1, u1_s2, obj_1):
     r = u1_s2.delete(
         reverse(
