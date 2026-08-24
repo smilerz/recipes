@@ -32,9 +32,13 @@
                             <v-text-field :label="$t('SubLocation')" :hint="$t('SubLocationHelp')" v-model="subLocation"
                                           v-if="bookingMode === 'add' || (bookingMode === 'edit' && editTab === 'location')"></v-text-field>
 
-                            <div v-if="bookingMode === 'edit' && editTab === 'amount'" class="text-caption text-medium-emphasis mb-2">
-                                {{ $t('InStock') }}: {{ entryOriginalAmount }} {{ entryOriginalUnit?.name || '' }}
-                                <span v-if="amountChanged" class="text-warning">→ {{ amount }} {{ unit?.name || '' }}</span>
+                            <div v-if="bookingMode === 'edit' && editTab === 'amount'" class="text-caption text-medium-emphasis mb-2 d-flex align-center justify-space-between">
+                                <span>
+                                    {{ $t('InStock') }}: {{ entryOriginalAmount }} {{ entryOriginalUnit?.name || '' }}
+                                    <span v-if="amountChanged" class="text-warning">→ {{ amount }} {{ unit?.name || '' }}</span>
+                                </span>
+                                <v-btn size="small" variant="text" prepend-icon="fa-solid fa-minus" data-test="consume-lot-btn"
+                                       @click="amount = 0">{{ $t('UseUp') }}</v-btn>
                             </div>
 
                             <v-number-input :label="$t('Amount')" :precision="2" v-model="amount"
@@ -57,7 +61,7 @@
                                 <template #append-inner>
                                     <v-btn variant="text" @click.stop="freezerExpiryDialog = true">
                                         <v-icon icon="fa-solid fa-snowflake"></v-icon>
-                                        <freezer-expiry-dialog v-model:date="expires" v-model="freezerExpiryDialog"></freezer-expiry-dialog>
+                                        <expiry-preset-dialog v-model:date="expires" v-model="freezerExpiryDialog"></expiry-preset-dialog>
                                     </v-btn>
                                 </template>
                             </v-date-input>
@@ -125,7 +129,7 @@ import VClosableCardTitle from "@/components/dialogs/VClosableCardTitle.vue";
 import {DateTime} from "luxon";
 import {ingredientToString} from "@/utils/model_utils.ts";
 import {ApiApi, Food, Ingredient, InventoryEntry, InventoryLocation, PatchedInventoryEntry, Unit} from "@/openapi";
-import FreezerExpiryDialog from "@/components/dialogs/FreezerExpiryDialog.vue";
+import ExpiryPresetDialog from "@/components/dialogs/ExpiryPresetDialog.vue";
 import ClosableHelpAlert from "@/components/display/ClosableHelpAlert.vue";
 import {VDateInput} from "vuetify/components";
 import ModelEditDialog from "@/components/dialogs/ModelEditDialog.vue";
@@ -364,8 +368,10 @@ function inventoryEntrySelected() {
     if (inventoryEntry.value) {
         food.value = inventoryEntry.value.food
         unit.value = inventoryEntry.value.unit
-        //inventoryLocation.value = inventoryEntry.value.inventoryLocation
-        //subLocation.value = inventoryEntry.value.subLocation
+        // Pre-populate with the entry's own current values — reconsidered post-UAT from an
+        // earlier "starts blank" design (judged counter-intuitive).
+        inventoryLocation.value = inventoryEntry.value.inventoryLocation
+        subLocation.value = inventoryEntry.value.subLocation ?? ''
         amount.value = inventoryEntry.value.amount
         //expires.value = inventoryEntry.value.expires
         entryOriginalAmount.value = inventoryEntry.value.amount

@@ -56,7 +56,7 @@
                         </v-card-text>
                         </v-card>
                     </template>
-                    <freezer-expiry-dialog v-model="freezerDialog" v-model:date="freezerDate"></freezer-expiry-dialog>
+                    <expiry-preset-dialog v-model="freezerDialog" v-model:date="freezerDate"></expiry-preset-dialog>
                 </template>
             </v-card-text>
 
@@ -81,7 +81,7 @@ import {ApiApi, FoodShopping, InventoryLocation, Unit} from "@/openapi";
 import {parseBooleanAnnotation} from "@/utils/model_utils";
 import ModelSelect from "@/components/inputs/ModelSelect.vue";
 import VClosableCardTitle from "@/components/dialogs/VClosableCardTitle.vue";
-import FreezerExpiryDialog from "@/components/dialogs/FreezerExpiryDialog.vue";
+import ExpiryPresetDialog from "@/components/dialogs/ExpiryPresetDialog.vue";
 import ClosableHelpAlert from "@/components/display/ClosableHelpAlert.vue";
 import PantryJarIndicator from "@/components/display/PantryJarIndicator.vue";
 import {stockUpItemsFromRows, stockUpRowsFromEntries} from "@/utils/pantry_utils.ts";
@@ -131,7 +131,7 @@ function setAllChecked(value: boolean) {
     for (const r of rows.value) r.checked = value
 }
 
-// One shared FreezerExpiryDialog targets whichever row's snowflake was tapped; it v-models a JS
+// One shared ExpiryPresetDialog targets whichever row's snowflake was tapped; it v-models a JS
 // Date while the row field is a date-only ISO string — glue both ways.
 const freezerDialog = ref(false)
 const freezerRow = ref<Row | null>(null)

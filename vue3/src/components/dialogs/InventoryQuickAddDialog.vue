@@ -96,7 +96,7 @@
                         />
                     </template>
                 </v-text-field>
-                <freezer-expiry-dialog v-model="freezerDialog" v-model:date="freezerDate" />
+                <expiry-preset-dialog v-model="freezerDialog" v-model:date="freezerDate" />
             </v-card-text>
 
             <v-card-actions>
@@ -123,7 +123,7 @@
 import {computed, ref, watch} from 'vue'
 import {DateTime} from 'luxon'
 import VClosableCardTitle from '@/components/dialogs/VClosableCardTitle.vue'
-import FreezerExpiryDialog from '@/components/dialogs/FreezerExpiryDialog.vue'
+import ExpiryPresetDialog from '@/components/dialogs/ExpiryPresetDialog.vue'
 import ModelSelect from '@/components/inputs/ModelSelect.vue'
 import {useI18n} from 'vue-i18n'
 import {ApiApi, type InventoryEntry, type Unit} from '@/openapi'
@@ -181,7 +181,7 @@ const msLocationItems = computed(() => locationItems.value.map(l => ({
     id: l.value, name: l.label, isFreezer: l.isFreezer, household: l.household,
 })))
 
-// FreezerExpiryDialog v-models a JS Date; our field is a date-only ISO string — glue both ways.
+// ExpiryPresetDialog v-models a JS Date; our field is a date-only ISO string — glue both ways.
 const freezerDate = computed<Date>({
     get: () => expires.value ? new Date(`${expires.value}T00:00:00`) : new Date(),
     set: (d: Date) => { expires.value = DateTime.fromJSDate(d).toISODate() },

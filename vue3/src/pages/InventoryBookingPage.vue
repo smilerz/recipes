@@ -42,7 +42,7 @@
                                 <v-card-text>
                                     <v-chip size="small" label color="warning" class="me-2" prepend-icon="fa-solid fa-barcode">{{inventoryEntry.code}}</v-chip>
                                     <v-chip size="small" label color="info" class="me-2" :prepend-icon="TInventoryLocation.icon">{{inventoryEntry.inventoryLocation.name}}</v-chip>
-                                    <v-chip size="small" label :color="(inventoryEntry.expires < DateTime.now() ? 'error' : 'success')">
+                                    <v-chip size="small" label :color="(inventoryEntry.expires < DateTime.now() ? 'error' : 'success')" v-if="inventoryEntry.expires">
                                         {{ DateTime.fromJSDate(inventoryEntry.expires).toLocaleString(DateTime.DATE_MED) }}
                                     </v-chip>
                                 </v-card-text>
@@ -68,9 +68,13 @@
                             <closable-help-alert :text="$t('CodeHelp')" class="mb-2" v-if="['add'].includes(bookingMode)"></closable-help-alert>
                             <v-text-field :label="$t('Code')" v-model="code" v-if="['add'].includes(bookingMode)"></v-text-field>
 
-                            <div v-if="['edit'].includes(bookingMode) && editTab === 'amount'" class="text-caption text-medium-emphasis mb-2">
-                                {{ $t('InStock') }}: {{ entryOriginalAmount }} {{ entryOriginalUnit?.name || '' }}
-                                <span v-if="amountChanged" class="text-warning">→ {{ amount }} {{ unit?.name || '' }}</span>
+                            <div v-if="['edit'].includes(bookingMode) && editTab === 'amount'" class="text-caption text-medium-emphasis mb-2 d-flex align-center justify-space-between">
+                                <span>
+                                    {{ $t('InStock') }}: {{ entryOriginalAmount }} {{ entryOriginalUnit?.name || '' }}
+                                    <span v-if="amountChanged" class="text-warning">→ {{ amount }} {{ unit?.name || '' }}</span>
+                                </span>
+                                <v-btn size="small" variant="text" prepend-icon="fa-solid fa-minus" data-test="consume-lot-btn"
+                                       @click="amount = 0">{{ $t('UseUp') }}</v-btn>
                             </div>
 
                             <v-number-input :label="$t('Amount')" :precision="2" v-model="amount"
@@ -79,10 +83,10 @@
                                           v-if="['add'].includes(bookingMode) || (['edit'].includes(bookingMode) && editTab === 'amount')"></model-select>
 
                             <v-date-input :label="$t('Expires')" v-model="expires" v-if="['add'].includes(bookingMode)">
-                                <template #append-inner>
-                                    <v-btn variant="text" @click.stop="freezerExpiryDialog = true">
+                                <template #append-inner v-if="inventoryLocation?.isFreezer">
+                                    <v-btn variant="text" data-test="freezer-expiry-btn" @click.stop="freezerExpiryDialog = true">
                                         <v-icon icon="fa-solid fa-snowflake"></v-icon>
-                                        <freezer-expiry-dialog v-model:date="expires" v-model="freezerExpiryDialog"></freezer-expiry-dialog>
+                                        <expiry-preset-dialog v-model:date="expires" v-model="freezerExpiryDialog"></expiry-preset-dialog>
                                     </v-btn>
                                 </template>
                             </v-date-input>
@@ -122,7 +126,7 @@
                                 {{ ingredientToString({food: item.food, unit: item.unit, amount: item.amount} as Ingredient) }} <br/>
                                 <v-chip size="small" label color="warning" class="me-2" prepend-icon="fa-solid fa-barcode">{{item.code}}</v-chip>
                                     <v-chip size="small" label color="info" class="me-2" :prepend-icon="TInventoryLocation.icon">{{item.inventoryLocation.name}}</v-chip>
-                                    <v-chip size="small" label :color="(item.expires < DateTime.now() ? 'error' : 'success')">
+                                    <v-chip size="small" label :color="(item.expires < DateTime.now() ? 'error' : 'success')" v-if="item.expires">
                                         {{ DateTime.fromJSDate(item.expires).toLocaleString(DateTime.DATE_MED) }}
                                     </v-chip>
                             </template>
@@ -217,7 +221,7 @@ import {useRoute} from "vue-router";
 import {VDataTableUpdateOptions} from "@/vuetify.ts";
 import {DateTime} from "luxon";
 import {ingredientToString} from "@/utils/model_utils.ts";
-import FreezerExpiryDialog from "@/components/dialogs/FreezerExpiryDialog.vue";
+import ExpiryPresetDialog from "@/components/dialogs/ExpiryPresetDialog.vue";
 import InventoryEntryLogDialog from "@/components/dialogs/InventoryEntryLogDialog.vue";
 import VClosableCardTitle from "@/components/dialogs/VClosableCardTitle.vue";
 import ClosableHelpAlert from "@/components/display/ClosableHelpAlert.vue";
@@ -443,8 +447,13 @@ function inventoryEntrySelected() {
     if (inventoryEntry.value) {
         food.value = inventoryEntry.value.food
         unit.value = inventoryEntry.value.unit
-        //inventoryLocation.value = inventoryEntry.value.inventoryLocation
-        //subLocation.value = inventoryEntry.value.subLocation
+        // Pre-populate with the newly selected entry's own values — reconsidered post-UAT from an
+        // earlier "starts blank" design (judged counter-intuitive). This also structurally prevents
+        // a previously-selected entry's Location from leaking into this one: editEntry()'s dirty
+        // check compares against whatever is currently loaded here, which is now always this
+        // entry's own data, never a stale value left over from a different entry.
+        inventoryLocation.value = inventoryEntry.value.inventoryLocation
+        subLocation.value = inventoryEntry.value.subLocation ?? ''
         amount.value = inventoryEntry.value.amount
         //expires.value = inventoryEntry.value.expires
         entryOriginalAmount.value = inventoryEntry.value.amount
@@ -461,31 +470,26 @@ function loadItems(options: VDataTableUpdateOptions) {
 
     let parameters = {} as ApiInventoryEntryListRequest
 
-    if (food.value == null && inventoryLocation.value == null) {
-        items.value = []
-        itemCount.value = 0
-    } else {
-        if (food.value) {
-            parameters.foodId = food.value.id!
-        }
-        if (inventoryLocation.value) {
-            parameters.inventoryLocationId = inventoryLocation.value.id!
-        }
-
-        tableLoading.value = true
-
-        page.value = options.page
-        pageSize.value = options.itemsPerPage
-
-        api.apiInventoryEntryList(parameters).then((r: any) => {
-            items.value = r.results
-            itemCount.value = r.count
-        }).catch((err: any) => {
-            useMessageStore().addError(ErrorMessageType.FETCH_ERROR, err)
-        }).finally(() => {
-            tableLoading.value = false
-        })
+    if (food.value) {
+        parameters.foodId = food.value.id!
     }
+    if (inventoryLocation.value) {
+        parameters.inventoryLocationId = inventoryLocation.value.id!
+    }
+
+    tableLoading.value = true
+
+    page.value = options.page
+    pageSize.value = options.itemsPerPage
+
+    api.apiInventoryEntryList(parameters).then((r: any) => {
+        items.value = r.results
+        itemCount.value = r.count
+    }).catch((err: any) => {
+        useMessageStore().addError(ErrorMessageType.FETCH_ERROR, err)
+    }).finally(() => {
+        tableLoading.value = false
+    })
 }
 
 </script>

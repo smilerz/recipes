@@ -127,33 +127,42 @@ describe('FoodEditor - freezer-aware shelf-life defaults', () => {
         w.unmount()
     })
 
-    // #19: the Freezer row moved from the generic, category-blind ExpiryPresetChips ("3 Days /
-    // 1 Week / ...") to FreezerCategoryChips (real USDA-style guidance, e.g. "Poultry: 9 months") -
-    // Unopened and Opened have no such category guidance and keep the generic chips.
-    it('Unopened and Opened rows still use the generic ExpiryPresetChips, Frozen does not', async () => {
+    // #19/chips->dialog: the busy/crowded preset chip rows became a single "Presets" button +
+    // ExpiryPresetDialog per row. Frozen uses the dialog's own default (USDA-style freezer-category
+    // guidance, e.g. "Poultry: 9 months") by omitting the `presets` prop; Unopened/Opened have no
+    // such category guidance and pass the generic day-based preset list explicitly.
+    it('renders one ExpiryPresetDialog per visible row — Frozen uses the dialog default, Unopened/Opened pass generic presets', async () => {
         // frozen+opened both need an existing value so their opt-in rows are visible (#16/18)
         const item = makeFood({id: 5, name: 'Chicken Breast', shelfLifeDaysFrozen: 180, shelfLifeDaysOpened: 3})
         const w = mountEditor(item)
         await flushPromises()
 
-        expect(w.findAllComponents({name: 'ExpiryPresetChips'}).length).toBe(2)
-        expect(w.findAllComponents({name: 'FreezerCategoryChips'}).length).toBe(1)
+        const dialogs = w.findAllComponents({name: 'ExpiryPresetDialog'})
+        expect(dialogs.length).toBe(3)
+
+        const frozenDialog = dialogs.find(d => d.props('title') === 'Frozen')
+        expect(frozenDialog!.props('presets')).toBeUndefined()
+
+        const unopenedDialog = dialogs.find(d => d.props('title') === 'Unopened')
+        const openedDialog = dialogs.find(d => d.props('title') === 'Opened')
+        expect(unopenedDialog!.props('presets')).toBeTruthy()
+        expect(openedDialog!.props('presets')).toBeTruthy()
 
         w.unmount()
     })
 
-    it('a Freezer category chip click fills the Freezer row value+period', async () => {
+    it('selecting a Frozen preset fills the Freezer row value+period', async () => {
         const item = makeFood({id: 5, name: 'Chicken Breast'})
         const w = mountEditor(item)
         await flushPromises()
 
-        // user checks the opt-in Frozen box first (#16/18) — the row/chips aren't rendered until then
+        // user checks the opt-in Frozen box first (#16/18) — the row/dialog aren't rendered until then
         ;(w.vm as any).frozenEnabled = true
         await flushPromises()
 
-        const freezerChips = w.findComponent({name: 'FreezerCategoryChips'})
-        expect(freezerChips.exists()).toBe(true)
-        freezerChips.vm.$emit('select', 180)
+        const frozenDialog = w.findAllComponents({name: 'ExpiryPresetDialog'}).find(d => d.props('title') === 'Frozen')
+        expect(frozenDialog).toBeTruthy()
+        frozenDialog!.vm.$emit('select', 180)
         await flushPromises()
 
         expect((w.vm as any).shelfLifeFrozenValue).toBe(6)
@@ -176,9 +185,8 @@ describe('FoodEditor - Frozen/Opened opt-in toggles (#16/18)', () => {
 
         expect((w.vm as any).frozenEnabled).toBe(false)
         expect((w.vm as any).openedEnabled).toBe(false)
-        expect(w.findComponent({name: 'FreezerCategoryChips'}).exists()).toBe(false)
-        // only Unopened's ExpiryPresetChips renders — Opened's is hidden
-        expect(w.findAllComponents({name: 'ExpiryPresetChips'}).length).toBe(1)
+        // only Unopened's ExpiryPresetDialog renders — Frozen/Opened's are hidden with their rows
+        expect(w.findAllComponents({name: 'ExpiryPresetDialog'}).length).toBe(1)
 
         w.unmount()
     })

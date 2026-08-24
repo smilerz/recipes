@@ -46,8 +46,8 @@ function mountDialog() {
                 ModelSelect: {template: '<div class="model-select-stub" />'},
                 VClosableCardTitle: {template: '<div class="title-stub" />'},
                 // v-dialog activator="model" trips a Vuetify activator watcher under
-                // jsdom; the freezer dialog's own behavior is not under test here.
-                FreezerExpiryDialog: {template: '<div class="freezer-dialog-stub" />'},
+                // jsdom; the dialog's own behavior is not under test here.
+                ExpiryPresetDialog: {template: '<div class="freezer-dialog-stub" />'},
             },
         },
     })

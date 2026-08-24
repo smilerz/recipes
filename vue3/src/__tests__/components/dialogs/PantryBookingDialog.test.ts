@@ -64,7 +64,7 @@ function mountDialog(inventoryEntryId: number, bookingMode: string = 'edit') {
                 ModelEditDialog: {template: '<div class="stub-model-edit-dialog"/>'},
                 ClosableHelpAlert: {template: '<div class="stub-help-alert"/>'},
                 VClosableCardTitle: {template: '<div class="stub-title"/>'},
-                FreezerExpiryDialog: {template: '<div class="stub-freezer-dialog"/>'},
+                ExpiryPresetDialog: {template: '<div class="stub-freezer-dialog"/>'},
             },
         },
     })
@@ -185,6 +185,31 @@ describe('PantryBookingDialog - edit mode Amount tab (#9: direct amount/unit edi
         w.unmount()
     })
 
+    // Consume moved into the Edit dialog per feedback (not a new per-row icon) — a one-click
+    // shortcut that sets Amount to 0 (Save then patches it same as any other amount edit).
+    it('the Consume button zeroes the Amount field, ready for Save', async () => {
+        const entry = {
+            id: 7, food: {id: 1, name: 'Flour'}, unit: {id: 1, name: 'g'}, amount: 2,
+            inventoryLocation: {id: 1, name: 'Pantry', isFreezer: false},
+            expires: new Date('2027-01-01'), subLocation: '',
+        }
+        apiMock.apiInventoryEntryRetrieve.mockResolvedValue(entry)
+        apiMock.apiInventoryEntryList.mockResolvedValue({results: []})
+        const w = mountDialog(7)
+        await flushPromises()
+
+        expect((w.vm as any).amount).toBe(2)
+
+        const consumeBtn = document.body.querySelector('[data-test="consume-lot-btn"]') as HTMLElement
+        expect(consumeBtn).not.toBeNull()
+        consumeBtn.click()
+        await flushPromises()
+
+        expect((w.vm as any).amount).toBe(0)
+
+        w.unmount()
+    })
+
     it('sends nothing (no API call) when neither amount, unit, nor location changed', async () => {
         const entry = {
             id: 7, food: {id: 1, name: 'Flour'}, unit: {id: 1, name: 'g'}, amount: 2,
@@ -277,6 +302,26 @@ describe('PantryBookingDialog - edit mode consolidation (#2)', () => {
 
         expect((w.vm as any).amountChanged).toBe(true)
         expect((w.vm as any).entryOriginalAmount).toBe(2)
+
+        w.unmount()
+    })
+
+    // Reconsidered post-UAT: Location/SubLocation starting blank on entry selection (matching the
+    // old Move behavior) was judged counter-intuitive — a user editing a lot expects to see where
+    // it currently is.
+    it('pre-populates inventoryLocation/subLocation with the entry\'s own current values on selection', async () => {
+        const entry = {
+            id: 7, food: {id: 1, name: 'Flour'}, unit: {id: 1, name: 'g'}, amount: 2,
+            inventoryLocation: {id: 1, name: 'Pantry', isFreezer: false},
+            expires: new Date('2027-01-01'), subLocation: 'Top Shelf',
+        }
+        apiMock.apiInventoryEntryRetrieve.mockResolvedValue(entry)
+        apiMock.apiInventoryEntryList.mockResolvedValue({results: []})
+        const w = mountDialog(7)
+        await flushPromises()
+
+        expect((w.vm as any).inventoryLocation).toEqual({id: 1, name: 'Pantry', isFreezer: false})
+        expect((w.vm as any).subLocation).toBe('Top Shelf')
 
         w.unmount()
     })

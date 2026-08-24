@@ -44,7 +44,9 @@
                                           :items="[{title: $t('Days'), value: 'day'}, {title: $t('Weeks'), value: 'week'}, {title: $t('Months'), value: 'month'}]"></v-select>
                             </v-col>
                             <v-col cols="12">
-                                <expiry-preset-chips @select="(days:number) => setShelfLife('pantry', days)"></expiry-preset-chips>
+                                <v-btn variant="text" size="small" prepend-icon="fa-solid fa-list-ul" @click="pantryPresetDialog = true">{{ $t('Presets') }}</v-btn>
+                                <expiry-preset-dialog v-model="pantryPresetDialog" :title="$t('Unopened')" :subtitle="$t('ExpiryPresetHelp')" :presets="genericExpiryPresets"
+                                                       @select="(days:number) => setShelfLife('pantry', days)"></expiry-preset-dialog>
                             </v-col>
                         </v-row>
 
@@ -62,7 +64,9 @@
                                           :items="[{title: $t('Days'), value: 'day'}, {title: $t('Weeks'), value: 'week'}, {title: $t('Months'), value: 'month'}]"></v-select>
                             </v-col>
                             <v-col cols="12">
-                                <freezer-category-chips @select="(days:number) => setShelfLife('frozen', days)"></freezer-category-chips>
+                                <v-btn variant="text" size="small" prepend-icon="fa-solid fa-list-ul" @click="frozenPresetDialog = true">{{ $t('Presets') }}</v-btn>
+                                <expiry-preset-dialog v-model="frozenPresetDialog" :title="$t('Frozen')"
+                                                       @select="(days:number) => setShelfLife('frozen', days)"></expiry-preset-dialog>
                             </v-col>
                         </v-row>
 
@@ -76,7 +80,9 @@
                                           :items="[{title: $t('Days'), value: 'day'}, {title: $t('Weeks'), value: 'week'}, {title: $t('Months'), value: 'month'}]"></v-select>
                             </v-col>
                             <v-col cols="12">
-                                <expiry-preset-chips @select="(days:number) => setShelfLife('opened', days)"></expiry-preset-chips>
+                                <v-btn variant="text" size="small" prepend-icon="fa-solid fa-list-ul" @click="openedPresetDialog = true">{{ $t('Presets') }}</v-btn>
+                                <expiry-preset-dialog v-model="openedPresetDialog" :title="$t('Opened')" :subtitle="$t('ExpiryPresetHelp')" :presets="genericExpiryPresets"
+                                                       @select="(days:number) => setShelfLife('opened', days)"></expiry-preset-dialog>
                             </v-col>
                         </v-row>
                         <div class="text-caption text-medium-emphasis mb-4">{{ $t('ShelfLifeHelp') }}</div>
@@ -90,7 +96,11 @@
                             </v-col>
                         </v-row>
 
-                        <model-select :label="$t('PreferredUnit')" v-model="editingObj.preferredUnit" model="Unit" append-to-body></model-select>
+                        <v-row density="compact" align="center">
+                            <v-col cols="6">
+                                <model-select :label="$t('PreferredUnit')" v-model="editingObj.preferredUnit" model="Unit" append-to-body></model-select>
+                            </v-col>
+                        </v-row>
                     </v-form>
                 </v-tabs-window-item>
 
@@ -233,9 +243,11 @@ import {openFdcPage} from "@/utils/fdc.ts";
 import {DateTime} from "luxon";
 import HierarchyEditor from "@/components/inputs/HierarchyEditor.vue";
 import {useRoute} from 'vue-router'
-import {shelfLifeFromDays, shelfLifeToDays, type ShelfLifePeriod} from "@/utils/pantry_utils.ts";
-import ExpiryPresetChips from "@/components/inputs/ExpiryPresetChips.vue";
-import FreezerCategoryChips from "@/components/inputs/FreezerCategoryChips.vue";
+import {EXPIRY_PRESET_DAYS, formatShelfLifeDuration, shelfLifeFromDays, shelfLifeToDays, type ShelfLifePeriod} from "@/utils/pantry_utils.ts";
+import ExpiryPresetDialog from "@/components/dialogs/ExpiryPresetDialog.vue";
+import {useI18n} from "vue-i18n";
+
+const {t} = useI18n()
 
 
 const props = defineProps({
@@ -314,8 +326,20 @@ watch(openedEnabled, (enabled, wasEnabled) => {
     if (!enabled && wasEnabled) shelfLifeOpenedValue.value = null
 })
 
-/** Quick-select preset chip handler: fills a row's value+period pair from a preset day count,
- * without requiring the food to have any shelf-life field configured first. */
+// One ExpiryPresetDialog instance per row (matches the file's existing one-picker-pair-per-row
+// shape, and how every other caller of this dialog already uses its own dedicated instance)
+// rather than a single shared instance switched by context — no "did I set the right target
+// before opening" state to get wrong.
+const pantryPresetDialog = ref(false)
+const frozenPresetDialog = ref(false)
+const openedPresetDialog = ref(false)
+
+// Unopened and Opened have no category-specific guidance (unlike Frozen's USDA-style presets, the
+// dialog's own default) and share the same generic day-based preset list.
+const genericExpiryPresets = computed(() => EXPIRY_PRESET_DAYS.map(days => ({label: formatShelfLifeDuration(days, t), days})))
+
+/** Quick-select preset handler: fills a row's value+period pair from a preset day count, without
+ * requiring the food to have any shelf-life field configured first. */
 function setShelfLife(row: 'pantry' | 'frozen' | 'opened', days: number) {
     const sl = shelfLifeFromDays(days)
     if (row === 'pantry') {
