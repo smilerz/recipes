@@ -10,6 +10,10 @@
              become the multiselect's offsetParent and shift @vueform's append-to-body popper on
              first open. Suppressed for the inline variant, which shows the label as the placeholder. -->
         <!-- TODO resolve-on-load false for now, race condition with model class, make prop once better solution is found -->
+        <!-- `delay` below is remote-search-only: once it's above @vueform's own default of -1, it
+             registers a search watcher that unconditionally calls `options.value(...)` as a
+             function on every keystroke/selection — a static `:items` array has no such function
+             and this throws "options.value is not a function". Only debounce in remote-search mode. -->
         <Multiselect
             :ref="`ref_${props.id}`"
             :key="`${props.id}-hydration-${hydrationVersion}`"
@@ -21,7 +25,7 @@
             :options="props.items ?? search"
             :on-create="createObject"
             :createOption="props.allowCreate"
-            :delay="300"
+            :delay="props.items ? -1 : 300"
             :object="effectiveObject"
             :valueProp="itemValue"
             :label="itemLabel"
@@ -331,6 +335,17 @@ async function createObject(object: any, select$: Multiselect) {
 /* @vueform hardcodes the tags-mode search input white; make it transparent so the field fill
    (--ms-bg) shows through instead of a white band. */
 .material-multiselect .multiselect-tags-search {
+    background: transparent;
+}
+
+/* Same fix as .multiselect-tags-search above, for single/simple mode: .multiselect-search is an
+   absolutely-positioned input covering the ENTIRE field, also filled with --ms-bg by @vueform's
+   own theme. Left un-overridden, two identical translucent (0.04 alpha) layers stack — root +
+   search input — compounding to ~0.078 effective opacity, visibly darker than every other
+   (single-layer) Vuetify filled field despite either layer's OWN computed background-color
+   inspecting as the same 0.04. Root-caused 2026-08-24 from a UAT report that model-selects "look
+   darker" than native fields. */
+.material-multiselect .multiselect-search {
     background: transparent;
 }
 

@@ -163,14 +163,15 @@ describe('InventoryEntryTable — opened lifecycle', () => {
         await flushPromises()
 
         expect(wrapper.find('[data-test="open-lot-1"]').isVisible()).toBe(true)
-        expect(wrapper.find('[data-test="open-lot-1"]').classes()).not.toContain('v-btn--disabled')
+        expect(wrapper.find('[data-test="open-lot-1"]').classes()).not.toContain('open-lot-btn--inactive')
         expect(wrapper.find('[data-test="opened-chip-1"]').exists()).toBe(false)
     })
 
-    // The Open button always stays visible AND present (disabled, not hidden or removed) so the
-    // row's action icons never shift position or count row to row, and a disabled control reads as
-    // a clear, continuous UI state rather than an unexplained gap in the button group.
-    it('shows an Opened chip and a disabled (not hidden) Open action for an already-opened lot', async () => {
+    // The Open button always stays visible AND present (muted, not hidden or removed) so the
+    // row's action icons never shift position or count row to row, and a muted control reads as
+    // a clear, continuous UI state rather than an unexplained gap in the button group. Not
+    // natively `:disabled` — see openLot()'s comment.
+    it('shows an Opened chip and a muted (not hidden) Open action for an already-opened lot', async () => {
         apiMock.apiInventoryEntryList.mockResolvedValue({
             results: [entry({ id: 1, openedAt: new Date('2026-08-01') })], count: 1,
         })
@@ -179,11 +180,11 @@ describe('InventoryEntryTable — opened lifecycle', () => {
 
         const openBtn = wrapper.find('[data-test="open-lot-1"]')
         expect(openBtn.isVisible()).toBe(true)
-        expect(openBtn.classes()).toContain('v-btn--disabled')
+        expect(openBtn.classes()).toContain('open-lot-btn--inactive')
         expect(wrapper.find('[data-test="opened-chip-1"]').exists()).toBe(true)
     })
 
-    it('shows a disabled Open action, with an explanatory title, for a food with no configured opened shelf life', async () => {
+    it('shows a muted Open action, with an explanatory title, for a food with no configured opened shelf life', async () => {
         apiMock.apiInventoryEntryList.mockResolvedValue({
             results: [entry({ id: 1, food: { id: 10, name: 'Salt', shelfLifeDaysOpened: null } })], count: 1,
         })
@@ -192,8 +193,25 @@ describe('InventoryEntryTable — opened lifecycle', () => {
 
         const openBtn = wrapper.find('[data-test="open-lot-1"]')
         expect(openBtn.isVisible()).toBe(true)
-        expect(openBtn.classes()).toContain('v-btn--disabled')
+        expect(openBtn.classes()).toContain('open-lot-btn--inactive')
         expect(openBtn.attributes('title')).toBe('OpenNotApplicable')
+    })
+
+    // A native `:disabled` button can't receive any click/tap event at all — desktop or mobile —
+    // so the explanation was only ever reachable via the native `title` attribute's hover-only
+    // browser tooltip. Open is no longer natively disabled: tapping it now explains via toast.
+    it('tapping a non-actionable Open button explains why via a toast, instead of calling the API', async () => {
+        apiMock.apiInventoryEntryList.mockResolvedValue({
+            results: [entry({ id: 1, food: { id: 10, name: 'Salt', shelfLifeDaysOpened: null } })], count: 1,
+        })
+        const wrapper = mountPage(InventoryEntryTable)
+        await flushPromises()
+
+        await wrapper.find('[data-test="open-lot-1"]').trigger('click')
+        await flushPromises()
+
+        expect(apiMock.apiInventoryEntryOpenCreate).not.toHaveBeenCalled()
+        expect(addMessageMock).toHaveBeenLastCalledWith(expect.anything(), 'OpenNotApplicable', expect.anything())
     })
 
     it('clicking Open calls the open action and updates the row', async () => {
@@ -209,7 +227,7 @@ describe('InventoryEntryTable — opened lifecycle', () => {
 
         expect(apiMock.apiInventoryEntryOpenCreate).toHaveBeenCalledWith({ id: 1 })
         expect(wrapper.find('[data-test="opened-chip-1"]').exists()).toBe(true)
-        expect(wrapper.find('[data-test="open-lot-1"]').classes()).toContain('v-btn--disabled')
+        expect(wrapper.find('[data-test="open-lot-1"]').classes()).toContain('open-lot-btn--inactive')
     })
 
     // Regression: the "still frozen" message used to be keyed off r.expires truthiness instead of

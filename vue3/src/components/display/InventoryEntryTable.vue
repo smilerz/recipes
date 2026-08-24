@@ -60,7 +60,7 @@
                                 <v-btn-group divided border density="comfortable">
                                     <v-btn icon="fa-solid fa-clock-rotate-left" :title="t('History')" @click="openLog(item)"></v-btn>
                                     <v-btn icon="fa-solid fa-lock-open" :title="openTitle(item)" :data-test="`open-lot-${item.id}`" @click="openLot(item)"
-                                           :disabled="!canOpen(item)"></v-btn>
+                                           :class="{'open-lot-btn--inactive': !canOpen(item)}"></v-btn>
                                     <v-btn icon="$edit" :title="t('Edit')" :data-test="`edit-lot-${item.id}`" @click="openBooking(item)"></v-btn>
                                 </v-btn-group>
                             </td>
@@ -89,7 +89,7 @@
                                     <v-list density="compact">
                                         <v-list-item :title="t('History')" prepend-icon="fa-solid fa-clock-rotate-left" @click="openLog(item)"></v-list-item>
                                         <v-list-item :title="openTitle(item)" prepend-icon="fa-solid fa-lock-open" :data-test="`open-lot-${item.id}`"
-                                                     :disabled="!canOpen(item)" @click="openLot(item)"></v-list-item>
+                                                     :class="{'open-lot-btn--inactive': !canOpen(item)}" @click="openLot(item)"></v-list-item>
                                         <v-list-item :title="t('Edit')" prepend-icon="$edit" @click="openBooking(item)"></v-list-item>
                                     </v-list>
                                 </v-menu>
@@ -253,7 +253,16 @@ function openLog(item: InventoryEntry) {
  * the Open action is only ever reachable (see canOpen) for a food with an opened shelf life
  * configured, so a non-frozen lot always gets a real recomputed date; freezer status is the only
  * remaining reason the clock wouldn't start yet. */
+/** The Open action stays visually muted (v-btn--disabled/v-list-item--disabled classes) but is
+ * never natively `:disabled` — a native-disabled control can't receive any click/tap event at
+ * all, on desktop or mobile, so a native `title` tooltip (hover-only, invisible on touch) was the
+ * only explanation reachable. Tapping/clicking a non-actionable lot now shows the same
+ * explanation as an info toast instead of calling the API — works identically on touch and mouse. */
 function openLot(item: InventoryEntry) {
+    if (!canOpen(item)) {
+        useMessageStore().addMessage(MessageType.INFO, openTitle(item), 4000)
+        return
+    }
     new ApiApi().apiInventoryEntryOpenCreate({id: item.id!}).then(r => {
         Object.assign(item, r)
         const text = item.inventoryLocation.isFreezer ? t('OpenedStillFrozen') : t('OpenedExpiryUpdated', {date: expiryDateLabel(r.expires!)})
@@ -305,5 +314,14 @@ defineExpose({load})
 </script>
 
 <style scoped>
-
+/* Visual-only "muted" look for the Open action when it doesn't apply — deliberately NOT
+   Vuetify's own v-btn--disabled/v-list-item--disabled classes, both of which bake in
+   `pointer-events: none`. That's exactly what native `:disabled` did: it blocks ALL real
+   pointer/touch interaction, not just Playwright's synthetic actionability check (confirmed live
+   — a raw dispatchEvent()-based click bypasses hit-testing and gives a false pass; a real
+   click/tap does not). The whole point of this control is that it stays genuinely tappable so its
+   explanation is reachable — see openLot(). */
+.open-lot-btn--inactive {
+    opacity: 0.26;
+}
 </style>
