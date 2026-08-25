@@ -352,4 +352,26 @@ describe('PantryBookingDialog - edit mode consolidation (#2)', () => {
 
         w.unmount()
     })
+
+    // Phase 3 consolidation: the dialog previously showed the snowflake freezer-expiry button
+    // unconditionally in Add mode. InventoryBookingPage.vue already gated it on
+    // inventoryLocation.isFreezer (a defect fix from earlier this session) — unifying the shared
+    // form fields means the dialog now matches.
+    it('only shows the freezer-expiry (snowflake) button on Expires when the selected location is a freezer', async () => {
+        apiMock.apiInventoryEntryList.mockResolvedValue({results: []})
+        const w = mountDialog(0, 'add')
+        await flushPromises()
+
+        expect(document.body.querySelector('[data-test="freezer-expiry-btn"]')).toBeNull()
+
+        ;(w.vm as any).inventoryLocation = {id: 1, name: 'Pantry', isFreezer: false}
+        await flushPromises()
+        expect(document.body.querySelector('[data-test="freezer-expiry-btn"]')).toBeNull()
+
+        ;(w.vm as any).inventoryLocation = {id: 2, name: 'Freezer', isFreezer: true}
+        await flushPromises()
+        expect(document.body.querySelector('[data-test="freezer-expiry-btn"]')).not.toBeNull()
+
+        w.unmount()
+    })
 })

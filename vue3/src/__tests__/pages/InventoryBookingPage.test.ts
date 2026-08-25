@@ -432,4 +432,71 @@ describe('InventoryBookingPage', () => {
 
         w.unmount()
     })
+
+    // Phase 2 of the InventoryBookingPage/PantryBookingDialog consolidation: the page's post-Add
+    // confirm step previously had 3 hardcoded preset buttons (keep Location, keep Food, reset
+    // both) with no test coverage at all. It now shares the dialog's copy-picker (a multi-select
+    // of fields + one Copy button) via useInventoryEntryForm.
+    describe('post-Add confirm step (copy-picker)', () => {
+        it('a successful Add opens the confirm dialog with the created entry', async () => {
+            const created = {
+                id: 9, food: {id: 1, name: 'Rice'}, unit: {id: 1, name: 'g'}, amount: 2,
+                inventoryLocation: {id: 1, name: 'Pantry', isFreezer: false}, expires: null, code: 'ABC', subLocation: '',
+            }
+            apiMock.apiInventoryEntryCreate.mockResolvedValue(created)
+            const w = mountPage()
+            await flushPromises()
+
+            ;(w.vm as any).food = created.food
+            await (w.vm as any).save()
+            await flushPromises()
+
+            expect((w.vm as any).bookingConfirmDialog).toBe(true)
+            expect((w.vm as any).bookingConfirmEntry).toEqual(created)
+
+            w.unmount()
+        })
+
+        it('copyConfirmEntry() copies only the selected fields onto a reset form and returns to Add mode', async () => {
+            const created = {
+                id: 9, food: {id: 1, name: 'Rice'}, unit: {id: 1, name: 'g'}, amount: 2,
+                inventoryLocation: {id: 1, name: 'Pantry', isFreezer: false}, expires: null, code: 'ABC', subLocation: 'Top Shelf',
+            }
+            apiMock.apiInventoryEntryCreate.mockResolvedValue(created)
+            const w = mountPage()
+            await flushPromises()
+
+            await (w.vm as any).save()
+            await flushPromises()
+
+            ;(w.vm as any).selectedCopyOptions = ['inventoryLocation']
+            ;(w.vm as any).copyConfirmEntry()
+            await flushPromises()
+
+            expect((w.vm as any).inventoryLocation).toEqual(created.inventoryLocation)
+            expect((w.vm as any).food).toBeNull()
+            expect((w.vm as any).bookingMode).toBe('add')
+            expect((w.vm as any).bookingConfirmDialog).toBe(false)
+
+            w.unmount()
+        })
+    })
+
+    it('loads commonUnits on mount, for the Unit field\'s quick-pick chips', async () => {
+        const item = {
+            id: 1, food: {id: 1, name: 'Rice'}, amount: 1, code: 'ABC', expires: null,
+            inventoryLocation: {id: 1, name: 'Pantry', isFreezer: false}, subLocation: '',
+        }
+        apiMock.apiInventoryEntryList.mockResolvedValue({
+            results: [
+                {...item, unit: {id: 1, name: 'g'}}, {...item, unit: {id: 1, name: 'g'}}, {...item, unit: {id: 2, name: 'cup'}},
+            ], count: 3,
+        } as any)
+        const w = mountPage()
+        await flushPromises()
+
+        expect((w.vm as any).commonUnits.map((u: any) => u.id)).toEqual([1, 2])
+
+        w.unmount()
+    })
 })

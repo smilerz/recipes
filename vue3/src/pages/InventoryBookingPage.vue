@@ -28,72 +28,27 @@
                                 <v-btn value="edit" prepend-icon="$edit">{{ $t('Edit') }}</v-btn>
                             </v-btn-toggle>
 
-                            <model-select model="InventoryEntry" :label="$t('InventoryEntry')" v-model="inventoryEntry" v-if="['edit'].includes(bookingMode)"
-                                          @update:modelValue="inventoryEntrySelected()">
-                            </model-select>
-
-                            <model-select model="Food" :label="$t('Food')" allow-create v-model="food" v-if="['add'].includes(bookingMode)"></model-select>
-
-                            <v-card variant="outlined" class="mb-4" v-if="inventoryEntry">
-                                <v-card-title>
-                                    {{ ingredientToString({food: inventoryEntry.food, unit: inventoryEntry.unit, amount: inventoryEntry.amount} as Ingredient) }}
-                                    <v-btn class="float-right" density="compact" icon="fa-solid fa-clock-rotate-left" variant="plain" @click="entryLogDialog = true; entryLogEntry = inventoryEntry"></v-btn>
-                                </v-card-title>
-                                <v-card-text>
-                                    <v-chip size="small" label color="warning" class="me-2" prepend-icon="fa-solid fa-barcode">{{inventoryEntry.code}}</v-chip>
-                                    <v-chip size="small" label color="info" class="me-2" :prepend-icon="TInventoryLocation.icon">{{inventoryEntry.inventoryLocation.name}}</v-chip>
-                                    <v-chip size="small" label :color="(inventoryEntry.expires < DateTime.now() ? 'error' : 'success')" v-if="inventoryEntry.expires">
-                                        {{ DateTime.fromJSDate(inventoryEntry.expires).toLocaleString(DateTime.DATE_MED) }}
-                                    </v-chip>
-                                </v-card-text>
-                            </v-card>
-
-                            <v-tabs v-if="['edit'].includes(bookingMode)" v-model="editTab" class="mb-4" density="compact">
-                                <v-tab value="amount">{{ $t('Amount') }}</v-tab>
-                                <v-tab value="location">{{ $t('InventoryLocation') }}</v-tab>
-                            </v-tabs>
-
-                            <model-select model="InventoryLocation" :label="$t('InventoryLocation')" v-model="inventoryLocation"
-                                          v-if="['add'].includes(bookingMode) || (['edit'].includes(bookingMode) && editTab === 'location')">
-                                <template #append>
-                                    <v-btn icon>
-                                        <v-icon icon="$create"></v-icon>
-                                        <model-edit-dialog model="InventoryLocation" @create="args => inventoryLocation = args"></model-edit-dialog>
-                                    </v-btn>
+                            <inventory-entry-form-fields :form="form" :booking-mode="bookingMode">
+                                <template #after-identity>
+                                    <v-card variant="outlined" class="mb-4" v-if="inventoryEntry">
+                                        <v-card-title>
+                                            {{ ingredientToString({food: inventoryEntry.food, unit: inventoryEntry.unit, amount: inventoryEntry.amount} as Ingredient) }}
+                                            <v-btn class="float-right" density="compact" icon="fa-solid fa-clock-rotate-left" variant="plain" @click="entryLogDialog = true; entryLogEntry = inventoryEntry"></v-btn>
+                                        </v-card-title>
+                                        <v-card-text>
+                                            <v-chip size="small" label color="warning" class="me-2" prepend-icon="fa-solid fa-barcode">{{inventoryEntry.code}}</v-chip>
+                                            <v-chip size="small" label color="info" class="me-2" :prepend-icon="TInventoryLocation.icon">{{inventoryEntry.inventoryLocation.name}}</v-chip>
+                                            <v-chip size="small" label :color="(inventoryEntry.expires < DateTime.now() ? 'error' : 'success')" v-if="inventoryEntry.expires">
+                                                {{ DateTime.fromJSDate(inventoryEntry.expires).toLocaleString(DateTime.DATE_MED) }}
+                                            </v-chip>
+                                        </v-card-text>
+                                    </v-card>
                                 </template>
-                            </model-select>
-                            <v-text-field :label="$t('SubLocation')" :hint="$t('SubLocationHelp')" v-model="subLocation"
-                                          v-if="['add'].includes(bookingMode) || (['edit'].includes(bookingMode) && editTab === 'location')"></v-text-field>
-
-                            <closable-help-alert :text="$t('CodeHelp')" class="mb-2" v-if="['add'].includes(bookingMode)"></closable-help-alert>
-                            <v-text-field :label="$t('Code')" v-model="code" v-if="['add'].includes(bookingMode)"></v-text-field>
-
-                            <div v-if="['edit'].includes(bookingMode) && editTab === 'amount'" class="text-caption text-medium-emphasis mb-2 d-flex align-center justify-space-between">
-                                <span>
-                                    {{ $t('InStock') }}: {{ entryOriginalAmount }} {{ entryOriginalUnit?.name || '' }}
-                                    <span v-if="amountChanged" class="text-warning">→ {{ amount }} {{ unit?.name || '' }}</span>
-                                </span>
-                                <v-btn size="small" variant="text" prepend-icon="fa-solid fa-minus" data-test="consume-lot-btn"
-                                       @click="amount = 0">{{ $t('UseUp') }}</v-btn>
-                            </div>
-
-                            <v-number-input :label="$t('Amount')" :precision="2" v-model="amount"
-                                            v-if="['add'].includes(bookingMode) || (['edit'].includes(bookingMode) && editTab === 'amount')"></v-number-input>
-                            <model-select model="Unit" :label="$t('Unit')" allow-create v-model="unit"
-                                          v-if="['add'].includes(bookingMode) || (['edit'].includes(bookingMode) && editTab === 'amount')"></model-select>
-
-                            <v-date-input :label="$t('Expires')" v-model="expires" v-if="['add'].includes(bookingMode)">
-                                <template #append-inner v-if="inventoryLocation?.isFreezer">
-                                    <v-btn variant="text" data-test="freezer-expiry-btn" @click.stop="freezerExpiryDialog = true">
-                                        <v-icon icon="fa-solid fa-snowflake"></v-icon>
-                                        <expiry-preset-dialog v-model:date="expires" v-model="freezerExpiryDialog"></expiry-preset-dialog>
-                                    </v-btn>
-                                </template>
-                            </v-date-input>
+                            </inventory-entry-form-fields>
                         </v-form>
                     </v-card-text>
                     <v-card-actions>
-                        <v-btn color="warning" prepend-icon="$reset" @click="resetForm()">{{ $t('Reset') }}</v-btn>
+                        <v-btn color="warning" prepend-icon="$reset" @click="resetFormAndReload()">{{ $t('Reset') }}</v-btn>
                         <v-btn color="create" prepend-icon="$save" :disabled="formLoading" :loading="formLoading" @click="save()">{{ $t('Save') }}</v-btn>
                     </v-card-actions>
                 </v-card>
@@ -190,18 +145,20 @@
                     </p>
                 </template>
 
-                <p class="mt-10">
-                    <v-btn color="success" prepend-icon="$create" block @click="bookingConfirmDialog = false; resetForm(true, false)">
-                        {{ bookingConfirmEntry.inventoryLocation.name }}
-                    </v-btn>
-                    <v-btn color="success" class="mt-2" prepend-icon="$create" block @click="bookingConfirmDialog = false; resetForm(false, true)">
-                        {{ bookingConfirmEntry.food.name }}
-                    </v-btn>
-                    <v-btn color="info" class="mt-2" prepend-icon="fa-solid fa-boxes-stacked" block @click="bookingConfirmDialog = false; resetForm(true, true)">
-                        {{ $t('InventoryBooking') }}
-                    </v-btn>
+                <v-select
+                    v-model="selectedCopyOptions"
+                    chips
+                    class="mt-6"
+                    :label="$t('Copy')"
+                    :items="copyOptions"
+                    multiple
+                    hide-details
+                >
+                </v-select>
+                <p class="mt-4">
+                    <v-btn block color="create" prepend-icon="$copy" @click="copyConfirmEntry">{{ $t('Copy') }}</v-btn>
                     <v-btn color="primary" class="mt-2" prepend-icon="$pantry" block :to="{name: 'PantryPage'}">{{ $t('Pantry') }}</v-btn>
-                    <v-btn class="mt-2" block @click="bookingConfirmDialog = false; resetForm(true, true)">{{ $t('Close') }}</v-btn>
+                    <v-btn class="mt-2" block @click="bookingConfirmDialog = false; resetFormAndReload()">{{ $t('Close') }}</v-btn>
                 </p>
             </v-card-text>
         </v-card>
@@ -210,26 +167,22 @@
 
 <script setup lang="ts">
 
-import ModelSelect from "@/components/inputs/ModelSelect.vue";
-import {computed, onMounted, ref, watch} from "vue";
-import {ApiApi, ApiInventoryEntryListRequest, Food, Ingredient, InventoryEntry, InventoryLocation, PatchedInventoryEntry, Unit} from "@/openapi";
-import {useUserPreferenceStore} from "@/stores/UserPreferenceStore.ts";
-import {VDateInput} from "vuetify/components";
-import {ErrorMessageType, MessageType, PreparedMessage, StructuredMessage, useMessageStore} from "@/stores/MessageStore.ts";
+import {onMounted, ref, watch} from "vue";
+import {ApiApi, ApiInventoryEntryListRequest, Ingredient, InventoryEntry} from "@/openapi";
+import {ErrorMessageType, useMessageStore} from "@/stores/MessageStore.ts";
 import {useI18n} from "vue-i18n";
 import {useRoute} from "vue-router";
 import {VDataTableUpdateOptions} from "@/vuetify.ts";
 import {DateTime} from "luxon";
 import {ingredientToString} from "@/utils/model_utils.ts";
-import ExpiryPresetDialog from "@/components/dialogs/ExpiryPresetDialog.vue";
+import InventoryEntryFormFields from "@/components/inputs/InventoryEntryFormFields.vue";
 import InventoryEntryLogDialog from "@/components/dialogs/InventoryEntryLogDialog.vue";
 import VClosableCardTitle from "@/components/dialogs/VClosableCardTitle.vue";
-import ClosableHelpAlert from "@/components/display/ClosableHelpAlert.vue";
 import {useRouteQuery} from "@vueuse/router";
 import {toNumberArray} from "@/utils/utils.ts";
 import InventoryEntryLogTable from "@/components/tables/InventoryEntryLogTable.vue";
 import {TInventoryLocation} from "@/types/Models.ts";
-import ModelEditDialog from "@/components/dialogs/ModelEditDialog.vue";
+import {useInventoryEntryForm} from "@/composables/useInventoryEntryForm.ts";
 
 const {t} = useI18n()
 const route = useRoute()
@@ -246,25 +199,34 @@ onMounted(() => {
 })
 
 // form
-const formLoading = ref(false)
-const freezerExpiryDialog = ref(false)
-
 const bookingMode = useRouteQuery('bookingMode', 'add')
-const editTab = ref<'amount' | 'location'>('amount')
-const food = ref<Food | null>(null)
-const inventoryEntry = ref<InventoryEntry | null>(null)
-const inventoryLocation = ref<InventoryLocation | null>(null)
-const subLocation = ref<string | undefined>('')
-const code = ref('')
-const amount = ref<number | undefined>(1)
-const unit = ref<Unit | undefined | null>(useUserPreferenceStore().defaultUnitObj)
-const expires = ref<Date | undefined>(undefined)
+const bookingConfirmDialog = ref(false)
 
-// tracked so the Amount tab can show an "In Stock: X → Y" before/after caption (#2), matching
-// UseUpDialog's absolute-value editing pattern
-const entryOriginalAmount = ref<number | undefined>(undefined)
-const entryOriginalUnit = ref<Unit | undefined | null>(undefined)
-const amountChanged = computed(() => amount.value !== entryOriginalAmount.value || unit.value !== entryOriginalUnit.value)
+const form = useInventoryEntryForm(t, {
+    onAdded: () => {
+        bookingConfirmDialog.value = true
+    },
+    onEdited: (r) => {
+        if (inventoryEntry.value) {
+            Object.assign(inventoryEntry.value, r)
+        }
+        inventoryEntrySelected()
+    },
+    onSettled: () => {
+        logUpdateTrigger.value = !logUpdateTrigger.value
+    },
+    onCopied: () => {
+        bookingMode.value = 'add'
+        bookingConfirmDialog.value = false
+    },
+})
+
+const {
+    formLoading, editTab, food, inventoryEntry, inventoryLocation, subLocation, code, amount, unit, expires,
+    entryOriginalAmount, entryOriginalUnit, amountChanged, commonUnits,
+    bookingConfirmEntry, copyOptions, selectedCopyOptions,
+    loadCommonUnits, addInventory, editInventory, inventoryEntrySelected, resetForm, copyConfirmEntry,
+} = form
 
 // table
 const tableLoading = ref(false)
@@ -278,8 +240,6 @@ const pageSize = ref(10)
 const entryLogDialog = ref(false)
 const entryLogEntry = ref<InventoryEntry | null>(null)
 
-const bookingConfirmDialog = ref(false)
-const bookingConfirmEntry = ref<InventoryEntry | null>(null)
 const inventoryEntryId = useRouteQuery('inventoryEntryId')
 
 const logUpdateTrigger = ref(false)
@@ -305,6 +265,8 @@ onMounted(() => {
             inventoryEntrySelected()
         })
     }
+
+    loadCommonUnits()
 })
 
 /**
@@ -319,120 +281,20 @@ function save() {
     }
 }
 
-/**
- * add new inventory entry
- */
-function addInventory() {
-    let api = new ApiApi()
-    formLoading.value = true
-
-    // set time to noon because ISO string conversion might shift dates instead of just cutting of time
-    if (expires.value) {
-        expires.value.setHours(12, 0, 0, 0)
-    }
-
-    let inventoryEntry = {
-        food: food.value,
-        inventoryLocation: inventoryLocation.value,
-        subLocation: subLocation.value,
-        amount: amount.value,
-        unit: unit.value,
-        expires: expires.value,
-        code: code.value,
-    } as InventoryEntry
-
-    api.apiInventoryEntryCreate({inventoryEntry: inventoryEntry}).then(r => {
-        useMessageStore().addPreparedMessage(PreparedMessage.CREATE_SUCCESS)
-        bookingConfirmEntry.value = r
-        bookingConfirmDialog.value = true
-    }).catch(err => {
-        useMessageStore().addError(ErrorMessageType.CREATE_ERROR, err)
-    }).finally(() => {
-        formLoading.value = false
-        logUpdateTrigger.value = !logUpdateTrigger.value
-    })
-}
-
-/**
- * Directly correct an existing lot (#2) — Remove, Move, and the original #9 amount/unit Edit were
- * three separate modes with duplicated "which fields changed" PATCH logic; a single Save now
- * patches whichever fields actually changed, on either the Amount or Location tab. Never a full
- * PUT: that would resend the old `expires` and permanently defeat the backend's freeze/thaw
- * recompute (caller_set_expires) on a genuine freezer<->fridge move.
- */
+/** Thin wrapper kept only so existing tests can call `editEntry()` by name — the actual PATCH
+ * logic lives in useInventoryEntryForm.ts's editInventory(). */
 function editEntry() {
-    let api = new ApiApi()
-
-    if (inventoryEntry.value != null) {
-        formLoading.value = true
-        const expiresBeforeEdit = inventoryEntry.value.expires
-
-        const patch: PatchedInventoryEntry = {}
-        if (amount.value != null && inventoryEntry.value.amount !== amount.value) {
-            patch.amount = amount.value
-        }
-        if (inventoryEntry.value.unit !== unit.value) {
-            patch.unit = unit.value ?? null
-        }
-        if (inventoryLocation.value != null && inventoryEntry.value.inventoryLocation != inventoryLocation.value) {
-            patch.inventoryLocation = inventoryLocation.value
-        }
-        if (subLocation.value != null && inventoryEntry.value.subLocation != subLocation.value) {
-            patch.subLocation = subLocation.value
-        }
-
-        if (Object.keys(patch).length === 0) {
-            formLoading.value = false
-            return
-        }
-
-        api.apiInventoryEntryPartialUpdate({id: inventoryEntry.value.id!, patchedInventoryEntry: patch}).then(r => {
-            useMessageStore().addPreparedMessage(PreparedMessage.UPDATE_SUCCESS)
-            if (r.expires && (r.expires?.getTime() ?? null) !== (expiresBeforeEdit?.getTime() ?? null)) {
-                useMessageStore().addMessage(MessageType.INFO,
-                    {title: t('Expires'), text: t('OpenedExpiryUpdated', {date: DateTime.fromJSDate(r.expires).toLocaleString(DateTime.DATE_MED)})} as StructuredMessage,
-                    4000)
-            }
-            if (inventoryEntry.value) {
-                Object.assign(inventoryEntry.value, r)
-            }
-            inventoryEntrySelected()
-        }).catch(err => {
-            useMessageStore().addError(ErrorMessageType.UPDATE_ERROR, err)
-        }).finally(() => {
-            formLoading.value = false
-            logUpdateTrigger.value = !logUpdateTrigger.value
-        })
-    }
+    editInventory()
 }
 
-
 /**
- * reset form to default values
+ * reset form to default values and reload the Current Stock table
  */
-function resetForm(resetFood: boolean = true, resetInventoryLocation: boolean = true) {
-    if (resetFood) {
-        food.value = null
-    }
-    if (resetInventoryLocation) {
-        inventoryLocation.value = null
-    }
-
-    inventoryEntry.value = null
-    subLocation.value = ''
-    amount.value = 1
-    unit.value = useUserPreferenceStore().defaultUnitObj
-    expires.value = undefined
-    code.value = ''
-    editTab.value = 'amount'
-    entryOriginalAmount.value = undefined
-    entryOriginalUnit.value = undefined
+function resetFormAndReload(resetFood: boolean = true, resetInventoryLocation: boolean = true) {
+    resetForm(resetFood, resetInventoryLocation)
     loadItems({page: 1, itemsPerPage: 10})
 }
 
-/**
- * when an inventory entry is selected, fill form with values from inventory entry
- */
 /**
  * #13/#2: clicking anywhere on a Current Stock row (not just its action buttons) starts an Edit
  * on that entry — the most common single-row action, and now the only booking mode besides Add.
@@ -441,25 +303,6 @@ function selectRowForEdit(item: InventoryEntry) {
     bookingMode.value = 'edit'
     inventoryEntry.value = item
     inventoryEntrySelected()
-}
-
-function inventoryEntrySelected() {
-    if (inventoryEntry.value) {
-        food.value = inventoryEntry.value.food
-        unit.value = inventoryEntry.value.unit
-        // Pre-populate with the newly selected entry's own values — reconsidered post-UAT from an
-        // earlier "starts blank" design (judged counter-intuitive). This also structurally prevents
-        // a previously-selected entry's Location from leaking into this one: editEntry()'s dirty
-        // check compares against whatever is currently loaded here, which is now always this
-        // entry's own data, never a stale value left over from a different entry.
-        inventoryLocation.value = inventoryEntry.value.inventoryLocation
-        subLocation.value = inventoryEntry.value.subLocation ?? ''
-        amount.value = inventoryEntry.value.amount
-        //expires.value = inventoryEntry.value.expires
-        entryOriginalAmount.value = inventoryEntry.value.amount
-        entryOriginalUnit.value = inventoryEntry.value.unit
-        editTab.value = 'amount'
-    }
 }
 
 /**
