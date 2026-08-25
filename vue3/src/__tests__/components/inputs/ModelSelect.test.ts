@@ -225,6 +225,25 @@ describe('ModelSelect — id-array hydration (mode=multiple, object=false)', () 
         expect(spy).toHaveBeenCalled()
     })
 
+    // Defect found during UAT: @vueform/multiselect's search watcher only registers when
+    // `delay > -1` (its own default is -1, meaning "off"), and once registered it unconditionally
+    // calls `options.value(...)` as a function — even when `options` is a static array — throwing
+    // `TypeError: options.value is not a function` on every keystroke/selection. `:delay="300"` was
+    // being passed unconditionally regardless of mode; it must only apply to the remote-search path.
+    it('does not pass a search delay to Multiselect when static :items are provided (would crash @vueform on type/select)', async () => {
+        const wrapper = mountSelect({items: [{id: 1, name: 'Fridge'}]})
+        await flushPromises()
+
+        expect(wrapper.findComponent({name: 'Multiselect'}).props('delay')).toBe(-1)
+    })
+
+    it('still passes the search delay to Multiselect for the remote model source (no :items)', async () => {
+        const wrapper = mountSelect({})
+        await flushPromises()
+
+        expect(wrapper.findComponent({name: 'Multiselect'}).props('delay')).toBe(300)
+    })
+
     it('handles retrieve() failure by silently skipping the id (no crash, no unhandled rejection)', async () => {
         retrieveSpy.mockReset()
         retrieveSpy.mockRejectedValue(new Error('boom'))
