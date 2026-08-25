@@ -125,41 +125,12 @@
 
     <v-dialog max-width="400" v-model="bookingConfirmDialog" persistent>
         <v-card prepend-icon="$save" :title="$t('Saved')">
-
-            <v-card-text v-if="bookingConfirmEntry" class="text-center">
-                <p>
-                    {{ ingredientToString({food: bookingConfirmEntry.food, unit: bookingConfirmEntry.unit, amount: bookingConfirmEntry.amount} as Ingredient) }}
-                </p>
-
-                <p class="text-disabled mt-4">{{ $t('Code') }}</p>
-                <p class="text-h3 text-pre">
-                    #{{ bookingConfirmEntry.code }}
-                </p>
-
-                <template v-if="bookingConfirmEntry.expires">
-                    <p class="text-disabled mt-4">{{ $t('Expires') }}</p>
-                    <p>
-                        <v-chip label :color="(bookingConfirmEntry.expires < DateTime.now() ? 'error' : 'success')">
-                            {{ DateTime.fromJSDate(bookingConfirmEntry.expires).toLocaleString(DateTime.DATE_MED) }}
-                        </v-chip>
-                    </p>
-                </template>
-
-                <v-select
-                    v-model="selectedCopyOptions"
-                    chips
-                    class="mt-6"
-                    :label="$t('Copy')"
-                    :items="copyOptions"
-                    multiple
-                    hide-details
-                >
-                </v-select>
-                <p class="mt-4">
-                    <v-btn block color="create" prepend-icon="$copy" @click="copyConfirmEntry">{{ $t('Copy') }}</v-btn>
-                    <v-btn color="primary" class="mt-2" prepend-icon="$pantry" block :to="{name: 'PantryPage'}">{{ $t('Pantry') }}</v-btn>
-                    <v-btn class="mt-2" block @click="bookingConfirmDialog = false; resetFormAndReload()">{{ $t('Close') }}</v-btn>
-                </p>
+            <v-card-text class="text-center">
+                <inventory-entry-confirm-step :form="form" @close="bookingConfirmDialog = false; resetFormAndReload()">
+                    <template #extra-actions>
+                        <v-btn color="primary" prepend-icon="$pantry" block :to="{name: 'PantryPage'}">{{ $t('Pantry') }}</v-btn>
+                    </template>
+                </inventory-entry-confirm-step>
             </v-card-text>
         </v-card>
     </v-dialog>
@@ -176,6 +147,7 @@ import {VDataTableUpdateOptions} from "@/vuetify.ts";
 import {DateTime} from "luxon";
 import {ingredientToString} from "@/utils/model_utils.ts";
 import InventoryEntryFormFields from "@/components/inputs/InventoryEntryFormFields.vue";
+import InventoryEntryConfirmStep from "@/components/inputs/InventoryEntryConfirmStep.vue";
 import InventoryEntryLogDialog from "@/components/dialogs/InventoryEntryLogDialog.vue";
 import VClosableCardTitle from "@/components/dialogs/VClosableCardTitle.vue";
 import {useRouteQuery} from "@vueuse/router";
@@ -224,7 +196,7 @@ const form = useInventoryEntryForm(t, {
 const {
     formLoading, editTab, food, inventoryEntry, inventoryLocation, subLocation, code, amount, unit, expires,
     entryOriginalAmount, entryOriginalUnit, amountChanged, commonUnits,
-    bookingConfirmEntry, copyOptions, selectedCopyOptions,
+    bookingConfirmEntry, selectedCopyOptions,
     loadCommonUnits, addInventory, editInventory, inventoryEntrySelected, resetForm, copyConfirmEntry,
 } = form
 

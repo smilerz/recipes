@@ -17,46 +17,7 @@
                 </v-row>
                 <v-row v-if="['confirm'].includes(bookingMode) && bookingConfirmEntry != null">
                     <v-col>
-
-                        <v-card variant="outlined">
-                            <v-card-text>
-                                <p>
-                                    {{ ingredientToString({food: bookingConfirmEntry.food, unit: bookingConfirmEntry.unit, amount: bookingConfirmEntry.amount} as Ingredient) }}
-                                </p>
-
-                                <p class="text-disabled mt-4">{{ $t('Code') }}</p>
-                                <p class="text-h3 text-pre">
-                                    #{{ bookingConfirmEntry.code }}
-                                </p>
-
-                                <template v-if="bookingConfirmEntry.expires">
-                                    <p class="text-disabled mt-4">{{ $t('Expires') }}</p>
-                                    <p>
-                                        <v-chip label :color="(bookingConfirmEntry.expires < DateTime.now() ? 'error' : 'success')">
-                                            {{ DateTime.fromJSDate(bookingConfirmEntry.expires).toLocaleString(DateTime.DATE_MED) }}
-                                        </v-chip>
-                                    </p>
-                                </template>
-
-                            </v-card-text>
-                        </v-card>
-
-                        <p class="mt-10">
-
-                            <v-select
-                                v-model="selectedCopyOptions"
-                                chips
-                                :label="$t('Copy')"
-                                :items="copyOptions"
-                                multiple
-                                hide-details
-                            >
-                            </v-select>
-                            <v-btn class="" block color="success" prepend-icon="$copy" @click="copyConfirmEntry">{{ $t('Copy') }}</v-btn>
-                            <v-btn class="mt-4" block color="info" prepend-icon="$close" @click="dialog = false; resetForm();">{{ $t('Close') }}</v-btn>
-
-                        </p>
-
+                        <inventory-entry-confirm-step :form="form" wrap-in-card @close="dialog = false; resetForm()"></inventory-entry-confirm-step>
                     </v-col>
                 </v-row>
             </v-card-text>
@@ -68,10 +29,9 @@
 <script setup lang="ts">
 
 import VClosableCardTitle from "@/components/dialogs/VClosableCardTitle.vue";
-import {DateTime} from "luxon";
-import {ingredientToString} from "@/utils/model_utils.ts";
-import {ApiApi, Ingredient} from "@/openapi";
+import {ApiApi} from "@/openapi";
 import InventoryEntryFormFields from "@/components/inputs/InventoryEntryFormFields.vue";
+import InventoryEntryConfirmStep from "@/components/inputs/InventoryEntryConfirmStep.vue";
 import {useI18n} from "vue-i18n";
 import {computed, onMounted, ref, watch} from "vue";
 import {useInventoryEntryForm} from "@/composables/useInventoryEntryForm.ts";
@@ -109,7 +69,7 @@ const form = useInventoryEntryForm(t, {
 const {
     formLoading, editTab, food, inventoryEntry, inventoryLocation, subLocation, code, amount, unit, expires,
     entryOriginalAmount, entryOriginalUnit, amountChanged, commonUnits,
-    bookingConfirmEntry, copyOptions, selectedCopyOptions,
+    bookingConfirmEntry, selectedCopyOptions,
     loadCommonUnits, addInventory, editInventory, inventoryEntrySelected, resetForm, copyConfirmEntry,
 } = form
 

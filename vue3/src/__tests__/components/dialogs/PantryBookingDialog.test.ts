@@ -375,3 +375,59 @@ describe('PantryBookingDialog - edit mode consolidation (#2)', () => {
         w.unmount()
     })
 })
+
+// Phase 4 of the InventoryBookingPage/PantryBookingDialog consolidation: characterization tests
+// for the post-Add confirm step, which had zero prior coverage in this file (only the page's
+// equivalent got tests, in Phase 2). Written against the CURRENT (pre-extraction) code to lock in
+// behavior before InventoryEntryConfirmStep.vue is extracted — the "does this need a test" rubric's
+// characterization-test path, not TDD, since there's no bug being fixed here.
+describe('PantryBookingDialog - post-Add confirm step (copy-picker)', () => {
+    beforeEach(() => {
+        resetApiMock()
+        addMessageMock.mockClear()
+    })
+
+    it('a successful Add switches to confirm mode with the created entry', async () => {
+        const created = {
+            id: 9, food: {id: 1, name: 'Rice'}, unit: {id: 1, name: 'g'}, amount: 2,
+            inventoryLocation: {id: 1, name: 'Pantry', isFreezer: false}, expires: null, code: 'ABC', subLocation: '',
+        }
+        apiMock.apiInventoryEntryList.mockResolvedValue({results: []})
+        apiMock.apiInventoryEntryCreate.mockResolvedValue(created)
+        const w = mountDialog(0, 'add')
+        await flushPromises()
+
+        ;(w.vm as any).food = created.food
+        ;(w.vm as any).save()
+        await flushPromises()
+
+        expect((w.vm as any).bookingMode).toBe('confirm')
+        expect((w.vm as any).bookingConfirmEntry).toEqual(created)
+
+        w.unmount()
+    })
+
+    it('copyConfirmEntry() copies only the selected fields onto a reset form and returns to Add mode', async () => {
+        const created = {
+            id: 9, food: {id: 1, name: 'Rice'}, unit: {id: 1, name: 'g'}, amount: 2,
+            inventoryLocation: {id: 1, name: 'Pantry', isFreezer: false}, expires: null, code: 'ABC', subLocation: 'Top Shelf',
+        }
+        apiMock.apiInventoryEntryList.mockResolvedValue({results: []})
+        apiMock.apiInventoryEntryCreate.mockResolvedValue(created)
+        const w = mountDialog(0, 'add')
+        await flushPromises()
+
+        ;(w.vm as any).save()
+        await flushPromises()
+
+        ;(w.vm as any).selectedCopyOptions = ['inventoryLocation']
+        ;(w.vm as any).copyConfirmEntry()
+        await flushPromises()
+
+        expect((w.vm as any).inventoryLocation).toEqual(created.inventoryLocation)
+        expect((w.vm as any).food).toBeNull()
+        expect((w.vm as any).bookingMode).toBe('add')
+
+        w.unmount()
+    })
+})
