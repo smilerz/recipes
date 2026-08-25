@@ -22,6 +22,11 @@ export default defineConfig({
         // that floods the workers with Vue resolve-component warnings under
         // CI load. Forks have isolated stdio so the race doesn't surface.
         pool: 'forks',
+        // Node 24+ enables a native `localStorage` global by default (no --localstorage-file
+        // configured), which @vue/devtools-kit probes on Vue app init, printing a
+        // "--localstorage-file was provided without a valid path" warning on every worker.
+        // Disabling it here just drops back to jsdom's own localStorage polyfill for tests.
+        execArgv: ['--no-experimental-webstorage'],
         server: {
             deps: {
                 inline: ['vuetify'],
