@@ -1,6 +1,7 @@
-import {describe, it, expect, vi, beforeEach} from 'vitest'
+import {describe, it, expect, vi, beforeEach, afterEach} from 'vitest'
 import {createPinia, setActivePinia} from 'pinia'
 import {ref} from 'vue'
+import {Settings} from 'luxon'
 
 import {apiMock, resetApiMock} from '../api-mock'
 
@@ -21,10 +22,33 @@ vi.mock('@/openapi', async (importOriginal) => ({
     ApiApi: class { constructor() { return apiMock } },
 }))
 
-import {useInventoryActions} from '@/composables/useInventoryActions'
+import {announcePantryAdd, useInventoryActions} from '@/composables/useInventoryActions'
 import {useMessageStore} from '@/stores/MessageStore'
 
 const LOCATIONS = [{id: 1, name: 'Kitchen', household: {id: 1, name: 'Home'}}]
+
+// DEFECT-01 class regression (see pantry_utils.test.ts): date-only `expires` is delivered by the
+// API as a UTC-midnight Date. The toast must read it by its calendar date, not shift it to the
+// previous day for a viewer in a timezone behind UTC.
+describe('announcePantryAdd', () => {
+    let prevZone: any
+    beforeEach(() => {
+        setActivePinia(createPinia())
+        prevZone = Settings.defaultZone
+        Settings.defaultZone = 'America/Chicago'  // UTC-5/6
+    })
+    afterEach(() => { Settings.defaultZone = prevZone })
+
+    it('shows the stored calendar day, not the day before', () => {
+        const t = vi.fn((_k: string, params?: any) => params?.date ?? _k)
+        announcePantryAdd('Flour', new Date('2026-07-16T00:00:00Z'), t)
+
+        const dateArg = t.mock.calls.find(([key]) => key === 'ExpiresOn')?.[1]?.date
+        expect(dateArg).toContain('2026')
+        expect(dateArg).toMatch(/\b16\b/)
+        expect(dateArg).not.toMatch(/\b15\b/)
+    })
+})
 
 describe('markOutToList', () => {
     beforeEach(() => {
