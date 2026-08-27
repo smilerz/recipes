@@ -53,7 +53,7 @@ import {onMounted, ref} from "vue";
 import {useDisplay} from "vuetify";
 import {useI18n} from "vue-i18n";
 import {ApiApi, Food, InventoryLocation} from "@/openapi";
-import {useRoute} from "vue-router";
+import {useRoute, type RouteLocationRaw} from "vue-router";
 import {ErrorMessageType, useMessageStore} from "@/stores/MessageStore";
 import {useInventoryActions} from "@/composables/useInventoryActions";
 
@@ -79,11 +79,11 @@ async function quickAdd() {
 }
 
 // Header actions, rendered in the card append on desktop and a wrapping row on mobile (DEFECT-02).
-const headerActions = [
+const headerActions: Array<{key: string, labelKey: string, icon: string, color?: string, to?: RouteLocationRaw, action?: () => void}> = [
     {key: 'stock', labelKey: 'StockUp', icon: '$pantry', action: () => stockUpDialog.value?.open()},
     {key: 'use', labelKey: 'UseUp', icon: '$pantry', action: () => useUpDialog.value?.open()},
     {key: 'booking', labelKey: 'InventoryBooking', icon: 'fa-solid fa-boxes-stacked fa-fw', color: 'create', to: {name: 'InventoryBookingPage'}},
-] as const
+]
 
 onMounted(() => {
     const api = new ApiApi()

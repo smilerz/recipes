@@ -1,5 +1,5 @@
 import {MealPlan} from "@/openapi";
-import type {ICalendarItem} from "vue-simple-calendar/interfaces";
+import type {ICalendarItem} from "vue-simple-calendar";
 
 export interface IMealPlanCalendarItem {
 	startDate: Date,

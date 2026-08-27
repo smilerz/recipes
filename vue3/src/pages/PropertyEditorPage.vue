@@ -3,7 +3,7 @@
         <v-card :loading="recipeLoading || propertyTypesLoading">
             <v-card-title>{{ $t('Property_Editor') }}</v-card-title>
             <v-card-text>
-                <model-select append-to-body model="Recipe" v-model="recipe" @update:model-value="loadRecipe(recipe.id!)">
+                <model-select append-to-body model="Recipe" v-model="recipe" @update:model-value="recipe != undefined && loadRecipe(recipe.id!)">
                     <template #append>
                         <v-btn icon="fa-solid fa-arrow-up-right-from-square" :to="{name : 'RecipeViewPage', params: {id: recipe.id }}" v-if="recipe != undefined"></v-btn>
                     </template>
@@ -151,7 +151,7 @@
         </v-row>
 
         <fdc-search-dialog v-model="fdcDialog"
-                           @selected="(fdcId:number) => {fdcSelectedIngredient.food.fdcId = fdcId; updateFoodFdcData(fdcSelectedIngredient)}"></fdc-search-dialog>
+                           @selected="(fdcId:number) => {fdcSelectedIngredient!.food.fdcId = fdcId; updateFoodFdcData(fdcSelectedIngredient!)}"></fdc-search-dialog>
     </v-container>
 
     <v-dialog v-model="dialog" max-width="600">
@@ -162,7 +162,7 @@
 
                 <model-select model="Unit" :label="$t('Properties_Food_Unit')" v-model="dialogUnit">
                     <template v-slot:append>
-                        <v-btn @click="changeAllUnits(dialogUnit)" icon="$save" color="save" :disabled="dialogUnit == undefined"></v-btn>
+                        <v-btn @click="changeAllUnits(dialogUnit!)" icon="$save" color="save" :disabled="dialogUnit == undefined"></v-btn>
                     </template>
                 </model-select>
 
@@ -191,7 +191,9 @@ import BtnCopy from "@/components/buttons/BtnCopy.vue";
 import FdcSearchDialog from "@/components/dialogs/FdcSearchDialog.vue";
 import {openFdcPage} from "@/utils/fdc.ts";
 
-type IngredientLoading = Ingredient & { loading?: boolean }
+// buildIngredientMap() only ever inserts ingredients that passed an `ingredient.food` truthy
+// check, so every entry actually in `ingredients` has a non-null food — narrow the type to match.
+type IngredientLoading = Ingredient & { loading?: boolean, food: Food }
 
 const params = useUrlSearchParams('history', {})
 
@@ -272,7 +274,7 @@ function buildIngredientMap() {
         recipe.value.steps.forEach(step => {
             step.ingredients.forEach(ingredient => {
                 if (ingredient.food && !ingredients.value.has(ingredient.food.id!)) {
-                    let i: IngredientLoading = buildIngredientFoodProperties(ingredient)
+                    let i: IngredientLoading = buildIngredientFoodProperties(ingredient as IngredientLoading)
                     i.loading = false
                     ingredients.value.set(i.food.id!, i)
                 }
@@ -286,7 +288,7 @@ function buildIngredientMap() {
  * add null if no data exists for a property type to indicate a missing property
  * @param ingredient
  */
-function buildIngredientFoodProperties(ingredient: Ingredient) {
+function buildIngredientFoodProperties(ingredient: IngredientLoading): IngredientLoading {
     let existingProperties = new Map<number, Property>()
     ingredient.food.properties!.forEach(fp => {
         existingProperties.set(fp.propertyType.id!, fp)
@@ -296,7 +298,7 @@ function buildIngredientFoodProperties(ingredient: Ingredient) {
 
     propertyTypes.value.forEach(pt => {
         if (existingProperties.has(pt.id!)) {
-            ingredient.food.properties!.push(existingProperties.get(pt.id!))
+            ingredient.food.properties!.push(existingProperties.get(pt.id!)!)
         } else {
             ingredient.food.properties!.push({propertyType: pt, propertyAmount: null} as Property)
         }

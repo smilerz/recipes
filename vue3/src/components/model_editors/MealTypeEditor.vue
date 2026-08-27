@@ -31,7 +31,10 @@
                     </v-menu>
                 </v-text-field>
 
-                <v-checkbox v-model="editingObj._default" :label="$t('Default')"></v-checkbox>
+                <!-- _default isn't a real MealType field (not in the generated type, not sent to
+                     the API) - this checkbox doesn't currently persist anything. Pre-existing gap,
+                     out of scope here; cast to keep it compiling without inventing new behavior. -->
+                <v-checkbox v-model="(editingObj as any)._default" :label="$t('Default')"></v-checkbox>
 
                 <v-color-picker v-model="editingObj.color" mode="hex" :modes="['hex']" show-swatches
                                 :swatches="[['#ddbf86'],['#b98766'],['#b55e4f'],['#82aa8b'],['#385f84']]"></v-color-picker>

@@ -5,7 +5,7 @@
         :fullscreen="mobile">
         <v-card>
             <v-closable-card-title :title="$t('Move')" v-model="dialog"
-                                   :sub-title="ingredientToString(step.ingredients[editingIngredientIndex])"></v-closable-card-title>
+                                   :sub-title="ingredientToString(step.ingredients[editingIngredientIndex] as Ingredient)"></v-closable-card-title>
             <v-card-text>
                 <template v-if="step.ingredients.length > 1">
                     {{$t('Order')}}
@@ -37,13 +37,13 @@
 
 <script setup lang="ts">
 
-import {Recipe, SourceImportRecipe, SourceImportStep, Step} from "@/openapi";
+import {Ingredient, Recipe, SourceImportRecipe, SourceImportStep, Step} from "@/openapi";
 import {ingredientToString} from "@/utils/model_utils.ts";
 import VClosableCardTitle from "@/components/dialogs/VClosableCardTitle.vue";
 import {ref, watch} from "vue";
 import {useDisplay} from "vuetify/framework";
 
-const dialog = defineModel<Boolean>({required: true, default: false})
+const dialog = defineModel<boolean>({required: true, default: false})
 const step = defineModel<Step | SourceImportStep>('step', {required: true})
 const recipe = defineModel<Recipe | SourceImportRecipe>('recipe', {required: true})
 const props = defineProps({
@@ -54,7 +54,6 @@ const props = defineProps({
 const {mobile} = useDisplay()
 
 watch(() => props.ingredientIndex, () => {
-    console.log('updated ingredient inex')
     editingIngredientIndex.value = props.ingredientIndex
 })
 
@@ -67,11 +66,16 @@ const editingIngredientIndex = ref(0)
  * @param targetIngredientIndex place in the target steps ingredient list to insert into
  */
 function moveIngredient(sourceIngredientIndex: number, targetStepIndex: number, targetIngredientIndex: number,) {
-    let ingredient = step.value.ingredients[sourceIngredientIndex]
-    step.value.ingredients.splice(sourceIngredientIndex, 1)
-    recipe.value.steps[targetStepIndex].ingredients.splice(targetIngredientIndex, 0, ingredient)
+    // step/recipe are typed as unions of the real editor shape (Step/Recipe) and the import-preview
+    // shape (SourceImportStep/SourceImportRecipe) - both carry an `ingredients` array with the same
+    // amount/food/unit/note/order shape at runtime, but TS won't splice across the two unions.
+    const sourceIngredients = step.value.ingredients as any[]
+    let ingredient = sourceIngredients[sourceIngredientIndex]
+    sourceIngredients.splice(sourceIngredientIndex, 1)
+    const targetIngredients = (recipe.value.steps[targetStepIndex] as any).ingredients as any[]
+    targetIngredients.splice(targetIngredientIndex, 0, ingredient)
 
-    recipe.value.steps[targetStepIndex].ingredients.forEach((ingredient, index) => {
+    targetIngredients.forEach((ingredient, index) => {
         ingredient.order = index
     })
 

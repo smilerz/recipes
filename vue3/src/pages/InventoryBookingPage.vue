@@ -38,7 +38,7 @@
                                         <v-card-text>
                                             <v-chip size="small" label color="warning" class="me-2" prepend-icon="fa-solid fa-barcode">{{inventoryEntry.code}}</v-chip>
                                             <v-chip size="small" label color="info" class="me-2" :prepend-icon="TInventoryLocation.icon">{{inventoryEntry.inventoryLocation.name}}</v-chip>
-                                            <v-chip size="small" label :color="(inventoryEntry.expires < DateTime.now() ? 'error' : 'success')" v-if="inventoryEntry.expires">
+                                            <v-chip size="small" label :color="(DateTime.fromJSDate(inventoryEntry.expires) < DateTime.now() ? 'error' : 'success')" v-if="inventoryEntry.expires">
                                                 {{ DateTime.fromJSDate(inventoryEntry.expires).toLocaleString(DateTime.DATE_MED) }}
                                             </v-chip>
                                         </v-card-text>
@@ -81,13 +81,13 @@
                                 {{ ingredientToString({food: item.food, unit: item.unit, amount: item.amount} as Ingredient) }} <br/>
                                 <v-chip size="small" label color="warning" class="me-2" prepend-icon="fa-solid fa-barcode">{{item.code}}</v-chip>
                                     <v-chip size="small" label color="info" class="me-2" :prepend-icon="TInventoryLocation.icon">{{item.inventoryLocation.name}}</v-chip>
-                                    <v-chip size="small" label :color="(item.expires < DateTime.now() ? 'error' : 'success')" v-if="item.expires">
+                                    <v-chip size="small" label :color="(DateTime.fromJSDate(item.expires) < DateTime.now() ? 'error' : 'success')" v-if="item.expires">
                                         {{ DateTime.fromJSDate(item.expires).toLocaleString(DateTime.DATE_MED) }}
                                     </v-chip>
                             </template>
                             <template #item.expires="{item}">
                                 <template v-if="item.expires ">
-                                    <v-chip size="small" label :color="(item.expires < DateTime.now() ? 'error' : 'success')">
+                                    <v-chip size="small" label :color="(DateTime.fromJSDate(item.expires) < DateTime.now() ? 'error' : 'success')">
                                         {{ DateTime.fromJSDate(item.expires).toLocaleString(DateTime.DATE_MED) }}
                                     </v-chip>
                                 </template>
@@ -121,7 +121,7 @@
         </v-row>
     </v-container>
 
-    <inventory-entry-log-dialog v-model="entryLogDialog" :inventory-entry="entryLogEntry"></inventory-entry-log-dialog>
+    <inventory-entry-log-dialog v-model="entryLogDialog" :inventory-entry="entryLogEntry ?? undefined"></inventory-entry-log-dialog>
 
     <v-dialog max-width="400" v-model="bookingConfirmDialog" persistent>
         <v-card prepend-icon="$save" :title="$t('Saved')">
@@ -171,7 +171,7 @@ onMounted(() => {
 })
 
 // form
-const bookingMode = useRouteQuery('bookingMode', 'add')
+const bookingMode = useRouteQuery<'add' | 'edit'>('bookingMode', 'add')
 const bookingConfirmDialog = ref(false)
 
 const form = useInventoryEntryForm(t, {
@@ -221,7 +221,7 @@ const tableHeaders = ref([
     {title: t('Food'), key: 'food'},
     // {title: t('Expires'), key: 'expires',},
     // {title: t('InventoryLocation'), key: 'inventoryLocation',},
-    {title: 'Actions', key: 'action', align: 'end'},
+    {title: 'Actions', key: 'action', align: 'end' as const},
 ])
 
 watch([() => food.value, () => inventoryLocation.value], () => {
@@ -231,7 +231,7 @@ watch([() => food.value, () => inventoryLocation.value], () => {
 onMounted(() => {
     if (inventoryEntryId.value) {
         let api = new ApiApi()
-        api.apiInventoryEntryRetrieve({id: inventoryEntryId.value}).then(r => {
+        api.apiInventoryEntryRetrieve({id: Number(inventoryEntryId.value)}).then(r => {
             inventoryEntry.value = r
             inventoryEntryId.value = undefined
             inventoryEntrySelected()
@@ -295,7 +295,9 @@ function loadItems(options: VDataTableUpdateOptions) {
     tableLoading.value = true
 
     page.value = options.page
-    pageSize.value = options.itemsPerPage
+    if (options.itemsPerPage != null) {
+        pageSize.value = options.itemsPerPage
+    }
 
     api.apiInventoryEntryList(parameters).then((r: any) => {
         items.value = r.results

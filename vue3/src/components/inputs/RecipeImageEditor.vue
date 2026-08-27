@@ -13,7 +13,7 @@
                 <v-icon icon="fa-solid fa-grip-vertical" class="drag-handle cursor-grab" size="small" />
                 <div class="crop-thumb" :style="cropPreviewStyle(imageUrl(img), img.cropData, true)" />
                 <div class="flex-grow-1 text-truncate text-body-2">
-                    {{ img.file?.name ?? imageName(img) }}
+                    {{ imageName(img) }}
                 </div>
                 <v-btn :icon="img.isPrimary ? 'fa-solid fa-star' : 'fa-regular fa-star'"
                        :color="img.isPrimary ? 'warning' : undefined"

@@ -26,18 +26,18 @@
                 </tr>
                 </thead>
                 <tbody>
-                <tr v-for="d in metadata.datatypes">
+                <tr v-for="d in (metadata.datatypes as OpenDataType[])">
                     <td>
                         <v-checkbox hide-details density="compact" :loading="loading" v-model="importDatatype[d]"></v-checkbox>
                     </td>
                     <td>{{ $t(d.charAt(0).toUpperCase() + d.slice(1)) }}</td>
-                    <td>{{ metadata[requestData.selectedVersion][d] }}</td>
+                    <td>{{ (metadata as any)[requestData.selectedVersion!][d] }}</td>
                     <td>
                         <template v-if="responseData[d]">
-                            <p v-if="responseData[d].totalCreated > 0" ><i class="fas fa-plus-circle"></i> {{ responseData[d].totalCreated }} {{ $t('Created') }}</p>
-                            <p v-if="responseData[d].totalUpdated > 0"><i class="fas fa-pencil-alt"></i> {{ responseData[d].totalUpdated }} {{ $t('Updated') }}</p>
-                            <p v-if="responseData[d].totalUntouched > 0"><i class="fas fa-forward"></i> {{ responseData[d].totalUntouched }} {{ $t('Unchanged') }}</p>
-                            <p v-if="responseData[d].totalErrored > 0"><i class="fas fa-exclamation-circle"></i> {{ responseData[d].totalErrored }} {{ $t('Error') }}</p>
+                            <p v-if="(responseData[d]!).totalCreated! > 0" ><i class="fas fa-plus-circle"></i> {{ (responseData[d]!).totalCreated }} {{ $t('Created') }}</p>
+                            <p v-if="(responseData[d]!).totalUpdated! > 0"><i class="fas fa-pencil-alt"></i> {{ (responseData[d]!).totalUpdated }} {{ $t('Updated') }}</p>
+                            <p v-if="(responseData[d]!).totalUntouched! > 0"><i class="fas fa-forward"></i> {{ (responseData[d]!).totalUntouched }} {{ $t('Unchanged') }}</p>
+                            <p v-if="(responseData[d]!).totalErrored! > 0"><i class="fas fa-exclamation-circle"></i> {{ (responseData[d]!).totalErrored }} {{ $t('Error') }}</p>
                         </template>
                     </td>
                 </tr>
@@ -63,6 +63,8 @@ let permissionDenied = ref(false)
 let metadata = ref({} as ImportOpenDataMetaData)
 let requestData = ref({useMetric: true, updateExisting: true} as ImportOpenData)
 let responseData = ref({} as ImportOpenDataResponse)
+
+type OpenDataType = 'food' | 'unit' | 'category' | 'property' | 'store' | 'conversion'
 
 let importDatatype = ref({
     food: true,
@@ -107,9 +109,9 @@ function importOpenData() {
     loading.value = true
 
     requestData.value.selectedDatatypes = []
-    Object.keys(importDatatype.value).forEach(key => {
-        if (importDatatype.value[key]) {
-            requestData.value.selectedDatatypes.push(key)
+    Object.keys(importDatatype.value).forEach((key: string) => {
+        if (importDatatype.value[key as OpenDataType]) {
+            requestData.value.selectedDatatypes!.push(key)
         }
     })
 

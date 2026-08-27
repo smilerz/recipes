@@ -117,13 +117,15 @@ const shoppingStatus = ref<boolean>(parseFoodShopping(props.ingredient.food))
 const inventoryStatus = ref<boolean>(parseFoodInventory(props.ingredient.food))
 
 function parseFoodShopping(food: typeof props.ingredient.food): boolean {
+    // Food.shopping is a backend SerializerMethodField typed as string (Python str(bool)
+    // representation, e.g. 'True'/'False'), never a real JSON boolean.
     const s = food?.shopping
-    return s === true || s === 'True' || s === 'true'
+    return s === 'True' || s === 'true'
 }
 
 function parseFoodInventory(food: typeof props.ingredient.food): boolean {
     const inv = food?.inInventory
-    if (inv === true || inv === 'True' || inv === 'true') return true
+    if (inv === 'True' || inv === 'true') return true
     return !!food?.foodOnhand
 }
 const localIgnoreShopping = ref(false)

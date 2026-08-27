@@ -67,7 +67,7 @@ const rows = ref<Row[]>([])
  *  recipe payload's nested foods — no extra fetch. */
 function open(recipe: Recipe | RecipeOverview) {
     title.value = t('PantryForRecipe', {recipe: recipe.name})
-    rows.value = recipePantryRows(recipe as any).map(r => ({...r, added: false}))
+    rows.value = recipePantryRows(recipe as Recipe).map(r => ({...r, added: false}))
     showDialog.value = true
 }
 

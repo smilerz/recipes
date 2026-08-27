@@ -41,7 +41,7 @@
 
 import {useI18n} from "vue-i18n";
 import ModelSelect from "@/components/inputs/ModelSelect.vue";
-import {ApiApi, AutoMealPlan} from "@/openapi";
+import {ApiApi, AutoMealPlan, KeywordModeEnum} from "@/openapi";
 import {onMounted, ref} from "vue";
 import VClosableCardTitle from "@/components/dialogs/VClosableCardTitle.vue";
 import {VDateInput} from 'vuetify/components'
@@ -64,7 +64,7 @@ const loading = ref(false)
 const dateRangeValue = ref([] as Date[])
 const autoMealPlan = ref<Partial<AutoMealPlan>>({})
 const keywordIds = ref([] as number[])
-const keywordMode = ref('and')
+const keywordMode = ref<KeywordModeEnum>('and')
 
 onMounted(() => {
     initializeRequest()
@@ -85,8 +85,8 @@ function initializeRequest() {
     keywordMode.value = 'and'
 
     dateRangeValue.value = []
-    let currentDate = DateTime.fromJSDate(autoMealPlan.value.startDate).plus({day: 1}).toJSDate()
-    while (currentDate <= autoMealPlan.value.endDate) {
+    let currentDate = DateTime.fromJSDate(autoMealPlan.value.startDate!).plus({day: 1}).toJSDate()
+    while (currentDate <= autoMealPlan.value.endDate!) {
         dateRangeValue.value.push(currentDate)
         currentDate = DateTime.fromJSDate(currentDate).plus({day: 1}).toJSDate()
     }
@@ -108,7 +108,11 @@ function doAutoPlan() {
 
     console.log('requesting auto plan from ', autoMealPlan.value.startDate, ' to ', autoMealPlan.value.endDate)
 
-    api.apiAutoPlanCreate({autoMealPlan: autoMealPlan.value}).then(r => {
+    // autoMealPlan is built up incrementally (Partial<AutoMealPlan>) via initializeRequest() +
+    // this function's own field assignments above; startDate/endDate/keywords/keywordMode/servings/
+    // addshopping are all set by the time this fires. mealTypeId stays genuinely optional here
+    // (no required marker on its model-select) - matches the existing, already-shipping payload.
+    api.apiAutoPlanCreate({autoMealPlan: autoMealPlan.value as AutoMealPlan}).then(r => {
         dialog.value = false
         useMealPlanStore().refreshLastUpdatedPeriod()
         initializeRequest()

@@ -3,6 +3,8 @@ import {
     ApiApi,
     ApiShoppingListEntryListRequest,
     Food,
+    FoodBatchUpdate,
+    FoodShopping,
     Recipe,
     ShoppingList,
     ShoppingListEntry,
@@ -256,7 +258,7 @@ export const useShoppingStore = defineStore(_STORE_ID, () => {
 
             if (requestParameters.page == 1) {
                 if (r.next) {
-                    while (Math.ceil(r.count / requestParameters.pageSize) > requestParameters.page) {
+                    while (Math.ceil(r.count / requestParameters.pageSize!) > requestParameters.page) {
                         requestParameters.page = requestParameters.page + 1
                         promises.push(recLoadShoppingListEntries(requestParameters))
                     }
@@ -418,13 +420,13 @@ export const useShoppingStore = defineStore(_STORE_ID, () => {
             structure.categories.set(groupingKey, {'name': groupingKey, 'foods': new Map<number, IShoppingListFood>} as IShoppingListCategory)
         }
         if (structure.categories.has(groupingKey)) {
-            if (!structure.categories.get(groupingKey).foods.has(entry.food.id)) {
-                structure.categories.get(groupingKey).foods.set(entry.food.id, {
+            if (!structure.categories.get(groupingKey)!.foods.has(entry.food.id!)) {
+                structure.categories.get(groupingKey)!.foods.set(entry.food.id!, {
                     food: entry.food,
                     entries: new Map<number, ShoppingListEntry>
                 } as IShoppingListFood)
             }
-            structure.categories.get(groupingKey).foods.get(entry.food.id).entries.set(entry.id, entry)
+            structure.categories.get(groupingKey)!.foods.get(entry.food.id!)!.entries.set(entry.id!, entry)
         }
 
         return structure
@@ -479,7 +481,10 @@ export const useShoppingStore = defineStore(_STORE_ID, () => {
                     entry.ids.forEach(id => {
                         let e = globalEntriesMap.value.get(id)
                         if (e) {
-                            e.updatedAt = r.timestamp
+                            // updatedAt is server-managed (readonly) on the generated type, but this
+                            // is the store deliberately syncing its own cached copy to the server's
+                            // response timestamp after a successful write - not an external mutation.
+                            (e as any).updatedAt = r.timestamp
                             updatedEntries.set(id, e)
                         }
                     })
@@ -554,7 +559,7 @@ export const useShoppingStore = defineStore(_STORE_ID, () => {
             registerChange((ignored ? 'IGNORE' : 'UNIGNORE'), entries)
         }
 
-        let foods = [] as Food[]
+        let foods = [] as FoodShopping[]
 
         entries.forEach(e => {
             if (!foods.includes(e.food!)) {
@@ -565,8 +570,11 @@ export const useShoppingStore = defineStore(_STORE_ID, () => {
         setEntriesCheckedState(entries, ignored, false)
 
         foods.forEach(food => {
-            food.ignoreShopping = ignored
-            api.apiFoodUpdate({food: food, id: food.id!}).catch(err => {
+            (food as any).ignoreShopping = ignored
+            // FoodShopping is a lighter shopping-list-context view of the same Food row (both
+            // require only `name`) - apiFoodUpdate's payload type wants the full Food shape, but
+            // this update only ever touches ignoreShopping, so the narrower shape is safe here.
+            api.apiFoodUpdate({food: food as unknown as Food, id: food.id!}).catch(err => {
                 useMessageStore().addError(ErrorMessageType.UPDATE_ERROR, err)
             })
         })
@@ -646,14 +654,21 @@ export const useShoppingStore = defineStore(_STORE_ID, () => {
         const api = new ApiApi()
         const foodIds: number[] = []
         shoppingListFoods.forEach(sLF => {
-            sLF.food.supermarketCategory = category
-            sLF.entries.forEach(e => e.food.supermarketCategory = category)
+            // supermarketCategory is server-managed (readonly) on the generated type; this is an
+            // optimistic local cache update ahead of the API call below, same pattern as the
+            // updatedAt sync elsewhere in this store - not an external mutation.
+            (sLF.food as any).supermarketCategory = category
+            sLF.entries.forEach(e => (e.food as any).supermarketCategory = category)
             foodIds.push(sLF.food.id!)
         })
 
         useShoppingStore().updateEntriesStructure()
 
-        api.apiFoodBatchUpdateUpdate({foodBatchUpdate: {foods: foodIds, category: category.id!}}).then(r => {
+        // FoodBatchUpdate's generated type marks substituteAdd/Remove/Set and inheritFields*
+        // as required, but this endpoint already ships without them (this cast changes no
+        // runtime behavior - see the substituteAdd/Set discussion, it's a schema/backend drift,
+        // not something to paper over by guessing at Add/Remove/Set semantics here).
+        api.apiFoodBatchUpdateUpdate({foodBatchUpdate: {foods: foodIds, category: category.id!} as FoodBatchUpdate}).then(r => {
             useMessageStore().addPreparedMessage(PreparedMessage.UPDATE_SUCCESS)
         }).catch(err => {
             useMessageStore().addError(ErrorMessageType.UPDATE_ERROR, err)

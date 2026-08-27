@@ -14,7 +14,7 @@
                 <template v-if="form.bookingConfirmEntry.value.expires">
                     <p class="text-disabled mt-4">{{ $t('Expires') }}</p>
                     <p>
-                        <v-chip label :color="(form.bookingConfirmEntry.value.expires < DateTime.now() ? 'error' : 'success')">
+                        <v-chip label :color="(DateTime.fromJSDate(form.bookingConfirmEntry.value.expires) < DateTime.now() ? 'error' : 'success')">
                             {{ DateTime.fromJSDate(form.bookingConfirmEntry.value.expires).toLocaleString(DateTime.DATE_MED) }}
                         </v-chip>
                     </p>
@@ -34,7 +34,7 @@
             <template v-if="form.bookingConfirmEntry.value.expires">
                 <p class="text-disabled mt-4">{{ $t('Expires') }}</p>
                 <p>
-                    <v-chip label :color="(form.bookingConfirmEntry.value.expires < DateTime.now() ? 'error' : 'success')">
+                    <v-chip label :color="(DateTime.fromJSDate(form.bookingConfirmEntry.value.expires) < DateTime.now() ? 'error' : 'success')">
                         {{ DateTime.fromJSDate(form.bookingConfirmEntry.value.expires).toLocaleString(DateTime.DATE_MED) }}
                     </v-chip>
                 </p>

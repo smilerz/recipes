@@ -137,7 +137,7 @@ onMounted(() => {
             const recipe = {...r.results[0]}
             recipe._new = true
             if (!recipe.lastCooked) {
-                recipe.lastCooked = new Date(Date.now() - 3 * 86400000).toISOString()
+                recipe.lastCooked = new Date(Date.now() - 3 * 86400000)
             }
             if (!recipe.rating) {
                 recipe.rating = 4.5

@@ -254,12 +254,12 @@ describe('useHierarchyTree', () => {
             const tree = createTree()
             const item = makeItem(5, 'Garlic', 3)
             tree.selectItem(item)
-            expect(tree.selectedItem.value?.parent).toBe(3)
+            expect((tree.selectedItem.value as any)?.parent).toBe(3)
 
             await tree.moveItem(item, 10)
 
             expect(tree.selectedItem.value?.id).toBe(5)
-            expect(tree.selectedItem.value?.parent).toBe(10)
+            expect((tree.selectedItem.value as any)?.parent).toBe(10)
         })
 
         it('does not touch selectedItem when a DIFFERENT item is moved', async () => {
@@ -272,7 +272,7 @@ describe('useHierarchyTree', () => {
 
             await tree.moveItem(makeItem(5, 'Other', 3), 10)
 
-            expect(tree.selectedItem.value?.parent).toBe(2)
+            expect((tree.selectedItem.value as any)?.parent).toBe(2)
         })
     })
 
@@ -329,13 +329,13 @@ describe('useHierarchyTree', () => {
             // Pre-populate: source is expanded with a child, target already loaded (empty).
             await tree.loadChildren(5)
             await tree.loadChildren(10)
-            expect(tree.findItemInCache(50)?.parent).toBe(5)
+            expect((tree.findItemInCache(50) as any)?.parent).toBe(5)
 
             await tree.mergeItem(source, target)
 
             // Target's subtree must be reloaded so the newly-merged former child of source
             // shows up under target immediately, not just after a manual collapse/re-expand.
-            expect(tree.findItemInCache(50)?.parent).toBe(10)
+            expect((tree.findItemInCache(50) as any)?.parent).toBe(10)
         })
     })
 
@@ -507,7 +507,7 @@ describe('useHierarchyTree', () => {
 
             expect(mockList).toHaveBeenCalledWith(expect.objectContaining({root: 1}))
             expect(tree.drillParent.value).not.toBeNull()
-            expect(tree.drillParent.value?.name).toBe('Mid')
+            expect((tree.drillParent.value as any)?.name).toBe('Mid')
             expect(tree.drillBreadcrumbs.value.length).toBeGreaterThan(0)
         })
 

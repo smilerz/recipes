@@ -82,7 +82,7 @@ export function setupI18n() {
 
     // async load plugin default locales
     TANDOOR_PLUGINS.forEach(plugin => {
-        plugin.defaultLocale.then(pluginMessages => {
+        plugin.defaultLocale.then((pluginMessages: any) => {
             i18n.global.mergeLocaleMessage('en', pluginMessages)
         })
     })
@@ -100,7 +100,7 @@ export function setupI18n() {
  */
 export async function loadLocaleMessages(i18n: I18n, locale: Locale) {
     // load locale messages, clone to avoid mutating the imported module object
-    let messages = {...en}
+    let messages: Record<string, string> = {...en}
     if (locale != 'en') {
         const filename = LOCALE_MAP.get(locale) || locale
         const mod = await import(`./locales/${filename}.json`).then((r: any) => r.default || r)
@@ -147,7 +147,9 @@ export async function loadLocaleMessages(i18n: I18n, locale: Locale) {
  * @param locale string locale code to set (should be in SUPPORT_LOCALES)
  */
 export function setLocale(i18n: I18n, locale: Locale): void {
-    i18n.global.locale.value = locale
+    // i18n is always created with legacy: false, so .global.locale is a WritableComputedRef
+    // at runtime - the I18n type here is generic over both legacy and composition modes.
+    (i18n.global.locale as any).value = locale
     // set luxon locale
     Settings.defaultLocale = locale
 }

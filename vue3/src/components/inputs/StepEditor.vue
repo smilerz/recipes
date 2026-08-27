@@ -117,7 +117,7 @@
                     </div>
 
                     <v-list v-if="mobile">
-                        <vue-draggable v-model="step.ingredients" handle=".drag-handle" :on-sort="sortIngredients" group="ingredients" empty-insert-threshold="25">
+                        <vue-draggable v-model="step.ingredients" handle=".drag-handle" :on-sort="sortIngredients" group="ingredients" :empty-insert-threshold="25">
                             <v-list-item v-for="(ingredient, index) in step.ingredients" :key="ingredient.id" border
                                          @click="editingIngredientIndex = index; dialogIngredientEditor = true">
                                 <ingredient-string :ingredient="ingredient"></ingredient-string>
@@ -234,7 +234,7 @@
 
 <script setup lang="ts">
 import {nextTick, ref} from 'vue'
-import {ApiApi, Ingredient, ParsedIngredient, Recipe, Step} from "@/openapi";
+import {ApiApi, Ingredient, Recipe, Step} from "@/openapi";
 import StepMarkdownEditor from "@/components/inputs/StepMarkdownEditor.vue";
 import ModelSelect from "@/components/inputs/ModelSelect.vue";
 import {useDisplay} from "vuetify";
@@ -290,7 +290,7 @@ function parseAndInsertIngredients() {
         // clear empty non-header ingredients before pasting; preserve headline rows (isHeader=true) even when empty
         step.value.ingredients = step.value.ingredients.filter(i => i.isHeader || i.food != null || i.note != null || i.amount != 0)
 
-        step.value.ingredients = step.value.ingredients.concat(r.ingredients)
+        step.value.ingredients = step.value.ingredients.concat(r.ingredients as Ingredient[])
 
         ingredientTextInput.value = ""
         dialogIngredientParser.value = false
@@ -331,7 +331,7 @@ function insertAndFocusIngredient() {
             editingIngredientIndex.value = step.value.ingredients.length - 1
             dialogIngredientEditor.value = true
         } else {
-            document.getElementById(`id_input_amount_${props.stepIndex}_${step.value.ingredients.length - 1}`).select()
+            (document.getElementById(`id_input_amount_${props.stepIndex}_${step.value.ingredients.length - 1}`) as HTMLInputElement | null)?.select()
         }
     })
 }

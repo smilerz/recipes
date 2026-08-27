@@ -27,9 +27,7 @@ describe('ExportDataSettings', () => {
         resetApiMock()
         vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {})
         // jsdom doesn't implement URL.createObjectURL/revokeObjectURL
-        // @ts-expect-error test stub
         global.URL.createObjectURL = vi.fn(() => 'blob:mock-url')
-        // @ts-expect-error test stub
         global.URL.revokeObjectURL = vi.fn()
     })
 

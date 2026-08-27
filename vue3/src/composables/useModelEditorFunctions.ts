@@ -44,7 +44,10 @@ export function useModelEditorFunctions<T>(modelName: EditorSupportedModels, emi
      * before mounting the component UI set the model class based on the given model name
      */
     onBeforeMount(() => {
-        modelClass.value = getGenericModelFromString(modelName, t)
+        // modelName is always a real EditorSupportedModels value at every call site, so
+        // getGenericModelFromString can only return `false` for a programming error (an
+        // unregistered model name) - not a runtime state this composable needs to handle.
+        modelClass.value = getGenericModelFromString(modelName, t) as GenericModel
     })
 
     onMounted(() => {
@@ -82,9 +85,9 @@ export function useModelEditorFunctions<T>(modelName: EditorSupportedModels, emi
      * @param itemDefaults
      */
     function applyItemDefaults(itemDefaults: T) {
-        if (Object.keys(itemDefaults).length > 0) {
-            Object.keys(itemDefaults).forEach(k => {
-                editingObj.value[k] = itemDefaults[k]
+        if (Object.keys(itemDefaults as object).length > 0) {
+            Object.keys(itemDefaults as object).forEach(k => {
+                (editingObj.value as any)[k] = (itemDefaults as any)[k]
             })
         }
     }
@@ -155,8 +158,8 @@ export function useModelEditorFunctions<T>(modelName: EditorSupportedModels, emi
             if (typeof itemId == "string") {
                 itemId = Number(itemId)
             }
-            return modelClass.value.retrieve(itemId).then((r: T) => {
-                editingObj.value = r
+            return modelClass.value.retrieve(itemId).then((r) => {
+                editingObj.value = r as T
                 existingItemFunction()
                 title.value = editingObjName()
                 return editingObj.value

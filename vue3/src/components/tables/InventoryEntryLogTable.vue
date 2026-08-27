@@ -31,8 +31,8 @@
                         </div>
                         <div class="text-end">
                             <div>
-                                <template v-if="item.oldAmount != item.newAmount">{{ $n(item.oldAmount) }} <i class="fa-solid fa-arrow-right"></i> {{ $n(item.newAmount) }}</template>
-                                <template v-else>{{ $n(item.newAmount) }}</template>
+                                <template v-if="item.oldAmount != item.newAmount">{{ $n(item.oldAmount ?? 0) }} <i class="fa-solid fa-arrow-right"></i> {{ $n(item.newAmount ?? 0) }}</template>
+                                <template v-else>{{ $n(item.newAmount ?? 0) }}</template>
                             </div>
                             <div class="text-caption text-medium-emphasis">
                                 <template v-if="item.oldInventoryLocation.id != item.newInventoryLocation.id">{{ item.oldInventoryLocation.name }} <i class="fa-solid fa-arrow-right"></i> {{ item.newInventoryLocation.name }}</template>
@@ -56,10 +56,10 @@
 
         <template #item.amount="{item}">
             <template v-if="item.oldAmount != item.newAmount">
-                {{ $n(item.oldAmount) }} <i class="fa-solid fa-arrow-right"></i> {{ $n(item.newAmount) }}
+                {{ $n(item.oldAmount ?? 0) }} <i class="fa-solid fa-arrow-right"></i> {{ $n(item.newAmount ?? 0) }}
             </template>
             <template v-else>
-                {{ $n(item.newAmount) }}
+                {{ $n(item.newAmount ?? 0) }}
             </template>
         </template>
 
@@ -133,7 +133,9 @@ function loadItems(options: VDataTableUpdateOptions) {
     tableLoading.value = true
 
     page.value = options.page
-    pageSize.value = options.itemsPerPage
+    if (options.itemsPerPage != null) {
+        pageSize.value = options.itemsPerPage
+    }
 
     let parameters = {page: page.value, pageSize: pageSize.value} as ApiInventoryLogListRequest
     if (props.inventoryEntry) {

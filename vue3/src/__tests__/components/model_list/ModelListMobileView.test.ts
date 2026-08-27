@@ -16,7 +16,7 @@ import ModelListMobileView from '@/components/model_list/ModelListMobileView.vue
 import {MODEL_LIST_SETTINGS_KEY} from '@/composables/modellist/useModelListSettings'
 import type {ModelItem} from '@/composables/modellist/types'
 
-function mountView(props: Partial<Parameters<typeof mount>[1]>['props'] = {}) {
+function mountView(props: Record<string, any> = {}) {
     const settings = {
         quickActionKeys: computed(() => []),
         mobileSubtitleKeys: computed(() => []),

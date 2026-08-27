@@ -4,7 +4,7 @@
   "compilerOptions": {
     "composite": true,
     "ignoreDeprecations": "6.0",
-    "lib": [],
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
     "types": ["node", "jsdom", "vitest/globals"]
   }
 }

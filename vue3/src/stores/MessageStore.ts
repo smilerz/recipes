@@ -169,7 +169,7 @@ export const useMessageStore = defineStore('message_store', () => {
         }
 
         if (preparedMessage == PreparedMessage.RATE_LIMIT) {
-            data.response.json().then(responseJson => {
+            data.response.json().then((responseJson: any) => {
                 addMessage(MessageType.WARNING, {title: t(''), text: t('RateLimitHelp') + '\n' + responseJson.detail} as StructuredMessage, 6000, data)
             }).catch(() => {
                 addMessage(MessageType.WARNING, {title: t(''), text: t('RateLimitHelp')} as StructuredMessage, 6000, data)
@@ -182,7 +182,7 @@ export const useMessageStore = defineStore('message_store', () => {
      * @param obj object to flatten
      * @param keyPrefix key prefix for recursive calls to build structure
      */
-    function flattenObject(obj: any, keyPrefix = '') {
+    function flattenObject(obj: any, keyPrefix = ''): Record<string, any> {
         return Object.keys(obj).reduce((acc, key) => {
             if (typeof obj[key] === 'object') {
                 Object.assign(acc, flattenObject(obj[key], (keyPrefix.length ? keyPrefix + '.' : '') + key))
@@ -190,7 +190,7 @@ export const useMessageStore = defineStore('message_store', () => {
                 acc[keyPrefix] = obj[key]
             }
             return acc;
-        }, {});
+        }, {} as Record<string, any>);
     }
 
     /**

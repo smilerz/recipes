@@ -67,9 +67,12 @@ function refreshData(recipeId: string) {
     recipe.value = {} as Recipe
     loadError.value = null
 
-    let requestParameters: ApiRecipeRetrieveRequest = {id: props.id}
+    // id is a String route-param prop; the generated request type wants number but the wire
+    // format is identical either way (the Raw method String()-interpolates it into the URL) -
+    // matches the existing, tested call shape. Cast, don't coerce.
+    let requestParameters: ApiRecipeRetrieveRequest = {id: props.id as unknown as number}
     if (isShared.value) {
-        requestParameters.share = params.share
+        requestParameters.share = params.share as string
     }
 
     api.apiRecipeRetrieve(requestParameters).then(r => {

@@ -42,7 +42,7 @@ export function useFileApi() {
 
         return fetch(fetchUrl, {
             method: fetchMethod,
-            headers: {'X-CSRFToken': getCookie('csrftoken')},
+            headers: {'X-CSRFToken': getCookie('csrftoken') ?? ''},
             body: formData
         }).then(r => {
             if (r.ok) {
@@ -68,7 +68,7 @@ export function useFileApi() {
         return fetch(getDjangoUrl(`api/user-file/${id}/`), {
             method: 'PATCH',
             headers: {
-                'X-CSRFToken': getCookie('csrftoken'),
+                'X-CSRFToken': getCookie('csrftoken') ?? '',
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify({crop_data: cropData}),
@@ -98,7 +98,7 @@ export function useFileApi() {
         fileApiLoading.value = true
         return fetch(getDjangoUrl('api/recipe-image/'), {
             method: 'POST',
-            headers: {'X-CSRFToken': getCookie('csrftoken')},
+            headers: {'X-CSRFToken': getCookie('csrftoken') ?? ''},
             body: formData,
         }).then(r => {
             if (r.ok) return r.json().then(j => RecipeImageFromJSON(j))
@@ -114,7 +114,7 @@ export function useFileApi() {
         fileApiLoading.value = true
         return fetch(getDjangoUrl(`api/recipe-image/${id}/`), {
             method: 'PATCH',
-            headers: {'X-CSRFToken': getCookie('csrftoken'), 'Content-Type': 'application/json'},
+            headers: {'X-CSRFToken': getCookie('csrftoken') ?? '', 'Content-Type': 'application/json'},
             body: JSON.stringify(data),
         }).then(r => {
             if (r.ok) return r.json().then(j => RecipeImageFromJSON(j))
@@ -136,7 +136,7 @@ export function useFileApi() {
         fileApiLoading.value = true
         return fetch(getDjangoUrl(`api/recipe-image/${id}/`), {
             method: 'DELETE',
-            headers: {'X-CSRFToken': getCookie('csrftoken')},
+            headers: {'X-CSRFToken': getCookie('csrftoken') ?? ''},
         }).then(r => {
             if (!r.ok) throw new ResponseError(r)
         }).finally(() => { fileApiLoading.value = false })
@@ -149,7 +149,7 @@ export function useFileApi() {
         fileApiLoading.value = true
         return fetch(getDjangoUrl('api/recipe-image/from_url/'), {
             method: 'POST',
-            headers: {'X-CSRFToken': getCookie('csrftoken'), 'Content-Type': 'application/json'},
+            headers: {'X-CSRFToken': getCookie('csrftoken') ?? '', 'Content-Type': 'application/json'},
             body: JSON.stringify({recipe: recipeId, image_url: imageUrl}),
         }).then(r => {
             if (r.ok) return r.json().then(j => RecipeImageFromJSON(j))
@@ -164,7 +164,7 @@ export function useFileApi() {
         fileApiLoading.value = true
         return fetch(getDjangoUrl('api/recipe-from-source/'), {
             method: 'POST',
-            headers: {'X-CSRFToken': getCookie('csrftoken'), 'Content-Type': 'application/json'},
+            headers: {'X-CSRFToken': getCookie('csrftoken') ?? '', 'Content-Type': 'application/json'},
             body: JSON.stringify({url}),
         }).then(r => {
             if (r.ok) return r.json().then(j => RecipeFromSourceResponseFromJSON(j).images ?? [])
@@ -188,12 +188,12 @@ export function useFileApi() {
         }
         formData.append('text', text)
         formData.append('recipe_id', recipeId)
-        formData.append('ai_provider_id', providerId)
+        formData.append('ai_provider_id', String(providerId))
         fileApiLoading.value = true
 
         return fetch(getDjangoUrl(`api/ai-import/`), {
             method: 'POST',
-            headers: {'X-CSRFToken': getCookie('csrftoken')},
+            headers: {'X-CSRFToken': getCookie('csrftoken') ?? ''},
             body: formData
         }).then(r => {
             return r.json().then(r => {
@@ -229,7 +229,7 @@ export function useFileApi() {
 
         return fetch(getDjangoUrl(`api/import/`), {
             method: 'POST',
-            headers: {'X-CSRFToken': getCookie('csrftoken')},
+            headers: {'X-CSRFToken': getCookie('csrftoken') ?? ''},
             body: formData
         }).then(r => {
             return r.json().then(r => {

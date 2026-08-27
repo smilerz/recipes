@@ -11,7 +11,7 @@ import { makeRecipeOverview } from '../factories'
 // assert the built list reaches the table without exercising its internals.
 const { retrieveMock, buildIngredientsMock } = vi.hoisted(() => ({
     retrieveMock: vi.fn(),
-    buildIngredientsMock: vi.fn(() => [{ id: 1, food: { name: 'flour' } }]),
+    buildIngredientsMock: vi.fn((..._args: any[]) => [{ id: 1, food: { name: 'flour' } }]),
 }))
 vi.mock('@/openapi', async (importOriginal) => ({
     ...(await importOriginal<typeof import('@/openapi')>()),

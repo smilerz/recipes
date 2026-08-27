@@ -32,7 +32,7 @@ function makeFile(content: object) {
 async function selectFile(wrapper: ReturnType<typeof mountSettings>, file: File) {
     // jsdom disallows scripting a native file input's value; drive the VFileInput
     // component's own update:model-value emit instead, exactly as Vuetify would after a real pick.
-    const fileInput = wrapper.findComponent('[data-test="portable-import-file"]')
+    const fileInput = wrapper.findComponent('[data-test="portable-import-file"]') as any
     await fileInput.vm.$emit('update:model-value', [file])
     await flushPromises()
 }

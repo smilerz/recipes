@@ -186,7 +186,7 @@ describe('ModelDeletePage', () => {
     })
 
     it('shows a not-found state (no delete form) when the object does not exist (404)', async () => {
-        mockRetrieve.mockReset().mockRejectedValue(new ResponseError({ status: 404 }))
+        mockRetrieve.mockReset().mockRejectedValue(new ResponseError({ status: 404 } as Response))
         const wrapper = mountPage(ModelDeletePage, { props: { model: 'Food', id: '999999' } })
         await flushPromises()
 

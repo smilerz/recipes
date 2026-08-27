@@ -455,8 +455,8 @@ const {mobile} = useDisplay()
 // ─── Filter / sort / paging state (5 useRouteQuery slots total) ─────────
 const urlFilters = useUrlFilters(computed(() => RECIPE_FILTER_DEFS))
 const {filterDefs, groupedFilterDefs, filterParams, activeFilterCount, getFilter, setFilter, clearFilter, clearAllFilters} = urlFilters
-const query = useRouteQuery('query', '')
-const ordering = useRouteQuery('ordering', '')
+const query = useRouteQuery<string>('query', '')
+const ordering = useRouteQuery<string>('ordering', '')
 const page = useRouteQuery('page', 1, {transform: Number})
 const pageSize = useRouteQuery('pageSize', useUserPreferenceStore().deviceSettings.search_itemsPerPage, {transform: Number})
 

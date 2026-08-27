@@ -2,7 +2,7 @@
     <v-table v-if="!mobile" density="compact" class="ingredient-table">
         <tbody>
         <template v-for="(i, idx) in ingredients" :key="i.id">
-            <tr @click="i.checked = !i.checked">
+            <tr @click="(i as any).checked = !i.checked">
                 <template v-if="i.isHeader">
                     <td colspan="5" class="font-weight-bold">{{ i.note }}</td>
                 </template>
@@ -75,7 +75,7 @@
     <v-list v-else class="ingredient-list bg-transparent pa-0" density="compact">
         <template v-for="(i, idx) in ingredients" :key="i.id">
             <v-list-subheader v-if="i.isHeader" class="font-weight-bold">{{ i.note }}</v-list-subheader>
-            <v-list-item v-else data-test="ingredient-item" class="px-1" @click="i.checked = !i.checked">
+            <v-list-item v-else data-test="ingredient-item" class="px-1" @click="(i as any).checked = !i.checked">
                 <template #prepend v-if="showCheckbox">
                     <v-checkbox-btn v-model="i.checked" color="success" density="compact" @click.stop></v-checkbox-btn>
                 </template>
@@ -240,7 +240,7 @@ function hasNote(i: Ingredient): boolean {
     return i.note != null && i.note !== ''
 }
 
-function truncateNote(note: string | undefined, reserved: number = 0): string {
+function truncateNote(note: string | null | undefined, reserved: number = 0): string {
     if (!note) return ''
     const max = deviceSettings.recipe_notesTruncateLength || 30
     const budget = Math.max(5, max - reserved)

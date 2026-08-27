@@ -48,7 +48,7 @@
 import {computed, ref} from "vue";
 import {INTEGRATIONS} from "@/utils/integration_utils.ts";
 import ModelSelect from "@/components/inputs/ModelSelect.vue";
-import {ApiApi, CustomFilter, ExportLog, Recipe} from "@/openapi";
+import {ApiApi, CustomFilter, ExportLog, Recipe, RecipeSimple} from "@/openapi";
 import {useDjangoUrls} from "@/composables/useDjangoUrls.ts";
 import {ErrorMessageType, useMessageStore} from "@/stores/MessageStore.ts";
 
@@ -71,7 +71,7 @@ const portableSummary = ref<{foods: number, keywords: number, books: number} | n
  * show export option for all types that have export marked as true in integration list
  */
 const exportFormats = computed(() => {
-    let formats = []
+    let formats: {title: string, value: string}[] = []
 
     INTEGRATIONS.forEach(integration => {
         if (integration.export) {
@@ -87,7 +87,7 @@ function doExport() {
     exportLog.value = {} as ExportLog
     loading.value = true
 
-    api.apiExportCreate({exportRequest: {all: allRecipes.value, type: exportType.value, recipes: selectedRecipes.value, customFilter: selectedFilter.value}}).then(r => {
+    api.apiExportCreate({exportRequest: {all: allRecipes.value, type: exportType.value, recipes: selectedRecipes.value as unknown as RecipeSimple[], customFilter: selectedFilter.value}}).then(r => {
         exportLog.value = r
         recRefreshExportLog()
     }).catch(err => {

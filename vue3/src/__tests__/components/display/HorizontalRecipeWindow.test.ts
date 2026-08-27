@@ -197,7 +197,7 @@ describe('HorizontalRecipeWindow — randomize (D09)', () => {
             ],
         })
         const wrapper = mount(HorizontalRecipeWindow, {
-            props,
+            props: props as any,
             global: { plugins: [pinia, i18n, router], stubs: { RecipeCard: { template: '<div class="stub-card"/>' } } },
         })
         await flushPromises()

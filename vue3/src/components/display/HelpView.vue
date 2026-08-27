@@ -497,7 +497,7 @@ const props = withDefaults(defineProps<{
 
 const {t} = useI18n()
 const route = useRoute()
-const drawer = defineModel()
+const drawer = defineModel<boolean>()
 const section = props.defaultSection || (typeof route.query.section === 'string' ? route.query.section : null)
 const window = ref(section || 'start')
 

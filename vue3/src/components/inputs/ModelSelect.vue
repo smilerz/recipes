@@ -177,7 +177,12 @@ const effectivePlaceholder = computed(() => {
     return t(modelClass.value.model?.localizationKey ?? '')
 })
 
-const multiselect = useTemplateRef(`ref_${props.id}`)
+// the ref name is genuinely dynamic (keyed off props.id, since a page can render multiple
+// ModelSelects) - useTemplateRef's Keys generic wants a static literal, so vue-tsc can't infer
+// it from a runtime template-literal expression passed directly; compute it as a separately-typed
+// value first.
+const multiselectRefName = `ref_${props.id}`
+const multiselect = useTemplateRef<HTMLElement>(multiselectRefName)
 
 /**
  * On open, refresh options and deterministically correct @vueform's append-to-body first-open
@@ -213,7 +218,7 @@ const {multiselectModel, effectiveObject, version: hydrationVersion, hydrate, me
     useMultiselectHydration(model, modelClass, () => props.mode, () => props.object, itemValue, itemLabel, multiselect)
 
 onBeforeMount(() => {
-    modelClass.value = getGenericModelFromString(props.model, t)
+    modelClass.value = getGenericModelFromString(props.model, t) || getGenericModelFromString('Food', t) as GenericModel
     void hydrate()
 })
 

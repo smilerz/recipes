@@ -3,7 +3,7 @@
     <!--    <div v-html="instructions_html"></div>-->
 </template>
 
-<script>
+<script lang="ts">
 
 import {defineComponent, markRaw} from "vue";
 

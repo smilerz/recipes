@@ -92,7 +92,11 @@ type PropertyWrapper = {
     id: number,
     name: string,
     description?: string,
-    foodValues: [],
+    icon?: string,
+    // Recipe.foodProperties is a loosely-typed `any` field from the backend (no generated schema
+    // for this aggregated/computed shape) — foodValues inherits that looseness rather than
+    // pretending to a precision the source data doesn't have.
+    foodValues: any[],
     propertyAmountPerServing: number,
     propertyAmountTotal: number,
     missingValue: boolean,
@@ -121,7 +125,7 @@ const hasRecipeProperties = computed(() => {
  */
 const hasFoodProperties = computed(() => {
     let propertiesFound = false
-    for (const [key, fp] of Object.entries(recipe.value.foodProperties)) {
+    for (const [key, fp] of Object.entries(recipe.value.foodProperties as Record<string, any>)) {
         if (fp.total_value !== 0) {
             console.log(fp, fp.total_value)
             propertiesFound = true
@@ -137,25 +141,25 @@ const propertyList = computed(() => {
     let ptList = [] as PropertyWrapper[]
     if (sourceSelectedToShow.value == 'recipe') {
         if (hasRecipeProperties.value) {
-            recipe.value.properties.forEach(rp => {
+            recipe.value.properties!.forEach(rp => {
 
                 ptList.push(
                     {
                         id: rp.propertyType.id!,
                         name: rp.propertyType.name,
-                        description: rp.propertyType.description,
+                        description: rp.propertyType.description ?? undefined,
                         foodValues: [],
-                        propertyAmountPerServing: rp.propertyAmount,
-                        propertyAmountTotal: rp.propertyAmount * recipe.value.servings * props.ingredientFactor,
+                        propertyAmountPerServing: rp.propertyAmount ?? 0,
+                        propertyAmountTotal: (rp.propertyAmount ?? 0) * recipe.value.servings! * props.ingredientFactor,
                         missingValue: false,
-                        unit: rp.propertyType.unit,
+                        unit: rp.propertyType.unit ?? undefined,
                         type: rp.propertyType,
                     }
                 )
             })
         }
     } else {
-        for (const [key, fp] of Object.entries(recipe.value.foodProperties)) {
+        for (const [key, fp] of Object.entries(recipe.value.foodProperties as Record<string, any>)) {
             ptList.push(
                 {
                     id: fp.id,
@@ -163,7 +167,7 @@ const propertyList = computed(() => {
                     description: fp.description,
                     icon: fp.icon,
                     foodValues: fp.food_values,
-                    propertyAmountPerServing: fp.total_value / recipe.value.servings,
+                    propertyAmountPerServing: fp.total_value / recipe.value.servings!,
                     propertyAmountTotal: fp.total_value * props.ingredientFactor,
                     missingValue: fp.missing_value,
                     unit: fp.unit,
@@ -173,11 +177,13 @@ const propertyList = computed(() => {
         }
     }
 
-    function compare(a, b) {
-        if (a.type.order > b.type.order) {
+    function compare(a: PropertyWrapper, b: PropertyWrapper) {
+        const aOrder = a.type.order ?? 0
+        const bOrder = b.type.order ?? 0
+        if (aOrder > bOrder) {
             return 1
         }
-        if (a.type.order < b.type.order) {
+        if (aOrder < bOrder) {
             return -1
         }
         return 0
@@ -209,9 +215,10 @@ function refreshRecipe() {
         recipe.value = r
 
         nextTick(() => {
-            if(dialogProperty.value != undefined && dialog.value){
+            const currentId = dialogProperty.value?.id
+            if (currentId != undefined && dialog.value) {
                 propertyList.value.forEach(pLE => {
-                    if (dialogProperty.value.id == pLE.id) {
+                    if (currentId == pLE.id) {
                         dialogProperty.value = pLE
                     }
                 })

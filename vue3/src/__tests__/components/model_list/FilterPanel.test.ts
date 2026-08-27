@@ -34,6 +34,7 @@ function mountPanel(defs: FilterDef[], filterValues: Record<string, string> = {}
             groupedFilterDefs: grouped,
             getFilter: (key: string) => filterValues[key],
             setFilter: vi.fn(),
+            clearFilter: vi.fn(),
             clearAllFilters: vi.fn(),
             activeFilterCount: Object.keys(filterValues).length,
             ...extraProps,

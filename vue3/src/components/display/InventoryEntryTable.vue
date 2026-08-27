@@ -100,14 +100,14 @@
             </div>
         </template>
 
-        <inventory-entry-log-dialog v-model="entryLogDialog" :inventory-entry="entryLogEntry"></inventory-entry-log-dialog>
+        <inventory-entry-log-dialog v-model="entryLogDialog" :inventory-entry="entryLogEntry ?? undefined"></inventory-entry-log-dialog>
         <pantry-booking-dialog v-model="bookingDialog" :booking-mode="bookingMode" :inventory-entry-id="bookingEntry?.id" @update="load"></pantry-booking-dialog>
     </div>
 </template>
 
 <script setup lang="ts">
 
-import {ApiApi, ApiInventoryEntryListRequest, Ingredient, InventoryEntry, InventoryLocation} from "@/openapi";
+import {ApiApi, ApiInventoryEntryListRequest, Food, InventoryEntry, InventoryLocation} from "@/openapi";
 import {computed, PropType, ref, watch} from "vue";
 import {useDisplay} from "vuetify";
 import {useI18n} from "vue-i18n";
@@ -120,7 +120,7 @@ const {t} = useI18n()
 const {mobile} = useDisplay()
 
 const props = defineProps({
-    food: {type: Object as PropType<Ingredient | null>, required: false},
+    food: {type: Object as PropType<Food | null>, required: false},
     inventoryLocation: {type: Object as PropType<InventoryLocation | null>, required: false},
 })
 

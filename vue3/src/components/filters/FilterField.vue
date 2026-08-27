@@ -64,7 +64,7 @@
         <v-icon v-if="def.icon" size="small" :icon="def.icon" class="text-medium-emphasis" />
         <v-rating
             :model-value="getFilter(def.key) ? Number(getFilter(def.key)) : 0"
-            @update:model-value="setFilter(def.key, $event > 0 ? String($event) : undefined)"
+            @update:model-value="setFilter(def.key, Number($event) > 0 ? String($event) : undefined)"
             half-increments
             clearable
             hover
@@ -220,9 +220,10 @@ function toggleUnrated() {
     }
 }
 
-function onSelectStar(value: number) {
-    if (value > 0) {
-        props.setFilter(props.def.key, String(value))
+function onSelectStar(value: string | number) {
+    const numValue = Number(value)
+    if (numValue > 0) {
+        props.setFilter(props.def.key, String(numValue))
         if (props.def.unratedKey) props.clearFilter(props.def.unratedKey)
     } else {
         props.clearFilter(props.def.key)

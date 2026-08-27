@@ -198,7 +198,7 @@ describe('StartPageSettings', () => {
         // the section card's overflow clips it.
         const { wrapper } = mountSettings([{ mode: 'keyword', enabled: true, min_recipes: 10 }])
         await flushPromises()
-        expect(wrapper.findComponent('.stub-model-select').props('appendToBody')).toBe(true)
+        expect((wrapper.findComponent('.stub-model-select') as any).props('appendToBody')).toBe(true)
     })
 
     it('renders a v-select (not a ModelSelect) for rating', async () => {
@@ -220,7 +220,7 @@ describe('StartPageSettings', () => {
         // synced filter_id on every update. Lock the save-time reconciliation.
         const { wrapper, store } = mountSettings([{ mode: 'keyword', enabled: true, min_recipes: 10 }])
         await flushPromises()
-        const ms = wrapper.findComponent('.stub-model-select')
+        const ms = wrapper.findComponent('.stub-model-select') as any
 
         ms.vm.$emit('update:modelValue', { id: 99, name: 'kw' })   // v-model sets section._filterObj
         await flushPromises()

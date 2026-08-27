@@ -1,7 +1,7 @@
 <template>
     <span class="step__scalable-num"
           :class="[props.factor===1 ? 'step__scalable-num_scaled_false' : (props.factor > 1 ? 'step__scalable-num_scaled_up':'step__scalable-num_scaled_down')]"
-          v-html="calculateAmount(number)"></span>
+          v-html="calculateAmount(number!)"></span>
 </template>
 
 <script lang="ts" setup>
@@ -23,7 +23,7 @@ import {calculateFoodAmount} from "@/utils/number_utils.ts";
  * @param x
  * @return {number | string}
  */
-function calculateAmount(x) {
+function calculateAmount(x: number) {
     return calculateFoodAmount(x, props.factor, useUserPreferenceStore().userSettings.useFractions)
 }
 </script>

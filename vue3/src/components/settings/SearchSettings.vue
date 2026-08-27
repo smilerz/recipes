@@ -93,7 +93,7 @@ function updateSearchSettings() {
     loading.value = true
     if (searchPreferences.value != undefined) {
 
-        api.apiSearchPreferencePartialUpdate({patchedSearchPreference: searchPreferences.value, user: useUserPreferenceStore().userSettings.user.id}).then(r => {
+        api.apiSearchPreferencePartialUpdate({patchedSearchPreference: searchPreferences.value, user: useUserPreferenceStore().userSettings.user.id!}).then(r => {
             searchPreferences.value = r
             useMessageStore().addPreparedMessage(PreparedMessage.UPDATE_SUCCESS)
         }).catch(err => {
