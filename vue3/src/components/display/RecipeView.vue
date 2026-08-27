@@ -151,12 +151,12 @@
 
         <v-card class="mt-1"
                 v-if="recipe.showIngredientOverview && !useUserPreferenceStore().isPrintMode">
-            <steps-overview :steps="recipe.steps" :ingredient-factor="ingredientFactor" @scale="(factor: number) => {servings = recipe.servings * factor}"></steps-overview>
+            <steps-overview :steps="recipe.steps" :ingredient-factor="ingredientFactor" @scale="(factor: number) => {servings = (recipe.servings ?? 1) * factor}"></steps-overview>
         </v-card>
 
         <v-card class="mt-1" v-for="(step, index) in recipe.steps" :key="step.id">
             <step-view v-model="recipe.steps[index]" :step-number="index+1" :ingredientFactor="ingredientFactor"
-                       @scale="(factor: number) => {servings = recipe.servings * factor}"></step-view>
+                       @scale="(factor: number) => {servings = (recipe.servings ?? 1) * factor}"></step-view>
         </v-card>
 
         <property-view v-model="recipe" :ingredientFactor="ingredientFactor"></property-view>
@@ -216,7 +216,7 @@
 <script setup lang="ts">
 
 import {computed, onBeforeUnmount, onMounted, ref, watch} from 'vue'
-import {AiProvider, ApiApi, Recipe} from "@/openapi"
+import {AiProvider, ApiApi, Keyword, Recipe, Step} from "@/openapi"
 import NumberScalerDialog from "@/components/inputs/NumberScalerDialog.vue"
 import StepsOverview from "@/components/display/StepsOverview.vue";
 import RecipeActivity from "@/components/display/RecipeActivity.vue";
@@ -295,13 +295,15 @@ function openGalleryLightbox(index: number) {
 function refreshRecipeRating() {
     if (!recipe.value.id) return
     new ApiApi().apiRecipeRetrieve({id: recipe.value.id}).then(fresh => {
-        recipe.value.rating = fresh.rating
+        // rating is server-managed (readonly) on the generated type, but this is a deliberate
+        // sync of the local cache to the server's freshly recalculated aggregate rating.
+        ;(recipe.value as any).rating = fresh.rating
     }).catch(() => {
         // swallow — stale rating is acceptable vs. error toast
     })
 }
 
-const selectedAiProvider = ref<undefined | AiProvider>(useUserPreferenceStore().activeSpace.aiDefaultProvider)
+const selectedAiProvider = ref<undefined | AiProvider>(useUserPreferenceStore().activeSpace.aiDefaultProvider ?? undefined)
 
 /**
  * factor for multiplying ingredient amounts based on recipe base servings and user selected servings
@@ -335,19 +337,26 @@ onBeforeUnmount(() => {
  * converts the recipe into an internal recipe using AI
  */
 function aiConvertRecipe() {
+    if (selectedAiProvider.value == undefined) {
+        useMessageStore().addError(ErrorMessageType.CREATE_ERROR, "No AI Provider selected")
+        return
+    }
+
     let api = new ApiApi()
 
-    doAiImport(selectedAiProvider.value.id!, null, '', recipe.value.id!).then(r => {
+    doAiImport(selectedAiProvider.value.id!, null, '', String(recipe.value.id!)).then(r => {
         if (r.recipe) {
             recipe.value.internal = true
-            recipe.value.steps = r.recipe.steps
-            recipe.value.keywords = r.recipe.keywords
+            // r.recipe is SourceImportRecipe (the scrape-preview schema) - see the cast note in
+            // RecipeImportPage.vue's importFromUrlList() for why steps/keywords structurally satisfy Recipe.
+            recipe.value.steps = r.recipe.steps as unknown as Step[]
+            recipe.value.keywords = r.recipe.keywords as unknown as Keyword[] | undefined
             recipe.value.servings = r.recipe.servings
             recipe.value.servingsText = r.recipe.servingsText
             recipe.value.workingTime = r.recipe.workingTime
             recipe.value.waitingTime = r.recipe.waitingTime
 
-            servings.value = r.recipe.servings
+            servings.value = r.recipe.servings ?? 1
             loading.value = true
 
             api.apiRecipeUpdate({id: recipe.value.id!, recipe: recipe.value}).then(r => {

@@ -99,7 +99,7 @@ const itemCount = ref(0)
 
 const tableHeaders = [
     {title: t('Name'), key: 'recipeContent.name',},
-    {key: 'action', width: '1%', noBreak: true, align: 'end'},
+    {key: 'action', width: '1%', noBreak: true, align: 'end' as const},
 ]
 
 onMounted(() => {
@@ -146,7 +146,7 @@ function addRecipeToBook() {
             })
         } else {
             selectedRecipe.value = {} as Recipe
-            useMessageStore().addMessage(MessageType.WARNING, $t('WarningRecipeBookEntryDuplicate'), 5000)
+            useMessageStore().addMessage(MessageType.WARNING, t('WarningRecipeBookEntryDuplicate'), 5000)
         }
     }
 }
@@ -203,7 +203,9 @@ function loadRecipeBookEntries(options: VDataTableUpdateOptions) {
         tablePage.value = options.page
     }
 
-    useUserPreferenceStore().deviceSettings.general_tableItemsPerPage = options.itemsPerPage
+    if (options.itemsPerPage != null) {
+        useUserPreferenceStore().deviceSettings.general_tableItemsPerPage = options.itemsPerPage
+    }
 
     api.apiRecipeBookEntryList({page: options.page, pageSize: options.itemsPerPage, book: editingObj.value.id}).then((r: any) => {
         recipeBookEntries.value = r.results

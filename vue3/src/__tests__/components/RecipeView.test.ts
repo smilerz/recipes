@@ -29,6 +29,15 @@ vi.mock('@/utils/cookie', () => ({
     getCookie: () => 'test-csrf-token',
 }))
 
+// useMessageStore lazily creates its store on first use, and the real store's setup calls
+// useI18n() - fine when first triggered from a component's own setup/render, but tests that
+// invoke page methods directly (bypassing Vue's instance context) need the real store mocked out.
+const { addErrorMock } = vi.hoisted(() => ({ addErrorMock: vi.fn() }))
+vi.mock('@/stores/MessageStore', async (imp) => ({
+    ...(await imp<any>()),
+    useMessageStore: () => ({ addError: addErrorMock, addMessage: vi.fn(), addPreparedMessage: vi.fn() }),
+}))
+
 import RecipeView from '@/components/display/RecipeView.vue'
 import ImageLightbox from '@/components/display/ImageLightbox.vue'
 
@@ -134,7 +143,7 @@ describe('RecipeView', () => {
         const stepView = wrapper.findComponent('.stub-step-view')
         expect(stepView.attributes('data-factor')).toBe('1') // base factor (servings 4 / recipe 4)
 
-        stepView.vm.$emit('scale', 2) // e.g. doubling an ingredient's amount
+        ;(stepView as any).vm.$emit('scale', 2) // e.g. doubling an ingredient's amount
         await flushPromises()
 
         // servings -> 4 * 2 = 8, so ingredientFactor -> 2
@@ -170,6 +179,18 @@ describe('RecipeView', () => {
 
         const lightbox = wrapper.findComponent(ImageLightbox)
         expect(lightbox.props('startIndex')).toBe(1)
+    })
+
+    // TS debt sweep found this by removing an incorrect `null` from selectedAiProvider's type: like
+    // RecipeImportPage's loadRecipeFromAiImport, aiConvertRecipe() had no guard for a missing AI
+    // provider and fell through to `selectedAiProvider.value.id!`, which throws a real TypeError.
+    it('aiConvertRecipe does not throw when no AI provider is selected/configured', async () => {
+        addErrorMock.mockReset()
+        const wrapper = mountRecipeView()
+        await flushPromises()
+
+        expect(() => (wrapper.vm as any).aiConvertRecipe()).not.toThrow()
+        expect(addErrorMock).toHaveBeenCalled()
     })
 })
 

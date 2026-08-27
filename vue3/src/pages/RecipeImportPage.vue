@@ -249,7 +249,7 @@
                                         <model-select model="Keyword" v-model="keywordSelect" allow-create>
                                             <template #append>
                                                 <v-btn icon="$add" color="success"
-                                                       @click="keywordSelect.importKeyword = true; importResponse.recipe.keywords.push(keywordSelect); keywordSelect= null"
+                                                       @click="keywordSelect!.importKeyword = true; importResponse.recipe!.keywords!.push(keywordSelect!); keywordSelect = null"
                                                        :disabled="keywordSelect == null"></v-btn>
                                             </template>
                                         </model-select>
@@ -257,7 +257,7 @@
                                 </v-row>
 
                                 <v-list>
-                                    <v-list-item border v-for="k in importResponse.recipe.keywords" :key="k" :class="{'bg-success': k.importKeyword}"
+                                    <v-list-item border v-for="k in importResponse.recipe!.keywords" :key="k.name" :class="{'bg-success': k.importKeyword}"
                                                  @click="k.importKeyword = !k.importKeyword">
                                         {{ k.label }}
                                         <template #append>
@@ -285,7 +285,7 @@
                                         </v-btn-group>
                                     </v-col>
                                 </v-row>
-                                <v-row v-for="(s, stepIndex) in importResponse.recipe.steps" :key="stepIndex">
+                                <v-row v-for="(s, stepIndex) in importResponse.recipe!.steps" :key="stepIndex">
                                     <v-col cols="12">
                                         <v-chip color="primary">#{{ stepIndex + 1 }}</v-chip>
                                         <v-btn variant="plain" size="small" icon class="float-right">
@@ -295,11 +295,11 @@
                                                     <v-list-item prepend-icon="$delete" @click="deleteStep(s)">{{ $t('Delete') }}</v-list-item>
                                                     <v-list-item prepend-icon="fa-solid fa-maximize" @click="handleSplitStep(s)">{{ $t('Split') }}</v-list-item>
                                                     <v-list-item prepend-icon="fa-solid fa-arrow-down"
-                                                                 @click="mergeStep(s)" v-if="stepIndex < importResponse.recipe.steps.length - 1" data-test="merge-next">
+                                                                 @click="mergeStep(s)" v-if="stepIndex < importResponse.recipe!.steps.length - 1" data-test="merge-next">
                                                         {{ $t('MergeWithNext') }}
                                                     </v-list-item>
                                                     <v-list-item prepend-icon="fa-solid fa-arrow-up"
-                                                                 @click="mergeStep(importResponse.recipe.steps[stepIndex - 1])" v-if="stepIndex > 0" data-test="merge-previous">
+                                                                 @click="mergeStep(importResponse.recipe!.steps[stepIndex - 1])" v-if="stepIndex > 0" data-test="merge-previous">
                                                         {{ $t('MergeWithPrevious') }}
                                                     </v-list-item>
                                                     <v-list-item prepend-icon="fas fa-plus-circle" @click="expandedStepNames.add(stepIndex)"
@@ -359,7 +359,7 @@
 
                                             <v-text-field :label="$t('Unit')" v-model="editingIngredient.unit.name" :rules="['required']" v-if="editingIngredient.unit">
                                                 <template #append-inner>
-                                                    <v-btn icon="$delete" color="delete" @click="editingIngredient.unit = null"></v-btn>
+                                                    <v-btn icon="$delete" color="delete" @click="editingIngredient.unit = undefined"></v-btn>
                                                 </template>
                                             </v-text-field>
                                             <v-btn prepend-icon="$create" color="create" class="mb-4" @click="editingIngredient.unit = {name: ''}" v-else>{{ $t('Unit') }}</v-btn>
@@ -383,7 +383,7 @@
                             </v-stepper-window-item>
                             <v-stepper-window-item value="confirm">
                                 <v-card :loading="loading || fileApiLoading">
-                                    <v-card-title>{{ importResponse.recipe.name }}</v-card-title>
+                                    <v-card-title>{{ importResponse.recipe!.name }}</v-card-title>
                                     <v-row>
                                         <v-col cols="12" md="6">
                                             <template v-if="selectedImages.length">
@@ -399,13 +399,13 @@
                                                     </v-col>
                                                 </v-row>
                                             </template>
-                                            <v-img v-else-if="importResponse.recipe.imageUrl" :src="importResponse.recipe.imageUrl"></v-img>
+                                            <v-img v-else-if="importResponse.recipe!.imageUrl" :src="importResponse.recipe!.imageUrl"></v-img>
                                         </v-col>
                                         <v-col cols="12" md="6">
-                                            <v-text-field :label="$t('Name')" v-model="importResponse.recipe.name" :rules="[['maxLength',128]]"></v-text-field>
-                                            <v-number-input :label="$t('Servings')" v-model="importResponse.recipe.servings" :precision="2"></v-number-input>
-                                            <v-text-field :label="$t('ServingsText')" v-model="importResponse.recipe.servingsText" servings></v-text-field>
-                                            <v-textarea :label="$t('Description')" v-model="importResponse.recipe.description" :rules="[['maxLength',512]]" counter
+                                            <v-text-field :label="$t('Name')" v-model="importResponse.recipe!.name" :rules="[['maxLength',128]]"></v-text-field>
+                                            <v-number-input :label="$t('Servings')" v-model="importResponse.recipe!.servings" :precision="2"></v-number-input>
+                                            <v-text-field :label="$t('ServingsText')" v-model="importResponse.recipe!.servingsText" servings></v-text-field>
+                                            <v-textarea :label="$t('Description')" v-model="importResponse.recipe!.description" :rules="[['maxLength',512]]" counter
                                                         clearable></v-textarea>
 
                                             <v-checkbox v-model="editAfterImport" :label="$t('Edit_Recipe')" hide-details></v-checkbox>
@@ -541,7 +541,7 @@
                                 </v-progress-linear>
 
                                 <v-list>
-                                    <v-list-item border v-for="r in urlListImportedRecipes" :title="r.name" :subtitle="r.sourceUrl" :key="r.id"
+                                    <v-list-item border v-for="r in urlListImportedRecipes" :title="r.name" :subtitle="r.sourceUrl ?? undefined" :key="r.id"
                                                  :to="{name: 'RecipeViewPage', params: {id: r.id}}" target="_blank">
 
                                     </v-list-item>
@@ -570,7 +570,7 @@
         </v-row>
     </v-container>
 
-    <step-ingredient-sorter-dialog :step-index="editingStepIndex" :step="editingStep" :recipe="importResponse.recipe" v-model="dialogIngredientSorter"
+    <step-ingredient-sorter-dialog :step-index="editingStepIndex" :step="editingStep" :recipe="importResponse.recipe!" v-model="dialogIngredientSorter"
                                    :ingredient-index="editingIngredientIndex"></step-ingredient-sorter-dialog>
 
 </template>
@@ -590,6 +590,7 @@ import {
     type SourceImportIngredient,
     SourceImportKeyword,
     SourceImportStep,
+    type SourceImportUnit,
     Step
 } from "@/openapi";
 import {ErrorMessageType, MessageType, PreparedMessage, useMessageStore} from "@/stores/MessageStore";
@@ -625,7 +626,11 @@ function importFromUrlList() {
 
         api.apiRecipeFromSourceCreate({recipeFromSource: {url: url}}).then(sourceResponse => {
             if (sourceResponse.recipe) {
-                api.apiRecipeCreate({recipe: sourceResponse.recipe}).then(recipe => {
+                // SourceImportRecipe (the scrape-preview schema) structurally satisfies the
+                // recipe-create write shape - the one intentional looseness is
+                // ingredient.order allowing null (vs number|undefined on write), which the
+                // backend already defaults if omitted; this call has shipped as-is.
+                api.apiRecipeCreate({recipe: sourceResponse.recipe as unknown as Recipe}).then(recipe => {
                     urlListImportedRecipes.value.push(recipe)
                     // Attach the scraped image if there is one, then continue the
                     // batch regardless of whether the image import succeeded.
@@ -698,9 +703,9 @@ const appImportMealPlans = ref(true)
 const appImportShoppingLists = ref(true)
 const appImportNutritionsPerServing = ref(false)
 const appImportLog = ref<null | ImportLog>(null)
-const image = ref<null | File>(null)
+const image = ref<File | File[] | undefined>(undefined)
 const aiMode = ref<'file' | 'text'>('file')
-const selectedAiProvider = ref<undefined | AiProvider>(useUserPreferenceStore().activeSpace.aiDefaultProvider)
+const selectedAiProvider = ref<undefined | AiProvider>(useUserPreferenceStore().activeSpace.aiDefaultProvider ?? undefined)
 const editAfterImport = ref(false)
 
 const bookmarkletToken = ref("")
@@ -714,7 +719,9 @@ watch(() => importResponse.value?.recipe?.imageUrl, (url) => {
     selectedImages.value = url ? [url] : []
 })
 const keywordSelect = ref<null | SourceImportKeyword>(null)
-const editingIngredient = ref({} as SourceImportIngredient)
+// unit is required on SourceImportIngredient, but the edit dialog lets the user remove/re-add
+// it on the working copy (a "no unit" ingredient like "3 eggs") before it's saved back.
+const editingIngredient = ref({} as Omit<SourceImportIngredient, 'unit'> & { unit?: SourceImportUnit })
 
 // stuff for ingredient mover, find some better solution at some point (finally merge importer/editor?)
 const editingIngredientIndex = ref(0)
@@ -768,7 +775,7 @@ function loadRecipeFromUrl(recipeFromSourceRequest: RecipeFromSource) {
             }
         }
     }).catch(err => {
-        err.response.json().then(r => {
+        err.response.json().then((r: any) => {
             if (r.error) {
                 importResponse.value = r
             } else {
@@ -788,10 +795,13 @@ function loadRecipeFromAiImport() {
 
     if (selectedAiProvider.value == undefined) {
         useMessageStore().addError(ErrorMessageType.CREATE_ERROR, "No AI Provider selected")
+        return
     }
 
     if (image.value != null && aiMode.value == 'file') {
-        request = doAiImport(selectedAiProvider.value.id!, image.value)
+        // v-file-upload's v-model type allows File[] for multi-select mode, but this
+        // uploader isn't configured with :multiple, so it only ever produces a single File.
+        request = doAiImport(selectedAiProvider.value.id!, Array.isArray(image.value) ? image.value[0] : image.value)
     } else if (sourceImportText.value != '' && aiMode.value == 'text') {
         request = doAiImport(selectedAiProvider.value.id!, null, sourceImportText.value)
     }
@@ -846,9 +856,10 @@ function createRecipeFromImport() {
 
     if (importResponse.value.recipe) {
         loading.value = true
-        importResponse.value.recipe.keywords = importResponse.value.recipe.keywords.filter(k => k.importKeyword)
+        importResponse.value.recipe.keywords = (importResponse.value.recipe.keywords ?? []).filter(k => k.importKeyword)
 
-        api.apiRecipeCreate({recipe: importResponse.value.recipe}).then(recipe => {
+        // see the SourceImportRecipe -> Recipe cast note in importFromUrlList() above
+        api.apiRecipeCreate({recipe: importResponse.value.recipe as unknown as Recipe}).then(recipe => {
             const navigate = () => {
                 if (editAfterImport.value) {
                     router.push({name: 'ModelEditPage', params: {id: recipe.id, model: 'recipe'}})
@@ -982,7 +993,7 @@ function autoSortIngredients() {
  * @param status if keyword should be imported or not
  */
 function setAllKeywordsImportStatus(status: boolean) {
-    importResponse.value.recipe?.keywords.forEach(keyword => {
+    importResponse.value.recipe?.keywords?.forEach(keyword => {
         keyword.importKeyword = status
     })
 }
