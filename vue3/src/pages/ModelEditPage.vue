@@ -24,7 +24,7 @@
 <script setup lang="ts">
 
 import {useRouter} from "vue-router";
-import {EditorSupportedModels, getGenericModelFromString} from "@/types/Models";
+import {EditorSupportedModels, getGenericModelFromStringOrDefault} from "@/types/Models";
 import {PropType, shallowRef, watch} from "vue";
 import {useI18n} from "vue-i18n";
 
@@ -36,7 +36,7 @@ const props = defineProps({
     id: {type: String, required: false, default: undefined},
 })
 
-const editorComponent = shallowRef(getGenericModelFromString(props.model, t).model.editorComponent)
+const editorComponent = shallowRef(getGenericModelFromStringOrDefault(props.model, t).model.editorComponent)
 
 //TODO quick hack for some edge cases, move to proper reinitialization of all model editors should this case occur (currently only recipe editor create new via navigation btn)
 watch(() => props.id, (newValue, oldValue) => {

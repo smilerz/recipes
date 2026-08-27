@@ -2,6 +2,7 @@ import {
     AccessToken, AiLog, AiProvider,
     ApiApi, ApiKeywordMoveUpdateRequest, Automation, type AutomationTypeEnum, ConnectorConfig, CookLog, CustomFilter,
     Food, FoodInheritField,
+    Group,
     Ingredient,
     InviteLink, Keyword,
     MealPlan,
@@ -35,6 +36,20 @@ export function getGenericModelFromString(modelName: EditorSupportedModels, t: a
     } else {
         return false
     }
+}
+
+/**
+ * Same as getGenericModelFromString, but falls back to the Food model (logging a console.error)
+ * instead of returning false. For callers that can't sensibly render nothing — e.g. a route
+ * param that turned out to be an unsupported/invalid model name.
+ */
+export function getGenericModelFromStringOrDefault(modelName: EditorSupportedModels, t: any): GenericModel {
+    const model = getGenericModelFromString(modelName, t)
+    if (model) {
+        return model
+    }
+    console.error(`Invalid model "${modelName}" passed — falling back to Food`)
+    return getGenericModelFromString('Food', t) as GenericModel
 }
 
 /**
@@ -460,7 +475,7 @@ export const TMealType = {
         {key: 'edit', labelKey: 'Edit', icon: 'fa-solid fa-pen', group: 'Actions', routeName: 'ModelEditPage', routeParams: (item: any, modelName: string) => ({model: modelName, id: item.id})},
         {key: 'delete', labelKey: 'Delete', icon: 'fa-solid fa-trash', group: 'Actions', isDanger: true, routeName: 'ModelDeletePage', routeParams: (item: any, modelName: string) => ({model: modelName, id: item.id})},
     ],
-} as Model
+} as unknown as Model
 registerModel(TMealType)
 
 export const TMealPlan = {
@@ -606,7 +621,7 @@ export const TSupermarket = {
         {key: 'edit', labelKey: 'Edit', icon: 'fa-solid fa-pen', group: 'Actions', routeName: 'ModelEditPage', routeParams: (item: any, modelName: string) => ({model: modelName, id: item.id})},
         {key: 'delete', labelKey: 'Delete', icon: 'fa-solid fa-trash', group: 'Actions', isDanger: true, routeName: 'ModelDeletePage', routeParams: (item: any, modelName: string) => ({model: modelName, id: item.id})},
     ],
-} as Model
+} as unknown as Model
 registerModel(TSupermarket)
 
 export const TSupermarketCategory = {
@@ -630,7 +645,7 @@ export const TSupermarketCategory = {
         {key: 'edit', labelKey: 'Edit', icon: 'fa-solid fa-pen', group: 'Actions', routeName: 'ModelEditPage', routeParams: (item: any, modelName: string) => ({model: modelName, id: item.id})},
         {key: 'delete', labelKey: 'Delete', icon: 'fa-solid fa-trash', group: 'Actions', isDanger: true, routeName: 'ModelDeletePage', routeParams: (item: any, modelName: string) => ({model: modelName, id: item.id})},
     ],
-} as Model
+} as unknown as Model
 registerModel(TSupermarketCategory)
 
 
@@ -695,7 +710,7 @@ export const TPropertyType = {
         {key: 'edit', labelKey: 'Edit', icon: 'fa-solid fa-pen', group: 'Actions', routeName: 'ModelEditPage', routeParams: (item: any, modelName: string) => ({model: modelName, id: item.id})},
         {key: 'delete', labelKey: 'Delete', icon: 'fa-solid fa-trash', group: 'Actions', isDanger: true, routeName: 'ModelDeletePage', routeParams: (item: any, modelName: string) => ({model: modelName, id: item.id})},
     ],
-} as Model
+} as unknown as Model
 registerModel(TPropertyType)
 
 export const TProperty = {
@@ -904,7 +919,7 @@ export const TUserSpace = {
         {key: 'edit', labelKey: 'Edit', icon: 'fa-solid fa-pen', group: 'Actions', routeName: 'ModelEditPage', routeParams: (item: any, modelName: string) => ({model: modelName, id: item.id})},
         {key: 'delete', labelKey: 'Delete', icon: 'fa-solid fa-trash', group: 'Actions', isDanger: true, routeName: 'ModelDeletePage', routeParams: (item: any, modelName: string) => ({model: modelName, id: item.id})},
     ],
-} as Model
+} as unknown as Model
 registerModel(TUserSpace)
 
 export const TInviteLink = {
@@ -1009,7 +1024,7 @@ export const TInventoryLocation = {
         {key: 'edit', labelKey: 'Edit', icon: 'fa-solid fa-pen', group: 'Actions', routeName: 'ModelEditPage', routeParams: (item: any, modelName: string) => ({model: modelName, id: item.id})},
         {key: 'delete', labelKey: 'Delete', icon: 'fa-solid fa-trash', group: 'Actions', isDanger: true, routeName: 'ModelDeletePage', routeParams: (item: any, modelName: string) => ({model: modelName, id: item.id})},
     ],
-} as Model
+} as unknown as Model
 registerModel(TInventoryLocation)
 
 export const TInventoryEntry = {
@@ -1220,7 +1235,7 @@ export const TAiLog = {
     headerActions: [
         {type: 'widget', component: defineAsyncComponent(() => import('@/components/display/AiCreditsBar.vue'))},
     ],
-} as Model
+} as unknown as Model
 registerModel(TAiLog)
 
 export const TFoodInheritField = {
@@ -1275,7 +1290,7 @@ export class GenericModel {
      */
     constructor(model: Model, t: any) {
         this.model = model
-        this.api = new ApiApi()
+        this.api = new ApiApi() as ApiApi & Record<string, (...args: any[]) => any>
         this.t = t
     }
 
