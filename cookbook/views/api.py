@@ -55,7 +55,7 @@ from rest_framework import decorators, status, viewsets
 from rest_framework import mixins
 from rest_framework.authtoken.views import ObtainAuthToken
 from rest_framework.decorators import api_view, permission_classes
-from rest_framework.exceptions import APIException, PermissionDenied
+from rest_framework.exceptions import APIException, ParseError, PermissionDenied
 from rest_framework.exceptions import ValidationError as DRFValidationError
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.parsers import JSONParser, MultiPartParser
@@ -245,10 +245,14 @@ class StandardFilterModelViewSet(viewsets.ModelViewSet):
         limit = self.request.query_params.get('limit', None)
         random = self.request.query_params.get('random', False)
         if limit is not None:
+            try:
+                limit = int(limit)
+            except ValueError:
+                raise ParseError(_('Parameter limit incorrectly formatted'))
             if random:
-                queryset = queryset.order_by("?")[:int(limit)]
+                queryset = queryset.order_by("?")[:limit]
             else:
-                queryset = queryset[:int(limit)]
+                queryset = queryset[:limit]
         return queryset
 
 
@@ -400,7 +404,10 @@ class FuzzyFilterMixin(viewsets.ModelViewSet, ExtendedRecipeMixin):
         if random:
             self.queryset = self.queryset.order_by("?")
         if limit is not None:
-            self.queryset = self.queryset[:int(limit)]
+            try:
+                self.queryset = self.queryset[:int(limit)]
+            except ValueError:
+                raise ParseError(_('Parameter limit incorrectly formatted'))
         return self.annotate_recipe(queryset=self.queryset, request=self.request, serializer=self.serializer_class)
 
 

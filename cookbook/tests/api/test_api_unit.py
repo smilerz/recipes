@@ -131,6 +131,11 @@ def test_list_filter(obj_1, obj_2, u1_s1):
     assert response['results'][0]['name'] == obj_1.name
 
 
+def test_list_bad_limit_returns_400(u1_s1):
+    r = u1_s1.get(f'{reverse(LIST_URL)}?limit=notanumber')
+    assert r.status_code == 400
+
+
 @pytest.mark.parametrize("arg", [
     ['a_u', 403],
     ['g1_s1', 403],
