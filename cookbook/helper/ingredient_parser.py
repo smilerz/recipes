@@ -184,9 +184,10 @@ class IngredientParser:
 
         # some people/languages put amount and unit at the end of the ingredient string
         # if something like this is detected move it to the beginning so the parser can handle it
-        if len(ingredient) < 1000 and re.search(r'^([^\W\d_])+(.)*[1-9](\d)*\s*([^\W\d_])+', ingredient):
-            match = re.search(r'[1-9](\d)*\s*([^\W\d_])+', ingredient)
-            ingredient = ingredient[match.start():match.end()] + ' ' + ingredient.replace(ingredient[match.start():match.end()], '')
+        # (matched in two linear-time steps, not one backtracking regex, to avoid CWE-1333)
+        if len(ingredient) < 1000 and re.match(r'[^\W\d_]', ingredient):
+            if match := re.search(r'[1-9]\d*\s*[^\W\d_]+', ingredient):
+                ingredient = ingredient[match.start():match.end()] + ' ' + ingredient.replace(ingredient[match.start():match.end()], '')
 
         # if the string contains parenthesis early on remove it and place it at the end
         # because its likely some kind of note
@@ -202,7 +203,7 @@ class IngredientParser:
         ingredient = re.sub("^(\\d+|\\d+[\\.,]\\d+) - (\\d+|\\d+[\\.,]\\d+) (.*)", "\\1 \\3 (\\1 - \\2)", ingredient)
 
         # if amount and unit are connected add space in between
-        if re.match('([0-9])+([A-z])+\\s', ingredient):
+        if re.match(r'[0-9]+[A-Za-z]+\s', ingredient):
             ingredient = re.sub(r'(?<=([a-z])|\d)(?=(?(1)\d|[a-z]))', ' ', ingredient)
 
         if not self.ignore_rules:
