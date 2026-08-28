@@ -54,8 +54,6 @@ class Default(Integration):
             errors = extract_error_messages(serialized_recipe.errors)
             raise Exception("\n".join(errors))
 
-        return None
-
     def get_file_from_recipe(self, recipe):
 
         export = RecipeExportSerializer(recipe).data
