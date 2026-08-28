@@ -31,8 +31,18 @@ jobs:
 
       - name: Run Vue tests
         working-directory: ./vue3
-        run: yarn test
+        run: yarn test:coverage
 
       - name: Dev server health check
         working-directory: ./vue3
         run: yarn healthcheck
+
+      # One upload per push/PR is enough - coverage doesn't vary by Node version.
+      - name: Upload frontend coverage to Codecov
+        if: matrix.node-version == '24'
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: ./vue3/coverage/lcov.info
+          flags: frontend
+          fail_ci_if_error: false

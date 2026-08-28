@@ -33,6 +33,7 @@ export default defineConfig({
             },
         },
         coverage: {
+            reporter: ['text', 'lcov'],
             exclude: [
                 'src/openapi/**',
                 'src/__tests__/**',

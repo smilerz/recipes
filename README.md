@@ -16,6 +16,7 @@
 <a href="https://hub.docker.com/r/vabene1111/recipes" target="_blank" rel="noopener noreferrer"><img src="https://img.shields.io/docker/pulls/vabene1111/recipes" ></a>
 <a href="https://github.com/vabene1111/recipes/releases/latest" rel="noopener noreferrer"><img src="https://img.shields.io/github/v/release/vabene1111/recipes" ></a>
 <a href="https://app.tandoor.dev/e/demo-auto-login/" rel="noopener noreferrer"><img src="https://img.shields.io/badge/demo-available-success" ></a>
+<a href="https://codecov.io/gh/smilerz/recipes" target="_blank" rel="noopener noreferrer"><img src="https://codecov.io/gh/smilerz/recipes/branch/preview/graph/badge.svg" ></a>
 </p>
 
 <p align="center">
