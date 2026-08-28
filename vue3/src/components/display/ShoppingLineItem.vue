@@ -10,7 +10,7 @@
         <!--        </div>-->
 
         <div class="color-marker-container">
-            <span :style="{background: sl.color}" v-for="sl in shoppingList"></span>
+            <span :style="{background: sl.color ?? undefined}" v-for="sl in shoppingList"></span>
         </div>
 
         <div class="flex-grow-1 p-2">

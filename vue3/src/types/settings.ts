@@ -45,6 +45,11 @@ export type DeviceSettings = {
     search_itemsPerPage: number,
     search_viewMode: 'table'|'grid',
     search_visibleFilters: String[],
+    search_includeChildren: boolean,
+    search_inlineFilters: string[],
+    search_drawerFilters: string[],
+    search_savedSearchInline: boolean,
+    search_savedSearchInPanel: boolean,
     search_showStats: boolean,
 
     start_showMealPlan: boolean,

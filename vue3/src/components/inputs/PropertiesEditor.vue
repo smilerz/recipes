@@ -1,11 +1,11 @@
 <template>
     <v-btn-group density="compact">
-        <v-btn color="create" @click="editingObj.properties.push({} as Property); addPropertiesFoodUnit()" prepend-icon="$create">{{ $t('Add') }}</v-btn>
+        <v-btn color="create" @click="(editingObj.properties ??= []).push({} as Property); addPropertiesFoodUnit()" prepend-icon="$create">{{ $t('Add') }}</v-btn>
         <v-btn color="secondary" @click="addAllProperties" prepend-icon="fa-solid fa-list">{{ $t('AddAll') }}</v-btn>
         <ai-action-button color="info" @selected="propertiesFromAi" :loading="aiLoading" prepend-icon="$ai">{{ $t('AI') }}</ai-action-button>
     </v-btn-group>
 
-    <v-row class="d-none d-md-flex mt-2" v-for="p in editingObj.properties" density="compact">
+    <v-row class="d-none d-md-flex mt-2" v-for="p in (editingObj.properties ?? [])" density="compact">
         <v-col cols="0" md="6">
             <v-number-input :step="10" v-model="p.propertyAmount" control-variant="stacked" :precision="2">
                 <template #append-inner v-if="p.propertyType">
@@ -25,7 +25,7 @@
         </v-col>
     </v-row>
     <v-list class="d-md-none">
-        <v-list-item v-for="p in editingObj.properties" border>
+        <v-list-item v-for="p in (editingObj.properties ?? [])" border>
             <span v-if="p.propertyType">{{ p.propertyAmount }} {{ p.propertyType.unit }} {{ p.propertyType.name }} / {{ props.amountFor }}
             </span>
             <span v-else><i><{{ $t('New') }}></i></span>
@@ -86,9 +86,10 @@ function addAllProperties() {
     addPropertiesFoodUnit()
 
     api.apiPropertyTypeList().then(r => {
+        const properties = editingObj.value.properties ??= []
         r.results.forEach(pt => {
-            if (editingObj.value.properties.findIndex(x => x.propertyType.name == pt.name) == -1) {
-                editingObj.value.properties.push({propertyAmount: 0, propertyType: pt} as Property)
+            if (properties.findIndex(x => x.propertyType.name == pt.name) == -1) {
+                properties.push({propertyAmount: 0, propertyType: pt} as Property)
             }
         })
     })
@@ -99,7 +100,7 @@ function propertiesFromAi(providerId: number) {
     aiLoading.value = true
 
     if (isFood.value) {
-        api.apiFoodAipropertiesCreate({id: editingObj.value.id!, food: editingObj.value, provider: providerId}).then(r => {
+        api.apiFoodAipropertiesCreate({id: editingObj.value.id!, food: editingObj.value as Food, provider: providerId}).then(r => {
             editingObj.value = r
             nextTick(() => {
                 addPropertiesFoodUnit()
@@ -110,7 +111,7 @@ function propertiesFromAi(providerId: number) {
             aiLoading.value = false
         })
     } else {
-        api.apiRecipeAipropertiesCreate({id: editingObj.value.id!, recipe: editingObj.value, provider: providerId}).then(r => {
+        api.apiRecipeAipropertiesCreate({id: editingObj.value.id!, recipe: editingObj.value as Recipe, provider: providerId}).then(r => {
             editingObj.value = r
         }).catch(err => {
             useMessageStore().addError(ErrorMessageType.FETCH_ERROR, err)
@@ -125,10 +126,8 @@ function propertiesFromAi(providerId: number) {
  * if its empty add the properties food unit
  */
 function addPropertiesFoodUnit(){
-    console.log('ADDING UNIT', !editingObj.value.propertiesFoodUnit)
-    if (isFood.value && !editingObj.value.propertiesFoodUnit) {
-        console.log('ADDING UNIT ACTUALLY')
-        editingObj.value.propertiesFoodUnit = (useUserPreferenceStore().defaultUnitObj != null) ? useUserPreferenceStore().defaultUnitObj! : {name: 'g'} as Unit
+    if (isFood.value && !(editingObj.value as Food).propertiesFoodUnit) {
+        (editingObj.value as Food).propertiesFoodUnit = (useUserPreferenceStore().defaultUnitObj != null) ? useUserPreferenceStore().defaultUnitObj! : {name: 'g'} as Unit
     }
 }
 

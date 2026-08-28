@@ -72,7 +72,7 @@ export function uploadRecipeImage(recipeId: number, file: File) {
 
     fetch('/api/recipe/' + recipeId + '/image/', {
         method: 'PUT',
-        headers: {'X-CSRFToken': getCookie('csrftoken')},
+        headers: {'X-CSRFToken': getCookie('csrftoken') ?? ''},
         body: formData
     }).then(r => {
         r.json().then(r => {

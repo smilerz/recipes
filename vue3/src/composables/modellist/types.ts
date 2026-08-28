@@ -8,8 +8,10 @@ import type {InventoryQuickAddDialogInstance} from '@/composables/useInventoryAc
 import type {EditorSupportedModels} from '@/types/Models'
 export type ActionConfirmDialogInstance = InstanceType<typeof ActionConfirmDialog>
 
-/** Minimal food reference for composable actions. */
-export type FoodRef = {id: number, name: string}
+/** Minimal food reference for composable actions. Shelf-life fields are optional — pass them
+ * through when the caller already has them (e.g. a full Food object) so the quick-add dialog can
+ * preview the expiry it would suggest (#5); omit them and the dialog just skips the preview. */
+export type FoodRef = {id: number, name: string, shelfLifeDays?: number | null, shelfLifeDaysFrozen?: number | null}
 
 /** Translation function signature for composable actions. */
 export type TranslateFunc = (key: string, params?: Record<string, any>) => string

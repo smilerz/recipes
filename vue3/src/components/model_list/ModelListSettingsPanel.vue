@@ -371,7 +371,7 @@ const props = withDefaults(defineProps<{
     allColumns: () => [],
     isColumnVisible: () => () => true,
     toggleColumn: () => () => {},
-    getDisplayMode: () => () => 'text',
+    getDisplayMode: () => () => 'text' as const,
     setDisplayMode: () => () => {},
     groupedFilterDefs: () => new Map(),
     getFilter: () => () => undefined,

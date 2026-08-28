@@ -91,6 +91,12 @@ export interface PatchedInventoryEntry {
     expires?: Date | null;
     /**
      * 
+     * @type {Date}
+     * @memberof PatchedInventoryEntry
+     */
+    readonly openedAt?: Date | null;
+    /**
+     * 
      * @type {string}
      * @memberof PatchedInventoryEntry
      */
@@ -140,6 +146,7 @@ export function PatchedInventoryEntryFromJSONTyped(json: any, ignoreDiscriminato
         'unit': json['unit'] == null ? undefined : UnitFromJSON(json['unit']),
         'amount': json['amount'] == null ? undefined : json['amount'],
         'expires': json['expires'] == null ? undefined : (new Date(json['expires'])),
+        'openedAt': json['opened_at'] == null ? undefined : (new Date(json['opened_at'])),
         'note': json['note'] == null ? undefined : json['note'],
         'label': json['label'] == null ? undefined : json['label'],
         'createdAt': json['created_at'] == null ? undefined : (new Date(json['created_at'])),
@@ -151,7 +158,7 @@ export function PatchedInventoryEntryToJSON(json: any): PatchedInventoryEntry {
     return PatchedInventoryEntryToJSONTyped(json, false);
 }
 
-export function PatchedInventoryEntryToJSONTyped(value?: Omit<PatchedInventoryEntry, 'label'|'created_at'|'created_by'> | null, ignoreDiscriminator: boolean = false): any {
+export function PatchedInventoryEntryToJSONTyped(value?: Omit<PatchedInventoryEntry, 'opened_at'|'label'|'created_at'|'created_by'> | null, ignoreDiscriminator: boolean = false): any {
     if (value == null) {
         return value;
     }

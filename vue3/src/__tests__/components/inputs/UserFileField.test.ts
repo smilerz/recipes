@@ -85,7 +85,7 @@ describe('UserFileField server-driven Search tab', () => {
         await flushPromises()
         apiMock.apiUserFileList.mockClear()
 
-        w.vm.loadItems({page: 3, itemsPerPage: 25, sortBy: [], search: ''})
+        w.vm.loadItems({page: 3, itemsPerPage: 25, sortBy: [], search: ''} as any)
         await flushPromises()
 
         expect(apiMock.apiUserFileList).toHaveBeenCalled()

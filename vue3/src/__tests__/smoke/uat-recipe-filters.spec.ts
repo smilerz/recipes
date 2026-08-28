@@ -1,3 +1,4 @@
+import type { Page } from '@playwright/test'
 import { test, expect, api } from './fixtures'
 
 /**
@@ -34,7 +35,7 @@ test.describe('Recipe filters — advanced-search', () => {
         await authedPage.waitForSelector('main', { timeout: 10_000 })
     })
 
-    async function openFilters(page: ReturnType<typeof test.extend<any>>['authedPage'] extends infer T ? T : never) {
+    async function openFilters(page: Page) {
         // The Filters button shows "Filters0" or "Filters" with a badge
         const filtersBtn = page.locator('button').filter({ hasText: /^Filters/ }).first()
         await filtersBtn.click()
@@ -97,7 +98,7 @@ test.describe('Recipe filters — advanced-search', () => {
 
         const { count, firstResult, params } = await captureRecipeRequest(page, async () => {
             const foodInput = page.locator('.v-navigation-drawer--active, [role=dialog]')
-                .locator('input').filter({ hasPlaceholder: /food/i }).first()
+                .getByPlaceholder(/food/i).first()
             await foodInput.fill('gin')
             await page.getByRole('option', { name: /^gin$/i }).first().click()
         }).catch(() => ({ count: null, firstResult: null, params: {} }))

@@ -11,6 +11,37 @@ LIST_URL = 'api:customfilter-list'
 DETAIL_URL = 'api:customfilter-detail'
 
 
+# CustomFilterViewSet extended StandardFilterModelViewSet (bare icontains) — fuzzy-matching UAT
+# batch swapped it onto FuzzyFilterMixin for real search.
+def test_query_param_filters_by_name(u1_s1, space_1):
+    user = auth.get_user(u1_s1)
+    with scopes_disabled():
+        match = CustomFilter.objects.create(name='Sodium Filter', type=CustomFilter.RECIPE, search={}, created_by=user, space=space_1)
+        other = CustomFilter.objects.create(name='Fiber Filter', type=CustomFilter.RECIPE, search={}, created_by=user, space=space_1)
+
+    names = [e['name'] for e in json.loads(u1_s1.get(reverse(LIST_URL), {'query': 'Sodium'}).content)['results']]
+
+    assert match.name in names
+    assert other.name not in names
+
+
+# OrderingMixin's own OpenAPI doc already promised "ignored when query is active" for every
+# consumer (Unit/Food/Keyword/ViewLog/CookLog too) but _apply_ordering() never actually checked —
+# found while composing it with FuzzyFilterMixin's relevance ordering here.
+def test_ordering_ignored_when_query_active(u1_s1, space_1):
+    user = auth.get_user(u1_s1)
+    with scopes_disabled():
+        starts_with_match = CustomFilter.objects.create(name='Banana Split', type=CustomFilter.RECIPE, search={}, created_by=user, space=space_1)
+        contains_match = CustomFilter.objects.create(name='Apple Banana', type=CustomFilter.RECIPE, search={}, created_by=user, space=space_1)
+
+    response = json.loads(u1_s1.get(f'{reverse(LIST_URL)}?query=Banana&ordering=name').content)
+    names = [r['name'] for r in response['results']]
+
+    # relevance ordering (istartswith match ranks first) survives, NOT alphabetical (which would
+    # put "Apple Banana" first) — proves the explicit `ordering` param was ignored during search.
+    assert names.index(starts_with_match.name) < names.index(contains_match.name)
+
+
 def test_ordering_name(u1_s1, space_1):
     """Characterization: name ordering is case-insensitive (Lower() path)."""
     user = auth.get_user(u1_s1)

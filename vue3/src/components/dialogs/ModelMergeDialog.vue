@@ -53,7 +53,7 @@
 
 import ModelSelect from "@/components/inputs/ModelSelect.vue";
 import {computed, PropType, ref, watch} from "vue";
-import {EditorSupportedModels, EditorSupportedTypes, getGenericModelFromString} from "@/types/Models";
+import {EditorSupportedModels, EditorSupportedTypes, getGenericModelFromStringOrDefault} from "@/types/Models";
 import {ErrorMessageType, PreparedMessage, useMessageStore} from "@/stores/MessageStore";
 import {useI18n} from "vue-i18n";
 import VClosableCardTitle from "@/components/dialogs/VClosableCardTitle.vue";
@@ -73,7 +73,7 @@ const dialog = defineModel<boolean>({default: false})
 const loading = ref(false)
 const automate = ref(false)
 
-const genericModel = getGenericModelFromString(props.model, t)
+const genericModel = getGenericModelFromStringOrDefault(props.model, t)
 const target = ref<null | EditorSupportedTypes>(null)
 
 const sourceItems = ref<EditorSupportedTypes[]>([])
@@ -91,7 +91,7 @@ watch(dialog, (newValue, oldValue) => {
  */
 const sourceNames = computed(() => {
     if (sourceItems.value) {
-        return sourceItems.value.map(i => genericModel.getLabel(i)).join(', ')
+        return sourceItems.value.map((i: EditorSupportedTypes) => genericModel.getLabel(i)).join(', ')
     }
     return ''
 })
@@ -105,24 +105,25 @@ function mergeModel() {
 
     if (target.value != null) {
         loading.value = true
+        const mergeTarget: EditorSupportedTypes = target.value
 
-        sourceItems.value.forEach(sourceItem => {
-            promises.push(genericModel.merge(sourceItem, target.value).then(r => {
+        sourceItems.value.forEach((sourceItem: EditorSupportedTypes) => {
+            promises.push(genericModel.merge(sourceItem, mergeTarget).then((r: any) => {
 
                 updatedItems.value.push(sourceItem)
 
-                if (automate.value && target.value != null && Object.hasOwn(sourceItem, 'name') && Object.hasOwn(sourceItem, 'name')) {
+                if (automate.value && Object.prototype.hasOwnProperty.call(sourceItem, 'name') && Object.prototype.hasOwnProperty.call(mergeTarget, 'name')) {
                     let automation = {
-                        name: `${t('Merge')} ${sourceItem.name} -> ${target.value.name}`.substring(0, 128),
-                        param1: sourceItem.name,
-                        param2: target.value.name,
+                        name: `${t('Merge')} ${(sourceItem as any).name} -> ${(mergeTarget as any).name}`.substring(0, 128),
+                        param1: (sourceItem as any).name,
+                        param2: (mergeTarget as any).name,
                         type: genericModel.model.mergeAutomation
                     } as Automation
                     promises.push(api.apiAutomationCreate({automation: automation}).catch(err => {
                         useMessageStore().addError(ErrorMessageType.UPDATE_ERROR, err)
                     }))
                 }
-            }).catch(err => {
+            }).catch((err: any) => {
                 updatedItems.value.push(sourceItem)
             }))
         })

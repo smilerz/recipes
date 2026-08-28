@@ -99,7 +99,7 @@ describe('parseSearchBlob', () => {
 describe('adversarial round-trip', () => {
     it('a range edit persists and a foreign key is preserved (finding #1)', () => {
         // Old saved search: servings 5~10 + a legacy/foreign key.
-        const old = {servings_gte: 5, servings_lte: 10, foo: 'legacy', version: '2'}
+        const old = {servings_gte: 5, servings_lte: 10, foo: 'legacy', version: '2' as const}
         const {stash} = parseSearchBlob({defs: DEFS, blob: old})
         // User edits servings to 7~12 in edit mode:
         const blob = buildSearchBlob({

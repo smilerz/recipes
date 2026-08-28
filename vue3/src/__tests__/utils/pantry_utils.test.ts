@@ -1,6 +1,6 @@
 import {describe, it, expect, beforeEach, afterEach} from 'vitest'
 import {DateTime, Settings} from 'luxon'
-import {expiryStatus, expiryColor, expiryDateLabel, pantryGroup, EXPIRING_SOON_DAYS, shelfLifeToDays, shelfLifeFromDays, isoDateToApiDate, stockUpRowFromFood, stockUpRowsFromEntries, stockUpItemsFromRows, useUpItemsFromRows, groupInventoryByFoodUnit, groupUseUpBySubstituteSlot, distinctRecentRecipes, foodRecipeUsageMap, recipeFoodIds, recipePantryRows, partitionUseUpRows, groupUseUpRowsByRecipe, pantryJarState} from '@/utils/pantry_utils'
+import {expiryStatus, expiryColor, expiryDateLabel, pantryGroup, EXPIRING_SOON_DAYS, shelfLifeToDays, shelfLifeFromDays, isoDateToApiDate, stockUpRowFromFood, stockUpRowsFromEntries, stockUpItemsFromRows, useUpItemsFromRows, groupInventoryByFoodUnit, groupUseUpBySubstituteSlot, distinctRecentRecipes, foodRecipeUsageMap, recipeFoodIds, recipePantryRows, partitionUseUpRows, groupUseUpRowsByRecipe, pantryJarState, EXPIRY_PRESET_DAYS, formatShelfLifeDuration, daysFromNow, suggestedExpiryForNewLot} from '@/utils/pantry_utils'
 
 const NOW = new Date('2026-07-15T12:00:00')
 const day = (iso: string) => new Date(iso)
@@ -17,17 +17,17 @@ describe('expiry is timezone-safe for date-only values (DEFECT-01)', () => {
     const utcDate = (iso: string) => new Date(iso + 'T00:00:00Z')
     const nowAt = (iso: string) => new Date(iso + 'T12:00:00Z')  // midday UTC → same calendar day in Chicago
 
-    it('a lot expiring 4 days out is ok, not soon (no -1 shift)', () => {
-        expect(expiryStatus(utcDate('2026-07-18'), nowAt('2026-07-14'))).toBe('ok')
+    it('a lot expiring well beyond the window is ok, not soon (no -1 shift)', () => {
+        expect(expiryStatus(utcDate('2026-07-22'), nowAt('2026-07-14'))).toBe('ok')
     })
-    it('a lot expiring exactly 3 days out is soon (boundary intact)', () => {
-        expect(expiryStatus(utcDate('2026-07-17'), nowAt('2026-07-14'))).toBe('soon')
+    it(`a lot expiring exactly ${EXPIRING_SOON_DAYS} days out is soon (boundary intact)`, () => {
+        expect(expiryStatus(utcDate('2026-07-19'), nowAt('2026-07-14'))).toBe('soon')
     })
     it('a lot expiring today is expired, not counted as tomorrow', () => {
         expect(expiryStatus(utcDate('2026-07-16'), nowAt('2026-07-16'))).toBe('expired')
     })
     it('pantryGroup follows the same calendar-date logic', () => {
-        expect(pantryGroup(utcDate('2026-07-18'), nowAt('2026-07-14'))).toBe('instock')
+        expect(pantryGroup(utcDate('2026-07-22'), nowAt('2026-07-14'))).toBe('instock')
     })
     it('expiryDateLabel shows the stored calendar day, not the day before', () => {
         const label = expiryDateLabel(utcDate('2026-07-16'))
@@ -42,8 +42,8 @@ describe('expiryStatus', () => {
     it('expired today', () => expect(expiryStatus(day('2026-07-15T00:00:00'), NOW)).toBe('expired'))
     it('expired in the past', () => expect(expiryStatus(day('2026-07-10'), NOW)).toBe('expired'))
     it('soon within the window', () => expect(expiryStatus(day('2026-07-17'), NOW)).toBe('soon'))
-    it(`soon at exactly ${EXPIRING_SOON_DAYS} days`, () => expect(expiryStatus(day('2026-07-18T00:00:00'), NOW)).toBe('soon'))
-    it('ok beyond the window', () => expect(expiryStatus(day('2026-07-20'), NOW)).toBe('ok'))
+    it(`soon at exactly ${EXPIRING_SOON_DAYS} days`, () => expect(expiryStatus(day('2026-07-20T00:00:00'), NOW)).toBe('soon'))
+    it('ok beyond the window', () => expect(expiryStatus(day('2026-07-22'), NOW)).toBe('ok'))
 })
 
 describe('expiryColor', () => {
@@ -54,7 +54,11 @@ describe('expiryColor', () => {
 })
 
 describe('pantryGroup', () => {
-    it('expired -> expiring', () => expect(pantryGroup(day('2026-07-10'), NOW)).toBe('expiring'))
+    // Expired and expiring-soon are DISTINCT buckets (not merged) — a lot weeks past its date
+    // needs a different signal than one merely approaching it. Regression coverage for the bug
+    // where both statuses collapsed into a single 'expiring' group.
+    it('expired -> expired (not merged into expiring)', () => expect(pantryGroup(day('2026-07-10'), NOW)).toBe('expired'))
+    it('expired today -> expired', () => expect(pantryGroup(day('2026-07-15T00:00:00'), NOW)).toBe('expired'))
     it('soon -> expiring', () => expect(pantryGroup(day('2026-07-17'), NOW)).toBe('expiring'))
     it('ok -> instock', () => expect(pantryGroup(day('2026-07-25'), NOW)).toBe('instock'))
     it('none -> instock', () => expect(pantryGroup(null, NOW)).toBe('instock'))
@@ -76,6 +80,64 @@ describe('shelfLifeFromDays', () => {
     it('5 -> 5 days', () => expect(shelfLifeFromDays(5)).toEqual({value: 5, period: 'day'}))
     it('10 -> 10 days (not weekly)', () => expect(shelfLifeFromDays(10)).toEqual({value: 10, period: 'day'}))
     it('prefers months when both divide (210 -> 7 months)', () => expect(shelfLifeFromDays(210)).toEqual({value: 7, period: 'month'}))
+})
+
+// Quick-select expiry presets — one tap gets a sensible date/duration without configuring a
+// food's shelf-life fields first (user-directed: "easy to select common dates for expiry
+// without hard coding every food").
+describe('EXPIRY_PRESET_DAYS', () => {
+    it('is a fixed, ascending list of common durations', () => {
+        expect(EXPIRY_PRESET_DAYS).toEqual([3, 7, 14, 30, 90, 180, 365])
+    })
+})
+
+describe('formatShelfLifeDuration', () => {
+    const t = (key: string) => key  // stub translator, mirrors other test files' i18n mock
+    it('3 -> 3 Days', () => expect(formatShelfLifeDuration(3, t)).toBe('3 Days'))
+    it('7 -> 1 Weeks', () => expect(formatShelfLifeDuration(7, t)).toBe('1 Weeks'))
+    it('14 -> 2 Weeks', () => expect(formatShelfLifeDuration(14, t)).toBe('2 Weeks'))
+    it('30 -> 1 Months', () => expect(formatShelfLifeDuration(30, t)).toBe('1 Months'))
+    it('365 -> 365 Days (not evenly divisible by week or month)', () => expect(formatShelfLifeDuration(365, t)).toBe('365 Days'))
+})
+
+describe('daysFromNow', () => {
+    it('adds the given number of days to the reference date', () => {
+        const from = new Date('2026-07-15T12:00:00')
+        expect(daysFromNow(7, from).toISOString().slice(0, 10)).toBe('2026-07-22')
+    })
+    it('defaults the reference date to now when omitted', () => {
+        const before = new Date()
+        const result = daysFromNow(1)
+        const after = new Date()
+        expect(result.getTime()).toBeGreaterThan(before.getTime())
+        expect(result.getTime()).toBeLessThanOrEqual(after.getTime() + 25 * 60 * 60 * 1000)
+    })
+})
+
+describe('suggestedExpiryForNewLot (#5: client-side mirror of the backend _suggest_expiry for a new unopened lot)', () => {
+    const from = new Date('2026-07-15T12:00:00')
+
+    it('uses the frozen number for a freezer location', () => {
+        const food = {shelfLifeDays: 5, shelfLifeDaysFrozen: 90}
+        const result = suggestedExpiryForNewLot(food, true, from)
+        expect(result?.toISOString().slice(0, 10)).toBe('2026-10-13')
+    })
+
+    it('uses the plain shelf life for a non-freezer location', () => {
+        const food = {shelfLifeDays: 5, shelfLifeDaysFrozen: 90}
+        const result = suggestedExpiryForNewLot(food, false, from)
+        expect(result?.toISOString().slice(0, 10)).toBe('2026-07-20')
+    })
+
+    it('never falls back to the plain shelf life for a freezer location with no frozen number', () => {
+        const food = {shelfLifeDays: 5, shelfLifeDaysFrozen: null}
+        expect(suggestedExpiryForNewLot(food, true, from)).toBeNull()
+    })
+
+    it('returns null for a non-freezer location with no shelf life configured', () => {
+        const food = {shelfLifeDays: null, shelfLifeDaysFrozen: 90}
+        expect(suggestedExpiryForNewLot(food, false, from)).toBeNull()
+    })
 })
 
 // Contract rewritten 2026-07-16 (user-directed requirement change, DEC-1): the pack is the only

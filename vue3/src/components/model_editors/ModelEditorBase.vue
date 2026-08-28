@@ -35,7 +35,7 @@
             </v-card-text>
             <v-card-actions>
                 <v-btn @click="leaveConfirmDialog = false; leaveGoTo = null">{{ $t('Cancel') }}</v-btn>
-                <v-btn :to="leaveGoTo" color="warning" v-if="!dialog">{{ $t('Confirm') }}</v-btn>
+                <v-btn :to="leaveGoTo ?? undefined" color="warning" v-if="!dialog">{{ $t('Confirm') }}</v-btn>
                 <v-btn @click="emit('close')" color="warning" v-if="dialog">{{ $t('Confirm') }}</v-btn>
             </v-card-actions>
         </v-card>

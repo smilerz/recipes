@@ -1,6 +1,6 @@
 <template>
     <v-card class="card cv-item pa-0" hover
-            :style="{'top': itemTop, 'height': itemHeight, 'border-color': mealPlan.mealType.color}"
+            :style="{'top': itemTop, 'height': itemHeight, 'border-color': mealPlan.mealType.color ?? undefined}"
             :draggable="true"
             :key="value.id"
             @dragstart="emit('onDragStart', value, $event)"
@@ -8,7 +8,7 @@
         <v-card-text class="pa-0">
             <div class="d-flex flex-row align-items-center">
                 <div class="flex-column" v-if="detailedItems">
-                    <recipe-image :height="itemHeight" :width="itemHeight" :recipe="mealPlan.recipe"></recipe-image>
+                    <recipe-image :height="itemHeight" :width="itemHeight" :recipe="mealPlan.recipe ?? undefined"></recipe-image>
                 </div>
                 <div class="flex-column flex-grow-0 pa-1 title-wrap">
                     <span class="font-light" :class="{'three-line-text': detailedItems,'one-line-text': !detailedItems,}">

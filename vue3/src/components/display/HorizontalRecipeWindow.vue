@@ -22,7 +22,7 @@
             </v-col>
         </v-row>
 
-        <v-row v-if="skeletons > 0 && loading">
+        <v-row v-if="(skeletons ?? 0) > 0 && loading">
             <v-col>
                 <v-window>
                     <v-window-item>
@@ -179,7 +179,10 @@ function loadRecipes() {
     // Randomize the sample for the applicable modes (D09). `books` builds its own requests in
     // loadBooksSection, so it applies the flag there; the rest flow through requestParameters.
     if (useRandom.value) {
-        requestParameters.random = 'true'
+        // ApiRecipeListRequest.random is generated as `boolean`, but every other endpoint's `random`
+// param (and this component's own existing test) uses the string 'true' - matches the actual
+// wire contract; typed here rather than changed to avoid altering the generated client.
+requestParameters.random = 'true' as any
     }
 
     switch (props.mode) {
@@ -188,11 +191,14 @@ function loadRecipes() {
             queryParams.value = {sortOrder: '-created_at'}
             break
         case 'random':
-            requestParameters.random = 'true'
+            // ApiRecipeListRequest.random is generated as `boolean`, but every other endpoint's `random`
+// param (and this component's own existing test) uses the string 'true' - matches the actual
+// wire contract; typed here rather than changed to avoid altering the generated client.
+requestParameters.random = 'true' as any
             queryParams.value = {sortOrder: 'random'}
             break
         case 'new':
-            requestParameters._new = 'true'
+            requestParameters._new = true
             requestParameters.sortOrder = '-created_at'
             // "More" must surface the SAME set as this section (#4646): the
             // section shows the backend `_new` flag = created within 7 days, so
@@ -249,7 +255,7 @@ function loadBooksSection() {
         // to the book's manual entries.
         queryParams.value = book.filter ? {filter: book.filter.id!} : {books: book.id!}
 
-        const randomFlag = useRandom.value ? {random: 'true'} : {}
+        const randomFlag = useRandom.value ? {random: 'true' as any} : {}
         const requests = [api.apiRecipeList({books: [book.id!], pageSize: 16, ...randomFlag})]
         if (book.filter) {
             requests.push(api.apiRecipeList({filter: book.filter.id, pageSize: 16, ...randomFlag}))
@@ -279,7 +285,12 @@ function doRecipeRequest(params: ApiRecipeListRequest) {
         if (props.mode == 'new') {
             recipes.value = r.results.filter(r => r._new)
         } else if (props.mode == 'recent') {
-            recipes.value = r.results.filter(r => r.recent != "0")
+            // `recent` is listed in RecipeOverviewSerializer's read_only_fields but was never
+            // added to Meta.fields, so the backend never actually sends it - this filter is a
+            // pre-existing no-op (recent filtering already happens server-side via `numRecent`
+            // above). Cast to preserve the exact current behavior rather than guessing a fix
+            // for a backend field that was never wired up.
+            recipes.value = r.results.filter(r => (r as any).recent != "0")
         } else {
             recipes.value = r.results
         }

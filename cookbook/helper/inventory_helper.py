@@ -9,23 +9,71 @@ from cookbook.models import InventoryEntry, InventoryLocation, InventoryLog
 DEFAULT_LOCATION_NAME = 'Pantry'
 
 
+def _suggest_expiry(food, location, opened_at, as_of):
+    """The shared formula behind both ``apply_shelf_life_expiry`` (create) and
+    ``recompute_lot_expiry`` (existing lot, state changed): pick which of the food's three
+    shelf-life numbers governs a lot in its current state, and return ``as_of + that many days``.
+
+    A frozen location always wins regardless of ``opened_at`` — freezing arrests decay
+    regardless of whether the seal is broken, so an opened-but-still-frozen lot stays governed
+    by the frozen number until it actually leaves the freezer. Otherwise, an opened lot uses the
+    Opened number counted from its own ``opened_at`` (not ``as_of`` — the clock started the day
+    it was opened, not today); an unopened, non-frozen lot (fresh or thawed) uses the ordinary
+    Pantry/Fridge number counted from ``as_of``. Returns ``None`` when the food has no default
+    configured for whichever state applies — "nothing to suggest," not zero.
+    """
+    if food is None:
+        return None
+    if location is not None and location.is_freezer:
+        return as_of + datetime.timedelta(days=food.shelf_life_days_frozen) if food.shelf_life_days_frozen else None
+    if opened_at is not None:
+        return opened_at + datetime.timedelta(days=food.shelf_life_days_opened) if food.shelf_life_days_opened else None
+    return as_of + datetime.timedelta(days=food.shelf_life_days) if food.shelf_life_days else None
+
+
 def apply_shelf_life_expiry(food, expires, location):
-    """FR-D1: default a lot's expiry to today + ``food.shelf_life_days`` when the caller gave none.
+    """FR-D1: default a new lot's expiry to the shelf-life suggestion for its starting state.
 
     An editable suggestion — returns the caller's ``expires`` untouched when it is already set, and
-    ``None`` for a food with no shelf life (FR-D2). A freezer ``location`` mutes the suggestion
-    entirely (DEC-4 B): pantry shelf life wildly understates freezer life, so a suggested date would
-    be wrong data; an explicit ``expires`` still passes through. ``location`` is deliberately
-    required — a caller that omits it would silently reintroduce autofill on freezer lots. Shared by
-    every add-to-pantry path
-    (the ``add_food_to_pantry`` helper and ``InventoryEntrySerializer.create``) so auto-expiry is
-    applied consistently regardless of how the lot is created.
+    ``None`` when the food has no default for that state (FR-D2). ``location`` is deliberately
+    required — a caller that omits it would silently reintroduce the wrong default. A new lot is
+    never opened, so this only ever chooses between the frozen and Pantry/Fridge numbers (see
+    ``_suggest_expiry``); a freezer location with no ``shelf_life_days_frozen`` set mutes the
+    suggestion entirely (DEC-4 B), same as before this only had one number. Shared by every
+    add-to-pantry path (the ``add_food_to_pantry`` helper and ``InventoryEntrySerializer.create``)
+    so auto-expiry is applied consistently regardless of how the lot is created.
     """
-    if location is not None and location.is_freezer:
+    if expires is not None:
         return expires
-    if expires is None and food is not None and food.shelf_life_days:
-        return timezone.localdate() + datetime.timedelta(days=food.shelf_life_days)
-    return expires
+    return _suggest_expiry(food, location, None, timezone.localdate())
+
+
+def recompute_lot_expiry(entry, *, as_of=None, just_thawed=False):
+    """Re-suggest ``expires`` for an EXISTING lot after a state change (location move in/out of a
+    freezer, or the opened/un-opened toggle) — always overwrites, unlike ``apply_shelf_life_expiry``
+    which only fills a blank. The lot's old expiry belonged to its old state and is no longer
+    meaningful once the state changes; if the food has no default configured for the new state,
+    ``expires`` is left as-is rather than blanked (there's nothing better to suggest, and silently
+    clearing a lot's date would be worse than leaving a stale one for the user to notice and fix).
+
+    ``as_of`` defaults to today (the day the state changed) and only matters for the non-opened
+    branch — an opened lot's clock is normally counted from its own ``opened_at``, never from when
+    a later move happened to trigger this recompute.
+
+    ``just_thawed`` — True specifically for a freezer -> non-freezer transition on an already-opened
+    lot. Freezing arrests decay for the opened clock too, not just the unopened one: without this,
+    a lot opened months ago, then frozen, then thawed today would still count from its original
+    ``opened_at`` and could come out of the freezer already "expired" on paper, even though the
+    opened clock was never actually running while frozen. When true, the opened countdown restarts
+    from ``as_of`` (the thaw date) instead of the lot's original ``opened_at``.
+    """
+    as_of = as_of or timezone.localdate()
+    effective_opened_at = as_of if (just_thawed and entry.opened_at is not None) else entry.opened_at
+    suggested = _suggest_expiry(entry.food, entry.inventory_location, effective_opened_at, as_of)
+    if suggested is not None and suggested != entry.expires:
+        entry.expires = suggested
+        entry.save(update_fields=['expires'])
+    return entry
 
 
 def get_or_create_default_inventory_location(household, user, space):

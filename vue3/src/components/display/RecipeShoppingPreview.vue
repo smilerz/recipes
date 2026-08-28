@@ -6,7 +6,7 @@
             <v-expansion-panel-text>
                 <v-table density="compact">
                     <tbody>
-                    <tr v-for="e in r.entries" :key="e.id" @click="liveMode ? toggleEntry(e) : (e.checked = !e.checked)" class="cursor-pointer">
+                    <tr v-for="e in r.entries" :key="e.ingredient?.id ?? e.entryId" @click="liveMode ? toggleEntry(e) : (e.checked = !e.checked)" class="cursor-pointer">
                         <td style="width: 1%; text-wrap: nowrap" class="pa-0">
                             <v-checkbox-btn v-if="!liveMode" v-model="e.checked" color="success"></v-checkbox-btn>
                             <v-checkbox-btn v-else :model-value="e.checked" color="success" @click.stop="toggleEntry(e)"></v-checkbox-btn>
@@ -14,10 +14,10 @@
                         <td style="width: 1%; text-wrap: nowrap" class="pr-1"
                             v-html="calculateFoodAmount(e.amount, ingredientFactor, useUserPreferenceStore().userSettings.useFractions)"></td>
                         <td style="width: 1%; text-wrap: nowrap" class="pr-1">
-                            <template v-if="e.unit"> {{ ingredientToUnitString(e.ingredient, ingredientFactor) }}</template>
+                            <template v-if="e.unit"> {{ ingredientToUnitString(e.ingredient!, ingredientFactor) }}</template>
                         </td>
                         <td>
-                            <template v-if="e.food"> {{ ingredientToFoodString(e.ingredient, ingredientFactor) }}</template>
+                            <template v-if="e.food"> {{ ingredientToFoodString(e.ingredient!, ingredientFactor) }}</template>
                             <!-- Surface why an on-hand row is pre-unchecked: the pantry jar signals it's
                                  already stocked (with expiry tint); a distinct swap icon + the first
                                  available substitute's name signals a substitute covers it instead -
@@ -243,13 +243,15 @@ const pendingToggle = new WeakSet<ShoppingDialogRecipeEntry>()
 function toggleEntry(entry: ShoppingDialogRecipeEntry) {
     if (pendingToggle.has(entry)) return
     if (entry.checked) {
+        // Intentionally partial - deleteObject() only reads .id off this, createObject() below
+        // sends the object as-is to the create endpoint which fills in the rest server-side.
         const toDelete = {
             id: entry.entryId,
             amount: entry.amount,
             unit: entry.unit,
             food: entry.food,
             ingredient: entry.ingredient?.id,
-        } as ShoppingListEntry
+        } as unknown as ShoppingListEntry
         entry.checked = false
         entry.entryId = undefined
         pendingToggle.add(entry)
@@ -260,7 +262,7 @@ function toggleEntry(entry: ShoppingDialogRecipeEntry) {
             unit: entry.unit,
             food: entry.food,
             ingredient: entry.ingredient?.id,
-        } as ShoppingListEntry
+        } as unknown as ShoppingListEntry
         if (props.mealPlan?.id) toCreate.mealplanId = props.mealPlan.id
         entry.checked = true
         pendingToggle.add(entry)

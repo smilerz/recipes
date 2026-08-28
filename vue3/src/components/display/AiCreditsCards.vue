@@ -2,7 +2,7 @@
     <v-col cols="12" md="6">
         <v-card :to="{name: 'ModelListPage', params: {model: 'AiLog'}}">
             <v-card-title><i class="fa-solid hand-holding-dollar"></i> {{ $t('MonthlyCredits') }}</v-card-title>
-            <v-card-text>{{ $n(space.aiMonthlyCreditsUsed) }} / {{ $n(space.aiCreditsMonthly) }} {{ $t('Credits') }}
+            <v-card-text>{{ $n(space.aiMonthlyCreditsUsed) }} / {{ $n(space.aiCreditsMonthly ?? 0) }} {{ $t('Credits') }}
             </v-card-text>
             <v-progress-linear :model-value="space.aiMonthlyCreditsUsed" :max="space.aiCreditsMonthly" height="10"
             ></v-progress-linear>
@@ -12,7 +12,7 @@
     <v-col cols="12" md="6">
         <v-card :to="{name: 'ModelListPage', params: {model: 'AiLog'}}">
             <v-card-title><i class="fa-solid hand-holding-dollar"></i> {{ $t('AiCreditsBalance') }}</v-card-title>
-            <v-card-text>{{ $n(space.aiCreditsBalance) }} {{ $t('Credits') }}
+            <v-card-text>{{ $n(space.aiCreditsBalance ?? 0) }} {{ $t('Credits') }}
             </v-card-text>
             <v-progress-linear height="10"
             ></v-progress-linear>

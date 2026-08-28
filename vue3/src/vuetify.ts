@@ -16,7 +16,7 @@ import * as vuetifyLocales from "vuetify/locale";
 // https://vuetifyjs.com/en/introduction/why-vuetify/#feature-guides
 export const vuetifyOptions = {
     display: {
-        mobileBreakpoint: 'md',
+        mobileBreakpoint: 'md' as const,
     },
     defaults: {
         // disabled as this leads to cards overflowing if not careful, manually set on cards containing a multiselect until proper solution is found

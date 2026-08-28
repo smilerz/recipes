@@ -11,7 +11,7 @@ const ModelSelectStub = {
     props: ['model', 'modelValue', 'mode', 'appendToBody'],
     emits: ['update:modelValue'],
     render() {
-        return h('div', {class: 'model-select-stub', 'data-model-value': JSON.stringify(this.modelValue)})
+        return h('div', {class: 'model-select-stub', 'data-model-value': JSON.stringify((this as any).modelValue)})
     },
 }
 

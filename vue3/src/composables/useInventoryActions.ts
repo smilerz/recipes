@@ -1,12 +1,11 @@
 import {unref} from 'vue'
-import {DateTime} from 'luxon'
 import type {ActionConfirmEntry} from '@/components/dialogs/ActionConfirmDialog.vue'
 import type {InventoryQuickAddResult} from '@/components/dialogs/InventoryQuickAddDialog.vue'
 import type {ActionConfirmDialogInstance, FoodRef, TranslateFunc} from '@/composables/modellist/types'
 import {ApiApi, type Food, type InventoryEntry, type InventoryLocation, type Unit} from '@/openapi'
 import {ErrorMessageType, MessageType, useMessageStore} from '@/stores/MessageStore'
 import {useUserPreferenceStore} from '@/stores/UserPreferenceStore'
-import {isoDateToApiDate} from '@/utils/pantry_utils'
+import {expiryDateLabel, isoDateToApiDate} from '@/utils/pantry_utils'
 
 const api = new ApiApi()
 
@@ -16,7 +15,7 @@ const api = new ApiApi()
  */
 export function announcePantryAdd(foodName: string, expires: Date | null | undefined, t: TranslateFunc) {
     const title = t('AddedToPantry', {food: foodName})
-    const text = expires ? t('ExpiresOn', {date: DateTime.fromJSDate(expires).toLocaleString(DateTime.DATE_MED)}) : ''
+    const text = expires ? t('ExpiresOn', {date: expiryDateLabel(expires)}) : ''
     useMessageStore().addMessage(MessageType.SUCCESS, {title, text}, 6000)
 }
 
@@ -35,6 +34,8 @@ export type InventoryQuickAddDialogInstance = {
         defaultLocationId?: number | null,
         amount?: number,
         unit?: Unit | null,
+        shelfLifeDays?: number | null,
+        shelfLifeDaysFrozen?: number | null,
     }) => Promise<InventoryQuickAddResult | null>
     openManage: (opts: {
         title: string,
@@ -44,6 +45,8 @@ export type InventoryQuickAddDialogInstance = {
         defaultLocationId?: number | null,
         amount?: number,
         unit?: Unit | null,
+        shelfLifeDays?: number | null,
+        shelfLifeDaysFrozen?: number | null,
     }) => Promise<{hasEntries: boolean}>
 }
 
@@ -114,6 +117,8 @@ export function useInventoryActions() {
             defaultLocationId: saved?.id ?? null,
             amount: defaults?.amount ?? 1,
             unit: defaults?.unit ?? null,
+            shelfLifeDays: food.shelfLifeDays,
+            shelfLifeDaysFrozen: food.shelfLifeDaysFrozen,
         })
 
         if (!dialogResult) return false
@@ -325,6 +330,8 @@ export function useInventoryActions() {
             defaultLocationId: saved?.id ?? null,
             amount: defaults?.amount ?? 1,
             unit: defaults?.unit ?? null,
+            shelfLifeDays: food.shelfLifeDays,
+            shelfLifeDaysFrozen: food.shelfLifeDaysFrozen,
         })
 
         return result.hasEntries

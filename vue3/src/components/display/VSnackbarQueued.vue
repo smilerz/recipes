@@ -6,7 +6,7 @@
             :timeout="visibleMessage.showTimeout"
             :color="visibleMessage.type"
             :vertical="showViewButton && props.vertical"
-            :location="props.location"
+            :location="(props.location as any)"
             :close-on-back="false"
             :multi-line="showViewButton || !!visibleMessage.action"
         >
@@ -25,7 +25,7 @@
             </template>
         </v-snackbar>
 
-        <message-list-dialog :activator="viewMessageDialogBtn"></message-list-dialog>
+        <message-list-dialog :activator="(viewMessageDialogBtn as any)"></message-list-dialog>
     </div>
 
 </template>
@@ -93,7 +93,7 @@ function processQueue() {
     if (timeoutId.value == -1 && useMessageStore().snackbarQueue.length > 0) {
         visibleMessage.value = useMessageStore().snackbarQueue[0]
         showSnackbar.value = true
-        timeoutId.value = setTimeout(() => {
+        timeoutId.value = window.setTimeout(() => {
             useMessageStore().snackbarQueue.shift()
             timeoutId.value = -1
             processQueue()

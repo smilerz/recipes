@@ -243,7 +243,7 @@ function updateSpaceAndUserSettings() {
  */
 function updateSpace() {
     let api = new ApiApi()
-    return api.apiSpacePartialUpdate({id: space.value.id, patchedSpace: space.value}).then(r => {
+    return api.apiSpacePartialUpdate({id: space.value!.id!, patchedSpace: space.value!}).then(r => {
         space.value = r
         useUserPreferenceStore().activeSpace = Object.assign({}, space.value)
     }).catch(err => {

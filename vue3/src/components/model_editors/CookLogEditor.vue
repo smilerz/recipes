@@ -18,7 +18,7 @@
                     <v-col cols="12" md="4">
                         <v-label>{{ $t('Rating') }}</v-label>
                         <br/>
-                        <v-rating v-model="editingObj.rating" clearable hover density="compact"></v-rating>
+                        <v-rating v-model="editingObjRating" clearable hover density="compact"></v-rating>
                     </v-col>
                     <v-col cols="12" md="4">
                         <v-number-input :label="$t('Servings')" v-model="editingObj.servings" :precision="2"></v-number-input>
@@ -37,7 +37,7 @@
 
 <script setup lang="ts">
 
-import {onMounted, PropType, watch} from "vue";
+import {computed, onMounted, PropType, watch} from "vue";
 import {CookLog} from "@/openapi";
 import ModelEditorBase from "@/components/model_editors/ModelEditorBase.vue";
 import {useModelEditorFunctions} from "@/composables/useModelEditorFunctions";
@@ -52,6 +52,12 @@ const props = defineProps({
 
 const emit = defineEmits(['create', 'save', 'delete', 'close', 'changedState'])
 const {setupState, deleteObject, saveObject, isUpdate, editingObjName, loading, editingObj, editingObjChanged, modelClass} = useModelEditorFunctions<CookLog>('CookLog', emit)
+
+// v-rating's v-model wants number|string|undefined; CookLog.rating is number|null|undefined
+const editingObjRating = computed<number | undefined>({
+    get: () => editingObj.value.rating ?? undefined,
+    set: (v) => { editingObj.value.rating = v ?? null },
+})
 
 /**
  * watch prop changes and re-initialize editor

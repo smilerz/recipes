@@ -20,7 +20,7 @@ import MenuUserInfo from '@/components/display/MenuUserInfo.vue'
 function mountMenu(image: unknown, displayName = 'Zoe') {
     const prePopulate: PiniaPlugin = ({ store }) => {
         if (store.$id === 'user_preference_store') {
-            const up = makeUserPreference() as Record<string, unknown>
+            const up = makeUserPreference() as unknown as Record<string, unknown>
             up.image = image
             up.user = { ...(up.user as object ?? {}), id: 1, displayName }
             store.userSettings = up

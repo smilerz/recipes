@@ -48,7 +48,7 @@
 
 <script setup lang="ts">
 
-import {onMounted, PropType, shallowRef, watch} from "vue";
+import {computed, onMounted, PropType, shallowRef, watch} from "vue";
 import {UserFile, UserSpace} from "@/openapi";
 import ModelEditorBase from "@/components/model_editors/ModelEditorBase.vue";
 import {useModelEditorFunctions} from "@/composables/useModelEditorFunctions";
@@ -78,7 +78,10 @@ watch([() => props.item, () => props.itemId], () => {
 // object specific data (for selects/display)
 
 const {fileApiLoading, createOrUpdateUserFile} = useFileApi()
-const file = shallowRef<File | null>(null)
+// v-file-upload's v-model type allows File[] for multi-select mode, but this uploader isn't
+// configured with :multiple, so it only ever produces a single File.
+const file = shallowRef<File | File[] | undefined>(undefined)
+const singleFile = computed<File | null>(() => Array.isArray(file.value) ? file.value[0] ?? null : file.value ?? null)
 
 onMounted(() => {
     initializeEditor()
@@ -99,7 +102,7 @@ function saveFile() {
 
     let event: ("create" | "save") = isUpdate() ? 'save' : 'create'
 
-    createOrUpdateUserFile(editingObj.value.name, file.value, editingObj.value.id).then(r => {
+    createOrUpdateUserFile(editingObj.value.name, singleFile.value, editingObj.value.id).then(r => {
         editingObj.value = r
         editingObjChanged.value = false
         emit(event, r)
@@ -116,8 +119,8 @@ function saveFile() {
  * set name based on file name if name is empty
  */
 function updateUserFileName() {
-    if (file.value != null && (editingObj.value.name == '' || editingObj.value.name == undefined)) {
-        editingObj.value.name = file.value.name
+    if (singleFile.value != null && (editingObj.value.name == '' || editingObj.value.name == undefined)) {
+        editingObj.value.name = singleFile.value.name
     }
 }
 

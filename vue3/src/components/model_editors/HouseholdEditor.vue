@@ -83,14 +83,17 @@ function initializeEditor() {
 
 function onAfterSave() {
     let userSpace = useUserPreferenceStore().activeUserSpace
-    console.log("onAfterSave", userSpace, joinAfterSave.value)
     if (joinAfterSave.value && userSpace) {
         let api = new ApiApi()
 
         loading.value = true
         userSpace.household = editingObj.value
         api.apiUserSpaceUpdate({id: userSpace.id!, userSpace: userSpace}).then(r => {
-             useUserPreferenceStore().activeUserSpace = r
+             // activeUserSpace is a computed derived from userSpaces (matched by active space id),
+             // not directly settable - update the underlying entry it's derived from instead.
+             const store = useUserPreferenceStore()
+             const idx = store.userSpaces.findIndex(us => us.id == r.id)
+             if (idx !== -1) store.userSpaces[idx] = r
         }).catch(err => {
             useMessageStore().addError(ErrorMessageType.UPDATE_ERROR, err)
         }).finally(() => {

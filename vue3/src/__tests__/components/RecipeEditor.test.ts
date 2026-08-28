@@ -93,7 +93,7 @@ describe('RecipeEditor - track as pantry food', () => {
 
     it('hides the Create Food control and shows the linked food when one already exists', async () => {
         const item = makeRecipe({id: 5, name: 'Sourdough Bread'})
-        const existingFood = makeFood({id: 42, name: 'Sourdough Bread', recipe: 5})
+        const existingFood = makeFood({id: 42, name: 'Sourdough Bread', recipe: 5 as any})
         ;(apiMock as any).apiFoodList = vi.fn().mockResolvedValue({results: [existingFood]})
         const w = mountEditor(item)
         ;(w.vm as any).tab = 'settings'
@@ -108,7 +108,7 @@ describe('RecipeEditor - track as pantry food', () => {
 
     it('clicking Create Food calls the backend action and then hides the control', async () => {
         const item = makeRecipe({id: 5, name: 'Sourdough Bread'})
-        const createdFood = makeFood({id: 42, name: 'Sourdough Bread', recipe: 5})
+        const createdFood = makeFood({id: 42, name: 'Sourdough Bread', recipe: 5 as any})
         ;(apiMock as any).apiFoodList = vi.fn().mockResolvedValue({results: []})
         ;(apiMock as any).apiFoodCreateFromRecipeCreate = vi.fn().mockResolvedValue(createdFood)
         const w = mountEditor(item)
@@ -134,6 +134,33 @@ describe('RecipeEditor - track as pantry food', () => {
 
         expect((apiMock as any).apiFoodList).not.toHaveBeenCalled()
         expect(w.find('[data-test="create-food-button"]').exists()).toBe(false)
+
+        w.unmount()
+    })
+})
+
+// The empty-steps "add first step" button called addStep(i+1), referencing `i` from a
+// *different* v-for block's loop variable (the per-step row below it) - not in scope here.
+// Vue templates resolve an out-of-scope identifier via `_ctx.i` (undefined), not a
+// ReferenceError, so `undefined + 1` -> NaN -> addStep(NaN) -> the `index >= 0` check is
+// false -> it happens to still append correctly. Characterization coverage for the fixed,
+// clearer addStep() call - not a behavior change, just removing the confusing dead reference.
+describe('RecipeEditor - add first step from the empty-steps state', () => {
+    beforeEach(() => {
+        resetApiMock()
+    })
+
+    it('adding a step to a recipe with none does not throw and adds exactly one step', async () => {
+        const item = makeRecipe({id: 5, name: 'Sourdough Bread', steps: []})
+        const w = mountEditor(item)
+        ;(w.vm as any).tab = 'steps'
+        await flushPromises()
+
+        expect(w.find('[data-test="add-first-step-button"]').exists()).toBe(true)
+        await expect(w.find('[data-test="add-first-step-button"]').trigger('click')).resolves.not.toThrow()
+        await flushPromises()
+
+        expect((w.vm as any).editingObj.steps.length).toBe(1)
 
         w.unmount()
     })

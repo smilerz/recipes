@@ -62,7 +62,7 @@ from rest_framework.parsers import JSONParser, MultiPartParser
 from rest_framework.renderers import JSONRenderer, TemplateHTMLRenderer, BaseRenderer
 
 from rest_framework.response import Response
-from rest_framework.serializers import CharField, IntegerField, UUIDField
+from rest_framework.serializers import BooleanField as DRFBooleanField, CharField, IntegerField, JSONField, UUIDField
 from rest_framework.throttling import AnonRateThrottle, UserRateThrottle
 from rest_framework.views import APIView
 from rest_framework.viewsets import ViewSetMixin
@@ -75,7 +75,7 @@ from cookbook.helper.HelperFunctions import str2bool, safe_request
 from cookbook.helper.ai_helper import can_perform_ai_request, AiCallbackHandler
 from cookbook.helper.batch_edit_helper import add_to_relation, remove_from_relation, remove_all_from_relation, set_relation
 from cookbook.helper.food_availability_helper import (
-    _is_available, annotate_food_inventory, annotate_food_substitute_availability, request_household,
+    _is_available, annotate_food_inventory, annotate_food_substitute_availability, compute_substitute_flags, request_household,
 )
 from cookbook.helper.image_processing import handle_image, set_primary_recipe_image
 from cookbook.helper.inventory_helper import add_food_to_pantry, get_or_create_default_inventory_location, reduce_food_to_amount, set_food_onhand
@@ -97,7 +97,7 @@ from cookbook.models import (
     MealType, Property, PropertyType, Recipe, RecipeBook, RecipeBookEntry, ShareLink, ShoppingListEntry, ShoppingListRecipe, Space, Step, Storage, Supermarket,
     SupermarketCategory, SupermarketCategoryRelation, Sync, SyncLog, Unit, UnitConversion, UserFile, UserPreference, UserSpace, ViewLog, RecipeImport, SearchPreference,
     SearchFields, AiLog, AiProvider, ShoppingList, InventoryLocation, InventoryEntry, InventoryLog, Household,
-    RecipeImage
+    RecipeImage, SpaceBackup
 )
 from cookbook.provider.dropbox import Dropbox
 from cookbook.provider.local import Local
@@ -116,6 +116,7 @@ from cookbook.serializer import (AccessTokenSerializer, AutomationSerializer, Au
                                  RecipeOverviewSerializer, RecipeSerializer, RecipeShoppingUpdateSerializer,
                                  RecipeSimpleSerializer, ShoppingListEntryBulkSerializer,
                                  ShoppingListEntrySerializer, ShoppingListRecipeSerializer, SpaceSerializer,
+                                 SpaceBackupSerializer,
                                  StepSerializer, StorageSerializer,
                                  InventoryLocationSerializer, InventoryEntrySerializer, InventoryLogSerializer,
                                  DrawDownSerializer, StockUpSerializer,
@@ -192,6 +193,8 @@ class OrderingMixin:
     * ``ordering_plain_fields`` — params that order by their own name as-is.
 
     Any ``ordering`` value not in the union of these is ignored (no ordering applied).
+    Ignored entirely while a ``query`` search is active, so relevance ordering wins (every
+    consuming viewset's OpenAPI doc already documents this contract).
     """
     ordering_lower_fields: dict = {}
     ordering_field_map: dict = {}
@@ -199,7 +202,7 @@ class OrderingMixin:
 
     def _apply_ordering(self, qs):
         ordering_param = self.request.query_params.get('ordering', None)
-        if not ordering_param:
+        if not ordering_param or self.request.query_params.get('query', None):
             return qs
         allowed = self.ordering_lower_fields.keys() | self.ordering_field_map.keys() | self.ordering_plain_fields
         if ordering_param in allowed:
@@ -329,6 +332,12 @@ class ExtendedRecipeMixin():
 ]))
 class FuzzyFilterMixin(viewsets.ModelViewSet, ExtendedRecipeMixin):
 
+    def _default_ordering(self):
+        """Ordering applied when no relevance search is active. Override for models with their
+        own user-controlled manual sort field (e.g. PropertyType/RecipeBook's ``order``) instead
+        of alphabetical name ordering."""
+        return (Lower('name').asc(),)
+
     def _apply_tristate(self, qs, param, true_q, false_q, distinct=False):
         value = self.request.query_params.get(param, None)
         if value is None:
@@ -342,7 +351,7 @@ class FuzzyFilterMixin(viewsets.ModelViewSet, ExtendedRecipeMixin):
         return qs
 
     def get_queryset(self):
-        self.queryset = self.queryset.filter(space=self.request.space).order_by(Lower('name').asc())
+        self.queryset = self.queryset.filter(space=self.request.space).order_by(*self._default_ordering())
         query = self.request.query_params.get('query', None)
         if self.request.user.is_authenticated:
             fuzzy = self.request.user.searchpreference.lookup or any(
@@ -931,14 +940,12 @@ class StorageViewSet(ProtectedDestroyMixin, LoggingMixin, viewsets.ModelViewSet,
         return self.queryset.filter(space=self.request.space)
 
 
-class InventoryLocationViewSet(LoggingMixin, viewsets.ModelViewSet, DeleteRelationMixing):
+class InventoryLocationViewSet(LoggingMixin, FuzzyFilterMixin, DeleteRelationMixing):
     queryset = InventoryLocation.objects
+    model = InventoryLocation
     serializer_class = InventoryLocationSerializer
     permission_classes = [CustomIsUser & CustomTokenHasReadWriteScope]
     pagination_class = DefaultPagination
-
-    def get_queryset(self):
-        return self.queryset.filter(space=self.request.space)
 
 
 @extend_schema_view(list=extend_schema(parameters=[
@@ -955,7 +962,14 @@ class InventoryEntryViewSet(LoggingMixin, viewsets.ModelViewSet, DeleteRelationM
     pagination_class = DefaultPagination
 
     def get_queryset(self):
-        queryset = self.queryset.filter(space=self.request.space)
+        queryset = self.queryset.filter(space=self.request.space).select_related(
+            'unit', 'inventory_location', 'inventory_location__household',
+            'food', 'food__recipe', 'food__food_image', 'food__supermarket_category',
+            'food__properties_food_unit', 'food__preferred_unit', 'food__preferred_shopping_unit',
+        ).prefetch_related(
+            'food__shopping_lists', 'food__inherit_fields', 'food__child_inherit_fields',
+            'food__substitute', 'food__properties',
+        )
 
         # the pantry is household-scoped (FR-B4) — never leak another household's lots in a shared space
         household = getattr(self.request.user_space, 'household', None)
@@ -982,6 +996,32 @@ class InventoryEntryViewSet(LoggingMixin, viewsets.ModelViewSet, DeleteRelationM
 
         queryset = queryset.order_by('expires')
         return queryset
+
+    def list(self, request, *args, **kwargs):
+        """Batch-compute substitute_onhand/substitute_inventory for the page's nested foods
+        (same pattern as FoodViewSet.list()) instead of letting FoodSerializer fall back to a
+        per-food query for each — that fallback only skips when this context is pre-populated,
+        and nothing did that for this endpoint until now."""
+        queryset = self.filter_queryset(self.get_queryset())
+        page = self.paginate_queryset(queryset)
+        entries = page if page is not None else list(queryset)
+
+        serializer = self.get_serializer(entries, many=True)
+
+        foods_by_id = {}
+        for entry in entries:
+            if entry.food_id is not None and entry.food_id not in foods_by_id:
+                foods_by_id[entry.food_id] = entry.food
+        if foods_by_id:
+            household = getattr(self.request.user_space, 'household', None)
+            shared_users = get_household_user_ids(self.request.user_space)
+            sub_onhand, sub_inventory = compute_substitute_flags(list(foods_by_id.values()), household, shared_users)
+            serializer.context['_substitute_onhand'] = sub_onhand
+            serializer.context['_substitute_inventory'] = sub_inventory
+
+        if page is not None:
+            return self.get_paginated_response(serializer.data)
+        return Response(serializer.data)
 
     @extend_schema(request=StockUpSerializer, responses=None)
     @decorators.action(detail=False, methods=['POST'], serializer_class=StockUpSerializer)
@@ -1067,6 +1107,37 @@ class InventoryEntryViewSet(LoggingMixin, viewsets.ModelViewSet, DeleteRelationM
                     kwargs['new_unit'] = new_unit
                 reduce_food_to_amount(food, household, item['amount'], **kwargs)
         return Response({'ok': True})
+
+    @extend_schema(methods=['POST'], request=None, responses={200: InventoryEntrySerializer})
+    @extend_schema(methods=['DELETE'], request=None, responses={200: InventoryEntrySerializer})
+    @decorators.action(detail=True, methods=['POST', 'DELETE'])
+    def open(self, request, pk):
+        """Mark a lot opened (POST) or undo that (DELETE) — starts/clears the Opened shelf-life
+        clock (see recompute_lot_expiry). POST is idempotent: opening an already-opened lot is a
+        no-op, opened_at never resets to a later date by re-tapping."""
+        from cookbook.helper.inventory_helper import recompute_lot_expiry
+        entry = self.get_object()
+
+        if request.method == 'DELETE':
+            entry.opened_at = None
+            entry.save(update_fields=['opened_at'])
+            recompute_lot_expiry(entry)
+            return Response(self.get_serializer(entry).data)
+
+        if entry.opened_at is None:
+            entry.opened_at = timezone.localdate()
+            entry.save(update_fields=['opened_at'])
+            recompute_lot_expiry(entry)
+            InventoryLog.objects.create(
+                space=entry.space,
+                entry=entry,
+                booking_type=InventoryLog.B_OPEN,
+                old_amount=entry.amount,
+                new_amount=entry.amount,
+                old_inventory_location=entry.inventory_location,
+                new_inventory_location=entry.inventory_location,
+            )
+        return Response(self.get_serializer(entry).data)
 
 
 @extend_schema_view(list=extend_schema(parameters=[
@@ -1162,15 +1233,12 @@ class ConnectorConfigViewSet(LoggingMixin, viewsets.ModelViewSet, DeleteRelation
         return self.queryset.filter(space=self.request.space)
 
 
-class SupermarketViewSet(LoggingMixin, StandardFilterModelViewSet, DeleteRelationMixing):
+class SupermarketViewSet(LoggingMixin, FuzzyFilterMixin, DeleteRelationMixing):
     queryset = Supermarket.objects
+    model = Supermarket
     serializer_class = SupermarketSerializer
     permission_classes = [CustomIsUser & CustomTokenHasReadWriteScope]
     pagination_class = DefaultPagination
-
-    def get_queryset(self):
-        self.queryset = self.queryset.filter(space=self.request.space)
-        return super().get_queryset()
 
 
 # TODO does supermarket category have settings to support fuzzy filtering and/or merge?
@@ -1471,74 +1539,6 @@ class FoodViewSet(OrderingMixin, LoggingMixin, TreeMixin, DeleteRelationMixing):
         params = self.request.query_params
         return any(params.get(k) not in (None, '') for k in keys)
 
-    def _compute_substitute_flags(self, foods):
-        """
-        Batch-compute substitute_onhand and substitute_inventory for a page of foods.
-        Replaces per-food N+1 queries in the serializer with 2–4 batch queries.
-        """
-        shared_users = self._shared_users
-        try:
-            household = self.request.user_space.household
-        except AttributeError:
-            household = None
-
-        # Build each food's full substitute ID set (direct + siblings + children)
-        food_sub_ids = {f.id: set(s.id for s in f.substitute.all()) for f in foods}
-
-        # Batch-fetch sibling IDs (1 query for all foods with substitute_siblings). Root-depth
-        # foods (no real parent category) have no true siblings — sibling_path_prefix returns
-        # None for them, so they're excluded here rather than matching every root-level Food.
-        sibling_foods = [f for f in foods if f.substitute_siblings and Food.sibling_path_prefix(f.path, f.depth) is not None]
-        if sibling_foods:
-            sibling_q = Q()
-            for f in sibling_foods:
-                parent_path = Food.sibling_path_prefix(f.path, f.depth)
-                sibling_q |= Q(path__startswith=parent_path, depth=f.depth)
-            candidates = list(Food.objects.filter(sibling_q).values_list('id', 'path', 'depth'))
-            for f in sibling_foods:
-                parent_path = Food.sibling_path_prefix(f.path, f.depth)
-                for cid, cpath, cdepth in candidates:
-                    if cdepth == f.depth and cpath.startswith(parent_path) and cid != f.id:
-                        food_sub_ids[f.id].add(cid)
-
-        # Batch-fetch child IDs (1 query for all foods with substitute_children)
-        children_foods = [f for f in foods if f.substitute_children]
-        if children_foods:
-            children_q = Q()
-            for f in children_foods:
-                children_q |= Q(path__startswith=f.path, depth__gt=f.depth)
-            candidates = list(Food.objects.filter(children_q).values_list('id', 'path', 'depth'))
-            for f in children_foods:
-                for cid, cpath, cdepth in candidates:
-                    if cpath.startswith(f.path) and cdepth > f.depth:
-                        food_sub_ids[f.id].add(cid)
-
-        all_sub_ids = set()
-        for sids in food_sub_ids.values():
-            all_sub_ids |= sids
-
-        if not all_sub_ids:
-            empty = {f.id: False for f in foods}
-            return empty, empty.copy()
-
-        # 1 query: which substitutes are available (household inventory, amount>0)?
-        available_ids = set(
-            Food.objects.filter(id__in=all_sub_ids).filter(_is_available(household, shared_users))
-            .values_list('id', flat=True)
-        )
-
-        # 1 query: which substitutes have inventory only? (drives substitute_inventory)
-        # Strictly household-scoped (FR-B4): household=None → IS NULL → no inventory (no space-wide fallback).
-        inventory_q = Q(inventoryentry__amount__gt=0, inventoryentry__inventory_location__household=household)
-        inventory_ids = set(
-            Food.objects.filter(id__in=all_sub_ids).filter(inventory_q)
-            .values_list('id', flat=True)
-        )
-
-        sub_onhand = {f.id: bool(food_sub_ids[f.id] & available_ids) for f in foods}
-        sub_inventory = {f.id: bool(food_sub_ids[f.id] & inventory_ids) for f in foods}
-        return sub_onhand, sub_inventory
-
     def list(self, request, *args, **kwargs):
         queryset = self.filter_queryset(self.get_queryset())
         page = self.paginate_queryset(queryset)
@@ -1548,7 +1548,11 @@ class FoodViewSet(OrderingMixin, LoggingMixin, TreeMixin, DeleteRelationMixing):
 
         # Batch-compute substitute flags for the full serializer (skip for ?simple=true)
         if not request.query_params.get('simple', False):
-            sub_onhand, sub_inventory = self._compute_substitute_flags(foods)
+            try:
+                household = self.request.user_space.household
+            except AttributeError:
+                household = None
+            sub_onhand, sub_inventory = compute_substitute_flags(foods, household, self._shared_users)
             serializer.context['_substitute_onhand'] = sub_onhand
             serializer.context['_substitute_inventory'] = sub_inventory
 
@@ -1960,15 +1964,17 @@ class FoodViewSet(OrderingMixin, LoggingMixin, TreeMixin, DeleteRelationMixing):
     OpenApiParameter(name='order_direction', description='Order ascending or descending', type=str,
                      enum=['asc', 'desc']),
 ]))
-class RecipeBookViewSet(LoggingMixin, StandardFilterModelViewSet, DeleteRelationMixing):
+class RecipeBookViewSet(LoggingMixin, FuzzyFilterMixin, DeleteRelationMixing):
     queryset = RecipeBook.objects
+    model = RecipeBook
     serializer_class = RecipeBookSerializer
     permission_classes = [(CustomIsOwner | (CustomIsShared & IsReadOnlyDRF)) & CustomTokenHasReadWriteScope]
     pagination_class = DefaultPagination
 
-    def get_queryset(self):
+    def _default_ordering(self):
+        # RecipeBook.order is a user-controlled manual sort field (drag-to-reorder), not
+        # alphabetical; order_field/order_direction let the frontend override it explicitly.
         ALLOWED_ORDER_FIELDS = ['id', 'name', 'order']
-
         order_field = self.request.GET.get('order_field')
         order_direction = self.request.GET.get('order_direction')
 
@@ -1979,9 +1985,11 @@ class RecipeBookViewSet(LoggingMixin, StandardFilterModelViewSet, DeleteRelation
         ordering = [primary_ordering]
         if order_field != 'id':
             ordering.append('id')
+        return ordering
 
+    def get_queryset(self):
         self.queryset = self.queryset.filter(Q(created_by=self.request.user) | Q(shared=self.request.user)).filter(
-            space=self.request.space).distinct().order_by(*ordering)
+            space=self.request.space).distinct()
         return super().get_queryset()
 
 
@@ -2739,18 +2747,23 @@ class UnitConversionViewSet(LoggingMixin, viewsets.ModelViewSet):
         enum=[m[0] for m in PropertyType.CHOICES])
     ]
 ))
-class PropertyTypeViewSet(LoggingMixin, viewsets.ModelViewSet, DeleteRelationMixing):
+class PropertyTypeViewSet(LoggingMixin, FuzzyFilterMixin, DeleteRelationMixing):
     queryset = PropertyType.objects
+    model = PropertyType
     serializer_class = PropertyTypeSerializer
     permission_classes = [CustomIsUser & CustomTokenHasReadWriteScope]
     pagination_class = DefaultPagination
 
+    def _default_ordering(self):
+        # PropertyType.order is a user-controlled manual sort field (drag-to-reorder), not
+        # alphabetical.
+        return ('order',)
+
     def get_queryset(self):
-        # TODO add tests for filter
         category = self.request.query_params.getlist('category', [])
         if category:
-            self.queryset.filter(category__in=category)
-        return self.queryset.filter(space=self.request.space)
+            self.queryset = self.queryset.filter(category__in=category)
+        return super().get_queryset()
 
 
 class PropertyViewSet(LoggingMixin, viewsets.ModelViewSet):
@@ -2827,15 +2840,12 @@ class ShoppingListRecipeViewSet(LoggingMixin, viewsets.ModelViewSet):
             return Response(serializer.errors, 400)
 
 
-class ShoppingListViewSet(LoggingMixin, StandardFilterModelViewSet, DeleteRelationMixing):
+class ShoppingListViewSet(LoggingMixin, FuzzyFilterMixin, DeleteRelationMixing):
     queryset = ShoppingList.objects
+    model = ShoppingList
     serializer_class = ShoppingListSerializer
     permission_classes = [CustomIsUser & CustomTokenHasReadWriteScope]
     pagination_class = DefaultPagination
-
-    def get_queryset(self):
-        self.queryset = self.queryset.filter(space=self.request.space).all()
-        return super().get_queryset()
 
 
 @extend_schema_view(
@@ -3057,6 +3067,63 @@ class ExportLogViewSet(LoggingMixin, viewsets.ModelViewSet):
         return self.queryset.filter(space=self.request.space, created_by=self.request.user)
 
 
+class SpaceBackupViewSet(LoggingMixin, viewsets.ModelViewSet):
+    """Part 3 (In-App Backup/Restore) of the pantry-expiration-and-data-portability plan.
+    create() kicks off build in a background thread (same convention as AppExportView) since
+    a full-space backup can cover thousands of rows; restore() runs synchronously (same
+    simplification Part 2's portable-data import made — restore is a deliberate, infrequent,
+    admin-only action, not a hot path)."""
+    queryset = SpaceBackup.objects
+    serializer_class = SpaceBackupSerializer
+    permission_classes = [(CustomIsAdmin | CustomIsSpaceOwner) & CustomTokenHasReadWriteScope]
+    pagination_class = DefaultPagination
+    http_method_names = ['get', 'post', 'delete', 'head', 'options']
+
+    def get_queryset(self):
+        return self.queryset.filter(space=self.request.space).all()
+
+    def create(self, request, *args, **kwargs):
+        from cookbook.helper.space_backup import run_space_backup
+        backup_log = SpaceBackup.objects.create(created_by=request.user, space=request.space)
+        t = threading.Thread(target=run_space_backup, args=[request.space, backup_log])
+        t.setDaemon(True)
+        t.start()
+        return Response(self.get_serializer(backup_log).data, status=status.HTTP_201_CREATED)
+
+    def _load_backup_data(self, backup_log):
+        with backup_log.file.open('r') as f:
+            return json.load(f)
+
+    @extend_schema(request=None, responses={200: OpenApiTypes.OBJECT, 400: OpenApiTypes.OBJECT})
+    @decorators.action(detail=True, methods=['POST'], url_path='restore-preview')
+    def restore_preview(self, request, pk=None):
+        from cookbook.helper.space_restore import preview_restore
+        backup_log = self.get_object()
+        if backup_log.running or not backup_log.file:
+            return Response({'error': 'backup is not ready to restore from'}, status=status.HTTP_400_BAD_REQUEST)
+
+        return Response(preview_restore(self._load_backup_data(backup_log)), status=status.HTTP_200_OK)
+
+    @extend_schema(request=None, responses={200: OpenApiTypes.OBJECT, 400: OpenApiTypes.OBJECT})
+    @decorators.action(detail=True, methods=['POST'])
+    def restore(self, request, pk=None):
+        from cookbook.helper.space_restore import SpaceRestoreValidationError, restore_space_backup
+        backup_log = self.get_object()
+        if backup_log.running or not backup_log.file:
+            return Response({'error': 'backup is not ready to restore from'}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            new_space, report = restore_space_backup(self._load_backup_data(backup_log), request.user)
+        except SpaceRestoreValidationError as e:
+            # Only this deliberate, hand-authored exception type is ever shown to the
+            # client - a bare `except ValueError` would also catch and expose incidental,
+            # unexpected error text (CWE-209 / CodeQL alert #125).
+            print(f'space restore refused for backup {backup_log.pk}: {e}')
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+        return Response({'space_id': new_space.pk, 'space_name': new_space.name, 'report': report}, status=status.HTTP_200_OK)
+
+
 class BookmarkletImportViewSet(LoggingMixin, viewsets.ModelViewSet):
     queryset = BookmarkletImport.objects
     serializer_class = BookmarkletImportSerializer
@@ -3081,8 +3148,9 @@ class BookmarkletImportViewSet(LoggingMixin, viewsets.ModelViewSet):
     ),
 ]))
 # destroy() 403s (not 500s) when a protected FK — e.g. Step.file — blocks deletion
-class UserFileViewSet(ProtectedDestroyMixin, OrderingMixin, LoggingMixin, StandardFilterModelViewSet, DeleteRelationMixing):
+class UserFileViewSet(ProtectedDestroyMixin, OrderingMixin, LoggingMixin, FuzzyFilterMixin, DeleteRelationMixing):
     queryset = UserFile.objects
+    model = UserFile
     serializer_class = UserFileSerializer
     permission_classes = [CustomIsUser & CustomTokenHasReadWriteScope]
     pagination_class = DefaultPagination
@@ -3194,8 +3262,9 @@ class RecipeImageViewSet(LoggingMixin, viewsets.ModelViewSet):
         description='Order results by field. Allowed: name, -name, type, -type, order, -order. Ignored when query is active.'
     ),
 ]))
-class AutomationViewSet(OrderingMixin, LoggingMixin, StandardFilterModelViewSet):
+class AutomationViewSet(OrderingMixin, LoggingMixin, FuzzyFilterMixin):
     queryset = Automation.objects
+    model = Automation
     serializer_class = AutomationSerializer
     permission_classes = [CustomIsUser & CustomTokenHasReadWriteScope]
     pagination_class = DefaultPagination
@@ -3207,7 +3276,7 @@ class AutomationViewSet(OrderingMixin, LoggingMixin, StandardFilterModelViewSet)
         automation_type = self.request.query_params.getlist('type', [])
         if automation_type:
             self.queryset = self.queryset.filter(type__in=automation_type)
-        return self._apply_ordering(self.queryset.filter(space=self.request.space).all())
+        return self._apply_ordering(super().get_queryset())
 
     @decorators.action(detail=False, pagination_class=None, methods=['GET'], serializer_class=AutomationStatsSerializer, url_path='stats', url_name='stats')
     def stats(self, request):
@@ -3259,8 +3328,9 @@ class InviteLinkViewSet(LoggingMixin, StandardFilterModelViewSet):
         description='Order results by field. Allowed: name, -name, type, -type, created_at, -created_at. Ignored when query is active.'
     ),
 ]))
-class CustomFilterViewSet(OrderingMixin, LoggingMixin, StandardFilterModelViewSet):
+class CustomFilterViewSet(OrderingMixin, LoggingMixin, FuzzyFilterMixin):
     queryset = CustomFilter.objects
+    model = CustomFilter
     serializer_class = CustomFilterSerializer
     permission_classes = [CustomIsOwner & CustomTokenHasReadWriteScope]
     pagination_class = DefaultPagination
@@ -3777,6 +3847,68 @@ class AppExportView(APIView):
             return Response(ExportLogSerializer(context={'request': request}).to_representation(el), status=status.HTTP_200_OK)
 
         return Response({'error': True, 'msg': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+
+
+class PortableDataExportView(APIView):
+    """Version-agnostic Food/Keyword/RecipeBook export (Part 2 of the pantry-expiration-and-
+    data-portability plan) — a thin, synchronous wrapper around build_portable_export.
+    Deliberately NOT the ExportLog/background-thread pattern AppExportView uses: this is pure
+    JSON with no images, so the async machinery that pattern exists for doesn't apply here."""
+    permission_classes = [CustomIsUser & CustomTokenHasReadWriteScope]
+
+    @extend_schema(
+        request=inline_serializer(name='PortableDataExportRequest', fields={
+            'include_foods': DRFBooleanField(required=False, default=True),
+            'include_keywords': DRFBooleanField(required=False, default=True),
+            'include_books': DRFBooleanField(required=False, default=True),
+        }),
+        responses={200: OpenApiTypes.OBJECT},
+    )
+    def post(self, request, *args, **kwargs):
+        from cookbook.helper.portable_data import build_portable_export
+        export = build_portable_export(
+            request.space,
+            include_foods=request.data.get('include_foods', True),
+            include_keywords=request.data.get('include_keywords', True),
+            include_books=request.data.get('include_books', True),
+        )
+        return Response(export, status=status.HTTP_200_OK)
+
+
+class PortableDataImportView(APIView):
+    """Import/merge for the portable-data envelope (see PortableDataExportView). Two modes:
+    'analyze' (dry-run diff preview, zero writes) and 'apply' (commit, per merge_policy)."""
+    permission_classes = [CustomIsUser & CustomTokenHasReadWriteScope]
+
+    @extend_schema(
+        request=inline_serializer(name='PortableDataImportRequest', fields={
+            'mode': CharField(),
+            'export': JSONField(),
+            'merge_policy': CharField(required=False, default='fill_gaps'),
+        }),
+        responses={200: OpenApiTypes.OBJECT},
+    )
+    def post(self, request, *args, **kwargs):
+        from cookbook.helper.portable_data import FORMAT_VERSION
+        from cookbook.helper.portable_import import analyze_portable_import, apply_portable_import
+
+        export = request.data.get('export')
+        if not isinstance(export, dict) or export.get('tandoor_export_format') != FORMAT_VERSION:
+            return Response({'error': 'missing or invalid export envelope'}, status=status.HTTP_400_BAD_REQUEST)
+
+        mode = request.data.get('mode')
+        if mode == 'analyze':
+            report = analyze_portable_import(export, request.space)
+        elif mode == 'apply':
+            report = apply_portable_import(
+                export, request.space,
+                merge_policy=request.data.get('merge_policy', 'fill_gaps'),
+                user=request.user,
+            )
+        else:
+            return Response({'error': "mode must be 'analyze' or 'apply'"}, status=status.HTTP_400_BAD_REQUEST)
+
+        return Response(report, status=status.HTTP_200_OK)
 
 
 class FdcSearchView(APIView):

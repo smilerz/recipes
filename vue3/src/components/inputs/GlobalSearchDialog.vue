@@ -8,7 +8,7 @@
         </v-btn>
     </slot>
 
-    <v-dialog v-model="dialog" location="id_dialog_anchor"
+    <v-dialog v-model="dialog"
               location-strategy="connected"
               :max-width="(mobile) ? '100vw': '800px'"
               :fullscreen="mobile"
