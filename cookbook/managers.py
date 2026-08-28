@@ -388,18 +388,18 @@ class RecipeQuerySet(models.QuerySet):
     #  Availability (makenow)
     # ------------------------------------------------------------------ #
 
-    def cookable(self, household, shopping_users, missing=0):
+    def cookable(self, household, missing=0):
         from cookbook.helper.food_availability_helper import (
             _is_available, _substitute_available,
             children_substitute_filter, sibling_substitute_filter,
         )
         from cookbook.models import Food, Recipe
 
-        available = _is_available(household, shopping_users)
+        available = _is_available(household)
         ignorable = Q(ignore_shopping=True, recipe__isnull=True)
-        resolved = Food.objects.filter(available | _substitute_available(household, shopping_users) | ignorable)
-        children_resolved = children_substitute_filter(household, shopping_users)
-        siblings_resolved = sibling_substitute_filter(household, shopping_users)
+        resolved = Food.objects.filter(available | _substitute_available(household) | ignorable)
+        children_resolved = children_substitute_filter(household)
+        siblings_resolved = sibling_substitute_filter(household)
 
         # Count foods that are needed but not resolved through any path
         makenow_recipes = Recipe.objects.annotate(
