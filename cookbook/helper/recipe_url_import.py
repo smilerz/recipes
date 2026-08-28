@@ -21,13 +21,14 @@ def get_from_scraper(scrape, request):
     keywords = []
 
     # assign source URL
+    source_url = ''
     try:
         source_url = scrape.canonical_url()
     except Exception:
         try:
             source_url = scrape.url
         except Exception:
-            pass
+            print('recipe_url_import: could not determine source_url from scrape.canonical_url() or scrape.url')
     if source_url == "https://urlnotfound.none" or not source_url:
         recipe_json['source_url'] = ''
     else:
@@ -48,6 +49,8 @@ def get_from_scraper(scrape, request):
             recipe_json['name'] = scrape.schema.data.get('name') or ''
         except Exception:
             recipe_json['name'] = ''
+    if not recipe_json['name']:
+        print('recipe_url_import: could not determine a recipe name from scrape.title() or schema data')
 
     if isinstance(recipe_json['name'], list) and len(recipe_json['name']) > 0:
         recipe_json['name'] = recipe_json['name'][0]
@@ -155,7 +158,7 @@ def get_from_scraper(scrape, request):
                 'show_ingredients_table': request.user.userpreference.show_step_ingredients,
             })
     except Exception:
-        pass
+        print('recipe_url_import: failed to extract any instructions from scrape.instructions_list()')
     if len(recipe_json['steps']) == 0:
         recipe_json['steps'].append({
             'instruction': '',
@@ -196,7 +199,7 @@ def get_from_scraper(scrape, request):
                         'original_text': x
                     })
     except Exception:
-        pass
+        print('recipe_url_import: failed to extract any ingredients from scrape.ingredients()')
 
     recipe_json['properties'] = []
     try:
