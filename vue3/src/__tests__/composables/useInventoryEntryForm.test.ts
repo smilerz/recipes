@@ -35,8 +35,10 @@ vi.mock('@/stores/MessageStore', async (importOriginal) => ({
 }))
 
 import {useInventoryEntryForm} from '@/composables/useInventoryEntryForm'
+import {useUserPreferenceStore} from '@/stores/UserPreferenceStore'
 
 const t = (k: string) => k
+const SAVED_LOCATION = {id: 5, name: 'Fridge', household: {id: 1, name: 'Home'}}
 
 describe('useInventoryEntryForm', () => {
     beforeEach(() => {
@@ -54,6 +56,49 @@ describe('useInventoryEntryForm', () => {
         expect(form.code.value).toBe('')
         expect(form.food.value).toBeNull()
         expect(form.inventoryLocation.value).toBeNull()
+    })
+
+    it('pre-fills inventoryLocation from the saved device default on a fresh form', () => {
+        useUserPreferenceStore().deviceSettings.food_defaultInventoryLocation = SAVED_LOCATION
+        const form = useInventoryEntryForm(t)
+        expect(form.inventoryLocation.value).toEqual(SAVED_LOCATION)
+    })
+
+    it('resetForm() restores the saved device default instead of blank', () => {
+        useUserPreferenceStore().deviceSettings.food_defaultInventoryLocation = SAVED_LOCATION
+        const form = useInventoryEntryForm(t)
+        form.inventoryLocation.value = {id: 99, name: 'Garage', household: {id: 1, name: 'Home'}} as any
+
+        form.resetForm()
+
+        expect(form.inventoryLocation.value).toEqual(SAVED_LOCATION)
+    })
+
+    it('resetForm(food, false) preserves the current location instead of restoring the default', () => {
+        useUserPreferenceStore().deviceSettings.food_defaultInventoryLocation = SAVED_LOCATION
+        const form = useInventoryEntryForm(t)
+        const kept = {id: 99, name: 'Garage', household: {id: 1, name: 'Home'}} as any
+        form.inventoryLocation.value = kept
+
+        form.resetForm(true, false)
+
+        expect(form.inventoryLocation.value).toEqual(kept)
+    })
+
+    it('addInventory() saves the created entry\'s location as the new device default', async () => {
+        const created = {
+            id: 9, food: {id: 1, name: 'Rice'}, amount: 2,
+            inventoryLocation: {id: 7, name: 'Freezer', household: {id: 1, name: 'Home'}},
+        }
+        apiMock.apiInventoryEntryCreate.mockResolvedValue(created)
+        const form = useInventoryEntryForm(t)
+
+        form.food.value = {id: 1, name: 'Rice'} as any
+        await form.addInventory()
+
+        expect(useUserPreferenceStore().deviceSettings.food_defaultInventoryLocation).toEqual({
+            id: 7, name: 'Freezer', household: {id: 1, name: 'Home'},
+        })
     })
 
     it('addInventory() creates the entry and calls onAdded with the result', async () => {

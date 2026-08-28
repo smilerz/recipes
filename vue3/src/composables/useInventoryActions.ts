@@ -89,8 +89,6 @@ export function useInventoryActions() {
         t: TranslateFunc,
         defaults?: {amount?: number, unit?: Unit | null},
     ): Promise<boolean> {
-        const store = useUserPreferenceStore()
-
         let locations: InventoryLocationRef[]
         try {
             const result = await api.apiInventoryLocationList({pageSize: 100})
@@ -127,11 +125,11 @@ export function useInventoryActions() {
         if (!selectedLoc) return false
 
         // Save selected location as default
-        store.deviceSettings.food_defaultInventoryLocation = {
+        setDefaultLocation({
             id: selectedLoc.id,
             name: selectedLoc.name,
             household: selectedLoc.household,
-        } as InventoryLocationRef
+        })
 
         try {
             const created = await addToInventory(food, selectedLoc, dialogResult.amount, dialogResult.unit, dialogResult.expires)
@@ -253,11 +251,11 @@ export function useInventoryActions() {
             }
 
             if (locations.length === 1) {
-                store.deviceSettings.food_defaultInventoryLocation = {
+                setDefaultLocation({
                     id: locations[0].id!,
                     name: locations[0].name,
                     household: {id: locations[0].household.id!, name: locations[0].household.name},
-                } as InventoryLocationRef
+                })
                 return true
             }
 
@@ -276,11 +274,11 @@ export function useInventoryActions() {
             if (confirmed && selectedVal != null) {
                 const selected = locations.find(l => l.id === selectedVal)
                 if (selected) {
-                    store.deviceSettings.food_defaultInventoryLocation = {
+                    setDefaultLocation({
                         id: selected.id!,
                         name: selected.name,
                         household: {id: selected.household.id!, name: selected.household.name},
-                    } as InventoryLocationRef
+                    })
                     return true
                 }
             }
@@ -348,6 +346,13 @@ export function useInventoryActions() {
             return null
         }
         return saved
+    }
+
+    /**
+     * Save a location as the sticky device default for future inventory adds.
+     */
+    function setDefaultLocation(location: InventoryLocationRef) {
+        useUserPreferenceStore().deviceSettings.food_defaultInventoryLocation = location
     }
 
     /**
@@ -420,5 +425,5 @@ export function useInventoryActions() {
         }
     }
 
-    return {addToInventory, quickAddToInventory, quickPantryAdd, manageInventory, removeFromInventory, markOutToList, ensureDefaultLocation, getDefaultLocation, checkInventoryStatus}
+    return {addToInventory, quickAddToInventory, quickPantryAdd, manageInventory, removeFromInventory, markOutToList, ensureDefaultLocation, getDefaultLocation, setDefaultLocation, checkInventoryStatus}
 }

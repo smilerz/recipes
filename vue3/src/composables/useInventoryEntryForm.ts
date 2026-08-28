@@ -2,6 +2,7 @@ import {computed, ref} from 'vue'
 import {DateTime} from 'luxon'
 import {ApiApi, type Food, type InventoryEntry, type InventoryLocation, type PatchedInventoryEntry, type Unit} from '@/openapi'
 import type {TranslateFunc} from '@/composables/modellist/types'
+import {useInventoryActions} from '@/composables/useInventoryActions'
 import {ErrorMessageType, MessageType, PreparedMessage, type StructuredMessage, useMessageStore} from '@/stores/MessageStore'
 import {useUserPreferenceStore} from '@/stores/UserPreferenceStore'
 
@@ -23,11 +24,15 @@ export interface UseInventoryEntryFormOptions {
  * host-specific and stays with each caller via the onAdded/onEdited/onNoChange callbacks.
  */
 export function useInventoryEntryForm(t: TranslateFunc, options: UseInventoryEntryFormOptions = {}) {
+    const inventoryActions = useInventoryActions()
+
     const formLoading = ref(false)
     const editTab = ref<'amount' | 'location'>('amount')
     const food = ref<Food | null>(null)
     const inventoryEntry = ref<InventoryEntry | null>(null)
-    const inventoryLocation = ref<InventoryLocation | null>(null)
+    // Pre-fill from the sticky device default (shared with quick-add) so a fresh Add doesn't force
+    // picking a location from scratch every time.
+    const inventoryLocation = ref<InventoryLocation | null>(inventoryActions.getDefaultLocation() as InventoryLocation | null)
     const subLocation = ref<string | undefined>('')
     const code = ref('')
     const amount = ref<number | undefined>(1)
@@ -100,6 +105,13 @@ export function useInventoryEntryForm(t: TranslateFunc, options: UseInventoryEnt
         return api.apiInventoryEntryCreate({inventoryEntry: newEntry}).then(r => {
             useMessageStore().addPreparedMessage(PreparedMessage.CREATE_SUCCESS)
             bookingConfirmEntry.value = r
+            if (r.inventoryLocation?.id != null && r.inventoryLocation.household?.id != null) {
+                inventoryActions.setDefaultLocation({
+                    id: r.inventoryLocation.id,
+                    name: r.inventoryLocation.name,
+                    household: {id: r.inventoryLocation.household.id, name: r.inventoryLocation.household.name},
+                })
+            }
             options.onAdded?.(r)
         }).catch(err => {
             useMessageStore().addError(ErrorMessageType.CREATE_ERROR, err)
@@ -178,13 +190,14 @@ export function useInventoryEntryForm(t: TranslateFunc, options: UseInventoryEnt
     }
 
     /** Reset the form to its defaults. Food/Location are independently preserved on request, for a
-     * caller offering "keep this field for the next entry" shortcuts after a successful Add. */
+     * caller offering "keep this field for the next entry" shortcuts after a successful Add.
+     * A reset Location falls back to the sticky device default (shared with quick-add), not blank. */
     function resetForm(resetFood: boolean = true, resetInventoryLocation: boolean = true) {
         if (resetFood) {
             food.value = null
         }
         if (resetInventoryLocation) {
-            inventoryLocation.value = null
+            inventoryLocation.value = inventoryActions.getDefaultLocation() as InventoryLocation | null
         }
         inventoryEntry.value = null
         subLocation.value = ''
