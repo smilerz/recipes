@@ -1,27 +1,29 @@
-from django.test import TestCase, override_settings
-from cookbook.provider.local import Local
+import pytest
+from django.test import override_settings
+
 from cookbook.models import Recipe
+from cookbook.provider.local import Local
 
-class LocalProviderTest(TestCase):
 
-    @override_settings(LOCAL_STORAGE_PATHS=['/tmp/allowed'])
-    def test_is_path_allowed(self):
-        # Normal allowed path
-        self.assertTrue(Local.is_path_allowed('/tmp/allowed/recipe.pdf'))
-        # Path outside
-        self.assertFalse(Local.is_path_allowed('/etc/passwd'))
-        # Attempt to traverse out
-        self.assertFalse(Local.is_path_allowed('/tmp/allowed/../forbidden/recipe.pdf'))
+@override_settings(LOCAL_STORAGE_PATHS=['/tmp/allowed'])
+def test_is_path_allowed():
+    # Normal allowed path
+    assert Local.is_path_allowed('/tmp/allowed/recipe.pdf')
+    # Path outside
+    assert not Local.is_path_allowed('/etc/passwd')
+    # Attempt to traverse out
+    assert not Local.is_path_allowed('/tmp/allowed/../forbidden/recipe.pdf')
 
-    @override_settings(LOCAL_STORAGE_PATHS=['/tmp/allowed'])
-    def test_get_file_restriction(self):
-        recipe = Recipe(file_path='/etc/passwd')
-        with self.assertRaises(Exception) as cm:
-            Local.get_file(recipe)
-        self.assertEqual(str(cm.exception), 'Path not allowed')
 
-    @override_settings(LOCAL_STORAGE_PATHS=['/tmp/allow'])
-    def test_path_prefix_attack(self):
-        # Path that starts with allowed prefix but is a different directory
-        self.assertFalse(Local.is_path_allowed('/tmp/allowed_secret/file.txt'))
-        self.assertTrue(Local.is_path_allowed('/tmp/allow/file.txt'))
+@override_settings(LOCAL_STORAGE_PATHS=['/tmp/allowed'])
+def test_get_file_restriction():
+    recipe = Recipe(file_path='/etc/passwd')
+    with pytest.raises(Exception, match='Path not allowed'):
+        Local.get_file(recipe)
+
+
+@override_settings(LOCAL_STORAGE_PATHS=['/tmp/allow'])
+def test_path_prefix_attack():
+    # Path that starts with allowed prefix but is a different directory
+    assert not Local.is_path_allowed('/tmp/allowed_secret/file.txt')
+    assert Local.is_path_allowed('/tmp/allow/file.txt')
