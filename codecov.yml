@@ -1,0 +1,36 @@
+coverage:
+  status:
+    project:
+      default: false
+      backend:
+        flags:
+          - backend
+        informational: true
+      frontend:
+        flags:
+          - frontend
+        informational: true
+    patch:
+      default:
+        informational: true
+
+flags:
+  backend:
+    paths:
+      - cookbook/
+      - recipes/
+    carryforward: true
+  frontend:
+    paths:
+      - vue3/src/
+    carryforward: true
+
+ignore:
+  - "**/migrations/**"
+  - "**/tests/**"
+  - "vue3/src/__tests__/**"
+  - "vue3/src/openapi/**"
+
+comment:
+  layout: "header, diff, flags, files"
+  require_changes: true
