@@ -7,7 +7,6 @@ from django.db.models.functions import Lower
 from django.utils import translation
 
 from cookbook.helper.HelperFunctions import str2bool
-from cookbook.helper.permission_helper import get_household_user_ids
 from cookbook.managers import DICTIONARY, TextSearchConfig
 from cookbook.models import CustomFilter, Recipe, SearchPreference
 from recipes import settings
@@ -408,14 +407,13 @@ class RecipeSearch:
                 qs = qs.none()
             else:
                 household = getattr(self._request.user_space, 'household', None)
-                shopping_users = get_household_user_ids(self._request.user_space)
                 if params.makenow == MAKENOW_EXCLUDE:
                     # "No": only recipes that are NOT make-now-able (the complement
                     # of strictly-cookable within the current queryset).
-                    cookable_ids = qs.cookable(household, shopping_users, missing=0).values('id')
+                    cookable_ids = qs.cookable(household, missing=0).values('id')
                     qs = qs.exclude(id__in=cookable_ids)
                 else:
-                    qs = qs.cookable(household, shopping_users, missing=params.makenow)
+                    qs = qs.cookable(household, missing=params.makenow)
 
         # Text search
         qs = qs.by_text(self._text_config)

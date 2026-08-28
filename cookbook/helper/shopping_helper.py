@@ -89,15 +89,14 @@ class RecipeShoppingEditor():
             queryset = Ingredient.objects.filter(step__recipe__id=id, food__ignore_shopping=False, space=self.space)
             owner_user_space = self.created_by.userspace_set.filter(space=self.space).first()
             household = getattr(owner_user_space, 'household', None)
-            # _is_available is inventory-only now; shopping_users is vestigial, so skip the query.
             # A food also counts as "on hand" if a substitute (direct, or via substitute_children /
             # substitute_siblings) has stock - same resolution Food.objects.cookable() uses for the
             # makenow badge (managers.py), otherwise the auto-generated list re-adds foods the
             # household can already cover with what they have.
-            available = _is_available(household, [], prefix='food__')
-            substitute_available = Food.objects.filter(_substitute_available(household, []))
-            children_available = children_substitute_filter(household, [])
-            siblings_available = sibling_substitute_filter(household, [])
+            available = _is_available(household, prefix='food__')
+            substitute_available = Food.objects.filter(_substitute_available(household))
+            children_available = children_substitute_filter(household)
+            siblings_available = sibling_substitute_filter(household)
             queryset = queryset.exclude(
                 available
                 | Q(food__in=substitute_available)

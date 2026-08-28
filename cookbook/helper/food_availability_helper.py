@@ -46,12 +46,12 @@ def annotate_food_inventory(qs, household, today, *, with_expiry=False):
     return qs
 
 
-def _is_available(household, shopping_users, prefix=''):
+def _is_available(household, prefix=''):
     """Availability Q: the food has a household inventory lot (``amount>0``).
 
     ``prefix`` relocates the lookups for querysets not rooted on Food (e.g. ``'food__'`` for an
     Ingredient queryset). Legacy ``onhand_users`` is retired (P1.7) — nothing is available without a
-    household. ``shopping_users`` is kept for signature stability but no longer used.
+    household.
     """
     if household is None:
         # always-false, but NOT an empty __in — that raises EmptyResultSet and zeroes the
@@ -63,7 +63,7 @@ def _is_available(household, shopping_users, prefix=''):
     })
 
 
-def _substitute_available(household, shopping_users):
+def _substitute_available(household):
     if household is None:
         return Q(substitute__pk__lt=0)
     return Q(
@@ -72,13 +72,13 @@ def _substitute_available(household, shopping_users):
     )
 
 
-def _tree_substitute_filter(household, shopping_users, *, tree_field, tree_q):
-    available = _is_available(household, shopping_users)
+def _tree_substitute_filter(household, *, tree_field, tree_q):
+    available = _is_available(household)
     ignorable = Q(ignore_shopping=True, recipe__isnull=True)
     related_available = Food.objects.filter(tree_q).filter(available)
     return (
         Food.objects.exclude(
-            available | _substitute_available(household, shopping_users) | ignorable
+            available | _substitute_available(household) | ignorable
         )
         .exclude(depth=1, numchild=0)
         .filter(**{tree_field: True})
@@ -87,17 +87,17 @@ def _tree_substitute_filter(household, shopping_users, *, tree_field, tree_q):
     )
 
 
-def children_substitute_filter(household, shopping_users):
+def children_substitute_filter(household):
     return _tree_substitute_filter(
-        household, shopping_users,
+        household,
         tree_field='substitute_children',
         tree_q=Q(path__startswith=OuterRef('path'), depth__gt=OuterRef('depth')),
     )
 
 
-def sibling_substitute_filter(household, shopping_users):
+def sibling_substitute_filter(household):
     return _tree_substitute_filter(
-        household, shopping_users,
+        household,
         tree_field='substitute_siblings',
         tree_q=Q(
             path__startswith=Substr(OuterRef('path'), 1, Food.steplen * (OuterRef('depth') - 1)),
@@ -106,7 +106,7 @@ def sibling_substitute_filter(household, shopping_users):
     )
 
 
-def compute_substitute_flags(foods, household, shared_users):
+def compute_substitute_flags(foods, household):
     """
     Batch-compute substitute_onhand and substitute_inventory for a page of foods.
     Replaces per-food N+1 queries in the serializer (FoodSerializer.get_substitute_onhand /
@@ -155,7 +155,7 @@ def compute_substitute_flags(foods, household, shared_users):
 
     # 1 query: which substitutes are available (household inventory, amount>0)?
     available_ids = set(
-        Food.objects.filter(id__in=all_sub_ids).filter(_is_available(household, shared_users))
+        Food.objects.filter(id__in=all_sub_ids).filter(_is_available(household))
         .values_list('id', flat=True)
     )
 
@@ -181,9 +181,9 @@ def annotate_food_substitute_availability(qs, household):
     children_substitute_filter/sibling_substitute_filter already resolve their own OuterRef
     correlations internally and return a closed, self-contained set of satisfied food ids.
     """
-    substitute_ids = Food.objects.filter(_substitute_available(household, [])).values('pk')
-    children_ids = children_substitute_filter(household, []).values('pk')
-    sibling_ids = sibling_substitute_filter(household, []).values('pk')
+    substitute_ids = Food.objects.filter(_substitute_available(household)).values('pk')
+    children_ids = children_substitute_filter(household).values('pk')
+    sibling_ids = sibling_substitute_filter(household).values('pk')
     return qs.annotate(
         has_substitute_available=Case(
             When(Q(pk__in=substitute_ids) | Q(pk__in=children_ids) | Q(pk__in=sibling_ids), then=Value(True)),

@@ -151,13 +151,11 @@ class CustomOnHandField(serializers.Field):
                 return False
             try:
                 user_space = self.context["request"].user_space
-                shared_users = get_household_user_ids(user_space)
                 household = user_space.household if hasattr(user_space, 'household') else None
-            except AttributeError:  # Anonymous users (using share links) don't have shared users
-                shared_users = []
+            except AttributeError:  # Anonymous users (using share links) don't have a household
                 household = None
             from cookbook.helper.food_availability_helper import _is_available
-            return Food.objects.filter(pk=obj.pk).filter(_is_available(household, shared_users)).exists()
+            return Food.objects.filter(pk=obj.pk).filter(_is_available(household)).exists()
         except AttributeError:
             return False
 
@@ -971,13 +969,11 @@ class FoodSerializer(UniqueFieldsMixin, WritableNestedModelSerializer, RecipeCou
                 return False
             try:
                 user_space = self.context["request"].user_space
-                shared_users = get_household_user_ids(user_space)
                 household = user_space.household if hasattr(user_space, 'household') else None
             except AttributeError:
-                shared_users = []
                 household = None
             from cookbook.helper.food_availability_helper import _is_available
-            return Food.objects.filter(self._substitute_candidates_filter(obj)).filter(_is_available(household, shared_users)).exists()
+            return Food.objects.filter(self._substitute_candidates_filter(obj)).filter(_is_available(household)).exists()
         except AttributeError:
             return False
 
@@ -1004,7 +1000,7 @@ class FoodSerializer(UniqueFieldsMixin, WritableNestedModelSerializer, RecipeCou
             if not shared_users and household is None:
                 return []
             from cookbook.helper.food_availability_helper import _is_available
-            available = Food.objects.filter(self._substitute_candidates_filter(obj)).filter(_is_available(household, shared_users)).distinct()
+            available = Food.objects.filter(self._substitute_candidates_filter(obj)).filter(_is_available(household)).distinct()
             return FoodSimpleSerializer(available, many=True, context=self.context).data
         except AttributeError:
             return []

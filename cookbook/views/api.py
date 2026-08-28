@@ -1021,8 +1021,7 @@ class InventoryEntryViewSet(LoggingMixin, viewsets.ModelViewSet, DeleteRelationM
                 foods_by_id[entry.food_id] = entry.food
         if foods_by_id:
             household = getattr(self.request.user_space, 'household', None)
-            shared_users = get_household_user_ids(self.request.user_space)
-            sub_onhand, sub_inventory = compute_substitute_flags(list(foods_by_id.values()), household, shared_users)
+            sub_onhand, sub_inventory = compute_substitute_flags(list(foods_by_id.values()), household)
             serializer.context['_substitute_onhand'] = sub_onhand
             serializer.context['_substitute_inventory'] = sub_inventory
 
@@ -1409,11 +1408,9 @@ class FoodViewSet(OrderingMixin, LoggingMixin, TreeMixin, DeleteRelationMixing):
             .select_related('recipe', 'supermarket_category')
 
     def _apply_list_filters(self, qs):
-        shared_users = self._shared_users
-
         onhand = self.request.query_params.get('onhand', None)
         if onhand is not None:
-            available = _is_available(self._household, shared_users)
+            available = _is_available(self._household)
             if str2bool(onhand):
                 qs = qs.filter(available).distinct()
             else:
@@ -1559,7 +1556,7 @@ class FoodViewSet(OrderingMixin, LoggingMixin, TreeMixin, DeleteRelationMixing):
                 household = self.request.user_space.household
             except AttributeError:
                 household = None
-            sub_onhand, sub_inventory = compute_substitute_flags(foods, household, self._shared_users)
+            sub_onhand, sub_inventory = compute_substitute_flags(foods, household)
             serializer.context['_substitute_onhand'] = sub_onhand
             serializer.context['_substitute_inventory'] = sub_inventory
 
@@ -1588,7 +1585,7 @@ class FoodViewSet(OrderingMixin, LoggingMixin, TreeMixin, DeleteRelationMixing):
                 created_by__in=shared_users,
             )
             agg = base_qs.annotate(_shopping=Exists(shopping_sub)).aggregate(
-                onhand=Count('pk', filter=_is_available(self._household, shared_users), distinct=True),
+                onhand=Count('pk', filter=_is_available(self._household), distinct=True),
                 shopping=Count('pk', filter=Q(_shopping=True), distinct=True),
                 ignored=Count('pk', filter=Q(ignore_shopping=True), distinct=True),
                 inventory=Count('pk', filter=Q(has_inventory_status=True), distinct=True),
@@ -2471,8 +2468,7 @@ class RecipeViewSet(LoggingMixin, viewsets.ModelViewSet, DeleteRelationMixing):
         user_space = getattr(request, 'user_space', None)
         if user_space is not None:
             household = getattr(user_space, 'household', None)
-            shopping_users = get_household_user_ids(user_space)
-            makenow_ready = base_qs.cookable(household, shopping_users, missing=0).count()
+            makenow_ready = base_qs.cookable(household, missing=0).count()
         else:
             makenow_ready = 0
 
