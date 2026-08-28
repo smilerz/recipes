@@ -30,17 +30,26 @@ from cookbook.helper.space_backup import GLOBAL_NATURAL_KEY_FIELDS, discover_spa
 from cookbook.models import Space, TreeModel, UserSpace
 
 
+class SpaceRestoreValidationError(ValueError):
+    """A deliberate, safe-to-display validation refusal — never wraps or carries an
+    unrelated exception's message. The API view catches only this type (not bare
+    ValueError) so an incidental/unexpected error elsewhere in the restore path can't be
+    forwarded to the client verbatim (CWE-209 / CodeQL alert #125)."""
+    pass
+
+
 def assert_target_space_is_empty(space):
     """A freshly-created, untouched space has exactly one UserSpace row (its creator) and
-    nothing else. Raises ValueError if `space` has anything more than that baseline."""
+    nothing else. Raises SpaceRestoreValidationError if `space` has anything more than that
+    baseline."""
     if UserSpace.objects.filter(space=space).count() > 1:
-        raise ValueError(f'space {space.pk} already has additional members — refusing to restore into it')
+        raise SpaceRestoreValidationError(f'space {space.pk} already has additional members — refusing to restore into it')
 
     for model, lookup_path in discover_space_scoped_models():
         if model is UserSpace:
             continue
         if model.objects.filter(**{lookup_path: space}).exists():
-            raise ValueError(f'space {space.pk} already has {model.__name__} data — refusing to restore into it')
+            raise SpaceRestoreValidationError(f'space {space.pk} already has {model.__name__} data — refusing to restore into it')
 
 
 def _resolve_users(users_payload):

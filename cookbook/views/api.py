@@ -3107,14 +3107,18 @@ class SpaceBackupViewSet(LoggingMixin, viewsets.ModelViewSet):
     @extend_schema(request=None, responses={200: OpenApiTypes.OBJECT, 400: OpenApiTypes.OBJECT})
     @decorators.action(detail=True, methods=['POST'])
     def restore(self, request, pk=None):
-        from cookbook.helper.space_restore import restore_space_backup
+        from cookbook.helper.space_restore import SpaceRestoreValidationError, restore_space_backup
         backup_log = self.get_object()
         if backup_log.running or not backup_log.file:
             return Response({'error': 'backup is not ready to restore from'}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
             new_space, report = restore_space_backup(self._load_backup_data(backup_log), request.user)
-        except ValueError as e:
+        except SpaceRestoreValidationError as e:
+            # Only this deliberate, hand-authored exception type is ever shown to the
+            # client - a bare `except ValueError` would also catch and expose incidental,
+            # unexpected error text (CWE-209 / CodeQL alert #125).
+            print(f'space restore refused for backup {backup_log.pk}: {e}')
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
         return Response({'space_id': new_space.pk, 'space_name': new_space.name, 'report': report}, status=status.HTTP_200_OK)

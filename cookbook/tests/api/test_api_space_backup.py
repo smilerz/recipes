@@ -129,6 +129,26 @@ def test_restore_rejects_a_still_running_backup(a1_s1, space_1):
 
 
 @pytest.mark.django_db
+def test_restore_returns_the_safe_validation_message_on_refusal(a1_s1, space_1, monkeypatch):
+    """The view only surfaces SpaceRestoreValidationError's hand-authored, safe message —
+    not an arbitrary exception's str() (CWE-209 / CodeQL alert #125: information exposure
+    through an exception)."""
+    from cookbook.helper.space_restore import SpaceRestoreValidationError
+
+    with scopes_disabled():
+        backup = _make_ready_backup(space_1, auth.get_user(a1_s1))
+
+    def refuse(*args, **kwargs):
+        raise SpaceRestoreValidationError('space 42 already has additional members — refusing to restore into it')
+
+    monkeypatch.setattr('cookbook.helper.space_restore.restore_space_backup', refuse)
+
+    r = a1_s1.post(reverse(RESTORE_URL, args=[backup.pk]), {}, content_type='application/json')
+    assert r.status_code == 400
+    assert json.loads(r.content) == {'error': 'space 42 already has additional members — refusing to restore into it'}
+
+
+@pytest.mark.django_db
 def test_restore_preview_lists_model_counts_and_users(a1_s1, space_1):
     from cookbook.models import Space
     with scopes_disabled():
