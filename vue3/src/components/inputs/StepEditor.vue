@@ -52,6 +52,7 @@
                 </v-col>
                 <v-col cols="12" md="6" v-if="showFile || step.file != null">
                     <model-select model="UserFile" :label="$t('File')" v-model="step.file"></model-select>
+                    <crop-image v-if="step.file?.preview" :src="step.file.preview" :crop-data="step.file?.cropData" height="150px" class="mt-2" />
                 </v-col>
             </v-row>
 
@@ -237,6 +238,7 @@ import {nextTick, ref} from 'vue'
 import {ApiApi, Ingredient, Recipe, Step} from "@/openapi";
 import StepMarkdownEditor from "@/components/inputs/StepMarkdownEditor.vue";
 import ModelSelect from "@/components/inputs/ModelSelect.vue";
+import CropImage from "@/components/display/CropImage.vue";
 import {useDisplay} from "vuetify";
 import {VueDraggable} from "vue-draggable-plus";
 import VClosableCardTitle from "@/components/dialogs/VClosableCardTitle.vue";

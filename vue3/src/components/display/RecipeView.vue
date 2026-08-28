@@ -31,7 +31,8 @@
                     <span class="ps-2 text-h5  flex-grow-1 pa-1" style="min-width: 0" :class="{'text-truncate': !showFullRecipeName}" @click="showFullRecipeName = !showFullRecipeName">
                         {{ recipe.name }}
                     </span>
-                        <recipe-context-menu :recipe="recipe" :servings="servings" context="view" ref="contextMenuRef" v-if="useUserPreferenceStore().isAuthenticated"></recipe-context-menu>
+                        <recipe-context-menu :recipe="recipe" :servings="servings" context="view" ref="contextMenuRef" v-if="useUserPreferenceStore().isAuthenticated"
+                                             @update:recipe="recipe = ($event as Recipe)"></recipe-context-menu>
                     </div>
                     <keywords-component variant="flat" class="ms-1" :keywords="recipe.keywords"></keywords-component>
                     <private-recipe-badge :users="recipe.shared" v-if="recipe._private"></private-recipe-badge>
@@ -88,7 +89,8 @@
                             <div class="d-flex">
                                 <h1 class="flex-column flex-grow-1">{{ recipe.name }}</h1>
                                 <div class="d-flex align-center mb-auto mt-2" v-if="useUserPreferenceStore().isAuthenticated">
-                                    <recipe-context-menu :recipe="recipe" :servings="servings" context="view" ref="contextMenuRef"></recipe-context-menu>
+                                    <recipe-context-menu :recipe="recipe" :servings="servings" context="view" ref="contextMenuRef"
+                                                         @update:recipe="recipe = ($event as Recipe)"></recipe-context-menu>
                                 </div>
                             </div>
                             <p v-if="deviceSettings.recipe_showAuthor">
@@ -248,6 +250,9 @@ const loading = ref(false)
 // overlaid on the hero image triggers the dialog through it (#10 follow-up: a menu item alone
 // wasn't discoverable enough).
 const contextMenuRef = ref<InstanceType<typeof RecipeContextMenu> | null>(null)
+// recipe-context-menu's `update:recipe` is typed Recipe|RecipeOverview since it's also used from
+// overview contexts (cards/lists) - this component only ever renders a full Recipe, so the two
+// `recipe = ($event as Recipe)` handlers below narrow it back.
 const recipe = defineModel<Recipe>({required: true})
 const props = defineProps<{
     servings?: number,

@@ -4,6 +4,39 @@ import django.db.models.deletion
 from django.db import migrations, models
 
 
+class AddFieldIfColumnMissing(migrations.AddField):
+    """AddField that skips the DDL when the column is already there.
+
+    food_image/crop_data were originally added by migration 0246_image_improvements
+    (2026-04-12) but silently dropped from the migration history during a later
+    chain-rebaseline squash — see commit 386adfe19. Any database migrated before
+    that squash already has these columns from the original migration and never
+    lost them; only databases created after the squash are actually missing them.
+    Model *state* must still be updated unconditionally (state_forwards is
+    untouched) so later migrations keep resolving the field correctly either way.
+    """
+
+    def __init__(self, *args, table_name, column_name, **kwargs):
+        self.table_name = table_name
+        self.column_name = column_name
+        super().__init__(*args, **kwargs)
+
+    def _column_exists(self, schema_editor):
+        with schema_editor.connection.cursor() as cursor:
+            columns = schema_editor.connection.introspection.get_table_description(cursor, self.table_name)
+        return any(col.name == self.column_name for col in columns)
+
+    def database_forwards(self, app_label, schema_editor, from_state, to_state):
+        if self._column_exists(schema_editor):
+            return
+        super().database_forwards(app_label, schema_editor, from_state, to_state)
+
+    def database_backwards(self, app_label, schema_editor, from_state, to_state):
+        if not self._column_exists(schema_editor):
+            return
+        super().database_backwards(app_label, schema_editor, from_state, to_state)
+
+
 class Migration(migrations.Migration):
 
     dependencies = [
@@ -11,14 +44,18 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.AddField(
+        AddFieldIfColumnMissing(
             model_name='food',
             name='food_image',
             field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='foods', to='cookbook.userfile'),
+            table_name='cookbook_food',
+            column_name='food_image_id',
         ),
-        migrations.AddField(
+        AddFieldIfColumnMissing(
             model_name='userfile',
             name='crop_data',
             field=models.JSONField(blank=True, null=True),
+            table_name='cookbook_userfile',
+            column_name='crop_data',
         ),
     ]

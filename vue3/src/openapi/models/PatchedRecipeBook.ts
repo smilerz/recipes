@@ -27,6 +27,13 @@ import {
     UserToJSON,
     UserToJSONTyped,
 } from './User';
+import type { UserFileView } from './UserFileView';
+import {
+    UserFileViewFromJSON,
+    UserFileViewFromJSONTyped,
+    UserFileViewToJSON,
+    UserFileViewToJSONTyped,
+} from './UserFileView';
 
 /**
  * Adds nested create feature
@@ -52,6 +59,12 @@ export interface PatchedRecipeBook {
      * @memberof PatchedRecipeBook
      */
     description?: string;
+    /**
+     * 
+     * @type {UserFileView}
+     * @memberof PatchedRecipeBook
+     */
+    image?: UserFileView | null;
     /**
      * 
      * @type {Array<User>}
@@ -98,6 +111,7 @@ export function PatchedRecipeBookFromJSONTyped(json: any, ignoreDiscriminator: b
         'id': json['id'] == null ? undefined : json['id'],
         'name': json['name'] == null ? undefined : json['name'],
         'description': json['description'] == null ? undefined : json['description'],
+        'image': json['image'] == null ? undefined : UserFileViewFromJSON(json['image']),
         'shared': json['shared'] == null ? undefined : ((json['shared'] as Array<any>).map(UserFromJSON)),
         'createdBy': json['created_by'] == null ? undefined : UserFromJSON(json['created_by']),
         'filter': json['filter'] == null ? undefined : CustomFilterFromJSON(json['filter']),
@@ -119,6 +133,7 @@ export function PatchedRecipeBookToJSONTyped(value?: Omit<PatchedRecipeBook, 'cr
         'id': value['id'],
         'name': value['name'],
         'description': value['description'],
+        'image': UserFileViewToJSON(value['image']),
         'shared': value['shared'] == null ? undefined : ((value['shared'] as Array<any>).map(UserToJSON)),
         'filter': CustomFilterToJSON(value['filter']),
         'order': value['order'],

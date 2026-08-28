@@ -10,7 +10,7 @@ import {createVuetify} from 'vuetify'
 import * as vuetifyComponents from 'vuetify/components'
 import * as vuetifyDirectives from 'vuetify/directives'
 import {apiMock, resetApiMock} from '@/__tests__/api-mock'
-import {makeIngredient, makeStep, makeRecipe, makeUserPreference, makeSpace, makeFood, makeUnit} from '@/__tests__/factories'
+import {makeIngredient, makeStep, makeRecipe, makeUserPreference, makeSpace, makeFood, makeUnit, makeUserFileView} from '@/__tests__/factories'
 
 vi.mock('@/openapi', async (importOriginal) => {
     const actual = await importOriginal<typeof import('@/openapi')>()
@@ -118,6 +118,24 @@ describe('StepEditor', () => {
         // Parsed ingredient must also be present
         expect(step.ingredients.some(i => i.id === 99)).toBe(true)
 
+        w.unmount()
+    })
+
+    it('shows a preview when the step has a file with an image preview', async () => {
+        const step = makeStep({file: makeUserFileView({preview: '/media/steps/photo.jpg'}) as any})
+        const w = mountEditor(step)
+        await flushPromises()
+
+        expect(w.find('.crop-image').exists()).toBe(true)
+        w.unmount()
+    })
+
+    it('shows no preview when the step file has no image preview (e.g. a non-image attachment)', async () => {
+        const step = makeStep({file: makeUserFileView({preview: ''}) as any})
+        const w = mountEditor(step)
+        await flushPromises()
+
+        expect(w.find('.crop-image').exists()).toBe(false)
         w.unmount()
     })
 })

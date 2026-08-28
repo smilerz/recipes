@@ -654,6 +654,23 @@ describe('SearchPage (Phase 3 rewrite)', () => {
             expect(vm.editMode).toBe(true)
             wrapper.unmount()
         })
+
+        // Bug: the homepage's recipe-book "More" link (HorizontalRecipeWindow.vue) navigates to
+        // ?filter=<id> for a book with a linked smart filter, but SearchPage never read that query
+        // key at all - the URL showed the filter id, but the actual search criteria were never
+        // applied, so "More" silently returned the unfiltered catalog. Read-only (unlike
+        // ?editFilter=), since the user is browsing the book's filter, not editing a saved search.
+        it('mounting with ?filter=<id> fetches the filter and applies its search criteria, without entering edit mode', async () => {
+            apiMock.apiCustomFilterRetrieve = vi.fn().mockResolvedValue({id: 44, name: 'Quick Dinners', search: {keywords: [9]}})
+            const {wrapper} = await mountSearchPage({filter: '44'})
+            const vm = wrapper.vm as any
+            await flushPromises()
+            expect(apiMock.apiCustomFilterRetrieve).toHaveBeenCalledWith({id: 44})
+            expect(vm.selectedCustomFilter?.id).toBe(44)
+            expect(vm.filterParams.keywords).toEqual([9])
+            expect(vm.editMode).toBe(false)
+            wrapper.unmount()
+        })
     })
 
     describe('active-filter chips (D02)', () => {

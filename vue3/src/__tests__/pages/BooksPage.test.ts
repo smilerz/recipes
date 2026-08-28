@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { flushPromises } from '@vue/test-utils'
 import { apiMock, resetApiMock } from '@/__tests__/api-mock'
-import { makeRecipeBook, makeUser } from '@/__tests__/factories'
+import { makeRecipeBook, makeUser, makeUserFileView } from '@/__tests__/factories'
 import { mountPage } from '@/__tests__/pages/page-mount-helper'
 import { SEARCH_DEBOUNCE_MS } from '@/utils/utils'
 
@@ -54,6 +54,30 @@ describe('BooksPage', () => {
 
         expect(wrapper.text()).toContain('Favorites')
         expect(wrapper.text()).toContain('Weeknight Dinners')
+    })
+
+    it('shows the cover image when a book has one set', async () => {
+        const books = [
+            makeRecipeBook({ id: 1, name: 'Favorites', image: makeUserFileView({ preview: '/media/covers/favorites.jpg' }) }),
+        ]
+        apiMock.apiRecipeBookList.mockResolvedValue({ results: books, count: 1 })
+
+        const wrapper = mountPage(BooksPage)
+        await flushPromises()
+
+        expect(wrapper.find('.crop-image').exists()).toBe(true)
+    })
+
+    it('shows no cover image when a book has none set', async () => {
+        const books = [
+            makeRecipeBook({ id: 1, name: 'Favorites', image: undefined }),
+        ]
+        apiMock.apiRecipeBookList.mockResolvedValue({ results: books, count: 1 })
+
+        const wrapper = mountPage(BooksPage)
+        await flushPromises()
+
+        expect(wrapper.find('.crop-image').exists()).toBe(false)
     })
 
     it('renders empty state when no books', async () => {
