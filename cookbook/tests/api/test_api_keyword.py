@@ -160,6 +160,11 @@ def test_list_filter(obj_1, obj_2, u1_s1):
     assert response['count'] == 1
 
 
+def test_list_bad_updated_at_returns_400(u1_s1):
+    r = u1_s1.get(f'{reverse(LIST_URL)}?updated_at=notadate')
+    assert r.status_code == 400
+
+
 @pytest.mark.parametrize("arg", [
     ['a_u', 403],
     ['g1_s1', 403],

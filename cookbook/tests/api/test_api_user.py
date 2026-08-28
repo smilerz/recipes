@@ -68,6 +68,11 @@ def test_list_filter_repeated_query_param(u1_s1, u2_s1, u1_s2, u2_s2):
     assert len(response) == 1  # obj_u2_s2 is in a different space
 
 
+def test_list_bad_filter_list_returns_400(u1_s1):
+    r = u1_s1.get(f'{reverse(LIST_URL)}?filter_list=notanumber')
+    assert r.status_code == 400
+
+
 def test_list_space(u1_s1, u2_s1, u1_s2, space_2):
     assert len(json.loads(u1_s1.get(reverse(LIST_URL)).content)) == 2
     assert len(json.loads(u1_s2.get(reverse(LIST_URL)).content)) == 1
