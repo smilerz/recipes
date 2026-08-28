@@ -32,6 +32,13 @@ def test_list_permission(arg, request, space_1, g1_s1, u1_s1, a1_s1, ids=lambda 
         assert len(json.loads(result.content)['results']) == arg[2]
 
 
+def test_list_bad_limit_returns_400(a1_s1, space_1):
+    space_1.created_by = auth.get_user(a1_s1)
+    space_1.save()
+    r = a1_s1.get(f'{reverse(LIST_URL)}?limit=notanumber')
+    assert r.status_code == 400
+
+
 @pytest.mark.parametrize("arg", [
     ['a_u', 403],
     ['g1_s1', 403],
