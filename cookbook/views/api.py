@@ -55,7 +55,7 @@ from rest_framework import decorators, status, viewsets
 from rest_framework import mixins
 from rest_framework.authtoken.views import ObtainAuthToken
 from rest_framework.decorators import api_view, permission_classes
-from rest_framework.exceptions import APIException, ParseError, PermissionDenied
+from rest_framework.exceptions import ParseError, PermissionDenied
 from rest_framework.exceptions import ValidationError as DRFValidationError
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.parsers import JSONParser, MultiPartParser
@@ -240,7 +240,7 @@ class StandardFilterModelViewSet(viewsets.ModelViewSet):
             except FieldError:
                 pass
             except ValidationError:
-                raise APIException(_('Parameter updated_at incorrectly formatted'))
+                raise ParseError(_('Parameter updated_at incorrectly formatted'))
 
         limit = self.request.query_params.get('limit', None)
         random = self.request.query_params.get('random', False)
@@ -397,7 +397,7 @@ class FuzzyFilterMixin(viewsets.ModelViewSet, ExtendedRecipeMixin):
             except FieldError:
                 pass
             except ValidationError:
-                raise APIException(_('Parameter updated_at incorrectly formatted'))
+                raise ParseError(_('Parameter updated_at incorrectly formatted'))
 
         limit = self.request.query_params.get('limit', None)
         random = self.request.query_params.get('random', False)
@@ -769,7 +769,7 @@ class UserViewSet(LoggingMixin, viewsets.ModelViewSet):
                 else:
                     ids = [int(x) for x in filter_list]
             except (ValueError, TypeError):
-                raise APIException('Parameter filter_list incorrectly formatted')
+                raise ParseError('Parameter filter_list incorrectly formatted')
             queryset = queryset.filter(pk__in=ids)
 
         return queryset
@@ -1627,7 +1627,7 @@ class FoodViewSet(OrderingMixin, LoggingMixin, TreeMixin, DeleteRelationMixing):
         try:
             amount = Decimal(str(amount))
         except (InvalidOperation, ValueError):
-            raise APIException({'error': 'Invalid amount — must be a numeric value'}, code=status.HTTP_400_BAD_REQUEST)
+            raise ParseError({'error': 'Invalid amount — must be a numeric value'})
 
         if unit is not None:
             unit = Unit.objects.filter(pk=unit, space=request.space).first()

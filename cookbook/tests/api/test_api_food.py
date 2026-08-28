@@ -2086,6 +2086,14 @@ def test_shopping_action_unit_not_found_returns_400(u1_s1, space_1):
     assert r.status_code == 400
 
 
+def test_shopping_action_bad_amount_returns_400(u1_s1, space_1):
+    with scopes_disabled():
+        food = FoodFactory(space=space_1)
+    r = u1_s1.put(reverse('api:food-shopping', args=[food.id]),
+                  {'amount': 'notanumber'}, content_type='application/json')
+    assert r.status_code == 400
+
+
 # ==================== create_from_recipe action ====================
 
 def test_create_from_recipe_creates_and_links_food(u1_s1, space_1):
