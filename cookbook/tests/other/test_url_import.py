@@ -97,6 +97,77 @@ def test_parse_servings_text(value, expected):
     assert parse_servings_text(value) == expected
 
 
+class FakeScrapeUrlTotalFailure:
+    """Minimal scrape stand-in where both canonical_url() and .url raise -
+    exercises get_from_scraper's source_url extraction when every attempt fails."""
+
+    def canonical_url(self):
+        raise Exception('canonical_url not implemented')
+
+    @property
+    def url(self):
+        raise Exception('url not implemented')
+
+    def title(self):
+        return 'Test Recipe'
+
+    def description(self):
+        return ''
+
+    def prep_time(self):
+        return None
+
+    def cook_time(self):
+        return None
+
+    def total_time(self):
+        return None
+
+    def image(self):
+        return None
+
+    def category(self):
+        raise NotImplementedError
+
+    def cuisine(self):
+        raise NotImplementedError
+
+    def author(self):
+        raise NotImplementedError
+
+    def instructions_list(self):
+        return ['Step 1']
+
+    def ingredients(self):
+        return []
+
+    class schema:
+        data = {}
+
+        @staticmethod
+        def nutrients():
+            return {}
+
+
+def test_get_from_scraper_does_not_crash_when_url_extraction_totally_fails(u1_s1):
+    from django.contrib import auth
+    from django.test import RequestFactory
+    from django_scopes import scope
+
+    from cookbook.helper.recipe_url_import import get_from_scraper
+
+    user = auth.get_user(u1_s1)
+    space = user.userspace_set.first().space
+    request = RequestFactory()
+    request.user = user
+    request.space = space
+
+    with scope(space=space):
+        recipe_json = get_from_scraper(FakeScrapeUrlTotalFailure(), request)
+
+    assert recipe_json['source_url'] == ''
+
+
 def test_source_import_step_serializer_defaults_name_to_empty_string():
     from cookbook.serializer import SourceImportStepSerializer
     step = {'instruction': 'mix', 'ingredients': []}
