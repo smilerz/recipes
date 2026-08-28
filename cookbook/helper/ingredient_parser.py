@@ -186,7 +186,7 @@ class IngredientParser:
         # if something like this is detected move it to the beginning so the parser can handle it
         # (matched in two linear-time steps, not one backtracking regex, to avoid CWE-1333)
         if len(ingredient) < 1000 and re.match(r'[^\W\d_]', ingredient):
-            if match := re.search(r'[1-9]\d*\s*[^\W\d_]+', ingredient):
+            if match := re.search(r'(?<!\d)[1-9]\d*\s*[^\W\d_]+', ingredient):
                 ingredient = ingredient[match.start():match.end()] + ' ' + ingredient.replace(ingredient[match.start():match.end()], '')
 
         # if the string contains parenthesis early on remove it and place it at the end
