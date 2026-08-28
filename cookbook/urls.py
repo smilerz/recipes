@@ -1,12 +1,11 @@
 from pydoc import locate
 
 from django.urls import include, path
-from django.views.generic import TemplateView
 from drf_spectacular.views import SpectacularAPIView
 from rest_framework import routers
 
 from cookbook.version_info import TANDOOR_VERSION
-from recipes.settings import DEBUG, PLUGINS
+from recipes.settings import PLUGINS
 from .views import api, telegram, views, import_export
 from .views.api import CustomAuthToken
 
