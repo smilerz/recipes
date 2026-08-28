@@ -1831,10 +1831,11 @@ class FoodViewSet(OrderingMixin, LoggingMixin, TreeMixin, DeleteRelationMixing):
                 }
                 return Response(response, status=status.HTTP_400_BAD_REQUEST)
             except Exception as err:
+                print(f'unexpected error processing AI request: {err}')
                 traceback.print_exc()
                 response = {
                     'error': True,
-                    'msg': 'An unexpected error occurred while processing your AI request. \n\n' + str(err),
+                    'msg': 'An unexpected error occurred while processing your AI request. Please try again later.',
                 }
                 return Response(response, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -2692,10 +2693,11 @@ class RecipeViewSet(LoggingMixin, viewsets.ModelViewSet, DeleteRelationMixing):
                 }
                 return Response(response, status=status.HTTP_400_BAD_REQUEST)
             except Exception as err:
+                print(f'unexpected error processing AI request: {err}')
                 traceback.print_exc()
                 response = {
                     'error': True,
-                    'msg': 'An unexpected error occurred while processing your AI request. \n\n' + str(err),
+                    'msg': 'An unexpected error occurred while processing your AI request. Please try again later.',
                 }
                 return Response(response, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -3674,7 +3676,7 @@ class AiImportView(APIView):
                 traceback.print_exc()
                 response = {
                     'error': True,
-                    'msg': "Error processing AI results. Response Text:\n\n" + response_text + "\n\n" + traceback.format_exc()
+                    'msg': "Error processing AI results. Response Text:\n\n" + response_text
                 }
                 return Response(RecipeFromSourceResponseSerializer(context={'request': request}).to_representation(response), status=status.HTTP_400_BAD_REQUEST)
         else:
@@ -3766,10 +3768,11 @@ class AiStepSortView(APIView):
                 }
                 return Response(response, status=status.HTTP_400_BAD_REQUEST)
             except Exception as err:
+                print(f'unexpected error processing AI request: {err}')
                 traceback.print_exc()
                 response = {
                     'error': True,
-                    'msg': 'An unexpected error occurred while processing your AI request. \n\n' + str(err),
+                    'msg': 'An unexpected error occurred while processing your AI request. Please try again later.',
                 }
                 return Response(response, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
