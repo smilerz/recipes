@@ -76,6 +76,7 @@
   "BatchEdit": "Batch Edit",
   "ComingSoon": "Coming soon",
   "BatchEditUpdatingItemsCount": "Editing {count} {type}",
+  "BatchAddToMealPlanSummary": "Add {count} selected recipes to the meal plan on the chosen date and meal type.",
   "BatchExportSummary": "Export {count} selected recipes as JSON-LD (Schema.org Recipe format).",
   "Blocking": "Blocking",
   "BlockingHelp": "The following objects are preventing you from deleting the selected {type}.",
