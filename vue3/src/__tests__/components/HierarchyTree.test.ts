@@ -1,6 +1,8 @@
 import {describe, it, expect, vi} from 'vitest'
 import {mount} from '@vue/test-utils'
 import {createVuetify} from 'vuetify'
+import * as components from 'vuetify/components'
+import * as directives from 'vuetify/directives'
 import {createI18n} from 'vue-i18n'
 import HierarchyTree from '@/components/hierarchy/HierarchyTree.vue'
 import type {FlatTreeNode} from '@/composables/hierarchy/types'
@@ -10,7 +12,7 @@ function makeNode(id: number, name: string, depth: number, hasChildren = false, 
 }
 
 function mountTree(props: Partial<InstanceType<typeof HierarchyTree>['$props']> = {}) {
-    const vuetify = createVuetify()
+    const vuetify = createVuetify({components, directives})
     const i18n = createI18n({legacy: false, locale: 'en', messages: {en: {}}, missingWarn: false, fallbackWarn: false})
 
     return mount(HierarchyTree, {
@@ -96,5 +98,14 @@ describe('HierarchyTree', () => {
             selectedId: 1,
         })
         expect(wrapper.find('.tree-hint').exists()).toBe(false)
+    })
+
+    it('virtualizes a large tree, rendering far fewer DOM rows than total nodes', () => {
+        const bigTree = Array.from({length: 500}, (_, i) => makeNode(i + 1, `Item ${i + 1}`, 0))
+        const wrapper = mountTree({flatTree: bigTree})
+
+        const rows = wrapper.findAll('.tree-row')
+        expect(rows.length).toBeGreaterThan(0)
+        expect(rows.length).toBeLessThan(bigTree.length)
     })
 })
