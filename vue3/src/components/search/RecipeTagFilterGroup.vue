@@ -1,5 +1,5 @@
 <template>
-    <v-card class="pa-2" style="overflow: visible">
+    <v-card v-bind="$attrs" class="pa-2" style="overflow: visible">
         <div class="d-flex align-center" style="min-height: 32px">
             <v-badge :model-value="totalCount > 0" :content="totalCount" color="primary" inline>
                 <span class="text-subtitle-2 flex-shrink-0">{{ label }}</span>
@@ -124,6 +124,11 @@ import type {EditorSupportedModels} from '@/types/Models'
 import type {FilterValue} from '@/composables/modellist/types'
 import ModelSelect from '@/components/inputs/ModelSelect.vue'
 import ActionConfirmDialog from '@/components/dialogs/ActionConfirmDialog.vue'
+
+// Two root nodes (the card + ActionConfirmDialog) make this a fragment component, so Vue
+// can't auto-forward fallthrough attrs (e.g. a class from a Transition wrapper) - direct
+// them at the v-card explicitly instead of letting Vue drop them with a warning.
+defineOptions({inheritAttrs: false})
 
 const props = withDefaults(defineProps<{
     label: string
