@@ -121,6 +121,15 @@ describe('StepEditor', () => {
         w.unmount()
     })
 
+    it('shows a scale input for an embedded sub-recipe, bound to step_recipe_scale', async () => {
+        const step = makeStep({stepRecipe: 7, stepRecipeScale: 0.5})
+        const w = mountEditor(step)
+        await flushPromises()
+
+        const scaleInput = w.find('[data-test="step-recipe-scale"]')
+        expect(scaleInput.exists()).toBe(true)
+    })
+
     it('shows a preview when the step has a file with an image preview', async () => {
         const step = makeStep({file: makeUserFileView({preview: '/media/steps/photo.jpg'}) as any})
         const w = mountEditor(step)

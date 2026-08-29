@@ -75,6 +75,36 @@ describe('StepsOverview hides empty steps', () => {
     })
 })
 
+describe('StepsOverview applies step_recipe_scale to embedded sub-recipe ingredients', () => {
+    beforeEach(() => setActivePinia(createPinia()))
+
+    function subRecipeStep(scale: number) {
+        return {
+            id: 1, name: 'Add dough', showAsHeader: true, ingredients: [],
+            stepRecipe: 9, stepRecipeScale: scale,
+            stepRecipeData: {
+                id: 9, name: 'Pie Crust',
+                steps: [{id: 90, ingredients: [{id: 900, food: {id: 1, name: 'flour'}, amount: 10, isHeader: false}]}],
+            },
+        }
+    }
+
+    it('scales the sub-recipe ingredient amounts shown in the structured overview card', () => {
+        const wrapper = mountOverview([subRecipeStep(0.5)])
+        const tables = wrapper.findAllComponents(IngredientsTable)
+        // last table is the sub-recipe card's table (first is the step's own, empty, table)
+        const subRecipeTable = tables[tables.length - 1]
+        expect(subRecipeTable.props('modelValue')[0].amount).toBe(5)
+    })
+
+    it('scales the sub-recipe ingredient amounts in the merged summary overview', () => {
+        const wrapper = mountOverview([subRecipeStep(0.5)], {recipe_mergeStepOverview: true})
+        const tables = wrapper.findAllComponents(IngredientsTable)
+        expect(tables).toHaveLength(1)
+        expect(tables[0].props('modelValue')[0].amount).toBe(5)
+    })
+})
+
 describe('StepsOverview merged overview forwards the ingredient menu', () => {
     beforeEach(() => setActivePinia(createPinia()))
 

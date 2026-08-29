@@ -402,6 +402,24 @@ def test_recipe_step_food_carries_household_earliest_expiry(u1_s1, space_1):
     assert step_food['earliest_expiry'] == (today + datetime.timedelta(days=5)).isoformat()
 
 
+def test_step_recipe_scale_serialized_with_default_and_custom_value(u1_s1, space_1):
+    """A step embedding a sub-recipe exposes step_recipe_scale, defaulting to 1."""
+    from cookbook.models import Step
+
+    with scopes_disabled():
+        sub_recipe = RecipeFactory(space=space_1, steps__count=0)
+        recipe = RecipeFactory(space=space_1, steps__count=0)
+        default_step = Step.objects.create(space=space_1, step_recipe=sub_recipe)
+        scaled_step = Step.objects.create(space=space_1, step_recipe=sub_recipe, step_recipe_scale=0.5)
+        recipe.steps.add(default_step, scaled_step)
+
+    r = u1_s1.get(reverse(DETAIL_URL, args=[recipe.pk]))
+    assert r.status_code == 200
+    steps_by_id = {s['id']: s for s in r.json()['steps']}
+    assert float(steps_by_id[default_step.pk]['step_recipe_scale']) == 1.0
+    assert float(steps_by_id[scaled_step.pk]['step_recipe_scale']) == 0.5
+
+
 def test_batch_update_book_add_creates_entries(u1_s1, space_1):
     """book_add creates a RecipeBookEntry for each selected recipe."""
     from cookbook.models import RecipeBookEntry

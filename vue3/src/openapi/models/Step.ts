@@ -101,7 +101,13 @@ export interface Step {
      */
     readonly stepRecipeData: any | null;
     /**
-     * 
+     *
+     * @type {number}
+     * @memberof Step
+     */
+    stepRecipeScale?: number;
+    /**
+     *
      * @type {boolean}
      * @memberof Step
      */
@@ -139,6 +145,7 @@ export function StepFromJSONTyped(json: any, ignoreDiscriminator: boolean): Step
         'file': json['file'] == null ? undefined : UserFileViewFromJSON(json['file']),
         'stepRecipe': json['step_recipe'] == null ? undefined : json['step_recipe'],
         'stepRecipeData': json['step_recipe_data'],
+        'stepRecipeScale': json['step_recipe_scale'] == null ? undefined : json['step_recipe_scale'],
         'showIngredientsTable': json['show_ingredients_table'] == null ? undefined : json['show_ingredients_table'],
     };
 }
@@ -163,6 +170,7 @@ export function StepToJSONTyped(value?: Omit<Step, 'instructions_markdown'|'step
         'show_as_header': value['showAsHeader'],
         'file': UserFileViewToJSON(value['file']),
         'step_recipe': value['stepRecipe'],
+        'step_recipe_scale': value['stepRecipeScale'],
         'show_ingredients_table': value['showIngredientsTable'],
     };
 }

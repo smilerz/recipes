@@ -35,7 +35,7 @@
                                     :to="{name: 'RecipeViewPage', params: {id: s.stepRecipeData.id}}" target="_blank">
                                 <v-row v-for="subRecipeStep in s.stepRecipeData.steps">
                                     <v-col>
-                                        <ingredients-table v-model="subRecipeStep.ingredients" :ingredient-factor="props.ingredientFactor"
+                                        <ingredients-table :model-value="scaledIngredients(subRecipeStep.ingredients, s.stepRecipeScale)" :ingredient-factor="props.ingredientFactor"
                                         :show-actions="useUserPreferenceStore().deviceSettings.recipe_overviewShowActions"
                                         :show-checkbox="useUserPreferenceStore().deviceSettings.recipe_overviewShowCheckboxes" context="overview"
                                         @scale="(factor: number) => emit('scale', factor)"></ingredients-table>
@@ -99,6 +99,15 @@ const overviewSteps = computed(() =>
         .filter(({step}) => stepHasIngredients(step))
 )
 
+// An embedded sub-recipe step (step_recipe) can specify its own scale independent of
+// the parent recipe's serving adjustment (e.g. "half a batch of this dough") - apply it
+// to a copy so the sub-recipe's own ingredient objects are never mutated.
+function scaledIngredients(ingredients: Array<Ingredient>, scale?: number): Array<Ingredient> {
+    const factor = scale ?? 1
+    if (factor === 1) return ingredients
+    return ingredients.map(ingredient => ({...ingredient, amount: ingredient.amount * factor}))
+}
+
 const mergedIngredients = computed(() => {
     // Function to collect all ingredients from recipe steps
     const getAllIngredients = () => {
@@ -115,7 +124,7 @@ const mergedIngredients = computed(() => {
             // Add ingredients from step recipes if they exist
             if (step.stepRecipeData) {
                 step.stepRecipeData.steps?.forEach((subStep: Step) => {
-                    subStep.ingredients.forEach((ingredient: Ingredient) => {
+                    scaledIngredients(subStep.ingredients, step.stepRecipeScale).forEach((ingredient: Ingredient) => {
                         if (ingredient.food && !ingredient.isHeader) {
                             ingredients.push(ingredient);
                         }
