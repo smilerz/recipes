@@ -35,6 +35,12 @@
                                 </v-card-text>
                             </v-card>
 
+                            <v-card :title="$t('Add_to_Book')" :prepend-icon="TRecipeBook.icon" variant="plain">
+                                <v-card-text>
+                                    <model-select model="RecipeBook" v-model="selectedBook" :object="true"></model-select>
+                                </v-card-text>
+                            </v-card>
+
                               <v-card :title="$t('Private_Recipe')" :subtitle="$t('Private_Recipe_Help')" prepend-icon="fa-solid fa-eye-slash" variant="plain">
                                 <v-card-text>
 
@@ -97,10 +103,10 @@
 <script setup lang="ts">
 
 import {onMounted, PropType, ref, watch} from "vue";
-import {EditorSupportedModels, EditorSupportedTypes, getGenericModelFromString, TKeyword, TRecipe} from "@/types/Models.ts";
+import {EditorSupportedModels, EditorSupportedTypes, getGenericModelFromString, TKeyword, TRecipe, TRecipeBook} from "@/types/Models.ts";
 import VClosableCardTitle from "@/components/dialogs/VClosableCardTitle.vue";
 import {useI18n} from "vue-i18n";
-import {ApiApi, ApiRecipeBatchUpdateUpdateRequest, Recipe, RecipeOverview} from "@/openapi";
+import {ApiApi, ApiRecipeBatchUpdateUpdateRequest, Recipe, RecipeBook, RecipeOverview} from "@/openapi";
 import {ErrorMessageType, useMessageStore} from "@/stores/MessageStore.ts";
 import ModelSelect from "@/components/inputs/ModelSelect.vue";
 
@@ -120,6 +126,7 @@ const updateItems = ref([] as RecipeOverview[])
 const batchUpdateRequest = ref({recipeBatchUpdate: {servingsText: ''}} as ApiRecipeBatchUpdateUpdateRequest)
 
 const updateServings = ref(false)
+const selectedBook = ref<RecipeBook | null>(null)
 
 const boolUpdateOptions = ref([
     {value: true, title: t('Yes')},
@@ -147,6 +154,8 @@ function batchUpdateRecipes() {
     if (!updateServings.value) {
         batchUpdateRequest.value.recipeBatchUpdate.servingsText = undefined
     }
+
+    batchUpdateRequest.value.recipeBatchUpdate.bookAdd = selectedBook.value?.id
 
     api.apiRecipeBatchUpdateUpdate(batchUpdateRequest.value).then(r => {
 

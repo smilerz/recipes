@@ -14,6 +14,7 @@ from cookbook.tests.factories import CookLogFactory, RecipeFactory
 LIST_URL = 'api:recipe-list'
 DETAIL_URL = 'api:recipe-detail'
 STATS_URL = 'api:recipe-stats'
+BATCH_URL = 'api:recipe-batch-update'
 
 
 def test_recipe_list_schema_declares_filter_params():
@@ -399,3 +400,65 @@ def test_recipe_step_food_carries_household_earliest_expiry(u1_s1, space_1):
     assert r.status_code == 200
     step_food = r.json()['steps'][0]['ingredients'][0]['food']
     assert step_food['earliest_expiry'] == (today + datetime.timedelta(days=5)).isoformat()
+
+
+def test_batch_update_book_add_creates_entries(u1_s1, space_1):
+    """book_add creates a RecipeBookEntry for each selected recipe."""
+    from cookbook.models import RecipeBookEntry
+    from cookbook.tests.factories import RecipeBookFactory
+
+    user = auth.get_user(u1_s1)
+    with scopes_disabled():
+        book = RecipeBookFactory(space=space_1, created_by=user)
+        r1 = RecipeFactory(space=space_1, created_by=user)
+        r2 = RecipeFactory(space=space_1, created_by=user)
+
+    resp = u1_s1.put(
+        reverse(BATCH_URL),
+        {'recipes': [r1.pk, r2.pk], 'book_add': book.pk},
+        content_type='application/json',
+    )
+    assert resp.status_code == 200
+    with scopes_disabled():
+        assert set(RecipeBookEntry.objects.filter(book=book).values_list('recipe_id', flat=True)) == {r1.pk, r2.pk}
+
+
+def test_batch_update_book_add_skips_existing_entry(u1_s1, space_1):
+    """book_add doesn't create a duplicate entry for a recipe already in the book."""
+    from cookbook.models import RecipeBookEntry
+    from cookbook.tests.factories import RecipeBookEntryFactory, RecipeBookFactory
+
+    user = auth.get_user(u1_s1)
+    with scopes_disabled():
+        book = RecipeBookFactory(space=space_1, created_by=user)
+        r1 = RecipeFactory(space=space_1, created_by=user)
+        RecipeBookEntryFactory(book=book, recipe=r1)
+
+    resp = u1_s1.put(
+        reverse(BATCH_URL),
+        {'recipes': [r1.pk], 'book_add': book.pk},
+        content_type='application/json',
+    )
+    assert resp.status_code == 200
+    with scopes_disabled():
+        assert RecipeBookEntry.objects.filter(book=book, recipe=r1).count() == 1
+
+
+def test_batch_update_book_add_requires_book_permission(u1_s1, u2_s1, space_1):
+    """book_add is rejected when the caller doesn't own or share the target book."""
+    from cookbook.models import RecipeBookEntry
+    from cookbook.tests.factories import RecipeBookFactory
+
+    owner = auth.get_user(u2_s1)
+    with scopes_disabled():
+        book = RecipeBookFactory(space=space_1, created_by=owner)
+        r1 = RecipeFactory(space=space_1)
+
+    resp = u1_s1.put(
+        reverse(BATCH_URL),
+        {'recipes': [r1.pk], 'book_add': book.pk},
+        content_type='application/json',
+    )
+    assert resp.status_code == 403
+    with scopes_disabled():
+        assert not RecipeBookEntry.objects.filter(book=book).exists()

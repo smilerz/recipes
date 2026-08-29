@@ -40,6 +40,7 @@ const API_METHODS = [
     'apiCookLogCreate',
     'apiCookLogList',
     'apiRecipeStatsRetrieve',
+    'apiRecipeBatchUpdateUpdate',
     'apiFoodRetrieve',
     'apiFoodList',
     'apiFoodCreate',
