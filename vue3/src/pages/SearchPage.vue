@@ -12,12 +12,16 @@
                         <v-btn data-test="batch-edit-action" variant="text" prepend-icon="$edit" class="text-none" @click="batchEditDialog = true">
                             {{ $t('BatchEdit') }}
                         </v-btn>
+                        <v-btn data-test="batch-export-action" variant="text" prepend-icon="fa-solid fa-file-export" class="text-none" @click="batchExportDialog = true">
+                            {{ $t('Export') }}
+                        </v-btn>
                         <v-btn data-test="batch-delete-action" variant="text" prepend-icon="$delete" class="text-none" @click="batchDeleteDialog = true">
                             {{ $t('Delete_All') }}
                         </v-btn>
                     </template>
                     <template #actions-menu>
                         <v-list-item data-test="batch-edit-action" prepend-icon="$edit" @click="batchEditDialog = true">{{ $t('BatchEdit') }}</v-list-item>
+                        <v-list-item data-test="batch-export-action" prepend-icon="fa-solid fa-file-export" @click="batchExportDialog = true">{{ $t('Export') }}</v-list-item>
                         <v-list-item data-test="batch-delete-action" prepend-icon="$delete" @click="batchDeleteDialog = true">{{ $t('Delete_All') }}</v-list-item>
                     </template>
                 </SelectionBar>
@@ -384,6 +388,8 @@
         <batch-edit-recipe-dialog :items="(selectedItems as any)" v-model="batchEditDialog" activator="model"
                                   @change="onBatchActionComplete()"></batch-edit-recipe-dialog>
 
+        <batch-export-dialog :items="(selectedItems as any)" v-model="batchExportDialog"></batch-export-dialog>
+
         <batch-delete-dialog :items="selectedItems" model="Recipe" v-model="batchDeleteDialog" activator="model"
                              @change="onBatchActionComplete()"></batch-delete-dialog>
     </v-container>
@@ -444,6 +450,7 @@ import KeywordsBar from '@/components/display/KeywordsBar.vue'
 import VClosableCardTitle from '@/components/dialogs/VClosableCardTitle.vue'
 import ActionConfirmDialog from '@/components/dialogs/ActionConfirmDialog.vue'
 import BatchEditRecipeDialog from '@/components/dialogs/BatchEditRecipeDialog.vue'
+import BatchExportDialog from '@/components/dialogs/BatchExportDialog.vue'
 import BatchDeleteDialog from '@/components/dialogs/BatchDeleteDialog.vue'
 import RecipeCard from '@/components/display/RecipeCard.vue'
 import RandomIcon from '@/components/display/RandomIcon.vue'
@@ -538,6 +545,7 @@ const tableItemCount = ref(0)
 const selectedItems = ref<EditorSupportedTypes[]>([])
 const selectMode = ref(false)
 const batchEditDialog = ref(false)
+const batchExportDialog = ref(false)
 const batchDeleteDialog = ref(false)
 
 /** Shared @change handler for the batch edit/delete dialogs — reload the list (which also
