@@ -197,6 +197,21 @@ describe('RecipeViewSettingsDrawer (consolidated)', () => {
         expect(options).toContain('onhand')
     })
 
+    it('shows the shared substitutes-expanded switch only when an actions toggle is on, and binds it', async () => {
+        const w = mountDrawer()
+        const s = settings(w)
+        s.recipe_overviewShowActions = false
+        s.recipe_stepShowActions = false
+        s.recipe_substitutesExpandedByDefault = false
+        await w.vm.$nextTick()
+        expect(w.find('[data-test="substitutes-expanded"]').exists()).toBe(false)
+        s.recipe_overviewShowActions = true
+        await w.vm.$nextTick()
+        expect(w.find('[data-test="substitutes-expanded"]').exists()).toBe(true)
+        await w.find('[data-test="substitutes-expanded"] input').setValue(true)
+        expect(s.recipe_substitutesExpandedByDefault).toBe(true)
+    })
+
     it('shows the shared truncate-length field only when a notes display is "truncate"', async () => {
         const w = mountDrawer()
         const s = settings(w)
