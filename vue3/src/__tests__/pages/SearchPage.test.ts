@@ -51,6 +51,15 @@ const HEAVY_STUBS: Record<string, any> = {
     RandomIcon: {render() { return h('div', {class: 'stub-random-icon'}) }},
     BatchDeleteDialog: {render() { return h('div') }},
     BatchEditRecipeDialog: {render() { return h('div') }},
+    // SelectionBar's real mobile/desktop menu-vs-inline-buttons split relies on Vuetify's
+    // teleported v-menu positioning, which doesn't render in jsdom's zero-layout environment.
+    // That responsive behavior is covered by SelectionBar's own test file - here we only need
+    // SearchPage's dialog-wiring logic, so render both slots unconditionally and inline.
+    SelectionBar: {
+        props: ['selectedCount'],
+        emits: ['close', 'select-all', 'select-none'],
+        template: '<div><slot name="actions"/><slot name="actions-menu"/></div>',
+    },
     ModelSelect: {props: ['model', 'modelValue'], render() { return h('div', {class: 'stub-model-select'}) }},
     ModelListSettingsPanel: {render() { return h('div', {class: 'stub-settings-panel'}) }},
     ModelListFilterChips: {props: ['filterDefs', 'getFilter', 'setFilter', 'clearFilter', 'clearAllFilters', 'activeFilterCount'], render() { return h('div', {class: 'stub-filter-chips'}) }},
@@ -108,6 +117,52 @@ describe('SearchPage (Phase 3 rewrite)', () => {
         apiMock.apiRecipeList = vi.fn().mockResolvedValue({results: [], count: 0, next: null, previous: null})
         apiMock.apiCustomFilterList = vi.fn().mockResolvedValue({results: [], count: 0, next: null, previous: null})
         apiMock.apiRecipeStatsRetrieve = vi.fn().mockResolvedValue({total: 0, makenow_ready: 0, new: 0, unrated: 0, never_cooked: 0, private: 0})
+    })
+
+    describe('batch actions', () => {
+        it('Batch Edit and Delete All actions are present once items are selected', async () => {
+            const {wrapper} = await mountSearchPage()
+            ;(wrapper.vm as any).selectMode = true
+            ;(wrapper.vm as any).selectedItems = [{id: 1, name: 'Rice'}]
+            await wrapper.vm.$nextTick()
+
+            expect(wrapper.find('[data-test="batch-edit-action"]').exists()).toBe(true)
+            expect(wrapper.find('[data-test="batch-delete-action"]').exists()).toBe(true)
+        })
+
+        it('clicking Batch Edit opens BatchEditRecipeDialog', async () => {
+            const {wrapper} = await mountSearchPage()
+            ;(wrapper.vm as any).selectMode = true
+            ;(wrapper.vm as any).selectedItems = [{id: 1, name: 'Rice'}]
+            await wrapper.vm.$nextTick()
+
+            expect((wrapper.vm as any).batchEditDialog).toBe(false)
+            await wrapper.find('[data-test="batch-edit-action"]').trigger('click')
+            expect((wrapper.vm as any).batchEditDialog).toBe(true)
+        })
+
+        it('clicking Delete All opens BatchDeleteDialog', async () => {
+            const {wrapper} = await mountSearchPage()
+            ;(wrapper.vm as any).selectMode = true
+            ;(wrapper.vm as any).selectedItems = [{id: 1, name: 'Rice'}]
+            await wrapper.vm.$nextTick()
+
+            expect((wrapper.vm as any).batchDeleteDialog).toBe(false)
+            await wrapper.find('[data-test="batch-delete-action"]').trigger('click')
+            expect((wrapper.vm as any).batchDeleteDialog).toBe(true)
+        })
+
+        it('onBatchActionComplete reloads the recipe list and exits select mode', async () => {
+            const {wrapper} = await mountSearchPage()
+            ;(wrapper.vm as any).selectMode = true
+            const callsBefore = (apiMock.apiRecipeList as any).mock.calls.length
+
+            ;(wrapper.vm as any).onBatchActionComplete()
+            await flushPromises()
+
+            expect((wrapper.vm as any).selectMode).toBe(false)
+            expect((apiMock.apiRecipeList as any).mock.calls.length).toBeGreaterThan(callsBefore)
+        })
     })
 
     describe('initial fetch', () => {

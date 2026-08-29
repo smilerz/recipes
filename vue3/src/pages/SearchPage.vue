@@ -9,18 +9,16 @@
                     @select-none="selectedItems = []"
                 >
                     <template #actions>
-                        <v-btn variant="text" prepend-icon="$edit" disabled class="text-none">
+                        <v-btn data-test="batch-edit-action" variant="text" prepend-icon="$edit" class="text-none" @click="batchEditDialog = true">
                             {{ $t('BatchEdit') }}
-                            <v-tooltip activator="parent" location="bottom">{{ $t('ComingSoon') }}</v-tooltip>
                         </v-btn>
-                        <v-btn variant="text" prepend-icon="$delete" disabled class="text-none">
+                        <v-btn data-test="batch-delete-action" variant="text" prepend-icon="$delete" class="text-none" @click="batchDeleteDialog = true">
                             {{ $t('Delete_All') }}
-                            <v-tooltip activator="parent" location="bottom">{{ $t('ComingSoon') }}</v-tooltip>
                         </v-btn>
                     </template>
                     <template #actions-menu>
-                        <v-list-item prepend-icon="$edit" disabled>{{ $t('BatchEdit') }}</v-list-item>
-                        <v-list-item prepend-icon="$delete" disabled>{{ $t('Delete_All') }}</v-list-item>
+                        <v-list-item data-test="batch-edit-action" prepend-icon="$edit" @click="batchEditDialog = true">{{ $t('BatchEdit') }}</v-list-item>
+                        <v-list-item data-test="batch-delete-action" prepend-icon="$delete" @click="batchDeleteDialog = true">{{ $t('Delete_All') }}</v-list-item>
                     </template>
                 </SelectionBar>
             </v-col>
@@ -383,8 +381,11 @@
 
         <action-confirm-dialog ref="confirmDialogRef" />
 
-        <!-- Batch action dialogs — coming soon. The selection bar UI is active
-             but actions are disabled until the batch-actions feature branch lands. -->
+        <batch-edit-recipe-dialog :items="(selectedItems as any)" v-model="batchEditDialog" activator="model"
+                                  @change="onBatchActionComplete()"></batch-edit-recipe-dialog>
+
+        <batch-delete-dialog :items="selectedItems" model="Recipe" v-model="batchDeleteDialog" activator="model"
+                             @change="onBatchActionComplete()"></batch-delete-dialog>
     </v-container>
 </template>
 
@@ -442,6 +443,8 @@ import RecipeContextMenu from '@/components/inputs/RecipeContextMenu.vue'
 import KeywordsBar from '@/components/display/KeywordsBar.vue'
 import VClosableCardTitle from '@/components/dialogs/VClosableCardTitle.vue'
 import ActionConfirmDialog from '@/components/dialogs/ActionConfirmDialog.vue'
+import BatchEditRecipeDialog from '@/components/dialogs/BatchEditRecipeDialog.vue'
+import BatchDeleteDialog from '@/components/dialogs/BatchDeleteDialog.vue'
 import RecipeCard from '@/components/display/RecipeCard.vue'
 import RandomIcon from '@/components/display/RandomIcon.vue'
 import type {EditorSupportedTypes} from '@/types/Models'
@@ -534,6 +537,15 @@ const recipes = ref<RecipeOverview[]>([])
 const tableItemCount = ref(0)
 const selectedItems = ref<EditorSupportedTypes[]>([])
 const selectMode = ref(false)
+const batchEditDialog = ref(false)
+const batchDeleteDialog = ref(false)
+
+/** Shared @change handler for the batch edit/delete dialogs — reload the list (which also
+ * clears selectedItems, see searchRecipes()) and drop out of select mode. */
+function onBatchActionComplete() {
+    selectMode.value = false
+    searchRecipes()
+}
 
 function toggleGridSelect(recipe: RecipeOverview, selected: boolean) {
     if (selected) {
