@@ -12,8 +12,11 @@
             {{ $t('Loading') }}...
         </div>
 
-        <!-- Tree rows -->
-        <template v-for="node in flatTree" :key="node.isLoadMore ? `load-more-${node.loadMoreParentId}` : node.id">
+        <!-- Tree rows — virtualized so a large flattened tree (many expanded branches)
+             doesn't render every row into the DOM at once. Rows are uniform height
+             (44px, single line, no wrap), which fixed-height virtualization requires. -->
+        <v-virtual-scroll v-if="flatTree.length > 0" :items="flatTree" item-height="44" max-height="60vh">
+            <template #default="{ item: node }">
             <!-- Load more sentinel -->
             <div
                 v-if="node.isLoadMore"
@@ -87,7 +90,8 @@
                     icon="fa-solid fa-chevron-right"
                 />
             </div>
-        </template>
+            </template>
+        </v-virtual-scroll>
 
     </div>
 </template>
