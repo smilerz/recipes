@@ -66,6 +66,8 @@ const API_METHODS = [
     'apiInventoryEntryOpenDestroy',
     'apiUserFileList',
     'apiExportPortableDataCreate',
+    'apiExportCreate',
+    'apiExportLogRetrieve',
     'apiImportPortableDataCreate',
     'apiSpaceBackupList',
     'apiSpaceBackupCreate',

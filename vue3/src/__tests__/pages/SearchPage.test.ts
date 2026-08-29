@@ -152,6 +152,17 @@ describe('SearchPage (Phase 3 rewrite)', () => {
             expect((wrapper.vm as any).batchDeleteDialog).toBe(true)
         })
 
+        it('clicking Export opens BatchExportDialog', async () => {
+            const {wrapper} = await mountSearchPage()
+            ;(wrapper.vm as any).selectMode = true
+            ;(wrapper.vm as any).selectedItems = [{id: 1, name: 'Rice'}]
+            await wrapper.vm.$nextTick()
+
+            expect((wrapper.vm as any).batchExportDialog).toBe(false)
+            await wrapper.find('[data-test="batch-export-action"]').trigger('click')
+            expect((wrapper.vm as any).batchExportDialog).toBe(true)
+        })
+
         it('onBatchActionComplete reloads the recipe list and exits select mode', async () => {
             const {wrapper} = await mountSearchPage()
             ;(wrapper.vm as any).selectMode = true
