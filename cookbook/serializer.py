@@ -1226,7 +1226,7 @@ class StepSerializer(WritableNestedModelSerializer):
         model = Step
         fields = (
             'id', 'name', 'instruction', 'ingredients', 'instructions_markdown', 'time', 'order', 'show_as_header', 'file', 'step_recipe',
-            'step_recipe_data', 'show_ingredients_table'
+            'step_recipe_data', 'step_recipe_scale', 'show_ingredients_table'
         )
 
 

@@ -823,6 +823,7 @@
   "Step": "Step",
   "StepHelp": "Steps contain ingredients (made up of quantity/unit/food), instructions, images and more information about that step in a recipe. ",
   "Step_Name": "Step Name",
+  "StepRecipeScale": "Recipe Scale",
   "Step_Type": "Step Type",
   "Step_start_time": "Step start time",
   "Steps": "Steps",

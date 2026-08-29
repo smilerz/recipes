@@ -48,7 +48,14 @@
                 </v-col>
                 <v-col cols="12" md="6" v-if="showRecipe || step.stepRecipe != null">
                     <model-select model="Recipe" :label="$t('Recipe')" v-model="step.stepRecipeData"
-                                  @update:modelValue="step.stepRecipe = (step.stepRecipeData != null) ? step.stepRecipeData.id! : null"></model-select>
+                                  @update:modelValue="onStepRecipeChange"></model-select>
+                    <v-number-input
+                        v-if="step.stepRecipe != null"
+                        data-test="step-recipe-scale"
+                        :label="$t('StepRecipeScale')"
+                        v-model="step.stepRecipeScale"
+                        :min="0" :step="0.25" control-variant="split"
+                    ></v-number-input>
                 </v-col>
                 <v-col cols="12" md="6" v-if="showFile || step.file != null">
                     <model-select model="UserFile" :label="$t('File')" v-model="step.file"></model-select>
@@ -269,6 +276,13 @@ const dialogIngredientParser = ref(false)
 const dialogIngredientSorter = ref(false)
 
 const editingIngredientIndex = ref(0)
+
+function onStepRecipeChange() {
+    step.value.stepRecipe = (step.value.stepRecipeData != null) ? step.value.stepRecipeData.id! : null
+    if (step.value.stepRecipe != null && step.value.stepRecipeScale == null) {
+        step.value.stepRecipeScale = 1
+    }
+}
 const ingredientTextInput = ref("")
 
 /**
