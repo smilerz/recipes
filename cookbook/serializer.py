@@ -1437,6 +1437,8 @@ class RecipeBatchUpdateSerializer(serializers.Serializer):
     keywords_set = serializers.ListField(child=serializers.IntegerField())
     keywords_remove_all = serializers.BooleanField(default=False)
 
+    book_add = serializers.IntegerField(required=False, allow_null=True)
+
     working_time = serializers.IntegerField(required=False, allow_null=True)
     waiting_time = serializers.IntegerField(required=False, allow_null=True)
     servings = serializers.IntegerField(required=False, allow_null=True)

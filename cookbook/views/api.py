@@ -2566,6 +2566,20 @@ class RecipeViewSet(LoggingMixin, viewsets.ModelViewSet, DeleteRelationMixing):
             if 'keywords_remove_all' in serializer.validated_data and serializer.validated_data['keywords_remove_all']:
                 Recipe.keywords.through.objects.filter(recipe_id__in=safe_recipe_ids).delete()
 
+            if serializer.validated_data.get('book_add', None) is not None:
+                try:
+                    book = RecipeBook.objects.get(id=serializer.validated_data['book_add'], space=self.request.space)
+                except RecipeBook.DoesNotExist:
+                    return Response({'book_add': [_('Recipe book not found.')]}, status=status.HTTP_400_BAD_REQUEST)
+
+                if book.get_owner() != self.request.user and self.request.user not in book.get_shared():
+                    return Response({'book_add': [_('No permission to add recipes to this book.')]}, status=status.HTTP_403_FORBIDDEN)
+
+                existing_recipe_ids = set(RecipeBookEntry.objects.filter(
+                    book=book, recipe_id__in=safe_recipe_ids).values_list('recipe_id', flat=True))
+                RecipeBookEntry.objects.bulk_create(
+                    [RecipeBookEntry(book=book, recipe_id=r.pk) for r in recipes if r.pk not in existing_recipe_ids])
+
             if 'working_time' in serializer.validated_data:
                 recipes.update(working_time=serializer.validated_data['working_time'])
 

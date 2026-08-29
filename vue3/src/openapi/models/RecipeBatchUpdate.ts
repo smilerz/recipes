@@ -50,7 +50,13 @@ export interface RecipeBatchUpdate {
      */
     keywordsRemoveAll?: boolean;
     /**
-     * 
+     *
+     * @type {number}
+     * @memberof RecipeBatchUpdate
+     */
+    bookAdd?: number | null;
+    /**
+     *
      * @type {number}
      * @memberof RecipeBatchUpdate
      */
@@ -146,6 +152,7 @@ export function RecipeBatchUpdateFromJSONTyped(json: any, ignoreDiscriminator: b
         'keywordsRemove': json['keywords_remove'],
         'keywordsSet': json['keywords_set'],
         'keywordsRemoveAll': json['keywords_remove_all'] == null ? undefined : json['keywords_remove_all'],
+        'bookAdd': json['book_add'] == null ? undefined : json['book_add'],
         'workingTime': json['working_time'] == null ? undefined : json['working_time'],
         'waitingTime': json['waiting_time'] == null ? undefined : json['waiting_time'],
         'servings': json['servings'] == null ? undefined : json['servings'],
@@ -176,6 +183,7 @@ export function RecipeBatchUpdateToJSONTyped(value?: RecipeBatchUpdate | null, i
         'keywords_remove': value['keywordsRemove'],
         'keywords_set': value['keywordsSet'],
         'keywords_remove_all': value['keywordsRemoveAll'],
+        'book_add': value['bookAdd'],
         'working_time': value['workingTime'],
         'waiting_time': value['waitingTime'],
         'servings': value['servings'],
