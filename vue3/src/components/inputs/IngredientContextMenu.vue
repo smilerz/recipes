@@ -182,16 +182,19 @@ const viewInPantry = computed(() => {
 watch(menuOpen, (open) => {
     if (!open) return
     localIgnoreShopping.value = props.ingredient.food?.ignoreShopping ?? false
-    substitutesExpanded.value = false
-    allSubstitutes.value = []
+    substitutesExpanded.value = userPrefStore.deviceSettings.recipe_substitutesExpandedByDefault
+    allSubstitutes.value = substitutesExpanded.value ? loadSubstitutes() : []
 })
+
+// The onhand subset already rides on the serialized Food object
+// (FoodSerializer.get_available_substitutes) — no network call needed.
+function loadSubstitutes() {
+    return (props.ingredient.food?.availableSubstitutes ?? []).map(s => ({id: s.id!, name: s.name!}))
+}
 
 function toggleSubstitutes() {
     substitutesExpanded.value = !substitutesExpanded.value
-    if (!substitutesExpanded.value) return
-    // The onhand subset already rides on the serialized Food object
-    // (FoodSerializer.get_available_substitutes) — no network call needed.
-    allSubstitutes.value = (props.ingredient.food?.availableSubstitutes ?? []).map(s => ({id: s.id!, name: s.name!}))
+    allSubstitutes.value = substitutesExpanded.value ? loadSubstitutes() : []
 }
 
 async function toggleShopping() {

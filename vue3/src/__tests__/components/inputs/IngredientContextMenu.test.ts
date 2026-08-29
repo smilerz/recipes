@@ -56,7 +56,14 @@ function mountMenu(ingredient: any = INGREDIENT) {
         missingWarn: false, fallbackWarn: false,
     })
     const vuetify = createVuetify({components: vuetifyComponents, directives: vuetifyDirectives})
-    const router = createRouter({history: createMemoryHistory(), routes: [{path: '/', component: {template: '<div/>'}}]})
+    const router = createRouter({
+        history: createMemoryHistory(),
+        routes: [
+            {path: '/', component: {template: '<div/>'}},
+            {path: '/model/:model/:id', name: 'ModelEditPage', component: {template: '<div/>'}},
+            {path: '/pantry', name: 'PantryPage', component: {template: '<div/>'}},
+        ],
+    })
     return mount(IngredientContextMenu, {
         props: {ingredient, ingredientFactor: 1},
         global: {
@@ -203,5 +210,33 @@ describe('IngredientContextMenu', () => {
         expect(fetchSpy).not.toHaveBeenCalled()
         expect((w.vm as any).allSubstitutes).toEqual(available)
         fetchSpy.mockRestore()
+    })
+
+    it('substitutes start collapsed on menu open when recipe_substitutesExpandedByDefault is off', async () => {
+        const available = [{id: 7, name: 'Olive Oil'}]
+        const food = {...INGREDIENT.food, availableSubstitutes: available}
+        const w = mountMenu({...INGREDIENT, food})
+        const store = (w.vm.$pinia as any)._s.get('user_preference_store')
+        store.deviceSettings.recipe_substitutesExpandedByDefault = false
+
+        ;(w.vm as any).menuOpen = true
+        await w.vm.$nextTick()
+
+        expect((w.vm as any).substitutesExpanded).toBe(false)
+        expect((w.vm as any).allSubstitutes).toEqual([])
+    })
+
+    it('substitutes start pre-expanded on menu open when recipe_substitutesExpandedByDefault is on', async () => {
+        const available = [{id: 7, name: 'Olive Oil'}]
+        const food = {...INGREDIENT.food, availableSubstitutes: available}
+        const w = mountMenu({...INGREDIENT, food})
+        const store = (w.vm.$pinia as any)._s.get('user_preference_store')
+        store.deviceSettings.recipe_substitutesExpandedByDefault = true
+
+        ;(w.vm as any).menuOpen = true
+        await w.vm.$nextTick()
+
+        expect((w.vm as any).substitutesExpanded).toBe(true)
+        expect((w.vm as any).allSubstitutes).toEqual(available)
     })
 })

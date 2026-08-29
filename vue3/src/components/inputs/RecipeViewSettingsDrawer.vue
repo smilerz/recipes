@@ -72,6 +72,17 @@
                                 />
                             </div>
 
+                            <!-- Shared sub-option: whether the menu's Substitutes sub-list opens
+                                 already expanded, revealed when either menu is on. -->
+                            <div v-if="anyActions" class="span-row d-flex align-center ga-2">
+                                <v-switch
+                                    v-model="deviceSettings.recipe_substitutesExpandedByDefault"
+                                    data-test="substitutes-expanded"
+                                    hide-details density="compact" color="primary"
+                                />
+                                <span>{{ $t('SubstitutesExpandedByDefault') }}</span>
+                            </div>
+
                             <!-- Notes selects need more room than the switch columns, so they
                                  break to a full-width row with their own Overview/Steps labels. -->
                             <div class="full-row">

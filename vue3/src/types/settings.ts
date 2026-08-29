@@ -34,6 +34,7 @@ export type DeviceSettings = {
     recipe_stepNotesDisplay: 'bubble' | 'inline' | 'truncate',
     recipe_notesTruncateLength: number,
     recipe_contextMenuColor: 'never' | 'onhand' | 'shopping' | 'substitute',
+    recipe_substitutesExpandedByDefault: boolean,
     recipe_showAuthor: boolean,
     recipe_showTimeChips: boolean,
     recipe_showServings: boolean,
