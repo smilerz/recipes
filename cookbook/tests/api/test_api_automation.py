@@ -37,6 +37,19 @@ def test_stats_enabled_disabled_counts(u1_s1, space_1):
     assert stats['disabled'] == baseline['disabled'] + 1
 
 
+# AutomationViewSet extended StandardFilterModelViewSet (bare icontains) — fuzzy-matching UAT batch
+# swapped it onto FuzzyFilterMixin for real search.
+def test_query_param_filters_by_name(u1_s1, space_1):
+    user = auth.get_user(u1_s1)
+    match = Automation.objects.create(name='Sodium Alias', type=Automation.FOOD_ALIAS, created_by=user, space=space_1)
+    other = Automation.objects.create(name='Fiber Alias', type=Automation.FOOD_ALIAS, created_by=user, space=space_1)
+
+    names = [e['name'] for e in json.loads(u1_s1.get(reverse(LIST_URL), {'query': 'Sodium'}).content)['results']]
+
+    assert match.name in names
+    assert other.name not in names
+
+
 def test_ordering_name(u1_s1, space_1):
     user = auth.get_user(u1_s1)
     Automation.objects.create(name='zzz_auto', type=Automation.FOOD_ALIAS, created_by=user, space=space_1)

@@ -326,6 +326,18 @@ export interface PatchedFood {
      * @type {number}
      * @memberof PatchedFood
      */
+    shelfLifeDaysFrozen?: number | null;
+    /**
+     * 
+     * @type {number}
+     * @memberof PatchedFood
+     */
+    shelfLifeDaysOpened?: number | null;
+    /**
+     * 
+     * @type {number}
+     * @memberof PatchedFood
+     */
     shoppingAmount?: number | null;
 }
 
@@ -381,6 +393,8 @@ export function PatchedFoodFromJSONTyped(json: any, ignoreDiscriminator: boolean
         'preferredUnit': json['preferred_unit'] == null ? undefined : UnitFromJSON(json['preferred_unit']),
         'preferredShoppingUnit': json['preferred_shopping_unit'] == null ? undefined : UnitFromJSON(json['preferred_shopping_unit']),
         'shelfLifeDays': json['shelf_life_days'] == null ? undefined : json['shelf_life_days'],
+        'shelfLifeDaysFrozen': json['shelf_life_days_frozen'] == null ? undefined : json['shelf_life_days_frozen'],
+        'shelfLifeDaysOpened': json['shelf_life_days_opened'] == null ? undefined : json['shelf_life_days_opened'],
         'shoppingAmount': json['shopping_amount'] == null ? undefined : json['shopping_amount'],
     };
 }
@@ -420,6 +434,8 @@ export function PatchedFoodToJSONTyped(value?: Omit<PatchedFood, 'shopping'|'par
         'preferred_unit': UnitToJSON(value['preferredUnit']),
         'preferred_shopping_unit': UnitToJSON(value['preferredShoppingUnit']),
         'shelf_life_days': value['shelfLifeDays'],
+        'shelf_life_days_frozen': value['shelfLifeDaysFrozen'],
+        'shelf_life_days_opened': value['shelfLifeDaysOpened'],
         'shopping_amount': value['shoppingAmount'],
     };
 }

@@ -807,7 +807,11 @@ class Food(ExportModelOperationsMixin('food'), TreeModel, PermissionModelMixin):
     preferred_shopping_unit = models.ForeignKey(Unit, on_delete=models.SET_NULL, null=True, blank=True, default=None, related_name='preferred_shopping_unit')
     # pantry: default shelf life (days) auto-fills a new lot's expiry; default purchase pack amount
     # pairs with preferred_shopping_unit for the shopping list. Both optional, per-food, not inheritable.
+    # shelf_life_days = Pantry/Fridge (sealed, not frozen). shelf_life_days_frozen = sealed & frozen.
+    # shelf_life_days_opened = once opened, applied only while NOT frozen (freezing pauses any clock).
     shelf_life_days = models.PositiveIntegerField(null=True, blank=True, default=None)
+    shelf_life_days_frozen = models.PositiveIntegerField(null=True, blank=True, default=None)
+    shelf_life_days_opened = models.PositiveIntegerField(null=True, blank=True, default=None)
     shopping_amount = models.DecimalField(max_digits=16, decimal_places=4, null=True, blank=True, default=None)
     fdc_id = models.IntegerField(null=True, default=None, blank=True)
 
@@ -1460,6 +1464,9 @@ class InventoryEntry(models.Model, PermissionModelMixin):
     food = models.ForeignKey(Food, on_delete=models.CASCADE, null=True, blank=True)
 
     expires = models.DateField(null=True, blank=True)
+    # null = never opened. Set by the `open` action; freezing pauses whatever clock is running,
+    # so this is preserved but inert while the lot sits in a freezer location (see recompute_lot_expiry).
+    opened_at = models.DateField(null=True, blank=True)
 
     note = models.CharField(max_length=256, null=True, blank=True)
 
@@ -1481,10 +1488,12 @@ class InventoryLog(models.Model, PermissionModelMixin):
     B_ADD = 'add'
     B_REMOVE = 'remove'
     B_MOVE = 'move'
+    B_OPEN = 'open'
     BOOKING_TYPES = [
         (B_ADD, _('Add')),
         (B_REMOVE, _('Remove')),
         (B_MOVE, _('Move')),
+        (B_OPEN, _('Open')),
     ]
 
     entry = models.ForeignKey(InventoryEntry, on_delete=models.CASCADE)
@@ -1659,6 +1668,29 @@ class ExportLog(models.Model, PermissionModelMixin):
 
     class Meta:
         ordering = ('pk',)
+
+
+class SpaceBackup(models.Model, PermissionModelMixin):
+    running = models.BooleanField(default=True)
+    msg = models.TextField(default="")
+
+    total_items = models.IntegerField(default=0)
+    processed_items = models.IntegerField(default=0)
+
+    file = models.FileField(upload_to='backups/', null=True, blank=True)
+    file_size_kb = models.IntegerField(default=0, blank=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    created_by = models.ForeignKey(User, on_delete=models.CASCADE)
+
+    objects = ScopedManager(space='space')
+    space = models.ForeignKey(Space, on_delete=models.CASCADE)
+
+    def __str__(self):
+        return f"{self.created_at}:{self.space_id}"
+
+    class Meta:
+        ordering = ('-created_at',)
 
 
 class BookmarkletImport(ExportModelOperationsMixin('bookmarklet_import'), models.Model, PermissionModelMixin):

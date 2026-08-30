@@ -1,5 +1,6 @@
 import json
 from datetime import date, timedelta
+from unittest.mock import patch
 
 import pytest
 from django.contrib import auth
@@ -38,6 +39,55 @@ def test_list_household_scoped(u1_s1, u2_s1, space_1):
     ids = get_result_ids(u1_s1.get(reverse(LIST_URL)))
     assert mine.id in ids
     assert theirs.id not in ids
+
+
+@pytest.mark.django_db
+def test_entry_food_carries_substitute_onhand(u1_s1, space_1):
+    """The pantry list's nested food surfaces substitute_onhand via the same batch-computed
+    context FoodViewSet.list() uses (compute_substitute_flags), not the serializer's per-food
+    fallback query - this locks in that InventoryEntryViewSet.list() actually populates that
+    context instead of silently relying on the (correct but N+1) fallback path."""
+    user = auth.get_user(u1_s1)
+    with scopes_disabled():
+        household = Household.objects.create(name='hh', space=space_1)
+        UserSpace.objects.filter(user=user, space=space_1).update(household=household)
+
+        food = FoodFactory(space=space_1)
+        substitute_food = FoodFactory(space=space_1)
+        food.substitute.add(substitute_food)
+        no_substitute_food = FoodFactory(space=space_1)
+
+        loc = InventoryLocationFactory(space=space_1, household=household)
+        InventoryEntryFactory(space=space_1, food=food, inventory_location=loc, amount=1)
+        InventoryEntryFactory(space=space_1, food=no_substitute_food, inventory_location=loc, amount=1)
+        InventoryEntryFactory(space=space_1, food=substitute_food, inventory_location=loc, amount=1)
+
+    results = json.loads(u1_s1.get(reverse(LIST_URL)).content)['results']
+    row = next(r for r in results if r['food']['id'] == food.id)
+    other_row = next(r for r in results if r['food']['id'] == no_substitute_food.id)
+    assert row['food']['substitute_onhand'] is True
+    assert other_row['food']['substitute_onhand'] is False
+
+
+@pytest.mark.django_db
+def test_list_batches_substitute_flags_instead_of_per_food_fallback(u1_s1, space_1):
+    """FoodSerializer.get_substitute_onhand/get_substitute_inventory only skip their per-food
+    fallback query when serializer.context['_substitute_onhand'/'_substitute_inventory'] is
+    pre-populated - the fallback computes the same correct answer either way, so a pure
+    correctness assertion wouldn't catch a regression back to the N+1 path. Assert
+    compute_substitute_flags is actually called by this endpoint's list(), the same way
+    FoodViewSet.list() already does it."""
+    user = auth.get_user(u1_s1)
+    with scopes_disabled():
+        household = Household.objects.create(name='hh', space=space_1)
+        UserSpace.objects.filter(user=user, space=space_1).update(household=household)
+        loc = InventoryLocationFactory(space=space_1, household=household)
+        InventoryEntryFactory(space=space_1, food=FoodFactory(space=space_1), inventory_location=loc, amount=1)
+
+    with patch('cookbook.views.api.compute_substitute_flags', return_value=({}, {})) as mock_compute:
+        u1_s1.get(reverse(LIST_URL))
+
+    assert mock_compute.called
 
 
 @pytest.mark.django_db
@@ -442,3 +492,217 @@ def test_draw_down_new_unit_requires_unit_scope_400(u1_s1, space_1):
     with scopes_disabled():
         lot.refresh_from_db()
         assert lot.amount == 2 and lot.unit_id == gallon.id
+
+
+# ==================== freezer-aware defaults + opened lifecycle ====================
+
+OPEN_URL = 'api:inventoryentry-open'
+
+
+@pytest.mark.django_db
+def test_create_freezer_autofills_from_frozen_shelf_life(u1_s1, space_1):
+    """A food with shelf_life_days_frozen set now gets a real auto-expiry in the freezer,
+    using the frozen number (not the pantry/fridge one)."""
+    hh, loc = _household_with_location(u1_s1, space_1)
+    with scopes_disabled():
+        freezer = InventoryLocationFactory(space=space_1, household=hh, is_freezer=True)
+        food = FoodFactory(space=space_1, shelf_life_days=7, shelf_life_days_frozen=180)
+
+    r = u1_s1.post(reverse(LIST_URL), _create_body(food, freezer, hh), content_type='application/json')
+    assert r.status_code == 201
+    assert r.json()['expires'] == (date.today() + timedelta(days=180)).isoformat()
+
+
+@pytest.mark.django_db
+def test_move_out_of_freezer_recomputes_from_pantry_shelf_life(u1_s1, space_1):
+    """Thawing (moving a lot from a freezer to a non-freezer location) unpauses the clock:
+    expiry recomputes from today using the Pantry/Fridge number, not preserved from the frozen date."""
+    hh, loc = _household_with_location(u1_s1, space_1)
+    with scopes_disabled():
+        freezer = InventoryLocationFactory(space=space_1, household=hh, is_freezer=True)
+        food = FoodFactory(space=space_1, shelf_life_days=2, shelf_life_days_frozen=180)
+        entry = InventoryEntryFactory(
+            space=space_1, food=food, inventory_location=freezer, amount=1, expires=date.today() + timedelta(days=180))
+
+    r = u1_s1.patch(
+        reverse('api:inventoryentry-detail', args=[entry.id]),
+        {'inventory_location': {'id': loc.id, 'name': loc.name, 'household': {'id': hh.id, 'name': hh.name}}},
+        content_type='application/json')
+    assert r.status_code == 200
+    assert r.json()['expires'] == (date.today() + timedelta(days=2)).isoformat()
+
+
+@pytest.mark.django_db
+def test_move_into_freezer_recomputes_from_frozen_shelf_life(u1_s1, space_1):
+    """Freezing (moving a lot into a freezer location) pauses the clock at the frozen number."""
+    hh, loc = _household_with_location(u1_s1, space_1)
+    with scopes_disabled():
+        freezer = InventoryLocationFactory(space=space_1, household=hh, is_freezer=True)
+        food = FoodFactory(space=space_1, shelf_life_days=2, shelf_life_days_frozen=180)
+        entry = InventoryEntryFactory(
+            space=space_1, food=food, inventory_location=loc, amount=1, expires=date.today() + timedelta(days=2))
+
+    r = u1_s1.patch(
+        reverse('api:inventoryentry-detail', args=[entry.id]),
+        {'inventory_location': {'id': freezer.id, 'name': freezer.name, 'household': {'id': hh.id, 'name': hh.name}}},
+        content_type='application/json')
+    assert r.status_code == 200
+    assert r.json()['expires'] == (date.today() + timedelta(days=180)).isoformat()
+
+
+@pytest.mark.django_db
+def test_move_with_explicit_expires_is_not_overwritten_by_recompute(u1_s1, space_1):
+    """A move that also carries an explicit expires in the same request wins over the recompute."""
+    hh, loc = _household_with_location(u1_s1, space_1)
+    explicit = (date.today() + timedelta(days=99)).isoformat()
+    with scopes_disabled():
+        freezer = InventoryLocationFactory(space=space_1, household=hh, is_freezer=True)
+        food = FoodFactory(space=space_1, shelf_life_days=2, shelf_life_days_frozen=180)
+        entry = InventoryEntryFactory(
+            space=space_1, food=food, inventory_location=freezer, amount=1, expires=date.today() + timedelta(days=180))
+
+    r = u1_s1.patch(
+        reverse('api:inventoryentry-detail', args=[entry.id]),
+        {'inventory_location': {'id': loc.id, 'name': loc.name, 'household': {'id': hh.id, 'name': hh.name}},
+         'expires': explicit},
+        content_type='application/json')
+    assert r.status_code == 200
+    assert r.json()['expires'] == explicit
+
+
+@pytest.mark.django_db
+def test_move_between_two_non_freezer_locations_does_not_recompute(u1_s1, space_1):
+    """A lateral move that never touches freezer status leaves an already-set expiry untouched —
+    even a custom date the formula would NOT have produced itself (proves it's not just coincidence)."""
+    hh, loc = _household_with_location(u1_s1, space_1)
+    custom = date.today() + timedelta(days=365)  # deliberately not what shelf_life_days=2 would suggest
+    with scopes_disabled():
+        other_loc = InventoryLocationFactory(space=space_1, household=hh)
+        food = FoodFactory(space=space_1, shelf_life_days=2)
+        entry = InventoryEntryFactory(space=space_1, food=food, inventory_location=loc, amount=1, expires=custom)
+
+    r = u1_s1.patch(
+        reverse('api:inventoryentry-detail', args=[entry.id]),
+        {'inventory_location': {'id': other_loc.id, 'name': other_loc.name, 'household': {'id': hh.id, 'name': hh.name}}},
+        content_type='application/json')
+    assert r.status_code == 200
+    assert r.json()['expires'] == custom.isoformat()
+
+
+@pytest.mark.django_db
+def test_move_between_two_freezer_locations_does_not_reset_frozen_clock(u1_s1, space_1):
+    """Moving between two freezer locations (garage chest freezer to kitchen freezer) must NOT
+    reset the frozen clock to 'today + frozen days' — the lot has already been frozen a while."""
+    hh, loc = _household_with_location(u1_s1, space_1)
+    with scopes_disabled():
+        freezer_a = InventoryLocationFactory(space=space_1, household=hh, is_freezer=True)
+        freezer_b = InventoryLocationFactory(space=space_1, household=hh, is_freezer=True)
+        food = FoodFactory(space=space_1, shelf_life_days_frozen=180)
+        old_expiry = date.today() + timedelta(days=30)  # frozen a while ago, well short of a fresh 180-day clock
+        entry = InventoryEntryFactory(space=space_1, food=food, inventory_location=freezer_a, amount=1, expires=old_expiry)
+
+    r = u1_s1.patch(
+        reverse('api:inventoryentry-detail', args=[entry.id]),
+        {'inventory_location': {'id': freezer_b.id, 'name': freezer_b.name, 'household': {'id': hh.id, 'name': hh.name}}},
+        content_type='application/json')
+    assert r.status_code == 200
+    assert r.json()['expires'] == old_expiry.isoformat()
+
+
+@pytest.mark.django_db
+def test_open_sets_opened_at_and_recomputes_expiry(u1_s1, space_1):
+    """Marking a non-frozen lot opened stamps opened_at=today and recomputes expiry from the
+    Opened shelf-life number, logging a B_OPEN entry."""
+    hh, loc = _household_with_location(u1_s1, space_1)
+    with scopes_disabled():
+        food = FoodFactory(space=space_1, shelf_life_days=7, shelf_life_days_opened=3)
+        entry = InventoryEntryFactory(
+            space=space_1, food=food, inventory_location=loc, amount=1, expires=date.today() + timedelta(days=7))
+
+    r = u1_s1.post(reverse(OPEN_URL, args=[entry.id]))
+    assert r.status_code == 200
+    assert r.json()['expires'] == (date.today() + timedelta(days=3)).isoformat()
+    assert r.json()['opened_at'] == date.today().isoformat()
+    with scopes_disabled():
+        assert InventoryLog.objects.filter(entry=entry, booking_type=InventoryLog.B_OPEN).exists()
+
+
+@pytest.mark.django_db
+def test_open_while_frozen_does_not_shorten_expiry_until_moved_out(u1_s1, space_1):
+    """Opening a lot that's still in the freezer records opened_at but does NOT touch expires —
+    freezing arrests decay regardless of the seal. The opened clock only takes effect once the
+    lot leaves the freezer."""
+    hh, loc = _household_with_location(u1_s1, space_1)
+    with scopes_disabled():
+        freezer = InventoryLocationFactory(space=space_1, household=hh, is_freezer=True)
+        food = FoodFactory(space=space_1, shelf_life_days_frozen=180, shelf_life_days_opened=3)
+        entry = InventoryEntryFactory(
+            space=space_1, food=food, inventory_location=freezer, amount=1, expires=date.today() + timedelta(days=180))
+
+    r = u1_s1.post(reverse(OPEN_URL, args=[entry.id]))
+    assert r.status_code == 200
+    assert r.json()['expires'] == (date.today() + timedelta(days=180)).isoformat()  # unchanged
+    assert r.json()['opened_at'] == date.today().isoformat()
+
+    # now move it out of the freezer — THIS is when the opened clock should take over
+    r2 = u1_s1.patch(
+        reverse('api:inventoryentry-detail', args=[entry.id]),
+        {'inventory_location': {'id': loc.id, 'name': loc.name, 'household': {'id': hh.id, 'name': hh.name}}},
+        content_type='application/json')
+    assert r2.status_code == 200
+    assert r2.json()['expires'] == (date.today() + timedelta(days=3)).isoformat()
+
+
+@pytest.mark.django_db
+def test_thawing_a_long_opened_lot_restarts_the_opened_clock_from_the_thaw_date(u1_s1, space_1):
+    """A lot opened weeks before being frozen must not come out of the freezer already "expired"
+    on paper — freezing arrests decay for the opened clock too, not just the sealed one. The
+    opened countdown restarts from the thaw date, not the original (long-past) opened_at."""
+    hh, loc = _household_with_location(u1_s1, space_1)
+    with scopes_disabled():
+        freezer = InventoryLocationFactory(space=space_1, household=hh, is_freezer=True)
+        food = FoodFactory(space=space_1, shelf_life_days_frozen=180, shelf_life_days_opened=3)
+        entry = InventoryEntryFactory(
+            space=space_1, food=food, inventory_location=freezer, amount=1,
+            opened_at=date.today() - timedelta(days=30), expires=date.today() + timedelta(days=180))
+
+    r = u1_s1.patch(
+        reverse('api:inventoryentry-detail', args=[entry.id]),
+        {'inventory_location': {'id': loc.id, 'name': loc.name, 'household': {'id': hh.id, 'name': hh.name}}},
+        content_type='application/json')
+    assert r.status_code == 200
+    # NOT opened_at (30 days ago) + 3 days, which would already be 27 days in the past
+    assert r.json()['expires'] == (date.today() + timedelta(days=3)).isoformat()
+
+
+@pytest.mark.django_db
+def test_open_is_idempotent(u1_s1, space_1):
+    """Opening an already-opened lot a second time is a no-op — opened_at doesn't reset."""
+    hh, loc = _household_with_location(u1_s1, space_1)
+    with scopes_disabled():
+        food = FoodFactory(space=space_1, shelf_life_days_opened=3)
+        entry = InventoryEntryFactory(
+            space=space_1, food=food, inventory_location=loc, amount=1, opened_at=date.today() - timedelta(days=1))
+
+    r = u1_s1.post(reverse(OPEN_URL, args=[entry.id]))
+    assert r.status_code == 200
+    with scopes_disabled():
+        entry.refresh_from_db()
+        assert entry.opened_at == date.today() - timedelta(days=1)
+
+
+@pytest.mark.django_db
+def test_unopen_clears_opened_at_and_recomputes_sealed_expiry(u1_s1, space_1):
+    """Undo: clearing opened_at reverts expiry to the sealed-state formula for wherever the
+    lot currently sits — no hidden 'original date' snapshot needed."""
+    hh, loc = _household_with_location(u1_s1, space_1)
+    with scopes_disabled():
+        food = FoodFactory(space=space_1, shelf_life_days=7, shelf_life_days_opened=3)
+        entry = InventoryEntryFactory(
+            space=space_1, food=food, inventory_location=loc, amount=1,
+            opened_at=date.today(), expires=date.today() + timedelta(days=3))
+
+    r = u1_s1.delete(reverse(OPEN_URL, args=[entry.id]))
+    assert r.status_code == 200
+    assert r.json()['opened_at'] is None
+    assert r.json()['expires'] == (date.today() + timedelta(days=7)).isoformat()

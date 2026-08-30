@@ -88,6 +88,7 @@ models/PaginatedRecipeOverviewList.ts
 models/PaginatedShoppingListEntryList.ts
 models/PaginatedShoppingListList.ts
 models/PaginatedShoppingListRecipeList.ts
+models/PaginatedSpaceBackupList.ts
 models/PaginatedSpaceList.ts
 models/PaginatedStepList.ts
 models/PaginatedStorageList.ts
@@ -144,6 +145,8 @@ models/PatchedUserFile.ts
 models/PatchedUserPreference.ts
 models/PatchedUserSpace.ts
 models/PatchedViewLog.ts
+models/PortableDataExportRequest.ts
+models/PortableDataImportRequest.ts
 models/Property.ts
 models/PropertyType.ts
 models/Recipe.ts
@@ -180,6 +183,7 @@ models/SourceImportRecipe.ts
 models/SourceImportStep.ts
 models/SourceImportUnit.ts
 models/Space.ts
+models/SpaceBackup.ts
 models/SpaceThemeEnum.ts
 models/Step.ts
 models/StockUp.ts

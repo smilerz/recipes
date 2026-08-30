@@ -83,6 +83,7 @@ import type {
   PaginatedShoppingListEntryList,
   PaginatedShoppingListList,
   PaginatedShoppingListRecipeList,
+  PaginatedSpaceBackupList,
   PaginatedSpaceList,
   PaginatedStepList,
   PaginatedStorageList,
@@ -137,6 +138,8 @@ import type {
   PatchedUserPreference,
   PatchedUserSpace,
   PatchedViewLog,
+  PortableDataExportRequest,
+  PortableDataImportRequest,
   Property,
   PropertyType,
   Recipe,
@@ -161,6 +164,7 @@ import type {
   ShoppingListEntryBulkCreate,
   ShoppingListRecipe,
   Space,
+  SpaceBackup,
   Step,
   StockUp,
   Storage,
@@ -316,6 +320,8 @@ import {
     PaginatedShoppingListListToJSON,
     PaginatedShoppingListRecipeListFromJSON,
     PaginatedShoppingListRecipeListToJSON,
+    PaginatedSpaceBackupListFromJSON,
+    PaginatedSpaceBackupListToJSON,
     PaginatedSpaceListFromJSON,
     PaginatedSpaceListToJSON,
     PaginatedStepListFromJSON,
@@ -424,6 +430,10 @@ import {
     PatchedUserSpaceToJSON,
     PatchedViewLogFromJSON,
     PatchedViewLogToJSON,
+    PortableDataExportRequestFromJSON,
+    PortableDataExportRequestToJSON,
+    PortableDataImportRequestFromJSON,
+    PortableDataImportRequestToJSON,
     PropertyFromJSON,
     PropertyToJSON,
     PropertyTypeFromJSON,
@@ -472,6 +482,8 @@ import {
     ShoppingListRecipeToJSON,
     SpaceFromJSON,
     SpaceToJSON,
+    SpaceBackupFromJSON,
+    SpaceBackupToJSON,
     StepFromJSON,
     StepToJSON,
     StockUpFromJSON,
@@ -809,6 +821,10 @@ export interface ApiExportLogUpdateRequest {
     exportLog: Omit<ExportLog, 'createdBy'|'createdAt'>;
 }
 
+export interface ApiExportPortableDataCreateRequest {
+    portableDataExportRequest?: PortableDataExportRequest;
+}
+
 export interface ApiFdcSearchRetrieveRequest {
     dataType?: Array<string>;
     query?: string;
@@ -1001,6 +1017,10 @@ export interface ApiImportOpenDataCreateRequest {
     importOpenData: ImportOpenData;
 }
 
+export interface ApiImportPortableDataCreateRequest {
+    portableDataImportRequest: PortableDataImportRequest;
+}
+
 export interface ApiIngredientCreateRequest {
     ingredient: Omit<Ingredient, 'conversions'|'usedInRecipes'|'checked'>;
 }
@@ -1042,7 +1062,7 @@ export interface ApiInventoryEntryCascadingListRequest {
 }
 
 export interface ApiInventoryEntryCreateRequest {
-    inventoryEntry: Omit<InventoryEntry, 'label'|'createdAt'|'createdBy'>;
+    inventoryEntry: Omit<InventoryEntry, 'openedAt'|'label'|'createdAt'|'createdBy'>;
 }
 
 export interface ApiInventoryEntryDestroyRequest {
@@ -1070,9 +1090,17 @@ export interface ApiInventoryEntryNullingListRequest {
     pageSize?: number;
 }
 
+export interface ApiInventoryEntryOpenCreateRequest {
+    id: number;
+}
+
+export interface ApiInventoryEntryOpenDestroyRequest {
+    id: number;
+}
+
 export interface ApiInventoryEntryPartialUpdateRequest {
     id: number;
-    patchedInventoryEntry?: Omit<PatchedInventoryEntry, 'label'|'createdAt'|'createdBy'>;
+    patchedInventoryEntry?: Omit<PatchedInventoryEntry, 'openedAt'|'label'|'createdAt'|'createdBy'>;
 }
 
 export interface ApiInventoryEntryProtectingListRequest {
@@ -1092,7 +1120,7 @@ export interface ApiInventoryEntryStockUpCreateRequest {
 
 export interface ApiInventoryEntryUpdateRequest {
     id: number;
-    inventoryEntry: Omit<InventoryEntry, 'label'|'createdAt'|'createdBy'>;
+    inventoryEntry: Omit<InventoryEntry, 'openedAt'|'label'|'createdAt'|'createdBy'>;
 }
 
 export interface ApiInventoryLocationCascadingListRequest {
@@ -1857,6 +1885,31 @@ export interface ApiShoppingListRetrieveRequest {
 export interface ApiShoppingListUpdateRequest {
     id: number;
     shoppingList?: ShoppingList;
+}
+
+export interface ApiSpaceBackupCreateRequest {
+    spaceBackup?: Omit<SpaceBackup, 'running'|'msg'|'totalItems'|'processedItems'|'file'|'fileSizeKb'|'createdBy'|'createdAt'>;
+}
+
+export interface ApiSpaceBackupDestroyRequest {
+    id: number;
+}
+
+export interface ApiSpaceBackupListRequest {
+    page?: number;
+    pageSize?: number;
+}
+
+export interface ApiSpaceBackupRestoreCreateRequest {
+    id: number;
+}
+
+export interface ApiSpaceBackupRestorePreviewCreateRequest {
+    id: number;
+}
+
+export interface ApiSpaceBackupRetrieveRequest {
+    id: number;
 }
 
 export interface ApiSpaceCreateRequest {
@@ -5245,6 +5298,42 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
+     * Version-agnostic Food/Keyword/RecipeBook export (Part 2 of the pantry-expiration-and- data-portability plan) — a thin, synchronous wrapper around build_portable_export. Deliberately NOT the ExportLog/background-thread pattern AppExportView uses: this is pure JSON with no images, so the async machinery that pattern exists for doesn\'t apply here.
+     */
+    async apiExportPortableDataCreateRaw(requestParameters: ApiExportPortableDataCreateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<{ [key: string]: any; }>> {
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        if (this.configuration && this.configuration.apiKey) {
+            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
+        }
+
+
+        let urlPath = `/api/export-portable-data/`;
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: PortableDataExportRequestToJSON(requestParameters['portableDataExportRequest']),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse<any>(response);
+    }
+
+    /**
+     * Version-agnostic Food/Keyword/RecipeBook export (Part 2 of the pantry-expiration-and- data-portability plan) — a thin, synchronous wrapper around build_portable_export. Deliberately NOT the ExportLog/background-thread pattern AppExportView uses: this is pure JSON with no images, so the async machinery that pattern exists for doesn\'t apply here.
+     */
+    async apiExportPortableDataCreate(requestParameters: ApiExportPortableDataCreateRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<{ [key: string]: any; }> {
+        const response = await this.apiExportPortableDataCreateRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
      */
     async apiFdcSearchRetrieveRaw(requestParameters: ApiFdcSearchRetrieveRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<FdcQuery>> {
         const queryParameters: any = {};
@@ -7116,6 +7205,49 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
+     * Import/merge for the portable-data envelope (see PortableDataExportView). Two modes: \'analyze\' (dry-run diff preview, zero writes) and \'apply\' (commit, per merge_policy).
+     */
+    async apiImportPortableDataCreateRaw(requestParameters: ApiImportPortableDataCreateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<{ [key: string]: any; }>> {
+        if (requestParameters['portableDataImportRequest'] == null) {
+            throw new runtime.RequiredError(
+                'portableDataImportRequest',
+                'Required parameter "portableDataImportRequest" was null or undefined when calling apiImportPortableDataCreate().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        if (this.configuration && this.configuration.apiKey) {
+            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
+        }
+
+
+        let urlPath = `/api/import-portable-data/`;
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: PortableDataImportRequestToJSON(requestParameters['portableDataImportRequest']),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse<any>(response);
+    }
+
+    /**
+     * Import/merge for the portable-data envelope (see PortableDataExportView). Two modes: \'analyze\' (dry-run diff preview, zero writes) and \'apply\' (commit, per merge_policy).
+     */
+    async apiImportPortableDataCreate(requestParameters: ApiImportPortableDataCreateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<{ [key: string]: any; }> {
+        const response = await this.apiImportPortableDataCreateRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
      * logs request counts to redis cache total/per user/
      */
     async apiIngredientCreateRaw(requestParameters: ApiIngredientCreateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Ingredient>> {
@@ -7706,6 +7838,88 @@ export class ApiApi extends runtime.BaseAPI {
      */
     async apiInventoryEntryNullingList(requestParameters: ApiInventoryEntryNullingListRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PaginatedGenericModelReferenceList> {
         const response = await this.apiInventoryEntryNullingListRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Mark a lot opened (POST) or undo that (DELETE) — starts/clears the Opened shelf-life clock (see recompute_lot_expiry). POST is idempotent: opening an already-opened lot is a no-op, opened_at never resets to a later date by re-tapping.
+     */
+    async apiInventoryEntryOpenCreateRaw(requestParameters: ApiInventoryEntryOpenCreateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<InventoryEntry>> {
+        if (requestParameters['id'] == null) {
+            throw new runtime.RequiredError(
+                'id',
+                'Required parameter "id" was null or undefined when calling apiInventoryEntryOpenCreate().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.apiKey) {
+            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
+        }
+
+
+        let urlPath = `/api/inventory-entry/{id}/open/`;
+        urlPath = urlPath.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id'])));
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => InventoryEntryFromJSON(jsonValue));
+    }
+
+    /**
+     * Mark a lot opened (POST) or undo that (DELETE) — starts/clears the Opened shelf-life clock (see recompute_lot_expiry). POST is idempotent: opening an already-opened lot is a no-op, opened_at never resets to a later date by re-tapping.
+     */
+    async apiInventoryEntryOpenCreate(requestParameters: ApiInventoryEntryOpenCreateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<InventoryEntry> {
+        const response = await this.apiInventoryEntryOpenCreateRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Mark a lot opened (POST) or undo that (DELETE) — starts/clears the Opened shelf-life clock (see recompute_lot_expiry). POST is idempotent: opening an already-opened lot is a no-op, opened_at never resets to a later date by re-tapping.
+     */
+    async apiInventoryEntryOpenDestroyRaw(requestParameters: ApiInventoryEntryOpenDestroyRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<InventoryEntry>> {
+        if (requestParameters['id'] == null) {
+            throw new runtime.RequiredError(
+                'id',
+                'Required parameter "id" was null or undefined when calling apiInventoryEntryOpenDestroy().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.apiKey) {
+            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
+        }
+
+
+        let urlPath = `/api/inventory-entry/{id}/open/`;
+        urlPath = urlPath.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id'])));
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'DELETE',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => InventoryEntryFromJSON(jsonValue));
+    }
+
+    /**
+     * Mark a lot opened (POST) or undo that (DELETE) — starts/clears the Opened shelf-life clock (see recompute_lot_expiry). POST is idempotent: opening an already-opened lot is a no-op, opened_at never resets to a later date by re-tapping.
+     */
+    async apiInventoryEntryOpenDestroy(requestParameters: ApiInventoryEntryOpenDestroyRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<InventoryEntry> {
+        const response = await this.apiInventoryEntryOpenDestroyRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
@@ -14675,6 +14889,246 @@ export class ApiApi extends runtime.BaseAPI {
      */
     async apiShoppingListUpdate(requestParameters: ApiShoppingListUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ShoppingList> {
         const response = await this.apiShoppingListUpdateRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Part 3 (In-App Backup/Restore) of the pantry-expiration-and-data-portability plan. create() kicks off build in a background thread (same convention as AppExportView) since a full-space backup can cover thousands of rows; restore() runs synchronously (same simplification Part 2\'s portable-data import made — restore is a deliberate, infrequent, admin-only action, not a hot path).
+     */
+    async apiSpaceBackupCreateRaw(requestParameters: ApiSpaceBackupCreateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<SpaceBackup>> {
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        if (this.configuration && this.configuration.apiKey) {
+            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
+        }
+
+
+        let urlPath = `/api/space-backup/`;
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: SpaceBackupToJSON(requestParameters['spaceBackup']),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => SpaceBackupFromJSON(jsonValue));
+    }
+
+    /**
+     * Part 3 (In-App Backup/Restore) of the pantry-expiration-and-data-portability plan. create() kicks off build in a background thread (same convention as AppExportView) since a full-space backup can cover thousands of rows; restore() runs synchronously (same simplification Part 2\'s portable-data import made — restore is a deliberate, infrequent, admin-only action, not a hot path).
+     */
+    async apiSpaceBackupCreate(requestParameters: ApiSpaceBackupCreateRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<SpaceBackup> {
+        const response = await this.apiSpaceBackupCreateRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Part 3 (In-App Backup/Restore) of the pantry-expiration-and-data-portability plan. create() kicks off build in a background thread (same convention as AppExportView) since a full-space backup can cover thousands of rows; restore() runs synchronously (same simplification Part 2\'s portable-data import made — restore is a deliberate, infrequent, admin-only action, not a hot path).
+     */
+    async apiSpaceBackupDestroyRaw(requestParameters: ApiSpaceBackupDestroyRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
+        if (requestParameters['id'] == null) {
+            throw new runtime.RequiredError(
+                'id',
+                'Required parameter "id" was null or undefined when calling apiSpaceBackupDestroy().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.apiKey) {
+            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
+        }
+
+
+        let urlPath = `/api/space-backup/{id}/`;
+        urlPath = urlPath.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id'])));
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'DELETE',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.VoidApiResponse(response);
+    }
+
+    /**
+     * Part 3 (In-App Backup/Restore) of the pantry-expiration-and-data-portability plan. create() kicks off build in a background thread (same convention as AppExportView) since a full-space backup can cover thousands of rows; restore() runs synchronously (same simplification Part 2\'s portable-data import made — restore is a deliberate, infrequent, admin-only action, not a hot path).
+     */
+    async apiSpaceBackupDestroy(requestParameters: ApiSpaceBackupDestroyRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
+        await this.apiSpaceBackupDestroyRaw(requestParameters, initOverrides);
+    }
+
+    /**
+     * Part 3 (In-App Backup/Restore) of the pantry-expiration-and-data-portability plan. create() kicks off build in a background thread (same convention as AppExportView) since a full-space backup can cover thousands of rows; restore() runs synchronously (same simplification Part 2\'s portable-data import made — restore is a deliberate, infrequent, admin-only action, not a hot path).
+     */
+    async apiSpaceBackupListRaw(requestParameters: ApiSpaceBackupListRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PaginatedSpaceBackupList>> {
+        const queryParameters: any = {};
+
+        if (requestParameters['page'] != null) {
+            queryParameters['page'] = requestParameters['page'];
+        }
+
+        if (requestParameters['pageSize'] != null) {
+            queryParameters['page_size'] = requestParameters['pageSize'];
+        }
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.apiKey) {
+            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
+        }
+
+
+        let urlPath = `/api/space-backup/`;
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => PaginatedSpaceBackupListFromJSON(jsonValue));
+    }
+
+    /**
+     * Part 3 (In-App Backup/Restore) of the pantry-expiration-and-data-portability plan. create() kicks off build in a background thread (same convention as AppExportView) since a full-space backup can cover thousands of rows; restore() runs synchronously (same simplification Part 2\'s portable-data import made — restore is a deliberate, infrequent, admin-only action, not a hot path).
+     */
+    async apiSpaceBackupList(requestParameters: ApiSpaceBackupListRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PaginatedSpaceBackupList> {
+        const response = await this.apiSpaceBackupListRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Part 3 (In-App Backup/Restore) of the pantry-expiration-and-data-portability plan. create() kicks off build in a background thread (same convention as AppExportView) since a full-space backup can cover thousands of rows; restore() runs synchronously (same simplification Part 2\'s portable-data import made — restore is a deliberate, infrequent, admin-only action, not a hot path).
+     */
+    async apiSpaceBackupRestoreCreateRaw(requestParameters: ApiSpaceBackupRestoreCreateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<{ [key: string]: any; }>> {
+        if (requestParameters['id'] == null) {
+            throw new runtime.RequiredError(
+                'id',
+                'Required parameter "id" was null or undefined when calling apiSpaceBackupRestoreCreate().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.apiKey) {
+            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
+        }
+
+
+        let urlPath = `/api/space-backup/{id}/restore/`;
+        urlPath = urlPath.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id'])));
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse<any>(response);
+    }
+
+    /**
+     * Part 3 (In-App Backup/Restore) of the pantry-expiration-and-data-portability plan. create() kicks off build in a background thread (same convention as AppExportView) since a full-space backup can cover thousands of rows; restore() runs synchronously (same simplification Part 2\'s portable-data import made — restore is a deliberate, infrequent, admin-only action, not a hot path).
+     */
+    async apiSpaceBackupRestoreCreate(requestParameters: ApiSpaceBackupRestoreCreateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<{ [key: string]: any; }> {
+        const response = await this.apiSpaceBackupRestoreCreateRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Part 3 (In-App Backup/Restore) of the pantry-expiration-and-data-portability plan. create() kicks off build in a background thread (same convention as AppExportView) since a full-space backup can cover thousands of rows; restore() runs synchronously (same simplification Part 2\'s portable-data import made — restore is a deliberate, infrequent, admin-only action, not a hot path).
+     */
+    async apiSpaceBackupRestorePreviewCreateRaw(requestParameters: ApiSpaceBackupRestorePreviewCreateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<{ [key: string]: any; }>> {
+        if (requestParameters['id'] == null) {
+            throw new runtime.RequiredError(
+                'id',
+                'Required parameter "id" was null or undefined when calling apiSpaceBackupRestorePreviewCreate().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.apiKey) {
+            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
+        }
+
+
+        let urlPath = `/api/space-backup/{id}/restore-preview/`;
+        urlPath = urlPath.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id'])));
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse<any>(response);
+    }
+
+    /**
+     * Part 3 (In-App Backup/Restore) of the pantry-expiration-and-data-portability plan. create() kicks off build in a background thread (same convention as AppExportView) since a full-space backup can cover thousands of rows; restore() runs synchronously (same simplification Part 2\'s portable-data import made — restore is a deliberate, infrequent, admin-only action, not a hot path).
+     */
+    async apiSpaceBackupRestorePreviewCreate(requestParameters: ApiSpaceBackupRestorePreviewCreateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<{ [key: string]: any; }> {
+        const response = await this.apiSpaceBackupRestorePreviewCreateRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Part 3 (In-App Backup/Restore) of the pantry-expiration-and-data-portability plan. create() kicks off build in a background thread (same convention as AppExportView) since a full-space backup can cover thousands of rows; restore() runs synchronously (same simplification Part 2\'s portable-data import made — restore is a deliberate, infrequent, admin-only action, not a hot path).
+     */
+    async apiSpaceBackupRetrieveRaw(requestParameters: ApiSpaceBackupRetrieveRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<SpaceBackup>> {
+        if (requestParameters['id'] == null) {
+            throw new runtime.RequiredError(
+                'id',
+                'Required parameter "id" was null or undefined when calling apiSpaceBackupRetrieve().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.apiKey) {
+            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
+        }
+
+
+        let urlPath = `/api/space-backup/{id}/`;
+        urlPath = urlPath.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id'])));
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => SpaceBackupFromJSON(jsonValue));
+    }
+
+    /**
+     * Part 3 (In-App Backup/Restore) of the pantry-expiration-and-data-portability plan. create() kicks off build in a background thread (same convention as AppExportView) since a full-space backup can cover thousands of rows; restore() runs synchronously (same simplification Part 2\'s portable-data import made — restore is a deliberate, infrequent, admin-only action, not a hot path).
+     */
+    async apiSpaceBackupRetrieve(requestParameters: ApiSpaceBackupRetrieveRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<SpaceBackup> {
+        const response = await this.apiSpaceBackupRetrieveRaw(requestParameters, initOverrides);
         return await response.value();
     }
 

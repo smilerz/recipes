@@ -14,6 +14,7 @@ from cookbook.integration.copymethat import CopyMeThat
 from cookbook.integration.default import Default
 from cookbook.integration.domestica import Domestica
 from cookbook.integration.gourmet import Gourmet
+from cookbook.integration.ldjson import LdJson
 from cookbook.integration.mealie import Mealie
 from cookbook.integration.mealie1 import Mealie1
 from cookbook.integration.mealmaster import MealMaster
@@ -85,6 +86,8 @@ def get_integration(request, export_type):
         return Rezeptsuitede(request, export_type)
     if export_type == ImportExportBase.GOURMET:
         return Gourmet(request, export_type)
+    if export_type == ImportExportBase.LDJSON:
+        return LdJson(request, export_type)
 
 
 @group_required('user')

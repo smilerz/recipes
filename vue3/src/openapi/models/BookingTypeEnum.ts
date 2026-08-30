@@ -17,12 +17,14 @@
  * * `add` - Add
  * * `remove` - Remove
  * * `move` - Move
+ * * `open` - Open
  * @export
  */
 export const BookingTypeEnum = {
     Add: 'add',
     Remove: 'remove',
-    Move: 'move'
+    Move: 'move',
+    Open: 'open'
 } as const;
 export type BookingTypeEnum = typeof BookingTypeEnum[keyof typeof BookingTypeEnum];
 

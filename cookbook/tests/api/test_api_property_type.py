@@ -110,6 +110,44 @@ def test_add_duplicate(u1_s1, u1_s2, obj_1):
     assert response['id'] != obj_1.id
 
 
+# get_queryset() had no query-param handling at all (fuzzy-matching UAT batch).
+def test_query_param_filters_by_name(u1_s1, space_1):
+    with scopes_disabled():
+        match = PropertyType.objects.get_or_create(name='Sodium', space=space_1)[0]
+        other = PropertyType.objects.get_or_create(name='Fiber', space=space_1)[0]
+
+    names = [e['name'] for e in json.loads(u1_s1.get(reverse(LIST_URL), {'query': 'Sodium'}).content)['results']]
+
+    assert match.name in names
+    assert other.name not in names
+
+
+# PropertyType.order is a user-controlled manual sort field (drag-to-reorder), not alphabetical —
+# unlike InventoryLocation, default listing must keep respecting it, not switch to name ordering.
+def test_list_default_order_respects_order_field(u1_s1, space_1):
+    with scopes_disabled():
+        PropertyType.objects.get_or_create(name='Zinc', space=space_1, defaults={'order': 2})
+        PropertyType.objects.get_or_create(name='Ash', space=space_1, defaults={'order': 0})
+        PropertyType.objects.get_or_create(name='Magnesium', space=space_1, defaults={'order': 1})
+
+    names = [e['name'] for e in json.loads(u1_s1.get(reverse(LIST_URL), {'page_size': 100}).content)['results']]
+
+    assert names == ['Ash', 'Magnesium', 'Zinc']
+
+
+# get_queryset() called `self.queryset.filter(category__in=category)` without reassigning the
+# result, so the category filter was a silent no-op.
+def test_category_filter(u1_s1, space_1):
+    with scopes_disabled():
+        match = PropertyType.objects.get_or_create(name='Sodium', space=space_1, defaults={'category': PropertyType.NUTRITION})[0]
+        other = PropertyType.objects.get_or_create(name='Peanuts', space=space_1, defaults={'category': PropertyType.ALLERGEN})[0]
+
+    names = [e['name'] for e in json.loads(u1_s1.get(reverse(LIST_URL), {'category': PropertyType.NUTRITION}).content)['results']]
+
+    assert match.name in names
+    assert other.name not in names
+
+
 def test_delete(u1_s1, u1_s2, obj_1):
     r = u1_s2.delete(
         reverse(
