@@ -92,6 +92,13 @@ LOGGING = {
             'handlers': ['console'],
             'level': LOG_LEVEL,
         },
+        'django_prometheus': {
+            'handlers': ['console'],
+            # Suppress the "Exporting Prometheus /metrics/ on port X" INFO line
+            # django_prometheus logs on every gunicorn worker startup — real
+            # problems (e.g. "no available ports") still log at WARNING.
+            'level': 'WARNING',
+        },
     },
 }
 
