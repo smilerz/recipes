@@ -15,6 +15,8 @@ not-yet-existing node is always created outright with the imported values, regar
 policy. Three policies: 'skip' (never touch an existing node), 'overwrite' (imported values
 always win), 'fill_gaps' (default — only fills fields that are currently blank/None).
 """
+from django.db import transaction
+
 from cookbook.models import (Food, FoodInheritField, FoodProperty, Keyword, Property, PropertyType,
                              Recipe, RecipeBook, RecipeBookEntry, SupermarketCategory)
 
@@ -107,7 +109,13 @@ def _import_tree_model(entries, model, space, merge_policy, scalar_fields, extra
                     continue
 
             instance = model.objects.filter(space=space, name=entry['name']).first()
-            extra = extra_fields_fn(entry, space) if extra_fields_fn else {}
+            # 'skip' never applies extras to an existing instance (see _apply_field) —
+            # resolving them anyway would get_or_create a SupermarketCategory that's then
+            # never attached to anything, an orphan row violating 'skip never touches an
+            # existing node'. A new instance always needs its extras resolved regardless
+            # of merge_policy — there's nothing to "skip" for a node that doesn't exist yet.
+            need_extra = instance is None or merge_policy != 'skip'
+            extra = extra_fields_fn(entry, space) if extra_fields_fn and need_extra else {}
             if instance is None:
                 fields = {f: entry.get(f) for f in scalar_fields}
                 fields.update(extra)
@@ -222,14 +230,15 @@ def apply_portable_import(export, space, *, merge_policy='fill_gaps', user=None)
     content = export['content']
     warnings = list(content.get('warnings', []))
 
-    food_entries = content.get('foods', [])
-    food_result = _import_tree_model(food_entries, Food, space, merge_policy, FOOD_SCALAR_FIELDS, _food_extra_fields)
-    _resolve_food_substitutes(food_entries, space, warnings)
-    _resolve_food_inherit_fields(food_entries, space, warnings)
-    _resolve_food_properties(food_entries, space, warnings)
+    with transaction.atomic():
+        food_entries = content.get('foods', [])
+        food_result = _import_tree_model(food_entries, Food, space, merge_policy, FOOD_SCALAR_FIELDS, _food_extra_fields)
+        _resolve_food_substitutes(food_entries, space, warnings)
+        _resolve_food_inherit_fields(food_entries, space, warnings)
+        _resolve_food_properties(food_entries, space, warnings)
 
-    keyword_result = _import_tree_model(content.get('keywords', []), Keyword, space, merge_policy, KEYWORD_SCALAR_FIELDS)
+        keyword_result = _import_tree_model(content.get('keywords', []), Keyword, space, merge_policy, KEYWORD_SCALAR_FIELDS)
 
-    book_result = _import_books(content.get('books', []), space, merge_policy, warnings, user)
+        book_result = _import_books(content.get('books', []), space, merge_policy, warnings, user)
 
     return {'foods': food_result, 'keywords': keyword_result, 'books': book_result, 'warnings': warnings}

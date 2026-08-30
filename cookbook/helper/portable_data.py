@@ -48,7 +48,8 @@ def _export_food(food):
         'supermarket_category': food.supermarket_category.name if food.supermarket_category else None,
         'substitute': [s.full_name for s in food.substitute.all()],
         'properties': [
-            {'property_type': fp.property.property_type.name, 'amount': str(fp.property.property_amount)}
+            {'property_type': fp.property.property_type.name,
+             'amount': str(fp.property.property_amount) if fp.property.property_amount is not None else None}
             for fp in food.foodproperty_set.select_related('property__property_type').all()
         ],
         'inherit_fields': [f.field for f in food.inherit_fields.all()],

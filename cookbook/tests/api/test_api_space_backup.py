@@ -88,6 +88,24 @@ def test_list_backups_is_space_scoped(a1_s1, space_1, space_2):
     assert len(results) == 1
 
 
+@pytest.mark.django_db
+def test_delete_backup_removes_the_underlying_file(a1_s1, space_1):
+    """DELETE is allowed (http_method_names includes 'delete') but the viewset had no
+    destroy() override, so DRF's default just deleted the DB row — Django's FileField
+    storage is never auto-cleaned on model delete, so the backup JSON (which can contain
+    every referenced user's username/email) was orphaned on disk forever."""
+    with scopes_disabled():
+        backup = _make_ready_backup(space_1, auth.get_user(a1_s1))
+        file_path = backup.file.path
+        assert backup.file.storage.exists(file_path)
+
+    r = a1_s1.delete(reverse(DETAIL_URL, args=[backup.id]))
+    assert r.status_code == 204
+    with scopes_disabled():
+        assert not SpaceBackup.objects.filter(id=backup.id).exists()
+        assert not backup.file.storage.exists(file_path)
+
+
 @pytest.mark.parametrize("arg", [
     ['a_u', 403],
     ['g1_s1', 403],

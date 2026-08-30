@@ -706,3 +706,22 @@ def test_unopen_clears_opened_at_and_recomputes_sealed_expiry(u1_s1, space_1):
     assert r.status_code == 200
     assert r.json()['opened_at'] is None
     assert r.json()['expires'] == (date.today() + timedelta(days=7)).isoformat()
+
+
+@pytest.mark.django_db
+def test_unopen_is_idempotent(u1_s1, space_1):
+    """Unlike POST's `if entry.opened_at is None` guard, DELETE unconditionally called
+    recompute_lot_expiry — so DELETE on an already-unopened lot silently overwrote a
+    custom expires date with the sealed-state formula. Must be a no-op instead."""
+    hh, loc = _household_with_location(u1_s1, space_1)
+    custom_expires = date.today() + timedelta(days=99)
+    with scopes_disabled():
+        food = FoodFactory(space=space_1, shelf_life_days=7)
+        entry = InventoryEntryFactory(
+            space=space_1, food=food, inventory_location=loc, amount=1,
+            opened_at=None, expires=custom_expires)
+
+    r = u1_s1.delete(reverse(OPEN_URL, args=[entry.id]))
+    assert r.status_code == 200
+    assert r.json()['opened_at'] is None
+    assert r.json()['expires'] == custom_expires.isoformat()

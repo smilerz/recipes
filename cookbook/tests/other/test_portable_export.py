@@ -96,6 +96,22 @@ def test_export_food_properties_as_type_and_amount(space_1):
 
 
 @pytest.mark.django_db
+def test_export_food_property_with_null_amount_is_json_null(space_1):
+    """Property.property_amount is nullable (e.g. the AI-import path explicitly produces
+    null amounts). Before the fix, str(None) wrote the literal string 'None' instead of a
+    real null, which then crashed import's Decimal(prop['amount']) conversion."""
+    with scopes_disabled():
+        food = FoodFactory(space=space_1, name='Carrot')
+        ptype = PropertyType.objects.create(name='Calories', space=space_1, unit='kcal')
+        prop = Property.objects.create(property_type=ptype, property_amount=None, space=space_1)
+        FoodProperty.objects.create(food=food, property=prop)
+        export = build_portable_export(space_1)
+
+    by_key = {f['natural_key']: f for f in export['content']['foods']}
+    assert by_key['Carrot']['properties'] == [{'property_type': 'Calories', 'amount': None}]
+
+
+@pytest.mark.django_db
 def test_export_food_inherit_fields_as_field_names(space_1):
     with scopes_disabled():
         food = FoodFactory(space=space_1, name='Carrot')

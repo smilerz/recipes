@@ -19,8 +19,8 @@ from django_scopes import scopes_disabled
 from cookbook.helper.space_backup import build_space_backup
 from cookbook.helper.space_restore import assert_target_space_is_empty, preview_restore, restore_space_backup
 from cookbook.helper.permission_helper import create_space_for_user
-from cookbook.models import (CookLog, Food, FoodInheritField, InventoryEntry, InventoryLocation, MealPlan, Recipe,
-                             RecipeBook, RecipeBookEntry, Space, UserSpace)
+from cookbook.models import (CookLog, Food, FoodInheritField, InventoryEntry, InventoryLocation, InviteLink,
+                             MealPlan, Recipe, RecipeBook, RecipeBookEntry, Space, UserSpace)
 from cookbook.tests.factories import (CookLogFactory, FoodFactory, InventoryEntryFactory, InventoryLocationFactory,
                                       KeywordFactory, MealPlanFactory, RecipeBookFactory, RecipeFactory,
                                       ShoppingListEntryFactory)
@@ -249,6 +249,24 @@ def test_restore_recreates_userspace_groups_for_other_members(space_1, u1_s1, u2
 
         new_userspace = UserSpace.objects.get(user=other_user, space=new_space)
         assert 'guest' in new_userspace.groups.values_list('name', flat=True)
+
+
+@pytest.mark.django_db
+def test_restore_recreates_invite_link_group_fk(space_1, u1_s1):
+    """InviteLink.group is a required FK to the global Group model — not a restored
+    space-scoped model, so it isn't in pk_maps, and not User, so it must be resolved via
+    global_ref_map (the same mechanism the M2M pass already uses for Group). Before the
+    fix, this FK fell through to the "keep original pk" branch and
+    InviteLink.objects.create(group=<int>) raised ValueError, crashing the whole restore."""
+    user = auth.get_user(u1_s1)
+    with scopes_disabled():
+        InviteLink.objects.create(group=Group.objects.get(name='guest'), created_by=user, space=space_1)
+        backup = build_space_backup(space_1)
+
+        new_space, report = restore_space_backup(backup, user)
+
+        new_link = InviteLink.objects.get(space=new_space)
+        assert new_link.group.name == 'guest'
 
 
 @pytest.mark.django_db
