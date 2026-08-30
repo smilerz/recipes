@@ -14,7 +14,8 @@ from django_scopes import scopes_disabled
 
 from cookbook.helper.portable_data import build_portable_export
 from cookbook.helper.portable_import import analyze_portable_import, apply_portable_import
-from cookbook.models import Food, Keyword, RecipeBook, RecipeBookEntry
+from cookbook.models import (Food, FoodProperty, Keyword, Property, PropertyType, RecipeBook, RecipeBookEntry,
+                             SupermarketCategory)
 from cookbook.tests.factories import FoodFactory, KeywordFactory, RecipeFactory
 
 
@@ -180,6 +181,24 @@ def test_apply_skip_leaves_existing_food_untouched(space_1):
 
 
 @pytest.mark.django_db
+def test_apply_skip_does_not_create_orphan_supermarket_category(space_1):
+    """_food_extra_fields resolved (and get_or_create'd) the supermarket_category BEFORE
+    _apply_field's merge_policy check — so under 'skip' a brand-new SupermarketCategory row
+    got persisted even though _apply_field then refused to attach it to anything, violating
+    this module's documented 'skip never touches an existing node' contract with orphan
+    storage."""
+    with scopes_disabled():
+        FoodFactory(space=space_1, name='Carrot')
+    export = _envelope(foods=[_food_export('Carrot', supermarket_category='Produce')])
+
+    with scopes_disabled():
+        apply_portable_import(export, space_1, merge_policy='skip')
+
+        assert not SupermarketCategory.objects.filter(space=space_1, name='Produce').exists()
+        assert Food.objects.get(space=space_1, name='Carrot').supermarket_category is None
+
+
+@pytest.mark.django_db
 def test_apply_resolves_substitutes_within_the_batch(space_1):
     export = _envelope(foods=[
         _food_export('Chicken Breast', substitute=['Turkey Breast']),
@@ -238,6 +257,27 @@ def test_apply_returns_created_and_merged_counts(space_1):
 
 
 @pytest.mark.django_db
+def test_apply_rolls_back_on_mid_import_failure(space_1, monkeypatch):
+    """apply_portable_import runs several sequential DB-writing phases (foods, substitutes,
+    inherit_fields, properties, keywords, books). Without a transaction wrapper, an
+    exception in a later phase leaves earlier phases' writes (e.g. the Food created below)
+    committed — a silently half-imported space. Mirrors test_restore_rolls_back_on_failure
+    for restore_space_backup."""
+    export = _envelope(foods=[_food_export('Carrot')])
+
+    def boom(*args, **kwargs):
+        raise RuntimeError('simulated mid-import failure')
+
+    monkeypatch.setattr('cookbook.helper.portable_import._import_books', boom)
+
+    with scopes_disabled():
+        with pytest.raises(RuntimeError):
+            apply_portable_import(export, space_1)
+
+        assert not Food.objects.filter(space=space_1, name='Carrot').exists()
+
+
+@pytest.mark.django_db
 def test_apply_keyword_hierarchy(space_1):
     export = _envelope(keywords=[
         _keyword_export('Cuisine'),
@@ -249,6 +289,26 @@ def test_apply_keyword_hierarchy(space_1):
         asian = Keyword.objects.get(space=space_1, name='Asian')
         cuisine = Keyword.objects.get(space=space_1, name='Cuisine')
         assert asian.get_parent().id == cuisine.id
+
+
+@pytest.mark.django_db
+def test_round_trip_food_property_with_null_amount_does_not_crash(space_1, space_2):
+    """Property.property_amount is nullable (e.g. the AI-import path explicitly produces
+    null amounts). Before the fix, the export wrote str(None) as a literal 'None' string,
+    and import's Decimal('None') conversion raised decimal.InvalidOperation, 500ing the
+    whole apply."""
+    with scopes_disabled():
+        food = FoodFactory(space=space_1, name='Carrot')
+        ptype = PropertyType.objects.create(space=space_1, name='Calories', unit='kcal')
+        prop = Property.objects.create(space=space_1, property_type=ptype, property_amount=None)
+        FoodProperty.objects.create(food=food, property=prop)
+
+        export = build_portable_export(space_1)
+        apply_portable_import(export, space_2)
+
+        imported_food = Food.objects.get(space=space_2, name='Carrot')
+        imported_prop = Property.objects.get(space=space_2, foodproperty__food=imported_food)
+        assert imported_prop.property_amount is None
 
 
 # ==================== round-trip: export a space, import into a fresh one ====================

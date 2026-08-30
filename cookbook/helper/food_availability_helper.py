@@ -103,7 +103,7 @@ def sibling_substitute_filter(household):
             path__startswith=Substr(OuterRef('path'), 1, Food.steplen * (OuterRef('depth') - 1)),
             depth=OuterRef('depth'),
         ),
-    )
+    ).exclude(depth__lte=1)
 
 
 def compute_substitute_flags(foods, household):

@@ -177,8 +177,15 @@ def restore_space_backup(backup_data, admin_user):
                             skip_row = True
                             break
                         fields[field_name] = resolved
-                    # else: FK to a model outside the space-scoped set (global reference
-                    # data untouched by restore) — keep the original pk value as-is.
+                    elif related_model.__name__ in global_ref_map:
+                        resolved = global_ref_map[related_model.__name__].get(old_value) if old_value is not None else None
+                        if resolved is None and old_value is not None and field_name in not_null_fields:
+                            skip_row = True
+                            break
+                        fields[field_name] = resolved
+                    # else: FK to a model outside the space-scoped and global-natural-key
+                    # sets (reference data untouched by restore) — keep the original pk
+                    # value as-is.
 
                 if skip_row:
                     skipped += 1

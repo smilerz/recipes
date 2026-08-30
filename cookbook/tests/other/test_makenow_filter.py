@@ -139,6 +139,36 @@ def test_makenow_child_substitute(recipes, makenow_recipe, user1, household, spa
         assert search.first().id == makenow_recipe.id
 
 
+@pytest.mark.parametrize("makenow_recipe", [({'onhand_users': 'u1_s1'})], indirect=['makenow_recipe'])
+def test_makenow_sibling_substitute_root_food_is_not_falsely_matched(recipes, makenow_recipe, user1, household, space_1):
+    """sibling_substitute_filter's Substr(path, 1, steplen*(depth-1)) collapses to
+    Substr(path, 1, 0) = '' at depth=1, and path__startswith='' matches every food — so a
+    root-level food with substitute_siblings=True is treated as having a "sibling"
+    substitute in ANY other stocked root-level food, with no real relationship at all. The
+    other 9 ingredient foods of `makenow_recipe` are already stocked directly (fixture) and
+    are themselves root-level (never moved) — under the bug they satisfy `food`'s "sibling"
+    check even though none of them are actually siblings of it. `food` needs a child
+    (numchild>0) to bypass _tree_substitute_filter's `.exclude(depth=1, numchild=0)` leaf
+    guard and reach the buggy annotation — a category-root-with-children shape, same as the
+    bug report's "Milk" example."""
+    request = type('', (object, ), {'space': space_1, 'user': user1, 'user_space': UserSpace.objects.filter(space=space_1, user=user1).first()})()
+    search = RecipeSearch(request, makenow='true')
+    with scope(space=space_1):
+        food = Food.objects.filter(ingredient__step__recipe=makenow_recipe.id).first()
+        _unstock(food, household)
+        food.substitute_siblings = True
+        food.save()
+        FoodFactory.create(space=space_1).move(food, node_location)  # gives food a child, numchild>0
+        # force refresh from database, treebeard bypasses ORM after short pause
+        time.sleep(1)
+        food = Food.objects.get(id=food.id)
+        assert food.depth == 1
+        assert food.numchild > 0
+
+        search = search.get_queryset(Recipe.objects.all())
+        assert search.count() == 0
+
+
 @pytest.mark.parametrize("makenow_recipe", [({'onhand_users': 'u1_s1'}), ({'onhand_users': 'u2_s1'})], indirect=['makenow_recipe'])
 def test_makenow_sibling_substitute(recipes, makenow_recipe, user1, household, space_1):
     request = type('', (object, ), {'space': space_1, 'user': user1, 'user_space': UserSpace.objects.filter(space=space_1, user=user1).first()})()

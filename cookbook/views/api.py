@@ -1119,15 +1119,17 @@ class InventoryEntryViewSet(LoggingMixin, viewsets.ModelViewSet, DeleteRelationM
     @decorators.action(detail=True, methods=['POST', 'DELETE'])
     def open(self, request, pk):
         """Mark a lot opened (POST) or undo that (DELETE) — starts/clears the Opened shelf-life
-        clock (see recompute_lot_expiry). POST is idempotent: opening an already-opened lot is a
-        no-op, opened_at never resets to a later date by re-tapping."""
+        clock (see recompute_lot_expiry). Both are idempotent: opening an already-opened lot,
+        or un-opening an already-unopened one, is a no-op — neither resets opened_at nor
+        recomputes (and potentially overwrites a custom) expires."""
         from cookbook.helper.inventory_helper import recompute_lot_expiry
         entry = self.get_object()
 
         if request.method == 'DELETE':
-            entry.opened_at = None
-            entry.save(update_fields=['opened_at'])
-            recompute_lot_expiry(entry)
+            if entry.opened_at is not None:
+                entry.opened_at = None
+                entry.save(update_fields=['opened_at'])
+                recompute_lot_expiry(entry)
             return Response(self.get_serializer(entry).data)
 
         if entry.opened_at is None:
@@ -1657,6 +1659,12 @@ class FoodViewSet(OrderingMixin, LoggingMixin, TreeMixin, DeleteRelationMixing):
             return Response({'error': 'recipe is required and must exist in the current space'}, status=status.HTTP_400_BAD_REQUEST)
 
         name = request.data.get('name') or recipe.name
+        existing = Food.objects.filter(name=name, space=request.space).first()
+        if existing is not None and existing.recipe_id is not None and existing.recipe_id != recipe.id:
+            return Response(
+                {'error': 'a food with this name is already linked to a different recipe; choose a different name'},
+                status=status.HTTP_400_BAD_REQUEST)
+
         food, created = Food.objects.get_or_create(name=name, space=request.space, defaults={'recipe': recipe})
         if not created and food.recipe_id != recipe.id:
             food.recipe = recipe
@@ -3105,9 +3113,18 @@ class SpaceBackupViewSet(LoggingMixin, viewsets.ModelViewSet):
         from cookbook.helper.space_backup import run_space_backup
         backup_log = SpaceBackup.objects.create(created_by=request.user, space=request.space)
         t = threading.Thread(target=run_space_backup, args=[request.space, backup_log])
-        t.setDaemon(True)
+        t.daemon = True
         t.start()
         return Response(self.get_serializer(backup_log).data, status=status.HTTP_201_CREATED)
+
+    def destroy(self, request, *args, **kwargs):
+        # django-cleanup (installed project-wide) does NOT catch this delete — verified
+        # empirically, not just assumed — so the file needs an explicit delete here or it's
+        # orphaned on disk (and it can contain every referenced user's username/email).
+        instance = self.get_object()
+        if instance.file:
+            instance.file.delete(save=False)
+        return super().destroy(request, *args, **kwargs)
 
     def _load_backup_data(self, backup_log):
         with backup_log.file.open('r') as f:
@@ -3822,7 +3839,7 @@ class AppImportView(APIView):
                                              'nutrition_per_serving': form.cleaned_data['nutrition_per_serving']
                                              }
                                      )
-                t.setDaemon(True)
+                t.daemon = True
                 t.start()
 
                 return Response({'import_id': il.pk}, status=status.HTTP_200_OK)
@@ -3861,7 +3878,7 @@ class AppExportView(APIView):
             el = ExportLog.objects.create(type=serializer.validated_data['type'], created_by=request.user, space=request.space)
 
             t = threading.Thread(target=integration.do_export, args=[recipes, el])
-            t.setDaemon(True)
+            t.daemon = True
             t.start()
 
             return Response(ExportLogSerializer(context={'request': request}).to_representation(el), status=status.HTTP_200_OK)
@@ -4047,7 +4064,7 @@ def import_files(request):
             for f in request.FILES.getlist('files'):
                 files.append({'file': io.BytesIO(f.read()), 'name': f.name})
             t = threading.Thread(target=integration.do_import, args=[files, il, form.cleaned_data['duplicates']])
-            t.setDaemon(True)
+            t.daemon = True
             t.start()
 
             return Response({'import_id': il.pk}, status=status.HTTP_200_OK)

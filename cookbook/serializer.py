@@ -1967,11 +1967,6 @@ class ExportLogSerializer(serializers.ModelSerializer):
 
 class SpaceBackupSerializer(serializers.ModelSerializer):
 
-    def create(self, validated_data):
-        validated_data['created_by'] = self.context['request'].user
-        validated_data['space'] = self.context['request'].space
-        return super().create(validated_data)
-
     class Meta:
         model = SpaceBackup
         fields = ('id', 'running', 'msg', 'total_items', 'processed_items', 'file', 'file_size_kb',

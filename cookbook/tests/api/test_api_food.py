@@ -2144,6 +2144,30 @@ def test_create_from_recipe_recipe_must_be_in_space(u1_s1, space_2):
     assert r.status_code == 400
 
 
+def test_create_from_recipe_name_collision_with_different_recipe_is_rejected(u1_s1, space_1):
+    """Food.recipe is a single-valued FK — a food can only ever point to one recipe. Before
+    the fix, a name collision with a food already linked to a DIFFERENT recipe silently
+    reassigned that food's recipe FK (get_or_create finds the existing row, then the view
+    unconditionally overwrote food.recipe), orphaning the original recipe's link with no
+    warning. Must now refuse with 400 instead, leaving the original link untouched."""
+    with scopes_disabled():
+        recipe_a = RecipeFactory(space=space_1)
+        recipe_b = RecipeFactory(space=space_1)
+        first = u1_s1.post(reverse('api:food-create-from-recipe'),
+                            {'recipe': recipe_a.id, 'name': 'Milk'},
+                            content_type='application/json')
+        assert first.status_code == 201
+        food_id = json.loads(first.content)['id']
+
+    r = u1_s1.post(reverse('api:food-create-from-recipe'),
+                    {'recipe': recipe_b.id, 'name': 'Milk'},
+                    content_type='application/json')
+    assert r.status_code == 400
+    with scopes_disabled():
+        food = Food.objects.get(id=food_id)
+        assert food.recipe_id == recipe_a.id
+
+
 @pytest.fixture
 def recipe_with_food(space_1, u1_s1):
     """Create a recipe with a single ingredient whose food we can test."""
