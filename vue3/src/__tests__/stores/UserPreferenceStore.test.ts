@@ -161,7 +161,7 @@ describe('UserPreferenceStore', () => {
     describe('updateTheme', () => {
         let changeSpy: ReturnType<typeof vi.spyOn>
         beforeEach(() => {
-            changeSpy = vi.spyOn(vuetify.theme, 'change').mockImplementation(() => {})
+            changeSpy = vi.spyOn(vuetify.theme, 'change').mockImplementation(async () => {})
             printModeRef.value = false
         })
         afterEach(() => {

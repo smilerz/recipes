@@ -1,3 +1,4 @@
+/// <reference lib="webworker" />
 // These JavaScript module imports need to be bundled:
 import {precacheAndRoute, cleanupOutdatedCaches} from 'workbox-precaching';
 import {registerRoute, setCatchHandler} from 'workbox-routing';
@@ -27,11 +28,11 @@ self.addEventListener('install', async (event) => {
 });
 
 // default handler if everything else fails
-setCatchHandler(({event}) => {
-    switch (event.request.destination) {
+setCatchHandler(async ({request}) => {
+    switch (request.destination) {
         case 'document':
             console.log('Triggered fallback HTML')
-            return caches.open(OFFLINE_CACHE_NAME).then((cache) => cache.match(OFFLINE_PAGE_URL))
+            return caches.open(OFFLINE_CACHE_NAME).then((cache) => cache.match(OFFLINE_PAGE_URL)).then((r) => r ?? Response.error())
         default:
             console.log('Triggered response ERROR')
             return Response.error();

@@ -22,7 +22,7 @@
             <timer :seconds="step.time != undefined ? step.time*60 : 0" @stop="timerRunning = false" v-if="timerRunning"></timer>
             <v-card-text v-if="step.ingredients.length > 0 || step.instruction != ''">
                 <v-row>
-                    <v-col :cols="(useUserPreferenceStore().isPrintMode) ? 6 : 12" md="6" v-if="step.ingredients.length > 0 && (step.showIngredientsTable || step.show_ingredients_table)">
+                    <v-col :cols="(useUserPreferenceStore().isPrintMode) ? 6 : 12" md="6" v-if="step.ingredients.length > 0 && (step.showIngredientsTable || (step as any).show_ingredients_table)">
                         <ingredients-table v-model="step.ingredients" :ingredient-factor="ingredientFactor"
                                            :show-actions="showStepActions"
                                            :show-checkbox="useUserPreferenceStore().deviceSettings.recipe_stepShowCheckboxes"
@@ -32,7 +32,7 @@
                         <instructions :instructions_html="step.instructionsMarkdown" :ingredient_factor="ingredientFactor"
                                       v-if="step.instructionsMarkdown != undefined"></instructions>
                         <!-- sub recipes dont have a correct schema, thus they use different variable naming -->
-                        <instructions :instructions_html="step.instructions_markdown" :ingredient_factor="ingredientFactor" v-else></instructions>
+                        <instructions :instructions_html="(step as any).instructions_markdown" :ingredient_factor="ingredientFactor" v-else></instructions>
                     </v-col>
                 </v-row>
             </v-card-text>
@@ -45,7 +45,7 @@
                         <v-btn icon="fa-solid fa-up-right-from-square" size="x-small" :to="{name: 'RecipeViewPage', params: {id: step.stepRecipeData.id}}" target="_blank" variant="plain"></v-btn>
                     </v-card-title>
                     <v-card-text class="mt-1" v-for="(subRecipeStep, subRecipeStepIndex) in step.stepRecipeData.steps" :key="subRecipeStep.id">
-                        <step-view v-model="step.stepRecipeData.steps[subRecipeStepIndex]" :step-number="subRecipeStepIndex+1" :ingredientFactor="ingredientFactor"></step-view>
+                        <step-view v-model="step.stepRecipeData.steps[subRecipeStepIndex]" :step-number="Number(subRecipeStepIndex)+1" :ingredientFactor="ingredientFactor"></step-view>
                     </v-card-text>
                 </v-card>
             </template>

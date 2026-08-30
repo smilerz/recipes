@@ -21,8 +21,8 @@
                 :style="{ paddingLeft: (node.depth * 20 + 28) + 'px' }"
                 role="button"
                 tabindex="0"
-                @click="$emit('loadMore', node.loadMoreParentId)"
-                @keydown.enter="$emit('loadMore', node.loadMoreParentId)"
+                @click="$emit('loadMore', node.loadMoreParentId ?? null)"
+                @keydown.enter="$emit('loadMore', node.loadMoreParentId ?? null)"
             >
                 <v-icon size="x-small" class="mr-2" icon="fa-solid fa-angles-down" />
                 {{ $t('load_more') }}

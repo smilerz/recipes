@@ -94,7 +94,7 @@
 
 <script setup lang="ts">
 import {computed, nextTick, PropType, ref, watch} from 'vue'
-import {ApiApi, Recipe, RecipeFlat, RecipeOverview} from "@/openapi";
+import {ApiApi, Recipe, RecipeFlat, RecipeOverview, RecipeSimple} from "@/openapi";
 import ModelEditDialog from "@/components/dialogs/ModelEditDialog.vue";
 import RecipeShareDialog from "@/components/dialogs/RecipeShareDialog.vue";
 import AddToShoppingDialog from "@/components/dialogs/AddToShoppingDialog.vue";
@@ -156,7 +156,7 @@ function isVisible(key: string): boolean {
  *  recipe's food ids with the pantry, so passing all recipe food ids is safe. */
 function openUseUp() {
     useUpDialog.value?.open({
-        foodIds: recipeFoodIds(props.recipe),
+        foodIds: recipeFoodIds(props.recipe as Recipe),
         title: t('UseUpRecipe', {recipe: props.recipe.name}),
     })
 }
@@ -235,7 +235,9 @@ function exportRecipe() {
         exportRequest: {
             type: 'DEFAULT',
             all: false,
-            recipes: [{id: props.recipe.id!, name: props.recipe.name}],
+            // RecipeSimple.url is server-computed/required, but the export endpoint only needs
+            // id/name to look up the recipe - matches ExportDataSettings.vue's identical payload.
+            recipes: [{id: props.recipe.id!, name: props.recipe.name}] as unknown as RecipeSimple[],
             customFilter: null,
         }
     }).then(() => {

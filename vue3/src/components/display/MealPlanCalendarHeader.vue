@@ -30,7 +30,6 @@
 
 <script setup lang="ts">
 
-import type {IHeaderProps} from "vue-simple-calendar/interfaces";
 import {ref, watch} from "vue";
 import {VDateInput} from "vuetify/components";
 import {DateTime} from "luxon";
@@ -39,7 +38,10 @@ const emit = defineEmits(['input'])
 
 const props = defineProps({
     headerProps: {
-        type: Object as () => IHeaderProps,
+        // vue-simple-calendar's package.json exports an "./interfaces" subpath for
+        // IHeaderProps, but the file it points to (dist/lib/interfaces.d.ts) isn't actually
+        // published in this version - an upstream packaging bug, not fixable here.
+        type: Object as () => any,
         required: true,
     },
 })

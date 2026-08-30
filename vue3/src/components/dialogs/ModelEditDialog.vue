@@ -8,7 +8,7 @@
 
 
 import {defineAsyncComponent, PropType, ref, shallowRef, watch} from "vue";
-import {EditorSupportedModels, getGenericModelFromString} from "@/types/Models";
+import {EditorSupportedModels, getGenericModelFromStringOrDefault} from "@/types/Models";
 import {useI18n} from "vue-i18n";
 import {MealPlan} from "@/openapi";
 
@@ -19,10 +19,12 @@ const emit = defineEmits(['create', 'save', 'delete'])
 const props = defineProps({
     model: { type: String as PropType<EditorSupportedModels>, required: true, },
     activator: {default: 'parent'},
-    item: {default: null},
+    // Genuinely polymorphic: the editor component (and its expected item shape) is resolved
+    // dynamically from `model` via `editorComponent` below, so this can't be narrowed further.
+    item: {type: Object as PropType<any>, default: null},
     itemId: {type: [Number, String], required: false, default: undefined},
     itemDefaults: {required: false},
-    disabledFields: {default: []},
+    disabledFields: {type: Array as PropType<string[]>, default: () => []},
     closeAfterCreate: {default: true},
     closeAfterSave: {default: true},
     closeAfterDelete: {default: true},
@@ -33,9 +35,9 @@ const props = defineProps({
     persistent: {type: Boolean, default: false},
 })
 
-const editorComponent = shallowRef(getGenericModelFromString(props.model, t).model.editorComponent)
+const editorComponent = shallowRef(getGenericModelFromStringOrDefault(props.model, t).model.editorComponent)
 
-const dialog = defineModel<Boolean|undefined>({default: undefined})
+const dialog = defineModel<boolean|undefined>({default: undefined})
 const dialogActivator = (dialog.value !== undefined) ? undefined : props.activator
 
 const editingObjChangedState = ref(false)
@@ -45,7 +47,7 @@ const editingObjChangedState = ref(false)
  * because of this watch prop changes and update manually if prop is changed
  */
 watch(() => props.model, () => {
-    editorComponent.value = getGenericModelFromString(props.model, t).model.editorComponent
+    editorComponent.value = getGenericModelFromStringOrDefault(props.model, t).model.editorComponent
 })
 
 /**

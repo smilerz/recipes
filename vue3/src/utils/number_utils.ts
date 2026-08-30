@@ -52,7 +52,7 @@ export function calculateFoodAmount(amount: number, factor: number, useFractions
  * @param mixed true to return mixed fractions (e.g. 2 1/2) or false to return improper fractions (e.g. 5/2)
  * @returns [quot, num, den] array of numbers, quot is either 0 for improper fractions or the whole number, num is the numerator of the fraction and den the denominator
  */
-export function frac(x, D, mixed) {
+export function frac(x: number, D: number, mixed: boolean) {
     let n1 = Math.floor(x), d1 = 1;
     let n2 = n1 + 1, d2 = 1;
     if (x !== n1) while (d1 <= D && d2 <= D) {

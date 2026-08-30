@@ -46,8 +46,8 @@ function mountDialog() {
                 ModelSelect: {template: '<div class="model-select-stub" />'},
                 VClosableCardTitle: {template: '<div class="title-stub" />'},
                 // v-dialog activator="model" trips a Vuetify activator watcher under
-                // jsdom; the freezer dialog's own behavior is not under test here.
-                FreezerExpiryDialog: {template: '<div class="freezer-dialog-stub" />'},
+                // jsdom; the dialog's own behavior is not under test here.
+                ExpiryPresetDialog: {template: '<div class="freezer-dialog-stub" />'},
             },
         },
     })
@@ -190,6 +190,87 @@ describe('InventoryQuickAddDialog expiry field (FR-C2/FR-D6 gap + DEC-4 freezer)
         ;(w.vm as any).selectedLocationId = 9
         await flushPromises()
         expect(document.querySelector('[data-test="freezer-expiry-btn"]')).toBeTruthy()
+        w.unmount()
+    })
+})
+
+describe('InventoryQuickAddDialog expiry preview (#5: pre-populate/highlight instead of a post-save-only reveal)', () => {
+    beforeEach(() => setActivePinia(createPinia()))
+
+    it('QA-EXP-04: seeds expires from the plain shelf life for a non-freezer default location', async () => {
+        const w = mountDialog()
+        void (w.vm as any).open({
+            title: 'Add',
+            locations: [{value: 3, label: 'Pantry'}],
+            defaultLocationId: 3,
+            shelfLifeDays: 7,
+            shelfLifeDaysFrozen: 90,
+        })
+        await flushPromises()
+
+        const dateInput = document.querySelector('input[type="date"]') as HTMLInputElement
+        expect(dateInput.value).not.toBe('')
+        w.unmount()
+    })
+
+    it('QA-EXP-05: switching to a freezer location re-seeds expires from the frozen number', async () => {
+        const w = mountDialog()
+        void (w.vm as any).open({
+            title: 'Add',
+            locations: [{value: 3, label: 'Pantry'}, {value: 9, label: 'Chest freezer', isFreezer: true}],
+            defaultLocationId: 3,
+            shelfLifeDays: 7,
+            shelfLifeDaysFrozen: 90,
+        })
+        await flushPromises()
+        const pantrySeed = (w.vm as any).expires
+
+        ;(w.vm as any).selectedLocationId = 9
+        await flushPromises()
+
+        expect((w.vm as any).expires).not.toBe(pantrySeed)
+        expect((w.vm as any).expires).not.toBeNull()
+        w.unmount()
+    })
+
+    it('QA-EXP-06: a freezer location with no frozen shelf life mutes the suggestion (null), not the plain number', async () => {
+        const w = mountDialog()
+        void (w.vm as any).open({
+            title: 'Add',
+            locations: [{value: 3, label: 'Pantry'}, {value: 9, label: 'Chest freezer', isFreezer: true}],
+            defaultLocationId: 3,
+            shelfLifeDays: 7,
+            shelfLifeDaysFrozen: null,
+        })
+        await flushPromises()
+
+        ;(w.vm as any).selectedLocationId = 9
+        await flushPromises()
+
+        expect((w.vm as any).expires).toBeNull()
+        w.unmount()
+    })
+
+    it('QA-EXP-07: a user-typed date survives a location change (only the untouched seed gets replaced)', async () => {
+        const w = mountDialog()
+        void (w.vm as any).open({
+            title: 'Add',
+            locations: [{value: 3, label: 'Pantry'}, {value: 9, label: 'Chest freezer', isFreezer: true}],
+            defaultLocationId: 3,
+            shelfLifeDays: 7,
+            shelfLifeDaysFrozen: 90,
+        })
+        await flushPromises()
+
+        const dateInput = document.querySelector('input[type="date"]') as HTMLInputElement
+        dateInput.value = '2027-01-01'
+        dateInput.dispatchEvent(new Event('input'))
+        await flushPromises()
+
+        ;(w.vm as any).selectedLocationId = 9
+        await flushPromises()
+
+        expect((w.vm as any).expires).toBe('2027-01-01')
         w.unmount()
     })
 })

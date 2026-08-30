@@ -16,18 +16,28 @@ import * as components from 'vuetify/components'
 import * as directives from 'vuetify/directives'
 import {createRouter, createMemoryHistory} from 'vue-router'
 
-const {createRecipeImageFromUrlMock, apiRecipeCreateMock} = vi.hoisted(() => ({
+const {createRecipeImageFromUrlMock, apiRecipeCreateMock, doAiImportMock, addErrorMock} = vi.hoisted(() => ({
     createRecipeImageFromUrlMock: vi.fn(),
     apiRecipeCreateMock: vi.fn(),
+    doAiImportMock: vi.fn(),
+    addErrorMock: vi.fn(),
 }))
 
 vi.mock('@/composables/useFileApi', () => ({
     useFileApi: () => ({
         createRecipeImageFromUrl: createRecipeImageFromUrlMock,
-        doAiImport: vi.fn(),
+        doAiImport: doAiImportMock,
         doAppImport: vi.fn(),
         fileApiLoading: {value: false},
     }),
+}))
+// useMessageStore lazily creates its store on first use, and the real store's setup
+// calls useI18n() - fine when first triggered from inside a component's own setup/render,
+// but these tests invoke page methods directly (bypassing Vue's instance context), so the
+// real store must be mocked out rather than lazily constructed mid-test.
+vi.mock('@/stores/MessageStore', async (imp) => ({
+    ...(await imp<any>()),
+    useMessageStore: () => ({addError: addErrorMock, addMessage: vi.fn(), addPreparedMessage: vi.fn()}),
 }))
 vi.mock('@/openapi', async (imp) => ({
     ...(await imp<any>()),
@@ -208,5 +218,28 @@ describe('RecipeImportPage step name field (#12)', () => {
         await flushPromises()
 
         expect(wrapper.find('[data-test="step-name-field"]').exists()).toBe(true)
+    })
+})
+
+// TS debt sweep found this by removing an incorrect `null` from selectedAiProvider's type: the
+// function shows an error toast when no AI provider is selected/configured, but doesn't return -
+// execution fell through to `selectedAiProvider.value.id!`, which would throw a real TypeError.
+// The "Load" button's :disabled guard doesn't check for a missing provider either.
+describe('RecipeImportPage AI import guards against no selected provider', () => {
+    beforeEach(() => {
+        setActivePinia(createPinia())
+        doAiImportMock.mockReset()
+        addErrorMock.mockReset()
+    })
+
+    it('loadRecipeFromAiImport does not throw and does not call doAiImport when no provider is selected', async () => {
+        const {wrapper} = mountPage()
+        ;(wrapper.vm as any).selectedAiProvider = undefined
+        ;(wrapper.vm as any).aiMode = 'file'
+        ;(wrapper.vm as any).image = new File(['x'], 'x.pdf')
+
+        expect(() => (wrapper.vm as any).loadRecipeFromAiImport()).not.toThrow()
+        expect(doAiImportMock).not.toHaveBeenCalled()
+        expect(addErrorMock).toHaveBeenCalled()
     })
 })

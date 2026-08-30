@@ -7,7 +7,7 @@
                 <calendar-view
                     :locale="locale"
                     :show-date="calendarDate"
-                    :items="planItems"
+                    :items="(planItems as unknown as ICalendarItem[])"
                     class="theme-default"
                     :item-content-height="calendarItemHeight"
                     :enable-drag-drop="true"
@@ -17,7 +17,7 @@
                     :starting-day-of-week="useUserPreferenceStore().deviceSettings.mealplan_startingDayOfWeek"
                     :display-week-numbers="useUserPreferenceStore().deviceSettings.mealplan_displayWeekNumbers"
                     :current-period-label="$t('Today')"
-                    @click-date="(date : Date, calendarItems: [], windowEvent: any) => { newPlanDialogDefaultItem.fromDate = date; newPlanDialogDefaultItem.toDate = date; newPlanDialog = true }">
+                    @click-date="(date : Date, calendarItems: any[], windowEvent: any) => { newPlanDialogDefaultItem.fromDate = date; newPlanDialogDefaultItem.toDate = date; newPlanDialog = true }">
                     <template #header="{ headerProps }">
                         <!--                        <calendar-view-header :header-props="headerProps" @input="(d:Date) => calendarDate = d"></calendar-view-header>-->
                         <meal-plan-calendar-header :header-props="headerProps" @input="(d:Date) => calendarDate = d"></meal-plan-calendar-header>
@@ -25,10 +25,10 @@
                     <template #item="{ value, weekStartDate, top }">
                         <meal-plan-calendar-item
                             :item-height="calendarItemHeight"
-                            :value="value"
+                            :value="(value as unknown as IMealPlanNormalizedCalendarItem)"
                             :item-top="top"
-                            @onDragStart="currentlyDraggedMealplan = value"
-                            @delete="(arg: MealPlan) => {useMealPlanStore().plans.delete(arg.id)}"
+                            @onDragStart="currentlyDraggedMealplan = (value as unknown as IMealPlanNormalizedCalendarItem)"
+                            @delete="(arg: MealPlan) => {useMealPlanStore().plans.delete(arg.id!)}"
                             :detailed-items="lgAndUp"
                         ></meal-plan-calendar-item>
                     </template>
@@ -44,7 +44,7 @@
 
 
 <script setup lang="ts">
-import {CalendarView, CalendarViewHeader} from "vue-simple-calendar"
+import {CalendarView, CalendarViewHeader, type ICalendarItem} from "vue-simple-calendar"
 import "vue-simple-calendar/dist/vue-simple-calendar.css"
 import "vue-simple-calendar/dist/css/default.css"
 

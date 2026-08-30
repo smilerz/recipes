@@ -279,7 +279,7 @@
         <action-confirm-dialog ref="confirmDialogRef" />
         <inventory-quick-add-dialog ref="inventoryQuickAddRef" />
 
-        <batch-edit-user-space-dialog :items="selectedItems" v-model="batchEditDialog" v-if="model == 'UserSpace'" activator="model"
+        <batch-edit-user-space-dialog :items="(selectedItems as any)" v-model="batchEditDialog" v-if="model == 'UserSpace'" activator="model"
                                 @change="loadItems({page: page, itemsPerPage: pageSize})"></batch-edit-user-space-dialog>
 
     </v-container>
@@ -292,6 +292,7 @@ import {computed, h, onBeforeMount, provide, ref, shallowRef, toRef, triggerRef,
 import {ErrorMessageType, useMessageStore} from "@/stores/MessageStore";
 import {useI18n} from "vue-i18n";
 import {EditorSupportedModels, GenericModel, getGenericModelFromString, Model, ModelTableHeaders} from "@/types/Models";
+import {type Group} from "@/openapi";
 import {buildSubtitleParts} from "@/utils/utils";
 
 import {useRoute, useRouter, RouterLink} from "vue-router";

@@ -6,7 +6,7 @@
                 <v-col cols="12" md="4">
                     <v-label>{{ $t('Rating') }}</v-label>
                     <br/>
-                    <v-rating v-model="newCookLog.rating" clearable hover density="compact"></v-rating>
+                    <v-rating v-model="newCookLogRating" clearable hover density="compact"></v-rating>
                 </v-col>
                 <v-col cols="12" md="4">
 
@@ -58,7 +58,7 @@
 
                         </v-list-item-action>
                     </template>
-                    <model-edit-dialog model="CookLog" :item="c" v-if="c.createdBy.id == useUserPreferenceStore().userSettings?.user.id" @save="() => { recLoadCookLog(props.recipe.id); emit('cookLogSaved') }" @delete="() => { recLoadCookLog(props.recipe.id); emit('cookLogSaved') }"></model-edit-dialog>
+                    <model-edit-dialog model="CookLog" :item="c" v-if="c.createdBy.id == useUserPreferenceStore().userSettings?.user.id" @save="() => { recLoadCookLog(props.recipe.id!); emit('cookLogSaved') }" @delete="() => { recLoadCookLog(props.recipe.id!); emit('cookLogSaved') }"></model-edit-dialog>
                 </v-list-item>
             </v-list>
         </v-card-text>
@@ -69,7 +69,7 @@
 
 <script setup lang="ts">
 
-import {onMounted, PropType, ref, watch} from "vue";
+import {computed, onMounted, PropType, ref, watch} from "vue";
 import {ApiApi, CookLog, Recipe} from "@/openapi";
 import {DateTime} from "luxon";
 import {ErrorMessageType, useMessageStore} from "@/stores/MessageStore";
@@ -91,13 +91,18 @@ const props = defineProps({
 const emit = defineEmits(['cookLogSaved'])
 
 const newCookLog = ref({} as CookLog);
+// v-rating's v-model wants number|string|undefined; CookLog.rating is number|null|undefined
+const newCookLogRating = computed<number | undefined>({
+    get: () => newCookLog.value.rating ?? undefined,
+    set: (v) => { newCookLog.value.rating = v ?? null },
+})
 
 const cookLogs = ref([] as CookLog[])
 const loading = ref(false)
 const saving = ref(false)
 
 onMounted(() => {
-    recLoadCookLog(props.recipe.id)
+    recLoadCookLog(props.recipe.id!)
     resetForm()
 })
 

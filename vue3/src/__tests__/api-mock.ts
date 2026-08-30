@@ -55,11 +55,22 @@ const API_METHODS = [
     'apiInventoryLocationList',
     'apiInventoryEntryList',
     'apiInventoryEntryCreate',
+    'apiInventoryEntryRetrieve',
+    'apiInventoryEntryUpdate',
     'apiInventoryEntryStockUpCreate',
     'apiInventoryEntryDrawDownCreate',
     'apiInventoryEntryPartialUpdate',
     'apiInventoryEntryDestroy',
+    'apiInventoryEntryOpenCreate',
+    'apiInventoryEntryOpenDestroy',
     'apiUserFileList',
+    'apiExportPortableDataCreate',
+    'apiImportPortableDataCreate',
+    'apiSpaceBackupList',
+    'apiSpaceBackupCreate',
+    'apiSpaceBackupDestroy',
+    'apiSpaceBackupRestoreCreate',
+    'apiSpaceBackupRestorePreviewCreate',
 ] as const
 
 function buildApiMock(): Record<string, ReturnType<typeof vi.fn>> {

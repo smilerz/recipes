@@ -3,7 +3,7 @@
         :loading="loading"
         :dialog="dialog"
         @save="onSave()"
-        @delete="useMealPlanStore().plans.delete(editingObj.id); deleteObject()"
+        @delete="useMealPlanStore().plans.delete(editingObj.id!); deleteObject()"
         @close="emit('close'); editingObjChanged = false"
         :is-update="isUpdate()"
         :is-changed="editingObjChanged"
@@ -283,7 +283,9 @@ watch(() => tab.value, (newVal) => {
  */
 function onShoppingCreated() {
     const changed = editingObjChanged.value
-    editingObj.value.shopping = true
+    // shopping is server-computed (readonly) on the generated type, but this is a deliberate
+    // local-cache sync after the preview dialog persisted the shopping list itself.
+    ;(editingObj.value as any).shopping = true
     loadShoppingEntries()
     nextTick(() => {
         editingObjChanged.value = changed
@@ -313,8 +315,9 @@ function initializeEditor() {
 
             editingObj.value.servings = 1
 
-            if (useUserPreferenceStore().userSettings.defaultMealType){
-                editingObj.value.mealType = useUserPreferenceStore().userSettings.defaultMealType
+            const defaultMealType = useUserPreferenceStore().userSettings.defaultMealType
+            if (defaultMealType){
+                editingObj.value.mealType = defaultMealType
             }
 
             editingObj.value.addshopping = useUserPreferenceStore().userSettings.mealplanAutoaddShopping

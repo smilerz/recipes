@@ -33,26 +33,74 @@
                         <model-select :label="$t('Category')" v-model="editingObj.supermarketCategory" model="SupermarketCategory" allow-create append-to-body></model-select>
                         <model-select :label="$t('ShoppingList')" :hint="$t('DefaultShoppingListHelp')" v-model="editingObj.shoppingLists" model="ShoppingList" mode="tags" allow-create append-to-body></model-select>
 
-                        <v-row density="compact" align="center" class="mb-2">
+                        <div class="text-caption text-medium-emphasis mb-1">{{ $t('ShelfLife') }}</div>
+
+                        <v-row density="compact" align="center">
                             <v-col cols="7">
-                                <v-number-input :label="$t('ShelfLife')" v-model="shelfLifeValue" :precision="0" :min="0" control-variant="hidden" clearable hide-details></v-number-input>
+                                <v-number-input :label="$t('Unopened')" v-model="shelfLifeValue" :precision="0" :min="0" control-variant="hidden" clearable hide-details></v-number-input>
                             </v-col>
                             <v-col cols="5">
                                 <v-select :label="$t('Period')" v-model="shelfLifePeriod" hide-details
                                           :items="[{title: $t('Days'), value: 'day'}, {title: $t('Weeks'), value: 'week'}, {title: $t('Months'), value: 'month'}]"></v-select>
                             </v-col>
+                            <v-col cols="12">
+                                <v-btn variant="text" size="small" prepend-icon="fa-solid fa-list-ul" @click="pantryPresetDialog = true">{{ $t('Presets') }}</v-btn>
+                                <expiry-preset-dialog v-model="pantryPresetDialog" :title="$t('Unopened')" :subtitle="$t('ExpiryPresetHelp')" :presets="genericExpiryPresets"
+                                                       @select="(days:number) => setShelfLife('pantry', days)"></expiry-preset-dialog>
+                            </v-col>
                         </v-row>
+
+                        <!-- #16/18: Frozen and Opened are opt-in — most foods only ever need Unopened
+                             (+ at most one of these). Genuinely everyday foods DO need both (USDA:
+                             hot dogs/lunch meat have distinct unopened/opened/frozen numbers), so
+                             both stay independently toggleable rather than a single either/or pick. -->
+                        <v-checkbox :label="$t('Frozen')" v-model="frozenEnabled" hide-details density="compact"></v-checkbox>
+                        <v-row density="compact" align="center" v-if="frozenEnabled">
+                            <v-col cols="7">
+                                <v-number-input :label="$t('Frozen')" v-model="shelfLifeFrozenValue" :precision="0" :min="0" control-variant="hidden" clearable hide-details></v-number-input>
+                            </v-col>
+                            <v-col cols="5">
+                                <v-select :label="$t('Period')" v-model="shelfLifeFrozenPeriod" hide-details
+                                          :items="[{title: $t('Days'), value: 'day'}, {title: $t('Weeks'), value: 'week'}, {title: $t('Months'), value: 'month'}]"></v-select>
+                            </v-col>
+                            <v-col cols="12">
+                                <v-btn variant="text" size="small" prepend-icon="fa-solid fa-list-ul" @click="frozenPresetDialog = true">{{ $t('Presets') }}</v-btn>
+                                <expiry-preset-dialog v-model="frozenPresetDialog" :title="$t('Frozen')"
+                                                       @select="(days:number) => setShelfLife('frozen', days)"></expiry-preset-dialog>
+                            </v-col>
+                        </v-row>
+
+                        <v-checkbox :label="$t('Opened')" v-model="openedEnabled" hide-details density="compact"></v-checkbox>
+                        <v-row density="compact" align="center" class="mb-2" v-if="openedEnabled">
+                            <v-col cols="7">
+                                <v-number-input :label="$t('Opened')" v-model="shelfLifeOpenedValue" :precision="0" :min="0" control-variant="hidden" clearable hide-details></v-number-input>
+                            </v-col>
+                            <v-col cols="5">
+                                <v-select :label="$t('Period')" v-model="shelfLifeOpenedPeriod" hide-details
+                                          :items="[{title: $t('Days'), value: 'day'}, {title: $t('Weeks'), value: 'week'}, {title: $t('Months'), value: 'month'}]"></v-select>
+                            </v-col>
+                            <v-col cols="12">
+                                <v-btn variant="text" size="small" prepend-icon="fa-solid fa-list-ul" @click="openedPresetDialog = true">{{ $t('Presets') }}</v-btn>
+                                <expiry-preset-dialog v-model="openedPresetDialog" :title="$t('Opened')" :subtitle="$t('ExpiryPresetHelp')" :presets="genericExpiryPresets"
+                                                       @select="(days:number) => setShelfLife('opened', days)"></expiry-preset-dialog>
+                            </v-col>
+                        </v-row>
+                        <div class="text-caption text-medium-emphasis mb-4">{{ $t('ShelfLifeHelp') }}</div>
 
                         <v-row density="compact" align="center" class="mb-2">
                             <v-col cols="7">
                                 <v-number-input :label="$t('ShoppingAmount')" v-model="editingObj.shoppingAmount" :precision="2" :min="0" control-variant="hidden" clearable hide-details></v-number-input>
                             </v-col>
                             <v-col cols="5">
-                                <model-select :label="$t('ShoppingUnit')" v-model="editingObj.preferredShoppingUnit" model="Unit" append-to-body inline hide-details></model-select>
+                                <model-select :label="$t('ShoppingUnit')" v-model="editingObj.preferredShoppingUnit" model="Unit" append-to-body hide-details></model-select>
                             </v-col>
                         </v-row>
 
-                        <model-select :label="$t('PreferredUnit')" v-model="editingObj.preferredUnit" model="Unit" append-to-body></model-select>
+                        <v-row density="compact" align="center">
+                            <v-col cols="6">
+                                <model-select :label="$t('PreferredUnit')" v-model="editingObj.preferredUnit" model="Unit" append-to-body></model-select>
+                            </v-col>
+                        </v-row>
                     </v-form>
                 </v-tabs-window-item>
 
@@ -195,7 +243,11 @@ import {openFdcPage} from "@/utils/fdc.ts";
 import {DateTime} from "luxon";
 import HierarchyEditor from "@/components/inputs/HierarchyEditor.vue";
 import {useRoute} from 'vue-router'
-import {shelfLifeFromDays, shelfLifeToDays, type ShelfLifePeriod} from "@/utils/pantry_utils.ts";
+import {EXPIRY_PRESET_DAYS, formatShelfLifeDuration, shelfLifeFromDays, shelfLifeToDays, type ShelfLifePeriod} from "@/utils/pantry_utils.ts";
+import ExpiryPresetDialog from "@/components/dialogs/ExpiryPresetDialog.vue";
+import {useI18n} from "vue-i18n";
+
+const {t} = useI18n()
 
 
 const props = defineProps({
@@ -218,26 +270,89 @@ watch([() => props.item, () => props.itemId], () => {
 
 // object specific data (for selects/display)
 
-// shelf life is stored as days but edited as a value + period (days/weeks/months)
+// shelf life is stored as days but edited as a value + period (days/weeks/months) — three
+// independent pairs, one per physical state: sealed (Pantry/Fridge), sealed & frozen, and Opened.
 const shelfLifeValue = ref<number | null>(null)
 const shelfLifePeriod = ref<ShelfLifePeriod>('day')
+const shelfLifeFrozenValue = ref<number | null>(null)
+const shelfLifeFrozenPeriod = ref<ShelfLifePeriod>('day')
+const shelfLifeOpenedValue = ref<number | null>(null)
+const shelfLifeOpenedPeriod = ref<ShelfLifePeriod>('day')
 
-// initialize the value/period pickers whenever the stored days change (e.g. on load)
-watch(() => editingObj.value?.shelfLifeDays, (days) => {
-    const sl = shelfLifeFromDays(days)
-    shelfLifeValue.value = sl.value
-    shelfLifePeriod.value = sl.period
+/** Wire a {value, period} picker pair to a shelfLifeDays* field on editingObj: initializes from
+ * the stored days on load, and writes picker changes back — only when the value actually changes,
+ * so initializing on load doesn't mark a pristine food as edited (undefined and null both mean
+ * "unset"). Shared by all three rows so the three pairs don't hand-copy the same watcher logic. */
+function useShelfLifePicker(field: 'shelfLifeDays' | 'shelfLifeDaysFrozen' | 'shelfLifeDaysOpened', value: typeof shelfLifeValue, period: typeof shelfLifePeriod) {
+    watch(() => editingObj.value?.[field], (days) => {
+        const sl = shelfLifeFromDays(days)
+        value.value = sl.value
+        period.value = sl.period
+    }, {immediate: true})
+
+    watch([value, period], ([v, p]) => {
+        if (!editingObj.value) return
+        const days = shelfLifeToDays(v, p)
+        if ((days ?? null) !== (editingObj.value[field] ?? null)) {
+            editingObj.value[field] = days
+        }
+    })
+}
+
+useShelfLifePicker('shelfLifeDays', shelfLifeValue, shelfLifePeriod)
+useShelfLifePicker('shelfLifeDaysFrozen', shelfLifeFrozenValue, shelfLifeFrozenPeriod)
+useShelfLifePicker('shelfLifeDaysOpened', shelfLifeOpenedValue, shelfLifeOpenedPeriod)
+
+// #16/18: Frozen and Opened are opt-in exceptions — starts checked whenever the food already has
+// a value (existing data is never hidden by default), independent of one another (a food can
+// need both, e.g. hot dogs/lunch meat per USDA guidance).
+const frozenEnabled = ref(false)
+const openedEnabled = ref(false)
+
+watch(() => editingObj.value?.shelfLifeDaysFrozen, (days) => {
+    frozenEnabled.value = days != null
+}, {immediate: true})
+watch(() => editingObj.value?.shelfLifeDaysOpened, (days) => {
+    openedEnabled.value = days != null
 }, {immediate: true})
 
-// write the pickers back to the stored days — only when it actually changes, so initializing the
-// pickers on load doesn't mark a pristine food as edited (undefined and null both mean "unset")
-watch([shelfLifeValue, shelfLifePeriod], ([value, period]) => {
-    if (!editingObj.value) return
-    const days = shelfLifeToDays(value, period)
-    if ((days ?? null) !== (editingObj.value.shelfLifeDays ?? null)) {
-        editingObj.value.shelfLifeDays = days
-    }
+// Unchecking clears the value — the checkbox's meaning stays unambiguous (checked = has a value,
+// unchecked = doesn't). Reuses the existing shelfLife*Value watcher above, which already writes
+// null back to editingObj when the picker value clears.
+watch(frozenEnabled, (enabled, wasEnabled) => {
+    if (!enabled && wasEnabled) shelfLifeFrozenValue.value = null
 })
+watch(openedEnabled, (enabled, wasEnabled) => {
+    if (!enabled && wasEnabled) shelfLifeOpenedValue.value = null
+})
+
+// One ExpiryPresetDialog instance per row (matches the file's existing one-picker-pair-per-row
+// shape, and how every other caller of this dialog already uses its own dedicated instance)
+// rather than a single shared instance switched by context — no "did I set the right target
+// before opening" state to get wrong.
+const pantryPresetDialog = ref(false)
+const frozenPresetDialog = ref(false)
+const openedPresetDialog = ref(false)
+
+// Unopened and Opened have no category-specific guidance (unlike Frozen's USDA-style presets, the
+// dialog's own default) and share the same generic day-based preset list.
+const genericExpiryPresets = computed(() => EXPIRY_PRESET_DAYS.map(days => ({label: formatShelfLifeDuration(days, t), days})))
+
+/** Quick-select preset handler: fills a row's value+period pair from a preset day count, without
+ * requiring the food to have any shelf-life field configured first. */
+function setShelfLife(row: 'pantry' | 'frozen' | 'opened', days: number) {
+    const sl = shelfLifeFromDays(days)
+    if (row === 'pantry') {
+        shelfLifeValue.value = sl.value
+        shelfLifePeriod.value = sl.period
+    } else if (row === 'frozen') {
+        shelfLifeFrozenValue.value = sl.value
+        shelfLifeFrozenPeriod.value = sl.period
+    } else {
+        shelfLifeOpenedValue.value = sl.value
+        shelfLifeOpenedPeriod.value = sl.period
+    }
+}
 
 /**
  * compute label for the properties amount input to show user for
@@ -309,7 +424,7 @@ async function saveObjectConversions() {
                 useMessageStore().addError(ErrorMessageType.UPDATE_ERROR, err)
             })
         } else {
-            api.apiUnitConversionCreate({id: uc.id, unitConversion: uc}).catch(err => {
+            api.apiUnitConversionCreate({unitConversion: uc}).catch(err => {
                 useMessageStore().addError(ErrorMessageType.CREATE_ERROR, err)
             })
         }

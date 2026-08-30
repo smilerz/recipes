@@ -89,7 +89,7 @@ export const useUserPreferenceStore = defineStore('user_preference_store', () =>
     /**
      * detect if print mode is activated by checking for "print" query parameter
      */
-    const isPrintMode = useRouteQuery('print', false, {transform: Boolean})
+    const isPrintMode = useRouteQuery('print', false as any, {transform: Boolean})
 
     const router = useRouter()
 
@@ -342,7 +342,7 @@ export const useUserPreferenceStore = defineStore('user_preference_store', () =>
             vuetify.theme.change('light')
             return
         }
-        vuetify.theme.change(THEME_MAP[userSettings.value.theme] ?? 'light')
+        vuetify.theme.change((userSettings.value.theme && THEME_MAP[userSettings.value.theme]) ?? 'light')
     }
 
     // Nav bar background: an explicit space colour wins, then the user's explicit

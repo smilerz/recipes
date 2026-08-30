@@ -26,7 +26,7 @@
                 <v-list-item v-for="s in shoppingLists" :key="s.id" :value="s.id">
                     <template v-slot:prepend="{ isSelected, select }">
                         <v-list-item-action start>
-                            <v-checkbox-btn :model-value="isSelected" @update:model-value="select" :color="s.color" :baseColor="s.color"></v-checkbox-btn>
+                            <v-checkbox-btn :model-value="isSelected" @update:model-value="select" :color="s.color ?? undefined" :baseColor="s.color ?? undefined"></v-checkbox-btn>
                         </v-list-item-action>
                     </template>
                     {{ s.name }}
@@ -69,8 +69,8 @@ const emit = defineEmits(['update', 'refresh'])
 
 const menu = ref(false)
 
-const selectedLists = defineModel<ShoppingList[]>({default: [], required: false})
-const selectedListIds = defineModel<number[]>('ids', {default: [], required: false})
+const selectedLists = defineModel<ShoppingList[]>({default: () => [], required: false})
+const selectedListIds = defineModel<number[]>('ids', {default: () => [], required: false})
 
 watch(selectedListIds, () => {
     selectedLists.value = props.shoppingLists.filter(sl => selectedListIds.value.includes(sl.id!))

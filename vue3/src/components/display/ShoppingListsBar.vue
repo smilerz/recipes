@@ -2,7 +2,7 @@
     <div v-if="props.shoppingLists">
         <slot name="prepend"></slot>
 
-        <v-chip class="me-1 mb-1" :color="shoppingList.color" :size="props.size" :variant="props.variant" label v-for="shoppingList in props.shoppingLists">
+        <v-chip class="me-1 mb-1" :color="shoppingList.color ?? undefined" :size="props.size" :variant="props.variant" label v-for="shoppingList in props.shoppingLists">
             {{ shoppingList.name }}
         </v-chip>
 

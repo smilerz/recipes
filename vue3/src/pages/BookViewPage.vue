@@ -118,7 +118,10 @@ function loadBook() {
     const api = new ApiApi()
     loading.value = true
 
-    api.apiRecipeBookRetrieve({id: props.bookId}).then(r => {
+    // bookId is a String route-param prop; apiRecipeBookRetrieve's generated type wants a
+    // number but the Raw method just interpolates it into the URL path, so passing the string
+    // as-is is the existing, tested wire behavior - cast, don't coerce.
+    api.apiRecipeBookRetrieve({id: props.bookId as unknown as number}).then(r => {
         book.value = r
 
         entries.value = []
@@ -138,7 +141,7 @@ function recLoadEntries(page: number) {
     const api = new ApiApi()
     loadingEntries.value = true
 
-    api.apiRecipeBookEntryList({book: props.bookId, page: page, pageSize: 50}).then(r => {
+    api.apiRecipeBookEntryList({book: props.bookId as unknown as number, page: page, pageSize: 50}).then(r => {
         r.results.forEach(rBE => {
             recipes.value.push(rBE.recipeContent)
         })
@@ -147,7 +150,7 @@ function recLoadEntries(page: number) {
             recLoadEntries(page + 1)
         } else {
             if (book.value.filter) {
-                recLoadFilter(book.value.filter.id, 1)
+                recLoadFilter(book.value.filter.id!, 1)
             } else {
                 loadingEntries.value = false
             }

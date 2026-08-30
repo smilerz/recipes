@@ -1,5 +1,5 @@
 import {createApp} from "vue";
-import {createRouter, createWebHistory} from 'vue-router'
+import {createRouter, createWebHistory, type RouteRecordRaw} from 'vue-router'
 import {createPinia} from 'pinia'
 // @ts-ignore
 import App from './Tandoor.vue'
@@ -16,7 +16,7 @@ import {TANDOOR_PLUGINS} from "@/plugin_registry.ts";
 import type {TandoorPlugin} from "@/types/Plugins.ts";
 import {canRouteToModel, ModelRouteOperation} from "@/types/Models.ts";
 
-let routes = [
+let routes: RouteRecordRaw[] = [
     {path: '/', component: () => import("@/pages/StartPage.vue"), name: 'StartPage'},
     {path: '/search', redirect: {name: 'StartPage'}},
     {path: '/test', component: () => import("@/pages/TestPage.vue"), name: 'view_test'},
@@ -47,7 +47,7 @@ let routes = [
     {path: '/:pathMatch(.*)*', component: () => import("@/pages/404Page.vue"), name: '404Page', meta: {title: 'NotFound'}},
 ]
 
-let settings = {
+let settings: RouteRecordRaw = {
     path: '/settings', component: () => import("@/pages/SettingsPage.vue"), name: 'SettingsPage', redirect: '/settings/account',
     children: [
         {path: 'account', component: () => import("@/components/settings/AccountSettings.vue"), name: 'AccountSettings', meta: {title: 'Settings'}},
@@ -59,6 +59,8 @@ let settings = {
         {path: 'space', component: () => import("@/components/settings/SpaceSettings.vue"), name: 'SpaceSettings', meta: {title: 'Settings'}},
         {path: 'open-data-import', component: () => import("@/components/settings/OpenDataImportSettings.vue"), name: 'OpenDataImportSettings', meta: {title: 'Settings'}},
         {path: 'export', component: () => import("@/components/settings/ExportDataSettings.vue"), name: 'ExportDataSettings', meta: {title: 'Settings'}},
+        {path: 'portable-data-import', component: () => import("@/components/settings/PortableDataImportSettings.vue"), name: 'PortableDataImportSettings', meta: {title: 'Settings'}},
+        {path: 'space-backup', component: () => import("@/components/settings/SpaceBackupSettings.vue"), name: 'SpaceBackupSettings', meta: {title: 'Settings'}},
         {path: 'api', component: () => import("@/components/settings/ApiSettings.vue"), name: 'ApiSettings', meta: {title: 'Settings'}},
     ], meta: {title: 'Settings'}
 }

@@ -17,6 +17,8 @@
                     <v-list-item :to="{name: 'SpaceSettings'}" prepend-icon="$settings">{{ $t('SpaceSettings') }}</v-list-item>
                     <v-list-item :to="{name: 'OpenDataImportSettings'}" prepend-icon="fa-solid fa-cloud-arrow-down">{{ $t('Open_Data_Import') }}</v-list-item>
                     <v-list-item :to="{name: 'ExportDataSettings'}" prepend-icon="fa-solid fa-file-export">{{ $t('Export') }}</v-list-item>
+                    <v-list-item :to="{name: 'PortableDataImportSettings'}" prepend-icon="fa-solid fa-file-import">{{ $t('PortableDataImport') }}</v-list-item>
+                    <v-list-item :to="{name: 'SpaceBackupSettings'}" prepend-icon="fa-solid fa-clock-rotate-left">{{ $t('Backup') }}</v-list-item>
 
                     <template v-for="p in TANDOOR_PLUGINS" :key="p.name">
                         <component :is="p.settingsComponent" v-if="p.settingsComponent"></component>

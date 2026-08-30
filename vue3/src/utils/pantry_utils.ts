@@ -18,10 +18,10 @@ export function substituteAvailableLabel(
 }
 
 /** A lot expiring within this many days (inclusive) is "expiring soon". */
-export const EXPIRING_SOON_DAYS = 3
+export const EXPIRING_SOON_DAYS = 5
 
 export type ExpiryStatus = 'expired' | 'soon' | 'ok' | 'none'
-export type PantryGroup = 'expiring' | 'instock'
+export type PantryGroup = 'expired' | 'expiring' | 'instock'
 
 /**
  * Classify an inventory lot's expiry relative to `now` (day-granular):
@@ -60,10 +60,14 @@ export function expiryColor(status: ExpiryStatus): string {
     }
 }
 
-/** Which pantry group a lot belongs to: expiring-soon (expired or soon) vs in-stock. */
+/** Which pantry group a lot belongs to: already expired, expiring soon, or in-stock. Kept as three
+ * distinct buckets rather than merging expired into "expiring soon" — a lot weeks past its date
+ * needs a visibly different signal than one that's merely approaching it. */
 export function pantryGroup(expires: Date | null | undefined, now: Date = new Date()): PantryGroup {
     const status = expiryStatus(expires, now)
-    return status === 'expired' || status === 'soon' ? 'expiring' : 'instock'
+    if (status === 'expired') return 'expired'
+    if (status === 'soon') return 'expiring'
+    return 'instock'
 }
 
 export type ShelfLifePeriod = 'day' | 'week' | 'month'
@@ -86,6 +90,63 @@ export function shelfLifeFromDays(days: number | null | undefined): {value: numb
     if (days % SHELF_LIFE_PERIOD_DAYS.month === 0) return {value: days / SHELF_LIFE_PERIOD_DAYS.month, period: 'month'}
     if (days % SHELF_LIFE_PERIOD_DAYS.week === 0) return {value: days / SHELF_LIFE_PERIOD_DAYS.week, period: 'week'}
     return {value: days, period: 'day'}
+}
+
+/**
+ * Common expiry durations, in days — one tap gets a sensible date/duration without configuring
+ * a food's shelf-life fields first. Shared by every duration/date entry point (FoodEditor's three
+ * shelf-life rows, the Open confirm dialog) so "the common choices" stay a single definition.
+ */
+export const EXPIRY_PRESET_DAYS = [3, 7, 14, 30, 90, 180, 365]
+
+/**
+ * Freezer shelf-life guidance by food category (USDA-style rules of thumb), in months. The single
+ * source of truth for both FreezerExpiryDialog (pick an absolute date for a lot) and FoodEditor's
+ * Frozen shelf-life row (#19: reuse these instead of the generic, category-blind day chips —
+ * "3 Days / 1 Week / ..." carries no food-safety guidance the way "Poultry: 9 months" does).
+ */
+export const FREEZER_CATEGORY_PRESETS = [
+    {labelKey: 'Meat (Beef/Pork)', months: 12, icon: 'fa-solid fa-drumstick-bite'},
+    {labelKey: 'Poultry', months: 9, icon: 'fa-solid fa-dove'},
+    {labelKey: 'Ground Meat', months: 4, icon: 'fa-solid fa-hamburger'},
+    {labelKey: 'Fish (Lean)', months: 6, icon: 'fa-solid fa-fish'},
+    {labelKey: 'Fish (Fatty)', months: 3, icon: 'fa-solid fa-fish-fins'},
+    {labelKey: 'Vegetables', months: 10, icon: 'fa-solid fa-carrot'},
+    {labelKey: 'Fruit', months: 12, icon: 'fa-solid fa-apple-whole'},
+    {labelKey: 'Bread', months: 3, icon: 'fa-solid fa-bread-slice'},
+    {labelKey: 'Pre-cooked Meals', months: 3, icon: 'fa-solid fa-utensils'},
+    {labelKey: 'Soup/Stew', months: 3, icon: 'fa-solid fa-bowl-food'},
+] as const
+
+/** Human-readable label for a preset duration, e.g. "2 Weeks" — reuses the same Days/Weeks/Months
+ * period labels already shown in the shelf-life period selector, for one consistent vocabulary. */
+export function formatShelfLifeDuration(days: number, t: (key: string) => string): string {
+    const {value, period} = shelfLifeFromDays(days)
+    const label = period === 'month' ? 'Months' : period === 'week' ? 'Weeks' : 'Days'
+    return `${value} ${t(label)}`
+}
+
+/** today (or `from`) + `days`, as a Date — the absolute-date counterpart to a duration preset. */
+export function daysFromNow(days: number, from: Date = new Date()): Date {
+    return DateTime.fromJSDate(from).plus({days}).toJSDate()
+}
+
+/**
+ * The expiry a brand-new, unopened lot would get, for the given location — the client-side mirror
+ * of the backend's `_suggest_expiry`/`apply_shelf_life_expiry` for a lot that was never opened
+ * (`opened_at=None`): a freezer location always uses the Frozen number (never falls back to the
+ * plain shelf life), any other location uses the ordinary Pantry/Fridge number. `null` when the
+ * food has no default configured for that state — "nothing to suggest," not zero.
+ */
+export function suggestedExpiryForNewLot(
+    food: {shelfLifeDays?: number | null, shelfLifeDaysFrozen?: number | null},
+    isFreezer: boolean,
+    now: Date = new Date(),
+): Date | null {
+    if (isFreezer) {
+        return food.shelfLifeDaysFrozen ? daysFromNow(food.shelfLifeDaysFrozen, now) : null
+    }
+    return food.shelfLifeDays ? daysFromNow(food.shelfLifeDays, now) : null
 }
 
 export interface StockUpRowDefaults {

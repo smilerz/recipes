@@ -7,7 +7,7 @@
                 $t('Recipes')
             }} ({{ useShoppingStore().getAssociatedRecipes().length }})</span></v-tab>
         <v-tab value="selected_supermarket" v-if="useUserPreferenceStore().deviceSettings.shopping_selected_supermarket != null">
-            <i class="fa-solid fa-store fa-fw"></i> <span class="d-none d-md-block ms-1">{{ useUserPreferenceStore().deviceSettings.shopping_selected_supermarket.name }}</span>
+            <i class="fa-solid fa-store fa-fw"></i> <span class="d-none d-md-block ms-1">{{ useUserPreferenceStore().deviceSettings.shopping_selected_supermarket?.name }}</span>
         </v-tab>
 
         <v-btn class="float-right" height="100%" rounded="0" variant="text"
@@ -146,7 +146,7 @@
                             <v-chip label size="small" variant="outlined" class="ms-1 me-0 mt-0 mb-0 h-100" style="max-width: 50%;" :prepend-icon="TSupermarket.icon"
                                     append-icon="fa-solid fa-caret-down" v-if="props.mealPlanId == undefined">
                             <span v-if="useUserPreferenceStore().deviceSettings.shopping_selected_supermarket != null">
-                                {{ useUserPreferenceStore().deviceSettings.shopping_selected_supermarket.name }}
+                                {{ useUserPreferenceStore().deviceSettings.shopping_selected_supermarket?.name }}
                             </span>
                                 <span v-else>{{ $t('Supermarket') }}</span>
 
@@ -254,7 +254,7 @@
                                 Length: {{ useShoppingStore().itemCheckSyncQueue.length }} <br/>
                                 Has Failed Items: {{ useShoppingStore().hasFailedItems() }}
                                 <v-list>
-                                    <v-list-item v-for="i in useShoppingStore().itemCheckSyncQueue" :key="i">{{ i }}</v-list-item>
+                                    <v-list-item v-for="(i, idx) in useShoppingStore().itemCheckSyncQueue" :key="idx">{{ i }}</v-list-item>
                                 </v-list>
                             </v-card-text>
                         </v-card>
@@ -264,7 +264,7 @@
                             <v-card-title>Undo Debug</v-card-title>
                             <v-card-text>
                                 <v-list>
-                                    <v-list-item v-for="i in useShoppingStore().undoStack" :key="i">{{ i.type }} {{
+                                    <v-list-item v-for="(i, idx) in useShoppingStore().undoStack" :key="idx">{{ i.type }} {{
                                             i.entries.flatMap((e: ShoppingListEntry) => e.food.name)
                                         }}
                                     </v-list-item>
@@ -337,7 +337,7 @@
             <v-container>
                 <v-row>
                     <v-col>
-                        <supermarket-editor :item="useUserPreferenceStore().deviceSettings.shopping_selected_supermarket"
+                        <supermarket-editor :item="useUserPreferenceStore().deviceSettings.shopping_selected_supermarket ?? undefined"
                                             @save="(args: Supermarket) => (useUserPreferenceStore().deviceSettings.shopping_selected_supermarket = args)"></supermarket-editor>
                     </v-col>
                 </v-row>
@@ -484,7 +484,10 @@ function autoSyncLoop() {
 
     let timeout = Math.max(useUserPreferenceStore().userSettings.shoppingAutoSync!, 1) * 1000 // if disabled (shopping_auto_sync=0) check again after 1 second if enabled
 
-    useShoppingStore().autoSyncTimeoutId = setTimeout(() => {
+    // window.setTimeout forces the DOM `number` overload - plain setTimeout() resolves to
+    // @types/node's NodeJS.Timeout in this project's ambient types, which doesn't match the
+    // store's number-typed id.
+    useShoppingStore().autoSyncTimeoutId = window.setTimeout(() => {
         if (useUserPreferenceStore().userSettings.shoppingAutoSync! > 0) {
             useShoppingStore().autoSync()
         }

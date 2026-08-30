@@ -10,7 +10,7 @@
 
 <script setup lang="ts">
 
-import {EditorSupportedModels, GenericModel, getGenericModelFromString} from "@/types/Models.ts";
+import {EditorSupportedModels, GenericModel, getGenericModelFromStringOrDefault} from "@/types/Models.ts";
 import {onBeforeMount, PropType, shallowRef, watch} from "vue";
 import {useI18n} from "vue-i18n";
 
@@ -31,7 +31,7 @@ const genericModel = shallowRef({} as GenericModel)
 
 watch(() => props.model, (newValue, oldValue) => {
     if (newValue != oldValue) {
-        genericModel.value = getGenericModelFromString(props.model, t)
+        genericModel.value = getGenericModelFromStringOrDefault(props.model, t)
     }
 })
 
@@ -39,12 +39,7 @@ watch(() => props.model, (newValue, oldValue) => {
  * select model class before mount because template renders before onMounted is called
  */
 onBeforeMount(() => {
-    try {
-        genericModel.value = getGenericModelFromString(props.model, t)
-    } catch (Error) {
-        console.error('Invalid model passed to ModelListPage, loading Food instead')
-        genericModel.value = getGenericModelFromString('Food', t)
-    }
+    genericModel.value = getGenericModelFromStringOrDefault(props.model, t)
 })
 
 </script>

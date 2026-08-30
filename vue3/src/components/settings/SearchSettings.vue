@@ -6,7 +6,7 @@
         <v-alert variant="tonal" color="warning" :text="$t('SearchSettingsWarning')"></v-alert>
 
         <p class="mt-2 mb-2"> {{ $t('SearchSettingsOverview') }}</p>
-        <v-card :title="$t('Fuzzy') +' (' + $t('Default') + ')'" :subtitle="$t('FuzzySearchHelp')">
+        <v-card :title="$t('FuzzySearchPreset') +' (' + $t('Default') + ')'" :subtitle="$t('FuzzySearchHelp')">
             <template #append>
                 <v-btn color="success" @click="applyFuzzyPreset()">{{ $t('Apply') }}</v-btn>
             </template>
@@ -24,7 +24,7 @@
 
             <v-select v-model="searchPreferences.search" :items="searchMethods" :label="$t('Method')"></v-select>
 
-            <v-checkbox v-model="searchPreferences.lookup" :label="$t('Fuzzy')" persistent-hint :hint="$t('FuzzySearchHelp')" class="mb-4"></v-checkbox>
+            <v-checkbox v-model="searchPreferences.lookup" :label="$t('EnableFuzzySearch')" persistent-hint :hint="$t('FuzzySearchHelp')" class="mb-4"></v-checkbox>
             <v-number-input v-model="searchPreferences.trigramThreshold" :precision="2" :min="0.01" :max="1" :step="0.1" :label="$t('TrigramThreshold')" persistent-hint
                             :hint="$t('TrigramThresholdHelp')"></v-number-input>
 
@@ -32,7 +32,7 @@
             <ModelSelect model="SearchFields" mode="tags" v-model="searchPreferences.icontains" :label="$t('PartialMatch')" :hint="$t('PartialMatchHelp')"></ModelSelect>
             <ModelSelect model="SearchFields" mode="tags" v-model="searchPreferences.istartswith" :label="$t('StartsWith')" :hint="$t('StartsWithHelp')"></ModelSelect>
             <ModelSelect model="SearchFields" mode="tags" v-model="searchPreferences.fulltext" :label="$t('Fulltext')" :hint="$t('FulltextHelp')"></ModelSelect>
-            <ModelSelect model="SearchFields" mode="tags" v-model="searchPreferences.trigram" :label="$t('Fuzzy')" :hint="$t('FuzzySearchHelp')"></ModelSelect>
+            <ModelSelect model="SearchFields" mode="tags" v-model="searchPreferences.trigram" :label="$t('TrigramFields')" :hint="$t('TrigramFieldsHelp')"></ModelSelect>
 
             <v-btn class="mt-3" color="success" @click="updateSearchSettings()" prepend-icon="$save" :loading="loading">
                 {{ $t('Save') }}
@@ -93,7 +93,7 @@ function updateSearchSettings() {
     loading.value = true
     if (searchPreferences.value != undefined) {
 
-        api.apiSearchPreferencePartialUpdate({patchedSearchPreference: searchPreferences.value, user: useUserPreferenceStore().userSettings.user.id}).then(r => {
+        api.apiSearchPreferencePartialUpdate({patchedSearchPreference: searchPreferences.value, user: useUserPreferenceStore().userSettings.user.id!}).then(r => {
             searchPreferences.value = r
             useMessageStore().addPreparedMessage(PreparedMessage.UPDATE_SUCCESS)
         }).catch(err => {

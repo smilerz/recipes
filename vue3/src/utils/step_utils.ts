@@ -18,7 +18,7 @@ function splitStepObject<T extends StepLike>(step: T, split_character: string) {
     if (step.instruction) {
         step.instruction.split(split_character).forEach(part => {
             if (part.trim() !== '') {
-                steps.push({instruction: part, ingredients: [], time: 0, showIngredientsTable: useUserPreferenceStore().userSettings.showStepIngredients!})
+                steps.push({instruction: part, ingredients: [], time: 0, showIngredientsTable: useUserPreferenceStore().userSettings.showStepIngredients!} as unknown as T)
             }
         })
         steps[0].ingredients = step.ingredients // put all ingredients from the original step in the ingredients of the first step of the split step list
@@ -74,10 +74,10 @@ export function mergeStep(step1: Step, step2: Step) {
 /**
  * Merge all steps of a given steps array into one
  */
-export function mergeAllSteps(steps: Step[] | SourceImportStep[]) {
+export function mergeAllSteps<T extends StepLike>(steps: T[]): T[] {
     if (steps.length > 1) {
         steps[0].instruction = steps.map(s => s.instruction).join('\n')
-        steps[0].ingredients = steps.flatMap(s => s.ingredients)
+        steps[0].ingredients = steps.flatMap(s => s.ingredients ?? [])
         steps = [steps[0]]
     } else {
         useMessageStore().addMessage(MessageType.ERROR, "no steps found to split")

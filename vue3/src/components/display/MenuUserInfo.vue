@@ -3,7 +3,7 @@
         <template #prepend>
             <v-avatar color="primary" :aria-label="useUserPreferenceStore().userSettings.user.displayName">
                 <v-img v-if="useUserPreferenceStore().userSettings.image?.preview"
-                       :src="useUserPreferenceStore().userSettings.image.preview"
+                       :src="useUserPreferenceStore().userSettings.image?.preview"
                        :position="cropPosition(useUserPreferenceStore().userSettings.image?.cropData)" />
                 <span v-else>{{ useUserPreferenceStore().userSettings.user.displayName.charAt(0) }}</span>
             </v-avatar>
@@ -15,9 +15,9 @@
         </v-list-item-subtitle>
         <v-list-item-subtitle
             :to="{name: 'ModelListPage', params: {model: 'household'}}"
-            v-if="useUserPreferenceStore().activeUserSpace != null && useUserPreferenceStore().activeUserSpace.household != null">
+            v-if="useUserPreferenceStore().activeUserSpace != null && useUserPreferenceStore().activeUserSpace?.household != null">
             <i :class="THousehold.icon"></i>
-            {{ useUserPreferenceStore().activeUserSpace.household.name }}
+            {{ useUserPreferenceStore().activeUserSpace?.household?.name }}
         </v-list-item-subtitle>
         <v-list-item-subtitle class="cursor-pointer" @click="router.push({name: 'ModelListPage', params: {model: 'UserSpace'}})"
                               v-else>

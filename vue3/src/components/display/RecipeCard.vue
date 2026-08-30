@@ -11,7 +11,7 @@
                         <v-icon icon="fa-solid fa-star" size="x-small" color="amber" />
                         <span class="card-overlay-rating-text">{{ recipe.rating.toFixed(1) }}</span>
                     </span>
-                    <span v-if="deviceSettings.card_showNewBadge && recipe._new"
+                    <span v-if="deviceSettings.card_showNewBadge && (recipe as any)._new"
                           class="card-overlay-bottom-left card-overlay-new recipe-card-new-badge">
                         {{ t('New') }}
                     </span>

@@ -180,7 +180,7 @@ describe('StockUpDialog seeding (D3)', () => {
 
         // drive the location ModelSelect's emit so the @update:model-value binding is load-bearing
         const locationSelect = wrapper.findAllComponents('.model-select-stub')
-            .find(c => c.props('model') === 'InventoryLocation')!
+            .find((c: any) => c.props('model') === 'InventoryLocation')! as any
         locationSelect.vm.$emit('update:modelValue', {id: 9, name: 'Chest freezer', isFreezer: true})
         await flushPromises()
         expect(row.expires).toBeNull()                 // freezer mutes the auto suggestion

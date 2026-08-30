@@ -11,7 +11,7 @@
             >
                 {{ $t('All') }}
             </span>
-            <template v-for="(crumb, i) in breadcrumbs" :key="crumb.id">
+            <template v-for="(crumb, i) in breadcrumbs" :key="crumb.id ?? undefined">
                 <v-icon size="x-small" class="drill-sep" icon="fa-solid fa-chevron-right" />
                 <span
                     :class="['drill-crumb', { 'drill-crumb--current': i === breadcrumbs.length - 1 }]"

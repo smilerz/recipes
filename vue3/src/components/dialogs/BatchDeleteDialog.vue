@@ -3,7 +3,7 @@
         <v-card :loading="loading">
             <v-closable-card-title
                 :title="$t('delete_title', {type: $t(genericModel.model.localizationKey)})"
-                :sub-title="genericModel.getLabel(props.source)"
+                :sub-title="itemNames"
                 :icon="genericModel.model.icon"
                 v-model="dialog"
             ></v-closable-card-title>
@@ -39,8 +39,8 @@
 
 <script setup lang="ts">
 
-import {onMounted, PropType, ref, watch} from "vue";
-import {EditorSupportedModels, EditorSupportedTypes, getGenericModelFromString} from "@/types/Models.ts";
+import {computed, onMounted, PropType, ref, watch} from "vue";
+import {EditorSupportedModels, EditorSupportedTypes, GenericModel, getGenericModelFromString} from "@/types/Models.ts";
 import VClosableCardTitle from "@/components/dialogs/VClosableCardTitle.vue";
 import {useI18n} from "vue-i18n";
 
@@ -57,7 +57,9 @@ const {t} = useI18n()
 const dialog = defineModel<boolean>({default: false})
 const loading = ref(false)
 
-const genericModel = getGenericModelFromString(props.model, t)
+const genericModel = getGenericModelFromString(props.model, t) || getGenericModelFromString('Food', t) as GenericModel
+
+const itemNames = computed(() => props.items.map((i: EditorSupportedTypes) => genericModel.getLabel(i)).join(', '))
 
 const itemsToDelete = ref<EditorSupportedTypes[]>([])
 const failedItems = ref<EditorSupportedTypes[]>([])

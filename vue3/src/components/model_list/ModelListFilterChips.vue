@@ -83,7 +83,7 @@ function fetchName(modelName: string, idStr: string): void {
     // endpoint is open to any space member and supports id filtering, so use that
     // instead of retrieve() for this one model to resolve the "Created by" chip label.
     const lookup = modelName === 'User'
-        ? gm.list({filterList: [idStr]}).then((r: any) => r.results[0])
+        ? gm.list({filterList: [idStr]} as any).then((r: any) => r.results[0])
         : gm.retrieve(id)
     lookup.then((obj: any) => {
         nameCache.set(cacheKey, obj?.[label] ?? idStr)

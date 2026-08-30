@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from 'vitest'
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
-import { getGenericModelFromString, canRouteToModel, DATABASE_MODELS } from '@/types/Models'
+import { getGenericModelFromString, canRouteToModel, DATABASE_MODELS, type EditorSupportedModels, type GenericModel } from '@/types/Models'
 
 const t = (k: string) => k
 
@@ -9,13 +9,13 @@ describe('GenericModel delete-relationship dispatch', () => {
     it('returns an empty result (no throw) when the generated client lacks the endpoint', async () => {
         // Space has no apiSpaceProtectingList on the generated client; the old
         // code threw "this.api[...] is not a function" on this path.
-        const gm = getGenericModelFromString('Space', t)
+        const gm = getGenericModelFromString('Space', t) as GenericModel
         const r = await gm.getDeleteProtecting({ id: 1, page: 1, pageSize: 10, cache: true })
         expect(r).toEqual({ count: 0, results: [] })
     })
 
     it('invokes the generated endpoint when it exists', async () => {
-        const gm = getGenericModelFromString('Food', t)
+        const gm = getGenericModelFromString('Food', t) as GenericModel
         const spy = vi.fn().mockResolvedValue({ count: 2, results: [{ id: 7 }] })
         ;(gm as any).api = { apiFoodProtectingList: spy }
 
@@ -96,14 +96,14 @@ describe('DATABASE_MODELS stays in sync with DatabasePage.vue', () => {
 
 describe('GenericModel.list normalizes paginated vs non-paginated responses', () => {
     it('wraps a bare-array (isPaginated:false) response into {count, results, next}', async () => {
-        const gm = getGenericModelFromString('User', t)
+        const gm = getGenericModelFromString('User', t) as GenericModel
         ;(gm as any).api = { apiUserList: vi.fn().mockResolvedValue([{ id: 1 }, { id: 2 }]) }
         const r = await gm.list({ page: 1, pageSize: 10 } as any)
         expect(r).toEqual({ count: 2, results: [{ id: 1 }, { id: 2 }], next: null })
     })
 
     it('passes a paginated response through unchanged (preserving next)', async () => {
-        const gm = getGenericModelFromString('Food', t)
+        const gm = getGenericModelFromString('Food', t) as GenericModel
         const paginated = { count: 5, results: [{ id: 7 }], next: 'http://x/?page=2' }
         ;(gm as any).api = { apiFoodList: vi.fn().mockResolvedValue(paginated) }
         const r = await gm.list({ page: 1, pageSize: 10 } as any)
@@ -111,7 +111,7 @@ describe('GenericModel.list normalizes paginated vs non-paginated responses', ()
     })
 
     it('wraps an empty bare array as count 0 (the former NaN source)', async () => {
-        const gm = getGenericModelFromString('Group', t)
+        const gm = getGenericModelFromString('Group', t) as GenericModel
         ;(gm as any).api = { apiGroupList: vi.fn().mockResolvedValue([]) }
         const r = await gm.list({} as any)
         expect(r).toEqual({ count: 0, results: [], next: null })
@@ -129,14 +129,14 @@ describe('list-empty-actions — curated editable models expose row edit/delete'
     ]
 
     it.each(EDITABLE_MODELS)('%s declares an Actions column header', (name) => {
-        const model = getGenericModelFromString(name, t).model
+        const model = (getGenericModelFromString(name as EditorSupportedModels, t) as GenericModel).model
         const headers = model.tableHeaders ?? []
-        expect(headers.some(h => h.key === 'action')).toBe(true)
+        expect(headers.some((h: { key: string }) => h.key === 'action')).toBe(true)
     })
 
     it.each(EDITABLE_MODELS)('%s defines edit + delete actionDefs', (name) => {
-        const model = getGenericModelFromString(name, t).model
-        const keys = (model.actionDefs ?? []).map(a => a.key)
+        const model = (getGenericModelFromString(name as EditorSupportedModels, t) as GenericModel).model
+        const keys = (model.actionDefs ?? []).map((a: { key: string }) => a.key)
         expect(keys).toContain('edit')
         expect(keys).toContain('delete')
     })
@@ -147,9 +147,9 @@ describe('list-empty-actions — read-only ViewLog has no dead Actions column', 
     // edit or delete action, so the "Actions" column header was permanently empty.
     // Drop the header rather than render an always-blank column.
     it('ViewLog declares no Actions column header', () => {
-        const model = getGenericModelFromString('ViewLog', t).model
+        const model = (getGenericModelFromString('ViewLog', t) as GenericModel).model
         const headers = model.tableHeaders ?? []
-        expect(headers.some(h => h.key === 'action')).toBe(false)
+        expect(headers.some((h: { key: string }) => h.key === 'action')).toBe(false)
     })
 })
 
@@ -160,12 +160,12 @@ describe('list-inert-search — tiny config models hide the non-working search b
     const NON_SEARCHABLE = ['InventoryLocation', 'MealType', 'PropertyType', 'Space', 'UserSpace']
 
     it.each(NON_SEARCHABLE)('%s disables the search box', (name) => {
-        const model = getGenericModelFromString(name, t).model
+        const model = (getGenericModelFromString(name as EditorSupportedModels, t) as GenericModel).model
         expect(model.disableSearch).toBe(true)
     })
 
     it.each(['CookLog', 'ViewLog'])('%s keeps search enabled (real recipe-name filter)', (name) => {
-        const model = getGenericModelFromString(name, t).model
+        const model = (getGenericModelFromString(name as EditorSupportedModels, t) as GenericModel).model
         expect(model.disableSearch).toBeFalsy()
     })
 })
@@ -175,8 +175,8 @@ describe('list-numeric-id — log lists show the recipe name, not its id', () =>
     // recipe name. The serializer now exposes recipeName; the Recipe column
     // must render that field.
     it.each(['CookLog', 'ViewLog'])('%s Recipe column keys on recipeName', (name) => {
-        const model = getGenericModelFromString(name, t).model
-        const recipeCol = (model.tableHeaders ?? []).find(h => h.title === 'Recipe')
+        const model = (getGenericModelFromString(name as EditorSupportedModels, t) as GenericModel).model
+        const recipeCol = (model.tableHeaders ?? []).find((h: { title: string }) => h.title === 'Recipe')
         expect(recipeCol?.key).toBe('recipeName')
     })
 })
@@ -187,12 +187,12 @@ describe('list-mobile-collapse — log mobile rows render recipe name + date', (
     // field. Point itemLabel at recipeName and default the mobile subtitle to the
     // created date so each row shows "<recipe name> / <date>".
     it.each(['CookLog', 'ViewLog'])('%s uses recipeName as the mobile primary label', (name) => {
-        const model = getGenericModelFromString(name, t).model
+        const model = (getGenericModelFromString(name as EditorSupportedModels, t) as GenericModel).model
         expect(model.itemLabel).toBe('recipeName')
     })
 
     it.each(['CookLog', 'ViewLog'])('%s defaults the mobile subtitle to createdAt', (name) => {
-        const model = getGenericModelFromString(name, t).model
+        const model = (getGenericModelFromString(name as EditorSupportedModels, t) as GenericModel).model
         expect(model.listSettings?.defaults?.mobileSubtitle).toContain('createdAt')
     })
 })

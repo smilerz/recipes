@@ -25,7 +25,7 @@ export function useDebouncedSearch(options: UseDebouncedSearchOptions = {}): Use
     } = options
 
     // Route query ref (only created if routeQueryKey is set)
-    const routeRef = routeQueryKey ? useRouteQuery(routeQueryKey, '') : null
+    const routeRef = routeQueryKey ? useRouteQuery<string>(routeQueryKey, '') : null
 
     // The value users type into — always a plain ref for instant v-model updates
     const inputValue = ref(routeRef?.value ?? initialValue)

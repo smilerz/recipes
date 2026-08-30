@@ -79,7 +79,7 @@
                             <v-list-item-subtitle v-if="isDelayed(e)" class="text-info font-weight-bold">
                                 {{ $t('PostponedUntil') }} {{ DateTime.fromJSDate(e.delayUntil!).toLocaleString(DateTime.DATETIME_SHORT) }}
                             </v-list-item-subtitle>
-                            <v-list-item-subtitle v-if="e.shoppingLists.length > 0" class="text-info font-weight-bold">
+                            <v-list-item-subtitle v-if="(e.shoppingLists?.length ?? 0) > 0" class="text-info font-weight-bold">
                                 <shopping-lists-bar :shopping-lists="e.shoppingLists"></shopping-lists-bar>
                             </v-list-item-subtitle>
 
@@ -144,7 +144,7 @@ import {useUserPreferenceStore} from "@/stores/UserPreferenceStore.ts";
 
 const {mobile} = useDisplay()
 
-const showDialog = defineModel<Boolean>()
+const showDialog = defineModel<boolean>()
 const shoppingListFood = defineModel<IShoppingListFood>('shoppingListFood', {required: true})
 
 const shoppingListUpdateLoading = ref(false)
@@ -178,7 +178,7 @@ function shoppingListUpdate(shoppingLists: ShoppingList[]) {
 
     shoppingListFood.value.entries.forEach(e => {
         e.shoppingLists = shoppingLists
-        promises.push(api.apiShoppingListEntryUpdate({id: e.id, shoppingListEntry: e}).then(r => {
+        promises.push(api.apiShoppingListEntryUpdate({id: e.id!, shoppingListEntry: e}).then(r => {
 
         }).catch(err => {
             useMessageStore().addError(ErrorMessageType.UPDATE_ERROR, err)
@@ -204,7 +204,7 @@ function addEntryForFood() {
         food: shoppingListFood.value?.food,
         unit: null,
         amount: 1,
-    } as ShoppingListEntry, false).then((r: ShoppingListEntry | undefined) => {
+    } as unknown as ShoppingListEntry, false).then((r: ShoppingListEntry | undefined) => {
         if (r != undefined) {
             shoppingListFood.value?.entries.set(r.id!, r)
         }

@@ -26,7 +26,7 @@
                                             </v-list-item>
                                             <v-list-item link prepend-icon="fa-solid fa-arrows-to-dot" :disabled="!selectedFood">
                                                 {{ $t('Merge') }}
-                                                <model-merge-dialog :source="[selectedFood]" model="Food"
+                                                <model-merge-dialog :source="selectedFood ? [selectedFood] : []" model="Food"
                                                                     @change="(obj: Food) => {selectedFood = obj;refreshPage()} "></model-merge-dialog>
                                             </v-list-item>
 
@@ -62,7 +62,7 @@
                                             </v-list-item>
                                             <v-list-item link prepend-icon="fa-solid fa-arrows-to-dot" :disabled="!selectedUnit">
                                                 {{ $t('Merge') }}
-                                                <model-merge-dialog :source="[selectedUnit]" model="Unit"
+                                                <model-merge-dialog :source="selectedUnit ? [selectedUnit] : []" model="Unit"
                                                                     @change="(obj: Food) => {selectedUnit = obj;refreshPage()} "></model-merge-dialog>
                                             </v-list-item>
                                             <v-list-item link prepend-icon="$automation" :disabled="!selectedUnit">
@@ -93,7 +93,7 @@
                 :items-length="tableItemCount"
                 :items-per-page="tablePageSize"
                 :headers="tableHeaders"
-                :expanded="items.flatMap((i:Ingredient) => i.id)"
+                :expanded="items.flatMap((i:Ingredient) => i.id != null ? [String(i.id)] : [])"
                 :page="tablePage"
                 :loading="ingredientsLoading"
                 disable-sort
@@ -163,6 +163,7 @@ import {useUrlSearchParams} from "@vueuse/core";
 import DeleteConfirmDialog from "@/components/dialogs/DeleteConfirmDialog.vue";
 import ModelEditDialog from "@/components/dialogs/ModelEditDialog.vue";
 import ModelMergeDialog from "@/components/dialogs/ModelMergeDialog.vue";
+import {VDataTableUpdateOptions} from "@/vuetify.ts";
 
 const {t} = useI18n()
 const params = useUrlSearchParams('history', {})
@@ -176,7 +177,7 @@ const tableHeaders = [
     {title: t('Unit'), key: 'unit', minWidth: '120px', cellProps: {class: 'pr-0'}},
     {title: t('Food'), key: 'food', minWidth: '120px', cellProps: {class: 'pr-0'}},
     {title: t('Note'), key: 'note', minWidth: '120px', cellProps: {class: 'pr-0'}},
-    {key: 'action', width: '1%', noBreak: true, align: 'end'},
+    {key: 'action', width: '1%', noBreak: true, align: 'end' as const},
 ]
 
 const tablePage = ref(1)
@@ -286,7 +287,7 @@ function refreshPage() {
  * @param sortBy
  * @param groupBy
  */
-function loadItems({page, itemsPerPage, search, sortBy, groupBy}) {
+function loadItems({page, itemsPerPage}: VDataTableUpdateOptions) {
     // never load unfiltered, only load if at least one filter is set
     if (!selectedFood.value && !selectedUnit.value) {
         items.value = []

@@ -30,7 +30,7 @@ export async function api(page: Page, path: string, opts: RequestInit = {}) {
                     'X-CSRFToken': csrf ?? '',
                     ...((opts as any).headers ?? {}),
                 },
-                ...opts,
+                ...(opts as RequestInit),
             })
             const body = r.headers.get('content-type')?.includes('json') ? await r.json() : null
             return { status: r.status, body }

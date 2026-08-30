@@ -66,7 +66,7 @@ const user = ref({} as User)
 onMounted(() => {
     let api = new ApiApi()
 
-    api.apiUserRetrieve({id: useUserPreferenceStore().userSettings.user.id}).then(r => {
+    api.apiUserRetrieve({id: useUserPreferenceStore().userSettings.user.id!}).then(r => {
         user.value = r
     }).catch(err => {
         useMessageStore().addError(ErrorMessageType.FETCH_ERROR, err)

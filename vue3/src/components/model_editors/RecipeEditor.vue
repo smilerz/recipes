@@ -88,7 +88,7 @@
                     <v-form :disabled="loading">
                         <v-row v-if="editingObj.steps.length == 0">
                             <v-col class="text-center">
-                                <v-btn icon="$create" variant="outlined" size="x-small" @click="addStep(i+1)"></v-btn>
+                                <v-btn data-test="add-first-step-button" icon="$create" variant="outlined" size="x-small" @click="addStep()"></v-btn>
                             </v-col>
                         </v-row>
 

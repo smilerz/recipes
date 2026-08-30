@@ -148,13 +148,13 @@ const displayItems = computed(() => {
     return items
 })
 
-const sortBy = ref([{key: 'createdAt', order: 'desc'}])
+const sortBy = ref([{key: 'createdAt', order: 'desc' as const}])
 const search = ref('')
 const tableHeaders = ref([
     {title: t('Type'), key: 'type'},
     {title: t('Created'), key: 'createdAt'},
     {title: t('Message'), key: 'msg'},
-    {title: t('Actions'), key: 'actions', align: 'end'},
+    {title: t('Actions'), key: 'actions', align: 'end' as const},
 ])
 const typeFilter = ref([MessageType.SUCCESS, MessageType.INFO, MessageType.WARNING, MessageType.ERROR])
 const detailItem = ref({} as Message)

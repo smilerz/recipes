@@ -46,8 +46,6 @@ function addToBook() {
         recipeBookEntry: {
             book: selectedBook.value.id!,
             recipe: props.recipe.id!,
-            recipeContent: {} as any,
-            bookContent: {} as any,
         }
     }).then(() => {
         useMessageStore().addPreparedMessage(PreparedMessage.CREATE_SUCCESS)
