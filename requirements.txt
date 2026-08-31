@@ -1,5 +1,5 @@
 Django==5.2.16
-cryptography===50.0.0
+cryptography===50.0.1
 django-annoying==0.10.8
 django-cleanup==9.0.0
 django-crispy-forms==2.7
@@ -35,7 +35,7 @@ django-scopes==2.1.0
 django-treebeard==6.0.1
 django-cors-headers==4.9.0
 django-storages==1.14.6
-boto3==1.43.79
+boto3==1.43.82
 django-prometheus==2.5.0
 django-hCaptcha==0.2.0
 python-ldap==3.4.7
