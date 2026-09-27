@@ -18,8 +18,11 @@ jobs:
             fail-fast: false
             max-parallel: 4
             matrix:
+                # Node 24 is the project's pinned LTS version (see
+                # vue3/package.json "engines" and .nvmrc) — odd-numbered
+                # ("Current", non-LTS) lines aren't required here.
                 python-version: ["3.13"]
-                node-version: ["24", "25"]
+                node-version: ["24"]
                 include:
                     # Forward-looking canary: 3.14 is not viable until litellm drops
                     # its Requires-Python <3.14 cap (and any other <3.14 deps follow).
