@@ -8,13 +8,15 @@ on:
 jobs:
   vue-tests:
     runs-on: ubuntu-latest
-    # Node 25 currently fails on a jsdom / localStorage polyfill mismatch
-    # (`storage.getItem is not a function`). Tracked in ROADMAP under
-    # Developer Experience — when fixed, add Node 25 to required checks.
+    # Node 24 is the project's pinned LTS version (see vue3/package.json
+    # "engines" and .nvmrc). Odd-numbered Node lines ("Current", non-LTS)
+    # aren't supported by npm's own CLI-team tooling packages (e.g. nopt
+    # 10.x explicitly excludes 25.x in its engines field) and shouldn't be
+    # required here either.
     strategy:
       fail-fast: false
       matrix:
-        node-version: ["24", "25"]
+        node-version: ["24"]
     steps:
       - uses: actions/checkout@v6
 

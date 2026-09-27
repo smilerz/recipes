@@ -49,6 +49,20 @@ updates:
       npm-minors:
         patterns: ["*"]
         update-types: ["minor"]
+    ignore:
+      # @types/node tracks Node major versions. The project is pinned to
+      # Node 24 LTS (vue3/package.json "engines", .nvmrc) — stay on the
+      # matching 24.x types line rather than drifting ahead to an
+      # unreleased/Current major's typings.
+      - dependency-name: "@types/node"
+        versions: [">=25"]
+      # typescript 7 doesn't yet expose a stable programmatic API, so
+      # Volar-based tooling (vue-tsc) can't embed it — confirmed broken
+      # (vuejs/language-tools#5381, #6124) and TypeScript's own team
+      # recommends Vue projects stay on 6.0 until that's resolved. Revisit
+      # once vue-tsc ships TS7 support.
+      - dependency-name: "typescript"
+        versions: [">=7"]
     commit-message:
       prefix: "chore"
       include: "scope"
