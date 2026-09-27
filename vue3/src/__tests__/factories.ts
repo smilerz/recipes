@@ -100,6 +100,7 @@ export function makeUnit(overrides: Partial<Unit> = {}): Unit {
         description: '',
         baseUnit: '',
         openDataSlug: '',
+        numrecipe: 0,
         ...overrides,
     }
 }
@@ -133,6 +134,7 @@ export function makeKeyword(overrides: Partial<Keyword> = {}): Keyword {
         createdAt: new Date('2026-01-01'),
         updatedAt: new Date('2026-01-01'),
         fullName: 'Test Keyword',
+        numrecipe: 0,
         ...overrides,
     }
 }
@@ -210,6 +212,7 @@ export function makeRecipeFlat(overrides: Partial<RecipeFlat> = {}): RecipeFlat 
         id: 1,
         name: 'Test Recipe',
         image: null,
+        imageCropData: null,
         ...overrides,
     }
 }
@@ -248,6 +251,7 @@ export function makeUserFileView(overrides: Partial<UserFileView> = {}): UserFil
         fileDownload: '/media/test.jpg',
         preview: '/media/test_preview.jpg',
         fileSizeKb: 100,
+        cropData: null,
         createdBy: makeUser(),
         createdAt: new Date('2026-01-01'),
         ...overrides,
@@ -305,6 +309,11 @@ export function makeFood(overrides: Partial<Food> = {}): Food {
         childInheritFields: [],
         openDataSlug: '',
         shoppingLists: [],
+        numrecipe: 0,
+        inInventory: '',
+        earliestExpiry: null,
+        substituteInventory: false,
+        matchedFilter: false,
         ...overrides,
     }
 }
@@ -316,6 +325,10 @@ export function makeFoodShopping(overrides: Partial<FoodShopping> = {}): FoodSho
         pluralName: '',
         supermarketCategory: makeSupermarketCategory(),
         shoppingLists: [],
+        inInventory: null,
+        earliestExpiry: null,
+        foodImage: null,
+        substituteOnhand: false,
         ...overrides,
     }
 }
@@ -351,7 +364,6 @@ export function makeStep(overrides: Partial<Step> = {}): Step {
         file: undefined,
         stepRecipe: undefined,
         stepRecipeData: null,
-        numrecipe: 0,
         ...overrides,
     }
 }
@@ -386,7 +398,7 @@ export function makeRecipeOverview(overrides: Partial<RecipeOverview> = {}): Rec
         rating: null,
         lastCooked: null,
         _new: false,
-        recent: '',
+        imageCropData: null,
         ...overrides,
     }
 }
@@ -418,6 +430,8 @@ export function makeRecipe(overrides: Partial<Recipe> = {}): Recipe {
         rating: null,
         lastCooked: null,
         shared: [],
+        imageCropData: null,
+        images: [],
         ...overrides,
     }
 }
@@ -531,6 +545,7 @@ export function makeInventoryEntry(overrides: Partial<InventoryEntry> = {}): Inv
         unit: makeUnit(),
         amount: 1,
         expires: undefined,
+        openedAt: null,
         note: '',
         label: 'Test Food - 1 g',
         createdAt: new Date('2026-01-01'),
@@ -630,7 +645,6 @@ export function makeUserPreference(overrides: Partial<UserPreference> = {}): Use
         navShowLogo: true,
         defaultUnit: 'g',
         useFractions: false,
-        useKj: false,
         navSticky: true,
         ingredientDecimals: 2,
         comments: true,
@@ -652,6 +666,7 @@ export function makeCookLog(overrides: Partial<CookLog> = {}): CookLog {
     return {
         id: 1,
         recipe: 1,
+        recipeName: 'Test Recipe',
         servings: 4,
         rating: undefined,
         comment: '',
@@ -666,6 +681,7 @@ export function makeViewLog(overrides: Partial<ViewLog> = {}): ViewLog {
     return {
         id: 1,
         recipe: 1,
+        recipeName: 'Test Recipe',
         createdBy: 1,
         createdAt: new Date('2026-01-01'),
         ...overrides,
@@ -678,7 +694,7 @@ export function makeCustomFilter(overrides: Partial<CustomFilter> = {}): CustomF
         name: 'Test Filter',
         search: 'test',
         shared: [],
-        createdBy: 1,
+        createdBy: makeUser(),
         ...overrides,
     }
 }
