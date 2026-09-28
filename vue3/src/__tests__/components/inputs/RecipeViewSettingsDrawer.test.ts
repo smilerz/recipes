@@ -7,7 +7,7 @@
  * data-test hooks so the tests survive visual layout changes.
  */
 import {describe, it, expect, beforeEach, vi} from 'vitest'
-import {mount} from '@vue/test-utils'
+import {mount, type VueWrapper} from '@vue/test-utils'
 import {createPinia, setActivePinia, type PiniaPlugin} from 'pinia'
 import {createI18n} from 'vue-i18n'
 import {createVuetify} from 'vuetify'
@@ -191,8 +191,9 @@ describe('RecipeViewSettingsDrawer (consolidated)', () => {
         s.recipe_overviewShowActions = true
         await w.vm.$nextTick()
         expect(w.find('[data-test="highlight-color"]').exists()).toBe(true)
-        // Vuetify renders the select's hidden <option>s outside the wrapper, so query globally.
-        const options = w.findAll('option').map(o => o.attributes('value')).filter(Boolean)
+        // Read the select's items directly: Vuetify 4.2 no longer renders hidden native <option>s to scrape.
+        const select = w.findComponent('[data-test="highlight-color"]') as VueWrapper<any>
+        const options = (select.props('items') as {value: string}[]).map(i => i.value)
         expect(options).not.toContain('substitute')
         expect(options).toContain('onhand')
     })
