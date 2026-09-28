@@ -33,6 +33,10 @@ jobs:
                       experimental: true
         steps:
             - uses: actions/checkout@v7
+            # cache-apt-pkgs-action >=1.6.3 no longer runs `apt update` on GitHub runners, so a
+            # cache-cold install resolves against the runner image's stale lists and 404s.
+            - name: Refresh apt package lists
+              run: sudo apt-get update
             - uses: awalsh128/cache-apt-pkgs-action@v1.6.0
               with:
                   packages: libsasl2-dev python3-dev libxml2-dev libxmlsec1-dev libxslt-dev libxmlsec1-openssl libxslt-dev libldap2-dev libssl-dev gcc musl-dev postgresql-dev zlib-dev jpeg-dev libwebp-dev openssl-dev libffi-dev cargo openldap-dev python3-dev xmlsec-dev xmlsec build-base g++ curl
