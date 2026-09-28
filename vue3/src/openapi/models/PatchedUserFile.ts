@@ -13,6 +13,13 @@
  */
 
 import { mapValues } from '../runtime';
+import type { CropData } from './CropData';
+import {
+    CropDataFromJSON,
+    CropDataFromJSONTyped,
+    CropDataToJSON,
+    CropDataToJSONTyped,
+} from './CropData';
 import type { User } from './User';
 import {
     UserFromJSON,
@@ -65,10 +72,10 @@ export interface PatchedUserFile {
     readonly fileSizeKb?: number;
     /**
      * 
-     * @type {any}
+     * @type {CropData}
      * @memberof PatchedUserFile
      */
-    cropData?: any | null;
+    cropData?: CropData | null;
     /**
      * 
      * @type {User}
@@ -106,7 +113,7 @@ export function PatchedUserFileFromJSONTyped(json: any, ignoreDiscriminator: boo
         'fileDownload': json['file_download'] == null ? undefined : json['file_download'],
         'preview': json['preview'] == null ? undefined : json['preview'],
         'fileSizeKb': json['file_size_kb'] == null ? undefined : json['file_size_kb'],
-        'cropData': json['crop_data'] == null ? undefined : json['crop_data'],
+        'cropData': json['crop_data'] == null ? undefined : CropDataFromJSON(json['crop_data']),
         'createdBy': json['created_by'] == null ? undefined : UserFromJSON(json['created_by']),
         'createdAt': json['created_at'] == null ? undefined : (new Date(json['created_at'])),
     };
@@ -126,7 +133,7 @@ export function PatchedUserFileToJSONTyped(value?: Omit<PatchedUserFile, 'file_d
         'id': value['id'],
         'name': value['name'],
         'file': value['file'],
-        'crop_data': value['cropData'],
+        'crop_data': CropDataToJSON(value['cropData']),
     };
 }
 

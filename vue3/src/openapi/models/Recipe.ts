@@ -13,6 +13,13 @@
  */
 
 import { mapValues } from '../runtime';
+import type { CropData } from './CropData';
+import {
+    CropDataFromJSON,
+    CropDataFromJSONTyped,
+    CropDataToJSON,
+    CropDataToJSONTyped,
+} from './CropData';
 import type { User } from './User';
 import {
     UserFromJSON,
@@ -90,10 +97,10 @@ export interface Recipe {
     readonly image: string | null;
     /**
      * 
-     * @type {any}
+     * @type {CropData}
      * @memberof Recipe
      */
-    readonly imageCropData: any | null;
+    readonly imageCropData: CropData | null;
     /**
      * 
      * @type {Array<RecipeImage>}
@@ -266,7 +273,7 @@ export function RecipeFromJSONTyped(json: any, ignoreDiscriminator: boolean): Re
         'name': json['name'],
         'description': json['description'] == null ? undefined : json['description'],
         'image': json['image'],
-        'imageCropData': json['image_crop_data'],
+        'imageCropData': CropDataFromJSON(json['image_crop_data']),
         'images': ((json['images'] as Array<any>).map(RecipeImageFromJSON)),
         'keywords': json['keywords'] == null ? undefined : ((json['keywords'] as Array<any>).map(KeywordFromJSON)),
         'steps': ((json['steps'] as Array<any>).map(StepFromJSON)),

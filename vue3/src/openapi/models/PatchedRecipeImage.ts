@@ -13,6 +13,14 @@
  */
 
 import { mapValues } from '../runtime';
+import type { CropData } from './CropData';
+import {
+    CropDataFromJSON,
+    CropDataFromJSONTyped,
+    CropDataToJSON,
+    CropDataToJSONTyped,
+} from './CropData';
+
 /**
  * Serializer for the RecipeImage model (multi-image gallery).
  * @export
@@ -39,10 +47,10 @@ export interface PatchedRecipeImage {
     file?: string;
     /**
      * 
-     * @type {any}
+     * @type {CropData}
      * @memberof PatchedRecipeImage
      */
-    cropData?: any | null;
+    cropData?: CropData | null;
     /**
      * 
      * @type {number}
@@ -89,7 +97,7 @@ export function PatchedRecipeImageFromJSONTyped(json: any, ignoreDiscriminator: 
         'id': json['id'] == null ? undefined : json['id'],
         'recipe': json['recipe'] == null ? undefined : json['recipe'],
         'file': json['file'] == null ? undefined : json['file'],
-        'cropData': json['crop_data'] == null ? undefined : json['crop_data'],
+        'cropData': json['crop_data'] == null ? undefined : CropDataFromJSON(json['crop_data']),
         'order': json['order'] == null ? undefined : json['order'],
         'isPrimary': json['is_primary'] == null ? undefined : json['is_primary'],
         'createdBy': json['created_by'] == null ? undefined : json['created_by'],
@@ -111,7 +119,7 @@ export function PatchedRecipeImageToJSONTyped(value?: Omit<PatchedRecipeImage, '
         'id': value['id'],
         'recipe': value['recipe'],
         'file': value['file'],
-        'crop_data': value['cropData'],
+        'crop_data': CropDataToJSON(value['cropData']),
         'order': value['order'],
         'is_primary': value['isPrimary'],
     };

@@ -13,6 +13,13 @@
  */
 
 import { mapValues } from '../runtime';
+import type { CropData } from './CropData';
+import {
+    CropDataFromJSON,
+    CropDataFromJSONTyped,
+    CropDataToJSON,
+    CropDataToJSONTyped,
+} from './CropData';
 import type { User } from './User';
 import {
     UserFromJSON,
@@ -90,10 +97,10 @@ export interface PatchedRecipe {
     readonly image?: string | null;
     /**
      * 
-     * @type {any}
+     * @type {CropData}
      * @memberof PatchedRecipe
      */
-    readonly imageCropData?: any | null;
+    readonly imageCropData?: CropData | null;
     /**
      * 
      * @type {Array<RecipeImage>}
@@ -255,7 +262,7 @@ export function PatchedRecipeFromJSONTyped(json: any, ignoreDiscriminator: boole
         'name': json['name'] == null ? undefined : json['name'],
         'description': json['description'] == null ? undefined : json['description'],
         'image': json['image'] == null ? undefined : json['image'],
-        'imageCropData': json['image_crop_data'] == null ? undefined : json['image_crop_data'],
+        'imageCropData': json['image_crop_data'] == null ? undefined : CropDataFromJSON(json['image_crop_data']),
         'images': json['images'] == null ? undefined : ((json['images'] as Array<any>).map(RecipeImageFromJSON)),
         'keywords': json['keywords'] == null ? undefined : ((json['keywords'] as Array<any>).map(KeywordFromJSON)),
         'steps': json['steps'] == null ? undefined : ((json['steps'] as Array<any>).map(StepFromJSON)),

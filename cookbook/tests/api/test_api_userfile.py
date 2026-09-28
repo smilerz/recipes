@@ -95,6 +95,23 @@ def test_crop_data_rejects_unknown_fields(u1_s1, space_1):
     assert r.status_code == 400
 
 
+def test_crop_data_field_has_openapi_schema_override():
+    """Regression guard: extend_schema_field only takes effect when applied
+    to a Field CLASS (CropDataField), not a wrapped instance - DRF's
+    Field.__deepcopy__ silently drops instance-level overrides when the
+    serializer builds its bound fields. Without this, crop_data quietly
+    reverts to an untyped `any` in the generated OpenAPI schema/client with
+    no test failure anywhere, which is exactly what happened before this
+    fix (see anyToJSON regression)."""
+    from drf_spectacular.drainage import has_override
+
+    from cookbook.serializer import CropDataField, UserFileSerializer
+
+    field = UserFileSerializer().fields['crop_data']
+    assert isinstance(field, CropDataField)
+    assert has_override(field, 'field')
+
+
 def test_delete_userfile_referenced_by_step_is_blocked(u1_s1, space_1):
     """A user file attached to a recipe step is PROTECTed: deleting it must
     return a clean 4xx (403), not a 500, and the file must survive."""

@@ -87,7 +87,7 @@
 <script setup lang="ts">
 import {computed, ref} from "vue"
 import {VueDraggable} from "vue-draggable-plus"
-import type {RecipeImage as RecipeImageType} from "@/openapi"
+import type {CropData, RecipeImage as RecipeImageType} from "@/openapi"
 import {useFileApi} from "@/composables/useFileApi"
 import {cropPosition, cropPreviewStyle} from "@/utils/image_crop"
 import {ErrorMessageType, PreparedMessage, useMessageStore} from "@/stores/MessageStore"
@@ -116,7 +116,7 @@ const uploadEditorRef = ref<InstanceType<typeof ImageEditor> | null>(null)
 // Crop state
 const cropDialog = ref(false)
 const cropImageSrc = ref<string | null>(null)
-const cropExistingData = ref<Record<string, number> | null>(null)
+const cropExistingData = ref<CropData | null>(null)
 const cropEditorRef = ref<InstanceType<typeof ImageEditor> | null>(null)
 const cropImageIndex = ref(-1)
 
@@ -179,7 +179,7 @@ function imageName(img: RecipeImageType): string {
     return url.split('/').pop() ?? 'image'
 }
 
-function onNonImageFile(_file: File, _cropData: Record<string, number> | null) {
+function onNonImageFile(_file: File, _cropData: CropData | null) {
     // Non-image files shouldn't be uploaded as recipe images
 }
 

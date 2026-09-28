@@ -101,13 +101,13 @@ export interface Step {
      */
     readonly stepRecipeData: any | null;
     /**
-     *
+     * 
      * @type {number}
      * @memberof Step
      */
     stepRecipeScale?: number;
     /**
-     *
+     * 
      * @type {boolean}
      * @memberof Step
      */

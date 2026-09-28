@@ -16,6 +16,7 @@ models/BookmarkletImportList.ts
 models/ConnectorConfig.ts
 models/ConnectorConfigTypeEnum.ts
 models/CookLog.ts
+models/CropData.ts
 models/CustomFilter.ts
 models/CustomFilterTypeEnum.ts
 models/DefaultPageEnum.ts
@@ -162,6 +163,7 @@ models/RecipeOverview.ts
 models/RecipeShoppingUpdate.ts
 models/RecipeSimple.ts
 models/RecipeStats.ts
+models/RotateEnum.ts
 models/SearchEnum.ts
 models/SearchFields.ts
 models/SearchPreference.ts

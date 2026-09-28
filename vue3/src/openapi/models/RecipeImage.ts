@@ -13,6 +13,14 @@
  */
 
 import { mapValues } from '../runtime';
+import type { CropData } from './CropData';
+import {
+    CropDataFromJSON,
+    CropDataFromJSONTyped,
+    CropDataToJSON,
+    CropDataToJSONTyped,
+} from './CropData';
+
 /**
  * Serializer for the RecipeImage model (multi-image gallery).
  * @export
@@ -39,10 +47,10 @@ export interface RecipeImage {
     file: string;
     /**
      * 
-     * @type {any}
+     * @type {CropData}
      * @memberof RecipeImage
      */
-    cropData?: any | null;
+    cropData?: CropData | null;
     /**
      * 
      * @type {number}
@@ -93,7 +101,7 @@ export function RecipeImageFromJSONTyped(json: any, ignoreDiscriminator: boolean
         'id': json['id'] == null ? undefined : json['id'],
         'recipe': json['recipe'],
         'file': json['file'],
-        'cropData': json['crop_data'] == null ? undefined : json['crop_data'],
+        'cropData': json['crop_data'] == null ? undefined : CropDataFromJSON(json['crop_data']),
         'order': json['order'] == null ? undefined : json['order'],
         'isPrimary': json['is_primary'] == null ? undefined : json['is_primary'],
         'createdBy': json['created_by'],
@@ -115,7 +123,7 @@ export function RecipeImageToJSONTyped(value?: Omit<RecipeImage, 'created_by'|'c
         'id': value['id'],
         'recipe': value['recipe'],
         'file': value['file'],
-        'crop_data': value['cropData'],
+        'crop_data': CropDataToJSON(value['cropData']),
         'order': value['order'],
         'is_primary': value['isPrimary'],
     };
