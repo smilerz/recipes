@@ -67,6 +67,7 @@ import {ErrorMessageType, useMessageStore} from "@/stores/MessageStore"
 import {useI18n} from "vue-i18n"
 import CropImage from "@/components/display/CropImage.vue"
 import {snapCropEdges} from "@/utils/image_crop"
+import type {CropData} from "@/openapi"
 
 const previewContexts = [
     {label: 'Card', ratio: 16 / 9, previewWidth: 120, previewHeight: 68},
@@ -77,7 +78,7 @@ const previewContexts = [
 const props = withDefaults(defineProps<{
     imageSrc?: string | null
     allowedExtensions?: string[]
-    existingCropData?: Record<string, number> | null
+    existingCropData?: CropData | null
 }>(), {
     imageSrc: null,
     allowedExtensions: () => ['.png', '.jpg', '.jpeg', '.gif', '.webp'],
@@ -85,8 +86,8 @@ const props = withDefaults(defineProps<{
 })
 
 const emit = defineEmits<{
-    'file-selected': [file: File, cropData: Record<string, number> | null]
-    'recrop': [cropData: Record<string, number>]
+    'file-selected': [file: File, cropData: CropData | null]
+    'recrop': [cropData: CropData]
     'cancel': []
 }>()
 
@@ -103,7 +104,7 @@ async function ensureCropper(): Promise<typeof CropperType> {
 }
 const cropperSrc = ref<string | null>(props.imageSrc ?? null)
 const selectedFile = ref<File | null>(null)
-const liveCropData = ref<Record<string, number> | null>(null)
+const liveCropData = ref<CropData | null>(null)
 const fitToFrame = ref(false)
 let changeObserverRaf = 0
 let lastSelectionKey = ''
@@ -151,16 +152,20 @@ async function onImageLoad() {
         fitToFrame.value = !!props.existingCropData?.['fit']
 
         const crop = props.existingCropData
-        const isValidCrop = crop && crop.width > 10 && crop.height > 10
+        const cropX = crop?.x ?? 0
+        const cropY = crop?.y ?? 0
+        const cropW = crop?.width ?? 0
+        const cropH = crop?.height ?? 0
+        const isValidCrop = crop && cropW > 10 && cropH > 10
 
         if (isValidCrop) {
             // Use image bounds (not canvas) since crop data is stored as image percentages
             const imgBounds = getImageBounds()
             if (imgBounds && imgBounds.w > 0 && imgBounds.h > 0) {
-                const rawX = imgBounds.x + (crop.x / 100) * imgBounds.w
-                const rawY = imgBounds.y + (crop.y / 100) * imgBounds.h
-                const rawW = (crop.width / 100) * imgBounds.w
-                const rawH = (crop.height / 100) * imgBounds.h
+                const rawX = imgBounds.x + (cropX / 100) * imgBounds.w
+                const rawY = imgBounds.y + (cropY / 100) * imgBounds.h
+                const rawW = (cropW / 100) * imgBounds.w
+                const rawH = (cropH / 100) * imgBounds.h
                 // Enforce square: use smaller dimension, center within original crop
                 const size = Math.min(rawW, rawH)
                 const sx = rawX + (rawW - size) / 2
@@ -274,7 +279,7 @@ function startSelectionObserver() {
 
 function updateLivePreview() {
     const data = extractCropData()
-    if (data && fitToFrame.value) data['fit'] = 1
+    if (data && fitToFrame.value) data['fit'] = true
     liveCropData.value = data
 }
 
@@ -343,7 +348,7 @@ function onPaste(event: ClipboardEvent) {
     onFileSelected(file)
 }
 
-function extractCropData(): Record<string, number> | null {
+function extractCropData(): CropData | null {
     const selection = cropperInstance.value?.getCropperSelection()
     if (!selection) return null
 
@@ -368,7 +373,7 @@ function extractCropData(): Record<string, number> | null {
     })
     return {
         ...snapped,
-        ...(fitToFrame.value ? {fit: 1} : {}),
+        ...(fitToFrame.value ? {fit: true} : {}),
     }
 }
 

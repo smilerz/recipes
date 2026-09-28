@@ -102,6 +102,12 @@ export interface PatchedStep {
     readonly stepRecipeData?: any | null;
     /**
      * 
+     * @type {number}
+     * @memberof PatchedStep
+     */
+    stepRecipeScale?: number;
+    /**
+     * 
      * @type {boolean}
      * @memberof PatchedStep
      */
@@ -136,6 +142,7 @@ export function PatchedStepFromJSONTyped(json: any, ignoreDiscriminator: boolean
         'file': json['file'] == null ? undefined : UserFileViewFromJSON(json['file']),
         'stepRecipe': json['step_recipe'] == null ? undefined : json['step_recipe'],
         'stepRecipeData': json['step_recipe_data'] == null ? undefined : json['step_recipe_data'],
+        'stepRecipeScale': json['step_recipe_scale'] == null ? undefined : json['step_recipe_scale'],
         'showIngredientsTable': json['show_ingredients_table'] == null ? undefined : json['show_ingredients_table'],
     };
 }
@@ -160,6 +167,7 @@ export function PatchedStepToJSONTyped(value?: Omit<PatchedStep, 'instructions_m
         'show_as_header': value['showAsHeader'],
         'file': UserFileViewToJSON(value['file']),
         'step_recipe': value['stepRecipe'],
+        'step_recipe_scale': value['stepRecipeScale'],
         'show_ingredients_table': value['showIngredientsTable'],
     };
 }

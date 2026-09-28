@@ -2,6 +2,7 @@ import {useDjangoUrls} from "@/composables/useDjangoUrls";
 import {ref} from "vue";
 import {getCookie} from "@/utils/cookie";
 import {RecipeFromSourceResponseFromJSON, RecipeImage, RecipeImageFromJSON, ResponseError, UserFile, UserFileFromJSON} from "@/openapi";
+import type {CropData} from "@/openapi";
 
 
 /**
@@ -19,7 +20,7 @@ export function useFileApi() {
      * @param id optional id to update existing user file
      * @param cropData optional crop coordinates to save with the file
      */
-    function createOrUpdateUserFile(name: string, file: File | null, id?: number, cropData?: Record<string, number> | null): Promise<UserFile> {
+    function createOrUpdateUserFile(name: string, file: File | null, id?: number, cropData?: CropData | null): Promise<UserFile> {
         let formData = new FormData()
         formData.append('name', name)
 
@@ -62,7 +63,7 @@ export function useFileApi() {
      * @param id UserFile id
      * @param cropData crop coordinates to save
      */
-    function updateUserFileCropData(id: number, cropData: Record<string, number>): Promise<UserFile> {
+    function updateUserFileCropData(id: number, cropData: CropData): Promise<UserFile> {
         fileApiLoading.value = true
 
         return fetch(getDjangoUrl(`api/user-file/${id}/`), {
@@ -86,7 +87,7 @@ export function useFileApi() {
     /**
      * creates a RecipeImage for a recipe
      */
-    function createRecipeImage(recipeId: number, file: File, cropData?: Record<string, number> | null, isPrimary: boolean = false, order: number = 0): Promise<RecipeImage> {
+    function createRecipeImage(recipeId: number, file: File, cropData?: CropData | null, isPrimary: boolean = false, order: number = 0): Promise<RecipeImage> {
         let formData = new FormData()
         formData.append('recipe', String(recipeId))
         formData.append('file', file)
@@ -125,7 +126,7 @@ export function useFileApi() {
     /**
      * updates crop_data on an existing RecipeImage
      */
-    function updateRecipeImageCropData(id: number, cropData: Record<string, number>): Promise<RecipeImage> {
+    function updateRecipeImageCropData(id: number, cropData: CropData): Promise<RecipeImage> {
         return patchRecipeImage(id, {crop_data: cropData})
     }
 

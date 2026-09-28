@@ -46,7 +46,7 @@
                                     <image-editor
                                         ref="recropEditor"
                                         :image-src="model.preview"
-                                        :existing-crop-data="model.cropData as Record<string, number> | null"
+                                        :existing-crop-data="model.cropData"
                                     />
                                 </div>
                             </template>
@@ -125,7 +125,8 @@
 </template>
 
 <script setup lang="ts">
-import {ApiApi, UserFile} from "@/openapi"
+import {ApiApi} from "@/openapi"
+import type {CropData, UserFile} from "@/openapi"
 import {ref, watch} from "vue"
 import {DateTime} from "luxon"
 import {ErrorMessageType, PreparedMessage, useMessageStore} from "@/stores/MessageStore"
@@ -209,7 +210,7 @@ watch(() => model.value?.id, (id) => {
     }
 })
 
-function onNonImageFileSelected(file: File, _cropData: Record<string, number> | null) {
+function onNonImageFileSelected(file: File, _cropData: CropData | null) {
     // For non-image files selected via ImageEditor, auto-fill the name
     if (!newFileName.value) {
         newFileName.value = file.name

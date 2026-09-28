@@ -13,6 +13,13 @@
  */
 
 import { mapValues } from '../runtime';
+import type { CropData } from './CropData';
+import {
+    CropDataFromJSON,
+    CropDataFromJSONTyped,
+    CropDataToJSON,
+    CropDataToJSONTyped,
+} from './CropData';
 import type { User } from './User';
 import {
     UserFromJSON,
@@ -62,10 +69,10 @@ export interface RecipeOverview {
     readonly image: string | null;
     /**
      * 
-     * @type {any}
+     * @type {CropData}
      * @memberof RecipeOverview
      */
-    readonly imageCropData: any | null;
+    readonly imageCropData: CropData | null;
     /**
      * 
      * @type {Array<KeywordLabel>}
@@ -182,7 +189,7 @@ export function RecipeOverviewFromJSONTyped(json: any, ignoreDiscriminator: bool
         'name': json['name'],
         'description': json['description'] == null ? undefined : json['description'],
         'image': json['image'],
-        'imageCropData': json['image_crop_data'],
+        'imageCropData': CropDataFromJSON(json['image_crop_data']),
         'keywords': ((json['keywords'] as Array<any>).map(KeywordLabelFromJSON)),
         'workingTime': json['working_time'],
         'waitingTime': json['waiting_time'],

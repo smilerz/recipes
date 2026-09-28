@@ -50,13 +50,13 @@ export interface RecipeBatchUpdate {
      */
     keywordsRemoveAll?: boolean;
     /**
-     *
+     * 
      * @type {number}
      * @memberof RecipeBatchUpdate
      */
     bookAdd?: number | null;
     /**
-     *
+     * 
      * @type {number}
      * @memberof RecipeBatchUpdate
      */

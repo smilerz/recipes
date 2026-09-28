@@ -10,10 +10,11 @@
 <script setup lang="ts">
 import {computed} from "vue"
 import {cropPreviewStyle, shouldFitFrame} from "@/utils/image_crop"
+import type {CropData} from "@/openapi"
 
 const props = withDefaults(defineProps<{
     src?: string | null
-    cropData?: Record<string, number> | null
+    cropData?: CropData | null
     width?: string
     height?: string
     rounded?: boolean | string
