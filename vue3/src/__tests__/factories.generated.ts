@@ -11,7 +11,6 @@
 
 import type {
     AccessToken,
-    AiImport,
     AiLog,
     AiProvider,
     AuthToken,
@@ -152,36 +151,6 @@ export function makeEdgeCaseAccessToken(overrides: Partial<AccessToken> = {}): A
         updated: new Date(0),
         ...overrides,
     } as AccessToken
-}
-
-export function makeAiImport(overrides: Partial<AiImport> = {}): AiImport {
-    return {
-        aiProviderId: 1,
-        file: '',
-        text: '',
-        recipeId: '',
-        ...overrides,
-    } as AiImport
-}
-
-export function makeMinimalAiImport(overrides: Partial<AiImport> = {}): AiImport {
-    return {
-        aiProviderId: 1,
-        file: '',
-        text: '',
-        recipeId: '',
-        ...overrides,
-    } as AiImport
-}
-
-export function makeEdgeCaseAiImport(overrides: Partial<AiImport> = {}): AiImport {
-    return {
-        aiProviderId: 0,
-        file: null,
-        text: null,
-        recipeId: null,
-        ...overrides,
-    } as AiImport
 }
 
 export function makeAiLog(overrides: Partial<AiLog> = {}): AiLog {
