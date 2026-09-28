@@ -3,6 +3,7 @@ name: Vue Continuous Integration
 on:
   push:
     branches-ignore: [preview]
+  pull_request:
   workflow_call:
 
 jobs:
