@@ -13,6 +13,13 @@
  */
 
 import { mapValues } from '../runtime';
+import type { CropData } from './CropData';
+import {
+    CropDataFromJSON,
+    CropDataFromJSONTyped,
+    CropDataToJSON,
+    CropDataToJSONTyped,
+} from './CropData';
 import type { User } from './User';
 import {
     UserFromJSON,
@@ -59,10 +66,10 @@ export interface UserFileView {
     readonly fileSizeKb: number;
     /**
      * 
-     * @type {any}
+     * @type {CropData}
      * @memberof UserFileView
      */
-    readonly cropData: any | null;
+    readonly cropData: CropData | null;
     /**
      * 
      * @type {User}
@@ -106,7 +113,7 @@ export function UserFileViewFromJSONTyped(json: any, ignoreDiscriminator: boolea
         'fileDownload': json['file_download'],
         'preview': json['preview'],
         'fileSizeKb': json['file_size_kb'],
-        'cropData': json['crop_data'],
+        'cropData': CropDataFromJSON(json['crop_data']),
         'createdBy': UserFromJSON(json['created_by']),
         'createdAt': (new Date(json['created_at'])),
     };

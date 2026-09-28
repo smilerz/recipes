@@ -13,6 +13,14 @@
  */
 
 import { mapValues } from '../runtime';
+import type { CropData } from './CropData';
+import {
+    CropDataFromJSON,
+    CropDataFromJSONTyped,
+    CropDataToJSON,
+    CropDataToJSONTyped,
+} from './CropData';
+
 /**
  * Expose the derived ``image`` URL + ``image_crop_data`` of a recipe's
  * primary RecipeImage (pattern-014: the legacy ``Recipe.image`` column is no
@@ -41,10 +49,10 @@ export interface RecipeFlat {
     readonly image: string | null;
     /**
      * 
-     * @type {any}
+     * @type {CropData}
      * @memberof RecipeFlat
      */
-    readonly imageCropData: any | null;
+    readonly imageCropData: CropData | null;
 }
 
 /**
@@ -70,7 +78,7 @@ export function RecipeFlatFromJSONTyped(json: any, ignoreDiscriminator: boolean)
         'id': json['id'] == null ? undefined : json['id'],
         'name': json['name'],
         'image': json['image'],
-        'imageCropData': json['image_crop_data'],
+        'imageCropData': CropDataFromJSON(json['image_crop_data']),
     };
 }
 

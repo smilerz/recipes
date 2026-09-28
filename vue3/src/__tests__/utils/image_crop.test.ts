@@ -40,7 +40,7 @@ describe('cropPreviewStyle', () => {
     const SRC = '/media/foo.jpg'
 
     it('returns plain cover when src is empty', () => {
-        const s = cropPreviewStyle('', { x: 10, y: 20, width: 50, height: 50, fit: 1 })
+        const s = cropPreviewStyle('', { x: 10, y: 20, width: 50, height: 50, fit: true })
         expect(s.backgroundSize).toBe('cover')
         expect(s.backgroundPosition).toBe('center')
     })
@@ -78,7 +78,7 @@ describe('cropPreviewStyle', () => {
     })
 
     it('returns zoom-into-crop when fit=true and forceCrop=false', () => {
-        const s = cropPreviewStyle(SRC, { x: 0, y: 0, width: 50, height: 50, fit: 1 })
+        const s = cropPreviewStyle(SRC, { x: 0, y: 0, width: 50, height: 50, fit: true })
         expect(s.backgroundSize).toBe('200%')
         // top-left quadrant: pos = 0/(100-50)*100, 0/(100-50)*100 = 0% 0%
         expect(s.backgroundPosition).toBe('0% 0%')
@@ -180,11 +180,11 @@ describe('shouldFitFrame', () => {
     })
 
     it('returns true when fit flag is set and forceCrop=false', () => {
-        expect(shouldFitFrame({ x: 0, y: 0, width: 50, height: 50, fit: 1 })).toBe(true)
+        expect(shouldFitFrame({ x: 0, y: 0, width: 50, height: 50, fit: true })).toBe(true)
     })
 
     it('returns false when forceCrop=true (caller already cropping)', () => {
-        expect(shouldFitFrame({ x: 0, y: 0, width: 50, height: 50, fit: 1 }, true)).toBe(false)
+        expect(shouldFitFrame({ x: 0, y: 0, width: 50, height: 50, fit: true }, true)).toBe(false)
     })
 })
 

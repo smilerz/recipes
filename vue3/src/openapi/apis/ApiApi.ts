@@ -24,6 +24,7 @@ import type {
   BookmarkletImport,
   ConnectorConfig,
   CookLog,
+  CropData,
   CustomFilter,
   DrawDown,
   ExportLog,
@@ -202,6 +203,8 @@ import {
     ConnectorConfigToJSON,
     CookLogFromJSON,
     CookLogToJSON,
+    CropDataFromJSON,
+    CropDataToJSON,
     CustomFilterFromJSON,
     CustomFilterToJSON,
     DrawDownFromJSON,
@@ -1139,8 +1142,12 @@ export interface ApiInventoryLocationDestroyRequest {
 }
 
 export interface ApiInventoryLocationListRequest {
+    limit?: string;
     page?: number;
     pageSize?: number;
+    query?: string;
+    random?: string;
+    updatedAt?: string;
 }
 
 export interface ApiInventoryLocationNullingListRequest {
@@ -1408,8 +1415,12 @@ export interface ApiPropertyTypeDestroyRequest {
 
 export interface ApiPropertyTypeListRequest {
     category?: Array<ApiPropertyTypeListCategoryEnum>;
+    limit?: string;
     page?: number;
     pageSize?: number;
+    query?: string;
+    random?: string;
+    updatedAt?: string;
 }
 
 export interface ApiPropertyTypeNullingListRequest {
@@ -1568,7 +1579,7 @@ export interface ApiRecipeImageCreateRequest {
     createdBy: number;
     createdAt: Date;
     id?: number;
-    cropData?: any | null;
+    cropData?: CropData | null;
     order?: number;
     isPrimary?: boolean;
 }
@@ -1591,7 +1602,7 @@ export interface ApiRecipeImagePartialUpdateRequest {
     id2?: number;
     recipe?: number;
     file?: string;
-    cropData?: any | null;
+    cropData?: CropData | null;
     order?: number;
     isPrimary?: boolean;
     createdBy?: number;
@@ -1609,7 +1620,7 @@ export interface ApiRecipeImageUpdateRequest {
     createdBy: number;
     createdAt: Date;
     id2?: number;
-    cropData?: any | null;
+    cropData?: CropData | null;
     order?: number;
     isPrimary?: boolean;
 }
@@ -2324,7 +2335,7 @@ export interface ApiUserFileCreateRequest {
     createdAt: Date;
     id?: number;
     file?: string;
-    cropData?: any | null;
+    cropData?: CropData | null;
 }
 
 export interface ApiUserFileDestroyRequest {
@@ -2356,7 +2367,7 @@ export interface ApiUserFilePartialUpdateRequest {
     fileDownload?: string;
     preview?: string;
     fileSizeKb?: number;
-    cropData?: any | null;
+    cropData?: CropData | null;
     createdBy?: User;
     createdAt?: Date;
 }
@@ -2382,7 +2393,7 @@ export interface ApiUserFileUpdateRequest {
     createdAt: Date;
     id2?: number;
     file?: string;
-    cropData?: any | null;
+    cropData?: CropData | null;
 }
 
 export interface ApiUserListRequest {
@@ -3405,7 +3416,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied). Ignored entirely while a ``query`` search is active, so relevance ordering wins (every consuming viewset\'s OpenAPI doc already documents this contract).
      */
     async apiAutomationCreateRaw(requestParameters: ApiAutomationCreateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Automation>> {
         if (requestParameters['automation'] == null) {
@@ -3440,7 +3451,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied). Ignored entirely while a ``query`` search is active, so relevance ordering wins (every consuming viewset\'s OpenAPI doc already documents this contract).
      */
     async apiAutomationCreate(requestParameters: ApiAutomationCreateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Automation> {
         const response = await this.apiAutomationCreateRaw(requestParameters, initOverrides);
@@ -3448,7 +3459,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied). Ignored entirely while a ``query`` search is active, so relevance ordering wins (every consuming viewset\'s OpenAPI doc already documents this contract).
      */
     async apiAutomationDestroyRaw(requestParameters: ApiAutomationDestroyRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
         if (requestParameters['id'] == null) {
@@ -3481,14 +3492,14 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied). Ignored entirely while a ``query`` search is active, so relevance ordering wins (every consuming viewset\'s OpenAPI doc already documents this contract).
      */
     async apiAutomationDestroy(requestParameters: ApiAutomationDestroyRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
         await this.apiAutomationDestroyRaw(requestParameters, initOverrides);
     }
 
     /**
-     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied). Ignored entirely while a ``query`` search is active, so relevance ordering wins (every consuming viewset\'s OpenAPI doc already documents this contract).
      */
     async apiAutomationListRaw(requestParameters: ApiAutomationListRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PaginatedAutomationList>> {
         const queryParameters: any = {};
@@ -3545,7 +3556,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied). Ignored entirely while a ``query`` search is active, so relevance ordering wins (every consuming viewset\'s OpenAPI doc already documents this contract).
      */
     async apiAutomationList(requestParameters: ApiAutomationListRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PaginatedAutomationList> {
         const response = await this.apiAutomationListRaw(requestParameters, initOverrides);
@@ -3553,7 +3564,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied). Ignored entirely while a ``query`` search is active, so relevance ordering wins (every consuming viewset\'s OpenAPI doc already documents this contract).
      */
     async apiAutomationPartialUpdateRaw(requestParameters: ApiAutomationPartialUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Automation>> {
         if (requestParameters['id'] == null) {
@@ -3589,7 +3600,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied). Ignored entirely while a ``query`` search is active, so relevance ordering wins (every consuming viewset\'s OpenAPI doc already documents this contract).
      */
     async apiAutomationPartialUpdate(requestParameters: ApiAutomationPartialUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Automation> {
         const response = await this.apiAutomationPartialUpdateRaw(requestParameters, initOverrides);
@@ -3597,7 +3608,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied). Ignored entirely while a ``query`` search is active, so relevance ordering wins (every consuming viewset\'s OpenAPI doc already documents this contract).
      */
     async apiAutomationRetrieveRaw(requestParameters: ApiAutomationRetrieveRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Automation>> {
         if (requestParameters['id'] == null) {
@@ -3630,7 +3641,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied). Ignored entirely while a ``query`` search is active, so relevance ordering wins (every consuming viewset\'s OpenAPI doc already documents this contract).
      */
     async apiAutomationRetrieve(requestParameters: ApiAutomationRetrieveRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Automation> {
         const response = await this.apiAutomationRetrieveRaw(requestParameters, initOverrides);
@@ -3638,7 +3649,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied). Ignored entirely while a ``query`` search is active, so relevance ordering wins (every consuming viewset\'s OpenAPI doc already documents this contract).
      */
     async apiAutomationStatsRetrieveRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<AutomationStats>> {
         const queryParameters: any = {};
@@ -3663,7 +3674,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied). Ignored entirely while a ``query`` search is active, so relevance ordering wins (every consuming viewset\'s OpenAPI doc already documents this contract).
      */
     async apiAutomationStatsRetrieve(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<AutomationStats> {
         const response = await this.apiAutomationStatsRetrieveRaw(initOverrides);
@@ -3671,7 +3682,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied). Ignored entirely while a ``query`` search is active, so relevance ordering wins (every consuming viewset\'s OpenAPI doc already documents this contract).
      */
     async apiAutomationUpdateRaw(requestParameters: ApiAutomationUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Automation>> {
         if (requestParameters['id'] == null) {
@@ -3714,7 +3725,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied). Ignored entirely while a ``query`` search is active, so relevance ordering wins (every consuming viewset\'s OpenAPI doc already documents this contract).
      */
     async apiAutomationUpdate(requestParameters: ApiAutomationUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Automation> {
         const response = await this.apiAutomationUpdateRaw(requestParameters, initOverrides);
@@ -4401,7 +4412,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied). Ignored entirely while a ``query`` search is active, so relevance ordering wins (every consuming viewset\'s OpenAPI doc already documents this contract).
      */
     async apiCookLogCreateRaw(requestParameters: ApiCookLogCreateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<CookLog>> {
         if (requestParameters['cookLog'] == null) {
@@ -4436,7 +4447,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied). Ignored entirely while a ``query`` search is active, so relevance ordering wins (every consuming viewset\'s OpenAPI doc already documents this contract).
      */
     async apiCookLogCreate(requestParameters: ApiCookLogCreateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<CookLog> {
         const response = await this.apiCookLogCreateRaw(requestParameters, initOverrides);
@@ -4444,7 +4455,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied). Ignored entirely while a ``query`` search is active, so relevance ordering wins (every consuming viewset\'s OpenAPI doc already documents this contract).
      */
     async apiCookLogDestroyRaw(requestParameters: ApiCookLogDestroyRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
         if (requestParameters['id'] == null) {
@@ -4477,14 +4488,14 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied). Ignored entirely while a ``query`` search is active, so relevance ordering wins (every consuming viewset\'s OpenAPI doc already documents this contract).
      */
     async apiCookLogDestroy(requestParameters: ApiCookLogDestroyRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
         await this.apiCookLogDestroyRaw(requestParameters, initOverrides);
     }
 
     /**
-     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied). Ignored entirely while a ``query`` search is active, so relevance ordering wins (every consuming viewset\'s OpenAPI doc already documents this contract).
      */
     async apiCookLogListRaw(requestParameters: ApiCookLogListRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PaginatedCookLogList>> {
         const queryParameters: any = {};
@@ -4529,7 +4540,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied). Ignored entirely while a ``query`` search is active, so relevance ordering wins (every consuming viewset\'s OpenAPI doc already documents this contract).
      */
     async apiCookLogList(requestParameters: ApiCookLogListRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PaginatedCookLogList> {
         const response = await this.apiCookLogListRaw(requestParameters, initOverrides);
@@ -4537,7 +4548,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied). Ignored entirely while a ``query`` search is active, so relevance ordering wins (every consuming viewset\'s OpenAPI doc already documents this contract).
      */
     async apiCookLogPartialUpdateRaw(requestParameters: ApiCookLogPartialUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<CookLog>> {
         if (requestParameters['id'] == null) {
@@ -4573,7 +4584,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied). Ignored entirely while a ``query`` search is active, so relevance ordering wins (every consuming viewset\'s OpenAPI doc already documents this contract).
      */
     async apiCookLogPartialUpdate(requestParameters: ApiCookLogPartialUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<CookLog> {
         const response = await this.apiCookLogPartialUpdateRaw(requestParameters, initOverrides);
@@ -4581,7 +4592,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied). Ignored entirely while a ``query`` search is active, so relevance ordering wins (every consuming viewset\'s OpenAPI doc already documents this contract).
      */
     async apiCookLogRetrieveRaw(requestParameters: ApiCookLogRetrieveRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<CookLog>> {
         if (requestParameters['id'] == null) {
@@ -4614,7 +4625,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied). Ignored entirely while a ``query`` search is active, so relevance ordering wins (every consuming viewset\'s OpenAPI doc already documents this contract).
      */
     async apiCookLogRetrieve(requestParameters: ApiCookLogRetrieveRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<CookLog> {
         const response = await this.apiCookLogRetrieveRaw(requestParameters, initOverrides);
@@ -4622,7 +4633,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied). Ignored entirely while a ``query`` search is active, so relevance ordering wins (every consuming viewset\'s OpenAPI doc already documents this contract).
      */
     async apiCookLogUpdateRaw(requestParameters: ApiCookLogUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<CookLog>> {
         if (requestParameters['id'] == null) {
@@ -4665,7 +4676,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied). Ignored entirely while a ``query`` search is active, so relevance ordering wins (every consuming viewset\'s OpenAPI doc already documents this contract).
      */
     async apiCookLogUpdate(requestParameters: ApiCookLogUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<CookLog> {
         const response = await this.apiCookLogUpdateRaw(requestParameters, initOverrides);
@@ -4673,7 +4684,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied). Ignored entirely while a ``query`` search is active, so relevance ordering wins (every consuming viewset\'s OpenAPI doc already documents this contract).
      */
     async apiCustomFilterCreateRaw(requestParameters: ApiCustomFilterCreateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<CustomFilter>> {
         if (requestParameters['customFilter'] == null) {
@@ -4708,7 +4719,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied). Ignored entirely while a ``query`` search is active, so relevance ordering wins (every consuming viewset\'s OpenAPI doc already documents this contract).
      */
     async apiCustomFilterCreate(requestParameters: ApiCustomFilterCreateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<CustomFilter> {
         const response = await this.apiCustomFilterCreateRaw(requestParameters, initOverrides);
@@ -4716,7 +4727,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied). Ignored entirely while a ``query`` search is active, so relevance ordering wins (every consuming viewset\'s OpenAPI doc already documents this contract).
      */
     async apiCustomFilterDestroyRaw(requestParameters: ApiCustomFilterDestroyRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
         if (requestParameters['id'] == null) {
@@ -4749,14 +4760,14 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied). Ignored entirely while a ``query`` search is active, so relevance ordering wins (every consuming viewset\'s OpenAPI doc already documents this contract).
      */
     async apiCustomFilterDestroy(requestParameters: ApiCustomFilterDestroyRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
         await this.apiCustomFilterDestroyRaw(requestParameters, initOverrides);
     }
 
     /**
-     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied). Ignored entirely while a ``query`` search is active, so relevance ordering wins (every consuming viewset\'s OpenAPI doc already documents this contract).
      */
     async apiCustomFilterListRaw(requestParameters: ApiCustomFilterListRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PaginatedCustomFilterList>> {
         const queryParameters: any = {};
@@ -4813,7 +4824,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied). Ignored entirely while a ``query`` search is active, so relevance ordering wins (every consuming viewset\'s OpenAPI doc already documents this contract).
      */
     async apiCustomFilterList(requestParameters: ApiCustomFilterListRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PaginatedCustomFilterList> {
         const response = await this.apiCustomFilterListRaw(requestParameters, initOverrides);
@@ -4821,7 +4832,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied). Ignored entirely while a ``query`` search is active, so relevance ordering wins (every consuming viewset\'s OpenAPI doc already documents this contract).
      */
     async apiCustomFilterPartialUpdateRaw(requestParameters: ApiCustomFilterPartialUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<CustomFilter>> {
         if (requestParameters['id'] == null) {
@@ -4857,7 +4868,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied). Ignored entirely while a ``query`` search is active, so relevance ordering wins (every consuming viewset\'s OpenAPI doc already documents this contract).
      */
     async apiCustomFilterPartialUpdate(requestParameters: ApiCustomFilterPartialUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<CustomFilter> {
         const response = await this.apiCustomFilterPartialUpdateRaw(requestParameters, initOverrides);
@@ -4865,7 +4876,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied). Ignored entirely while a ``query`` search is active, so relevance ordering wins (every consuming viewset\'s OpenAPI doc already documents this contract).
      */
     async apiCustomFilterRetrieveRaw(requestParameters: ApiCustomFilterRetrieveRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<CustomFilter>> {
         if (requestParameters['id'] == null) {
@@ -4898,7 +4909,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied). Ignored entirely while a ``query`` search is active, so relevance ordering wins (every consuming viewset\'s OpenAPI doc already documents this contract).
      */
     async apiCustomFilterRetrieve(requestParameters: ApiCustomFilterRetrieveRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<CustomFilter> {
         const response = await this.apiCustomFilterRetrieveRaw(requestParameters, initOverrides);
@@ -4906,7 +4917,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied). Ignored entirely while a ``query`` search is active, so relevance ordering wins (every consuming viewset\'s OpenAPI doc already documents this contract).
      */
     async apiCustomFilterUpdateRaw(requestParameters: ApiCustomFilterUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<CustomFilter>> {
         if (requestParameters['id'] == null) {
@@ -4949,7 +4960,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied). Ignored entirely while a ``query`` search is active, so relevance ordering wins (every consuming viewset\'s OpenAPI doc already documents this contract).
      */
     async apiCustomFilterUpdate(requestParameters: ApiCustomFilterUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<CustomFilter> {
         const response = await this.apiCustomFilterUpdateRaw(requestParameters, initOverrides);
@@ -5373,7 +5384,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied). Ignored entirely while a ``query`` search is active, so relevance ordering wins (every consuming viewset\'s OpenAPI doc already documents this contract).
      */
     async apiFoodAipropertiesCreateRaw(requestParameters: ApiFoodAipropertiesCreateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Food>> {
         if (requestParameters['id'] == null) {
@@ -5420,7 +5431,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied). Ignored entirely while a ``query`` search is active, so relevance ordering wins (every consuming viewset\'s OpenAPI doc already documents this contract).
      */
     async apiFoodAipropertiesCreate(requestParameters: ApiFoodAipropertiesCreateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Food> {
         const response = await this.apiFoodAipropertiesCreateRaw(requestParameters, initOverrides);
@@ -5428,7 +5439,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied). Ignored entirely while a ``query`` search is active, so relevance ordering wins (every consuming viewset\'s OpenAPI doc already documents this contract).
      */
     async apiFoodBatchUpdateUpdateRaw(requestParameters: ApiFoodBatchUpdateUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<FoodBatchUpdate>> {
         if (requestParameters['foodBatchUpdate'] == null) {
@@ -5463,7 +5474,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied). Ignored entirely while a ``query`` search is active, so relevance ordering wins (every consuming viewset\'s OpenAPI doc already documents this contract).
      */
     async apiFoodBatchUpdateUpdate(requestParameters: ApiFoodBatchUpdateUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<FoodBatchUpdate> {
         const response = await this.apiFoodBatchUpdateUpdateRaw(requestParameters, initOverrides);
@@ -5524,7 +5535,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied). Ignored entirely while a ``query`` search is active, so relevance ordering wins (every consuming viewset\'s OpenAPI doc already documents this contract).
      */
     async apiFoodCreateRaw(requestParameters: ApiFoodCreateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Food>> {
         if (requestParameters['food'] == null) {
@@ -5559,7 +5570,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied). Ignored entirely while a ``query`` search is active, so relevance ordering wins (every consuming viewset\'s OpenAPI doc already documents this contract).
      */
     async apiFoodCreate(requestParameters: ApiFoodCreateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Food> {
         const response = await this.apiFoodCreateRaw(requestParameters, initOverrides);
@@ -5610,7 +5621,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied). Ignored entirely while a ``query`` search is active, so relevance ordering wins (every consuming viewset\'s OpenAPI doc already documents this contract).
      */
     async apiFoodDestroyRaw(requestParameters: ApiFoodDestroyRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
         if (requestParameters['id'] == null) {
@@ -5643,7 +5654,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied). Ignored entirely while a ``query`` search is active, so relevance ordering wins (every consuming viewset\'s OpenAPI doc already documents this contract).
      */
     async apiFoodDestroy(requestParameters: ApiFoodDestroyRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
         await this.apiFoodDestroyRaw(requestParameters, initOverrides);
@@ -5775,7 +5786,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied). Ignored entirely while a ``query`` search is active, so relevance ordering wins (every consuming viewset\'s OpenAPI doc already documents this contract).
      */
     async apiFoodListRaw(requestParameters: ApiFoodListRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PaginatedFoodList>> {
         const queryParameters: any = {};
@@ -5880,7 +5891,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied). Ignored entirely while a ``query`` search is active, so relevance ordering wins (every consuming viewset\'s OpenAPI doc already documents this contract).
      */
     async apiFoodList(requestParameters: ApiFoodListRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PaginatedFoodList> {
         const response = await this.apiFoodListRaw(requestParameters, initOverrides);
@@ -5888,7 +5899,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied). Ignored entirely while a ``query`` search is active, so relevance ordering wins (every consuming viewset\'s OpenAPI doc already documents this contract).
      */
     async apiFoodMergeUpdateRaw(requestParameters: ApiFoodMergeUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Food>> {
         if (requestParameters['id'] == null) {
@@ -5939,7 +5950,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied). Ignored entirely while a ``query`` search is active, so relevance ordering wins (every consuming viewset\'s OpenAPI doc already documents this contract).
      */
     async apiFoodMergeUpdate(requestParameters: ApiFoodMergeUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Food> {
         const response = await this.apiFoodMergeUpdateRaw(requestParameters, initOverrides);
@@ -5947,7 +5958,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied). Ignored entirely while a ``query`` search is active, so relevance ordering wins (every consuming viewset\'s OpenAPI doc already documents this contract).
      */
     async apiFoodMoveUpdateRaw(requestParameters: ApiFoodMoveUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Food>> {
         if (requestParameters['id'] == null) {
@@ -5998,7 +6009,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied). Ignored entirely while a ``query`` search is active, so relevance ordering wins (every consuming viewset\'s OpenAPI doc already documents this contract).
      */
     async apiFoodMoveUpdate(requestParameters: ApiFoodMoveUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Food> {
         const response = await this.apiFoodMoveUpdateRaw(requestParameters, initOverrides);
@@ -6059,7 +6070,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied). Ignored entirely while a ``query`` search is active, so relevance ordering wins (every consuming viewset\'s OpenAPI doc already documents this contract).
      */
     async apiFoodPartialUpdateRaw(requestParameters: ApiFoodPartialUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Food>> {
         if (requestParameters['id'] == null) {
@@ -6095,7 +6106,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied). Ignored entirely while a ``query`` search is active, so relevance ordering wins (every consuming viewset\'s OpenAPI doc already documents this contract).
      */
     async apiFoodPartialUpdate(requestParameters: ApiFoodPartialUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Food> {
         const response = await this.apiFoodPartialUpdateRaw(requestParameters, initOverrides);
@@ -6156,7 +6167,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied). Ignored entirely while a ``query`` search is active, so relevance ordering wins (every consuming viewset\'s OpenAPI doc already documents this contract).
      */
     async apiFoodRetrieveRaw(requestParameters: ApiFoodRetrieveRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Food>> {
         if (requestParameters['id'] == null) {
@@ -6189,7 +6200,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied). Ignored entirely while a ``query`` search is active, so relevance ordering wins (every consuming viewset\'s OpenAPI doc already documents this contract).
      */
     async apiFoodRetrieve(requestParameters: ApiFoodRetrieveRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Food> {
         const response = await this.apiFoodRetrieveRaw(requestParameters, initOverrides);
@@ -6197,7 +6208,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied). Ignored entirely while a ``query`` search is active, so relevance ordering wins (every consuming viewset\'s OpenAPI doc already documents this contract).
      */
     async apiFoodShoppingUpdateRaw(requestParameters: ApiFoodShoppingUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Food>> {
         if (requestParameters['id'] == null) {
@@ -6240,7 +6251,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied). Ignored entirely while a ``query`` search is active, so relevance ordering wins (every consuming viewset\'s OpenAPI doc already documents this contract).
      */
     async apiFoodShoppingUpdate(requestParameters: ApiFoodShoppingUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Food> {
         const response = await this.apiFoodShoppingUpdateRaw(requestParameters, initOverrides);
@@ -6248,7 +6259,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied). Ignored entirely while a ``query`` search is active, so relevance ordering wins (every consuming viewset\'s OpenAPI doc already documents this contract).
      */
     async apiFoodStatsRetrieveRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<FoodStats>> {
         const queryParameters: any = {};
@@ -6273,7 +6284,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied). Ignored entirely while a ``query`` search is active, so relevance ordering wins (every consuming viewset\'s OpenAPI doc already documents this contract).
      */
     async apiFoodStatsRetrieve(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<FoodStats> {
         const response = await this.apiFoodStatsRetrieveRaw(initOverrides);
@@ -6281,7 +6292,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied). Ignored entirely while a ``query`` search is active, so relevance ordering wins (every consuming viewset\'s OpenAPI doc already documents this contract).
      */
     async apiFoodSubstitutesRetrieveRaw(requestParameters: ApiFoodSubstitutesRetrieveRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<FoodSimple>> {
         if (requestParameters['id'] == null) {
@@ -6314,7 +6325,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied). Ignored entirely while a ``query`` search is active, so relevance ordering wins (every consuming viewset\'s OpenAPI doc already documents this contract).
      */
     async apiFoodSubstitutesRetrieve(requestParameters: ApiFoodSubstitutesRetrieveRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<FoodSimple> {
         const response = await this.apiFoodSubstitutesRetrieveRaw(requestParameters, initOverrides);
@@ -6322,7 +6333,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied). Ignored entirely while a ``query`` search is active, so relevance ordering wins (every consuming viewset\'s OpenAPI doc already documents this contract).
      */
     async apiFoodUpdateRaw(requestParameters: ApiFoodUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Food>> {
         if (requestParameters['id'] == null) {
@@ -6365,7 +6376,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied). Ignored entirely while a ``query`` search is active, so relevance ordering wins (every consuming viewset\'s OpenAPI doc already documents this contract).
      */
     async apiFoodUpdate(requestParameters: ApiFoodUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Food> {
         const response = await this.apiFoodUpdateRaw(requestParameters, initOverrides);
@@ -7728,7 +7739,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * logs request counts to redis cache total/per user/
+     * Batch-compute substitute_onhand/substitute_inventory for the page\'s nested foods (same pattern as FoodViewSet.list()) instead of letting FoodSerializer fall back to a per-food query for each — that fallback only skips when this context is pre-populated, and nothing did that for this endpoint until now.
      */
     async apiInventoryEntryListRaw(requestParameters: ApiInventoryEntryListRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PaginatedInventoryEntryList>> {
         const queryParameters: any = {};
@@ -7781,7 +7792,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * logs request counts to redis cache total/per user/
+     * Batch-compute substitute_onhand/substitute_inventory for the page\'s nested foods (same pattern as FoodViewSet.list()) instead of letting FoodSerializer fall back to a per-food query for each — that fallback only skips when this context is pre-populated, and nothing did that for this endpoint until now.
      */
     async apiInventoryEntryList(requestParameters: ApiInventoryEntryListRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PaginatedInventoryEntryList> {
         const response = await this.apiInventoryEntryListRaw(requestParameters, initOverrides);
@@ -7842,7 +7853,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * Mark a lot opened (POST) or undo that (DELETE) — starts/clears the Opened shelf-life clock (see recompute_lot_expiry). POST is idempotent: opening an already-opened lot is a no-op, opened_at never resets to a later date by re-tapping.
+     * Mark a lot opened (POST) or undo that (DELETE) — starts/clears the Opened shelf-life clock (see recompute_lot_expiry). Both are idempotent: opening an already-opened lot, or un-opening an already-unopened one, is a no-op — neither resets opened_at nor recomputes (and potentially overwrites a custom) expires.
      */
     async apiInventoryEntryOpenCreateRaw(requestParameters: ApiInventoryEntryOpenCreateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<InventoryEntry>> {
         if (requestParameters['id'] == null) {
@@ -7875,7 +7886,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * Mark a lot opened (POST) or undo that (DELETE) — starts/clears the Opened shelf-life clock (see recompute_lot_expiry). POST is idempotent: opening an already-opened lot is a no-op, opened_at never resets to a later date by re-tapping.
+     * Mark a lot opened (POST) or undo that (DELETE) — starts/clears the Opened shelf-life clock (see recompute_lot_expiry). Both are idempotent: opening an already-opened lot, or un-opening an already-unopened one, is a no-op — neither resets opened_at nor recomputes (and potentially overwrites a custom) expires.
      */
     async apiInventoryEntryOpenCreate(requestParameters: ApiInventoryEntryOpenCreateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<InventoryEntry> {
         const response = await this.apiInventoryEntryOpenCreateRaw(requestParameters, initOverrides);
@@ -7883,7 +7894,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * Mark a lot opened (POST) or undo that (DELETE) — starts/clears the Opened shelf-life clock (see recompute_lot_expiry). POST is idempotent: opening an already-opened lot is a no-op, opened_at never resets to a later date by re-tapping.
+     * Mark a lot opened (POST) or undo that (DELETE) — starts/clears the Opened shelf-life clock (see recompute_lot_expiry). Both are idempotent: opening an already-opened lot, or un-opening an already-unopened one, is a no-op — neither resets opened_at nor recomputes (and potentially overwrites a custom) expires.
      */
     async apiInventoryEntryOpenDestroyRaw(requestParameters: ApiInventoryEntryOpenDestroyRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<InventoryEntry>> {
         if (requestParameters['id'] == null) {
@@ -7916,7 +7927,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * Mark a lot opened (POST) or undo that (DELETE) — starts/clears the Opened shelf-life clock (see recompute_lot_expiry). POST is idempotent: opening an already-opened lot is a no-op, opened_at never resets to a later date by re-tapping.
+     * Mark a lot opened (POST) or undo that (DELETE) — starts/clears the Opened shelf-life clock (see recompute_lot_expiry). Both are idempotent: opening an already-opened lot, or un-opening an already-unopened one, is a no-op — neither resets opened_at nor recomputes (and potentially overwrites a custom) expires.
      */
     async apiInventoryEntryOpenDestroy(requestParameters: ApiInventoryEntryOpenDestroyRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<InventoryEntry> {
         const response = await this.apiInventoryEntryOpenDestroyRaw(requestParameters, initOverrides);
@@ -8296,12 +8307,28 @@ export class ApiApi extends runtime.BaseAPI {
     async apiInventoryLocationListRaw(requestParameters: ApiInventoryLocationListRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PaginatedInventoryLocationList>> {
         const queryParameters: any = {};
 
+        if (requestParameters['limit'] != null) {
+            queryParameters['limit'] = requestParameters['limit'];
+        }
+
         if (requestParameters['page'] != null) {
             queryParameters['page'] = requestParameters['page'];
         }
 
         if (requestParameters['pageSize'] != null) {
             queryParameters['page_size'] = requestParameters['pageSize'];
+        }
+
+        if (requestParameters['query'] != null) {
+            queryParameters['query'] = requestParameters['query'];
+        }
+
+        if (requestParameters['random'] != null) {
+            queryParameters['random'] = requestParameters['random'];
+        }
+
+        if (requestParameters['updatedAt'] != null) {
+            queryParameters['updated_at'] = requestParameters['updatedAt'];
         }
 
         const headerParameters: runtime.HTTPHeaders = {};
@@ -9001,7 +9028,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied). Ignored entirely while a ``query`` search is active, so relevance ordering wins (every consuming viewset\'s OpenAPI doc already documents this contract).
      */
     async apiKeywordCreateRaw(requestParameters: ApiKeywordCreateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Keyword>> {
         if (requestParameters['keyword'] == null) {
@@ -9036,7 +9063,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied). Ignored entirely while a ``query`` search is active, so relevance ordering wins (every consuming viewset\'s OpenAPI doc already documents this contract).
      */
     async apiKeywordCreate(requestParameters: ApiKeywordCreateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Keyword> {
         const response = await this.apiKeywordCreateRaw(requestParameters, initOverrides);
@@ -9044,7 +9071,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied). Ignored entirely while a ``query`` search is active, so relevance ordering wins (every consuming viewset\'s OpenAPI doc already documents this contract).
      */
     async apiKeywordDestroyRaw(requestParameters: ApiKeywordDestroyRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
         if (requestParameters['id'] == null) {
@@ -9077,14 +9104,14 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied). Ignored entirely while a ``query`` search is active, so relevance ordering wins (every consuming viewset\'s OpenAPI doc already documents this contract).
      */
     async apiKeywordDestroy(requestParameters: ApiKeywordDestroyRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
         await this.apiKeywordDestroyRaw(requestParameters, initOverrides);
     }
 
     /**
-     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied). Ignored entirely while a ``query`` search is active, so relevance ordering wins (every consuming viewset\'s OpenAPI doc already documents this contract).
      */
     async apiKeywordListRaw(requestParameters: ApiKeywordListRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PaginatedKeywordList>> {
         const queryParameters: any = {};
@@ -9157,7 +9184,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied). Ignored entirely while a ``query`` search is active, so relevance ordering wins (every consuming viewset\'s OpenAPI doc already documents this contract).
      */
     async apiKeywordList(requestParameters: ApiKeywordListRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PaginatedKeywordList> {
         const response = await this.apiKeywordListRaw(requestParameters, initOverrides);
@@ -9165,7 +9192,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied). Ignored entirely while a ``query`` search is active, so relevance ordering wins (every consuming viewset\'s OpenAPI doc already documents this contract).
      */
     async apiKeywordMergeUpdateRaw(requestParameters: ApiKeywordMergeUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Keyword>> {
         if (requestParameters['id'] == null) {
@@ -9216,7 +9243,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied). Ignored entirely while a ``query`` search is active, so relevance ordering wins (every consuming viewset\'s OpenAPI doc already documents this contract).
      */
     async apiKeywordMergeUpdate(requestParameters: ApiKeywordMergeUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Keyword> {
         const response = await this.apiKeywordMergeUpdateRaw(requestParameters, initOverrides);
@@ -9224,7 +9251,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied). Ignored entirely while a ``query`` search is active, so relevance ordering wins (every consuming viewset\'s OpenAPI doc already documents this contract).
      */
     async apiKeywordMoveUpdateRaw(requestParameters: ApiKeywordMoveUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Keyword>> {
         if (requestParameters['id'] == null) {
@@ -9275,7 +9302,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied). Ignored entirely while a ``query`` search is active, so relevance ordering wins (every consuming viewset\'s OpenAPI doc already documents this contract).
      */
     async apiKeywordMoveUpdate(requestParameters: ApiKeywordMoveUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Keyword> {
         const response = await this.apiKeywordMoveUpdateRaw(requestParameters, initOverrides);
@@ -9336,7 +9363,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied). Ignored entirely while a ``query`` search is active, so relevance ordering wins (every consuming viewset\'s OpenAPI doc already documents this contract).
      */
     async apiKeywordPartialUpdateRaw(requestParameters: ApiKeywordPartialUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Keyword>> {
         if (requestParameters['id'] == null) {
@@ -9372,7 +9399,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied). Ignored entirely while a ``query`` search is active, so relevance ordering wins (every consuming viewset\'s OpenAPI doc already documents this contract).
      */
     async apiKeywordPartialUpdate(requestParameters: ApiKeywordPartialUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Keyword> {
         const response = await this.apiKeywordPartialUpdateRaw(requestParameters, initOverrides);
@@ -9433,7 +9460,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied). Ignored entirely while a ``query`` search is active, so relevance ordering wins (every consuming viewset\'s OpenAPI doc already documents this contract).
      */
     async apiKeywordRetrieveRaw(requestParameters: ApiKeywordRetrieveRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Keyword>> {
         if (requestParameters['id'] == null) {
@@ -9466,7 +9493,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied). Ignored entirely while a ``query`` search is active, so relevance ordering wins (every consuming viewset\'s OpenAPI doc already documents this contract).
      */
     async apiKeywordRetrieve(requestParameters: ApiKeywordRetrieveRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Keyword> {
         const response = await this.apiKeywordRetrieveRaw(requestParameters, initOverrides);
@@ -9474,7 +9501,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied). Ignored entirely while a ``query`` search is active, so relevance ordering wins (every consuming viewset\'s OpenAPI doc already documents this contract).
      */
     async apiKeywordStatsRetrieveRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<KeywordStats>> {
         const queryParameters: any = {};
@@ -9499,7 +9526,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied). Ignored entirely while a ``query`` search is active, so relevance ordering wins (every consuming viewset\'s OpenAPI doc already documents this contract).
      */
     async apiKeywordStatsRetrieve(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<KeywordStats> {
         const response = await this.apiKeywordStatsRetrieveRaw(initOverrides);
@@ -9507,7 +9534,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied). Ignored entirely while a ``query`` search is active, so relevance ordering wins (every consuming viewset\'s OpenAPI doc already documents this contract).
      */
     async apiKeywordUpdateRaw(requestParameters: ApiKeywordUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Keyword>> {
         if (requestParameters['id'] == null) {
@@ -9550,7 +9577,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied). Ignored entirely while a ``query`` search is active, so relevance ordering wins (every consuming viewset\'s OpenAPI doc already documents this contract).
      */
     async apiKeywordUpdate(requestParameters: ApiKeywordUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Keyword> {
         const response = await this.apiKeywordUpdateRaw(requestParameters, initOverrides);
@@ -10683,12 +10710,28 @@ export class ApiApi extends runtime.BaseAPI {
             queryParameters['category'] = requestParameters['category'];
         }
 
+        if (requestParameters['limit'] != null) {
+            queryParameters['limit'] = requestParameters['limit'];
+        }
+
         if (requestParameters['page'] != null) {
             queryParameters['page'] = requestParameters['page'];
         }
 
         if (requestParameters['pageSize'] != null) {
             queryParameters['page_size'] = requestParameters['pageSize'];
+        }
+
+        if (requestParameters['query'] != null) {
+            queryParameters['query'] = requestParameters['query'];
+        }
+
+        if (requestParameters['random'] != null) {
+            queryParameters['random'] = requestParameters['random'];
+        }
+
+        if (requestParameters['updatedAt'] != null) {
+            queryParameters['updated_at'] = requestParameters['updatedAt'];
         }
 
         const headerParameters: runtime.HTTPHeaders = {};
@@ -12137,7 +12180,7 @@ export class ApiApi extends runtime.BaseAPI {
         }
 
         if (requestParameters['cropData'] != null) {
-            formParams.append('crop_data', new Blob([JSON.stringify(anyToJSON(requestParameters['cropData']))], { type: "application/json", }));
+            formParams.append('crop_data', new Blob([JSON.stringify(CropDataToJSON(requestParameters['cropData']))], { type: "application/json", }));
                     }
 
         if (requestParameters['order'] != null) {
@@ -12349,7 +12392,7 @@ export class ApiApi extends runtime.BaseAPI {
         }
 
         if (requestParameters['cropData'] != null) {
-            formParams.append('crop_data', new Blob([JSON.stringify(anyToJSON(requestParameters['cropData']))], { type: "application/json", }));
+            formParams.append('crop_data', new Blob([JSON.stringify(CropDataToJSON(requestParameters['cropData']))], { type: "application/json", }));
                     }
 
         if (requestParameters['order'] != null) {
@@ -12507,7 +12550,7 @@ export class ApiApi extends runtime.BaseAPI {
         }
 
         if (requestParameters['cropData'] != null) {
-            formParams.append('crop_data', new Blob([JSON.stringify(anyToJSON(requestParameters['cropData']))], { type: "application/json", }));
+            formParams.append('crop_data', new Blob([JSON.stringify(CropDataToJSON(requestParameters['cropData']))], { type: "application/json", }));
                     }
 
         if (requestParameters['order'] != null) {
@@ -18177,7 +18220,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied). Ignored entirely while a ``query`` search is active, so relevance ordering wins (every consuming viewset\'s OpenAPI doc already documents this contract).
      */
     async apiUnitCreateRaw(requestParameters: ApiUnitCreateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Unit>> {
         if (requestParameters['unit'] == null) {
@@ -18212,7 +18255,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied). Ignored entirely while a ``query`` search is active, so relevance ordering wins (every consuming viewset\'s OpenAPI doc already documents this contract).
      */
     async apiUnitCreate(requestParameters: ApiUnitCreateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Unit> {
         const response = await this.apiUnitCreateRaw(requestParameters, initOverrides);
@@ -18220,7 +18263,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied). Ignored entirely while a ``query`` search is active, so relevance ordering wins (every consuming viewset\'s OpenAPI doc already documents this contract).
      */
     async apiUnitDestroyRaw(requestParameters: ApiUnitDestroyRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
         if (requestParameters['id'] == null) {
@@ -18253,14 +18296,14 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied). Ignored entirely while a ``query`` search is active, so relevance ordering wins (every consuming viewset\'s OpenAPI doc already documents this contract).
      */
     async apiUnitDestroy(requestParameters: ApiUnitDestroyRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
         await this.apiUnitDestroyRaw(requestParameters, initOverrides);
     }
 
     /**
-     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied). Ignored entirely while a ``query`` search is active, so relevance ordering wins (every consuming viewset\'s OpenAPI doc already documents this contract).
      */
     async apiUnitListRaw(requestParameters: ApiUnitListRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PaginatedUnitList>> {
         const queryParameters: any = {};
@@ -18317,7 +18360,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied). Ignored entirely while a ``query`` search is active, so relevance ordering wins (every consuming viewset\'s OpenAPI doc already documents this contract).
      */
     async apiUnitList(requestParameters: ApiUnitListRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PaginatedUnitList> {
         const response = await this.apiUnitListRaw(requestParameters, initOverrides);
@@ -18325,7 +18368,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied). Ignored entirely while a ``query`` search is active, so relevance ordering wins (every consuming viewset\'s OpenAPI doc already documents this contract).
      */
     async apiUnitMergeUpdateRaw(requestParameters: ApiUnitMergeUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Unit>> {
         if (requestParameters['id'] == null) {
@@ -18376,7 +18419,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied). Ignored entirely while a ``query`` search is active, so relevance ordering wins (every consuming viewset\'s OpenAPI doc already documents this contract).
      */
     async apiUnitMergeUpdate(requestParameters: ApiUnitMergeUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Unit> {
         const response = await this.apiUnitMergeUpdateRaw(requestParameters, initOverrides);
@@ -18437,7 +18480,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied). Ignored entirely while a ``query`` search is active, so relevance ordering wins (every consuming viewset\'s OpenAPI doc already documents this contract).
      */
     async apiUnitPartialUpdateRaw(requestParameters: ApiUnitPartialUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Unit>> {
         if (requestParameters['id'] == null) {
@@ -18473,7 +18516,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied). Ignored entirely while a ``query`` search is active, so relevance ordering wins (every consuming viewset\'s OpenAPI doc already documents this contract).
      */
     async apiUnitPartialUpdate(requestParameters: ApiUnitPartialUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Unit> {
         const response = await this.apiUnitPartialUpdateRaw(requestParameters, initOverrides);
@@ -18534,7 +18577,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied). Ignored entirely while a ``query`` search is active, so relevance ordering wins (every consuming viewset\'s OpenAPI doc already documents this contract).
      */
     async apiUnitRetrieveRaw(requestParameters: ApiUnitRetrieveRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Unit>> {
         if (requestParameters['id'] == null) {
@@ -18567,7 +18610,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied). Ignored entirely while a ``query`` search is active, so relevance ordering wins (every consuming viewset\'s OpenAPI doc already documents this contract).
      */
     async apiUnitRetrieve(requestParameters: ApiUnitRetrieveRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Unit> {
         const response = await this.apiUnitRetrieveRaw(requestParameters, initOverrides);
@@ -18575,7 +18618,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied). Ignored entirely while a ``query`` search is active, so relevance ordering wins (every consuming viewset\'s OpenAPI doc already documents this contract).
      */
     async apiUnitStatsRetrieveRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<UnitStats>> {
         const queryParameters: any = {};
@@ -18600,7 +18643,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied). Ignored entirely while a ``query`` search is active, so relevance ordering wins (every consuming viewset\'s OpenAPI doc already documents this contract).
      */
     async apiUnitStatsRetrieve(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<UnitStats> {
         const response = await this.apiUnitStatsRetrieveRaw(initOverrides);
@@ -18608,7 +18651,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied). Ignored entirely while a ``query`` search is active, so relevance ordering wins (every consuming viewset\'s OpenAPI doc already documents this contract).
      */
     async apiUnitUpdateRaw(requestParameters: ApiUnitUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Unit>> {
         if (requestParameters['id'] == null) {
@@ -18651,7 +18694,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied). Ignored entirely while a ``query`` search is active, so relevance ordering wins (every consuming viewset\'s OpenAPI doc already documents this contract).
      */
     async apiUnitUpdate(requestParameters: ApiUnitUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Unit> {
         const response = await this.apiUnitUpdateRaw(requestParameters, initOverrides);
@@ -18805,7 +18848,7 @@ export class ApiApi extends runtime.BaseAPI {
         }
 
         if (requestParameters['cropData'] != null) {
-            formParams.append('crop_data', new Blob([JSON.stringify(anyToJSON(requestParameters['cropData']))], { type: "application/json", }));
+            formParams.append('crop_data', new Blob([JSON.stringify(CropDataToJSON(requestParameters['cropData']))], { type: "application/json", }));
                     }
 
         if (requestParameters['createdBy'] != null) {
@@ -19051,7 +19094,7 @@ export class ApiApi extends runtime.BaseAPI {
         }
 
         if (requestParameters['cropData'] != null) {
-            formParams.append('crop_data', new Blob([JSON.stringify(anyToJSON(requestParameters['cropData']))], { type: "application/json", }));
+            formParams.append('crop_data', new Blob([JSON.stringify(CropDataToJSON(requestParameters['cropData']))], { type: "application/json", }));
                     }
 
         if (requestParameters['createdBy'] != null) {
@@ -19280,7 +19323,7 @@ export class ApiApi extends runtime.BaseAPI {
         }
 
         if (requestParameters['cropData'] != null) {
-            formParams.append('crop_data', new Blob([JSON.stringify(anyToJSON(requestParameters['cropData']))], { type: "application/json", }));
+            formParams.append('crop_data', new Blob([JSON.stringify(CropDataToJSON(requestParameters['cropData']))], { type: "application/json", }));
                     }
 
         if (requestParameters['createdBy'] != null) {
@@ -19852,7 +19895,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied). Ignored entirely while a ``query`` search is active, so relevance ordering wins (every consuming viewset\'s OpenAPI doc already documents this contract).
      */
     async apiViewLogCreateRaw(requestParameters: ApiViewLogCreateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ViewLog>> {
         if (requestParameters['viewLog'] == null) {
@@ -19887,7 +19930,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied). Ignored entirely while a ``query`` search is active, so relevance ordering wins (every consuming viewset\'s OpenAPI doc already documents this contract).
      */
     async apiViewLogCreate(requestParameters: ApiViewLogCreateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ViewLog> {
         const response = await this.apiViewLogCreateRaw(requestParameters, initOverrides);
@@ -19895,7 +19938,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied). Ignored entirely while a ``query`` search is active, so relevance ordering wins (every consuming viewset\'s OpenAPI doc already documents this contract).
      */
     async apiViewLogDestroyRaw(requestParameters: ApiViewLogDestroyRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
         if (requestParameters['id'] == null) {
@@ -19928,14 +19971,14 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied). Ignored entirely while a ``query`` search is active, so relevance ordering wins (every consuming viewset\'s OpenAPI doc already documents this contract).
      */
     async apiViewLogDestroy(requestParameters: ApiViewLogDestroyRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
         await this.apiViewLogDestroyRaw(requestParameters, initOverrides);
     }
 
     /**
-     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied). Ignored entirely while a ``query`` search is active, so relevance ordering wins (every consuming viewset\'s OpenAPI doc already documents this contract).
      */
     async apiViewLogListRaw(requestParameters: ApiViewLogListRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PaginatedViewLogList>> {
         const queryParameters: any = {};
@@ -19976,7 +20019,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied). Ignored entirely while a ``query`` search is active, so relevance ordering wins (every consuming viewset\'s OpenAPI doc already documents this contract).
      */
     async apiViewLogList(requestParameters: ApiViewLogListRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PaginatedViewLogList> {
         const response = await this.apiViewLogListRaw(requestParameters, initOverrides);
@@ -19984,7 +20027,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied). Ignored entirely while a ``query`` search is active, so relevance ordering wins (every consuming viewset\'s OpenAPI doc already documents this contract).
      */
     async apiViewLogPartialUpdateRaw(requestParameters: ApiViewLogPartialUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ViewLog>> {
         if (requestParameters['id'] == null) {
@@ -20020,7 +20063,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied). Ignored entirely while a ``query`` search is active, so relevance ordering wins (every consuming viewset\'s OpenAPI doc already documents this contract).
      */
     async apiViewLogPartialUpdate(requestParameters: ApiViewLogPartialUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ViewLog> {
         const response = await this.apiViewLogPartialUpdateRaw(requestParameters, initOverrides);
@@ -20028,7 +20071,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied). Ignored entirely while a ``query`` search is active, so relevance ordering wins (every consuming viewset\'s OpenAPI doc already documents this contract).
      */
     async apiViewLogRetrieveRaw(requestParameters: ApiViewLogRetrieveRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ViewLog>> {
         if (requestParameters['id'] == null) {
@@ -20061,7 +20104,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied). Ignored entirely while a ``query`` search is active, so relevance ordering wins (every consuming viewset\'s OpenAPI doc already documents this contract).
      */
     async apiViewLogRetrieve(requestParameters: ApiViewLogRetrieveRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ViewLog> {
         const response = await this.apiViewLogRetrieveRaw(requestParameters, initOverrides);
@@ -20069,7 +20112,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied). Ignored entirely while a ``query`` search is active, so relevance ordering wins (every consuming viewset\'s OpenAPI doc already documents this contract).
      */
     async apiViewLogUpdateRaw(requestParameters: ApiViewLogUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ViewLog>> {
         if (requestParameters['id'] == null) {
@@ -20112,7 +20155,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied).
+     * Applies a validated ``?ordering=`` query param against a per-viewset allow-list.  Subclasses declare up to three class attributes:  * ``ordering_lower_fields`` — {param: OrderBy} for case-insensitive (``Lower``) orderings. * ``ordering_field_map`` — {param: db_field} where the exposed param name differs from the   column (e.g. ``numrecipe`` -> ``recipe_count``, ``created_at`` -> ``pk``). * ``ordering_plain_fields`` — params that order by their own name as-is.  Any ``ordering`` value not in the union of these is ignored (no ordering applied). Ignored entirely while a ``query`` search is active, so relevance ordering wins (every consuming viewset\'s OpenAPI doc already documents this contract).
      */
     async apiViewLogUpdate(requestParameters: ApiViewLogUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ViewLog> {
         const response = await this.apiViewLogUpdateRaw(requestParameters, initOverrides);

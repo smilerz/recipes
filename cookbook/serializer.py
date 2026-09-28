@@ -70,6 +70,44 @@ class WritableNestedModelSerializer(WNMS):
         return super().to_internal_value(data)
 
 
+class CropDataSerializer(serializers.Serializer):
+    """Schema-only shape for the ``crop_data``/``image_crop_data`` JSONField
+    on UserFile and RecipeImage. Never used for actual (de)serialization -
+    both fields stay plain JSONField with their own imperative validation.
+    UserFileSerializer.check_crop_data clamps x/y/width/height to [0,100];
+    RecipeImageSerializer.check_crop_data deliberately allows negative/>100
+    values (soft-clamped to [-1000,1000]/<=2000) to support non-square crops
+    of non-square images. No min/max is declared here since the two models'
+    rules genuinely differ - a single shared schema can't assert either
+    model's range without misrepresenting the other. This exists purely so
+    drf-spectacular emits a real object schema instead of `any`, so the
+    generated OpenAPI client can serialize it (see anyToJSON regression)."""
+    x = serializers.FloatField(required=False)
+    y = serializers.FloatField(required=False)
+    width = serializers.FloatField(required=False)
+    height = serializers.FloatField(required=False)
+    rotate = serializers.ChoiceField(choices=[0, 90, 180, 270], required=False)
+    fit = serializers.BooleanField(required=False)
+
+
+@extend_schema_field(CropDataSerializer(allow_null=True, required=False))
+class CropDataField(serializers.JSONField):
+    """Identical at runtime to JSONField - this subclass exists only so the
+    `extend_schema_field` annotation lives on the class (surviving DRF's
+    Field.__deepcopy__, which rebuilds fields from constructor args and
+    drops attributes set on an instance) rather than a stock JSONField
+    instance, which every other free-form JSONField in the app still uses
+    unmodified. Same pattern already used by CustomDecimalField/
+    CustomOnHandField below.
+
+    Note: the emitted schema's nullable/readOnly flags come from this
+    class-level override's own kwargs (allow_null=True, required=False
+    above), not from a given instance's own kwargs - e.g. a hypothetical
+    CropDataField(allow_null=False) would still emit nullable: true in the
+    schema, since the override is fixed at the class level."""
+    pass
+
+
 class PrimaryRecipeImageMixin(serializers.Serializer):
     """Expose the derived ``image`` URL + ``image_crop_data`` of a recipe's
     primary RecipeImage (pattern-014: the legacy ``Recipe.image`` column is no
@@ -87,7 +125,7 @@ class PrimaryRecipeImageMixin(serializers.Serializer):
             return request.build_absolute_uri(primary.file.url)
         return primary.file.url
 
-    @extend_schema_field(serializers.JSONField(allow_null=True))
+    @extend_schema_field(CropDataSerializer(allow_null=True))
     def get_primary_image_crop_data(self, obj):
         primary = get_primary_recipe_image(obj)
         if not primary:
@@ -259,7 +297,7 @@ class UserFileSerializer(serializers.ModelSerializer):
     file = serializers.FileField(write_only=True, required=False)
     file_download = serializers.SerializerMethodField('get_download_link')
     preview = serializers.SerializerMethodField('get_preview_link')
-    crop_data = serializers.JSONField(required=False, allow_null=True)
+    crop_data = CropDataField(required=False, allow_null=True)
 
     @extend_schema_field(serializers.CharField(read_only=True))
     def get_download_link(self, obj):
@@ -341,6 +379,7 @@ class UserFileViewSerializer(serializers.ModelSerializer):
     created_by = UserSerializer(read_only=True)
     file_download = serializers.SerializerMethodField('get_download_link')
     preview = serializers.SerializerMethodField('get_preview_link')
+    crop_data = CropDataField(read_only=True)
 
     @extend_schema_field(str)
     def get_download_link(self, obj):
@@ -1335,7 +1374,7 @@ class RecipeOverviewSerializer(PrimaryRecipeImageMixin, RecipeBaseSerializer):
 
 class RecipeImageSerializer(serializers.ModelSerializer):
     """Serializer for the RecipeImage model (multi-image gallery)."""
-    crop_data = serializers.JSONField(required=False, allow_null=True)
+    crop_data = CropDataField(required=False, allow_null=True)
 
     def check_crop_data(self, validated_data):
         if 'crop_data' not in validated_data or validated_data['crop_data'] is None:

@@ -13,6 +13,7 @@ Run after regenerating the OpenAPI client:
   python vue3/scripts/generate-test-factories.py
 """
 
+import re
 import yaml
 import sys
 from pathlib import Path
@@ -20,6 +21,7 @@ from collections import OrderedDict
 
 SCHEMA_PATH = Path(__file__).parent.parent / "src" / "openapi" / "openapi.json"
 OUTPUT_PATH = Path(__file__).parent.parent / "src" / "__tests__" / "factories.generated.ts"
+MODELS_INDEX_PATH = Path(__file__).parent.parent / "src" / "openapi" / "models" / "index.ts"
 
 # Models to skip (wrappers, not directly useful as test data)
 SKIP_PREFIXES = ("Patched", "Paginated")
@@ -31,6 +33,26 @@ ONLY_MODELS = set()
 def load_schema():
     with open(SCHEMA_PATH) as f:
         return yaml.safe_load(f)
+
+
+def load_exported_model_names() -> set[str]:
+    """Names the real OpenAPI client actually exports (models/index.ts).
+
+    Not every schema in openapi.json becomes a standalone model file: a
+    schema used only as one operation's multipart/form request body (e.g.
+    AiImport) gets its fields inlined into that operation's *Request
+    interface instead, by design - there's nothing else to reuse it for.
+    Generating a factory for a name the real client never exports produces
+    an `import {X} from '@/openapi'` that fails at typecheck (confirmed:
+    AiImport, before this fix). Cross-checking against the actual export
+    list keeps the generator honest about what the client really produced.
+    """
+    if not MODELS_INDEX_PATH.exists():
+        print(f"models/index.ts not found at {MODELS_INDEX_PATH} - run the "
+              f"OpenAPI client regen first", file=sys.stderr)
+        sys.exit(1)
+    text = MODELS_INDEX_PATH.read_text()
+    return set(re.findall(r"export \* from '\./(\w+)';", text))
 
 
 def resolve_ref(ref: str) -> str:
@@ -196,6 +218,7 @@ def generate_factory(name: str, schema: dict, schemas: dict, mode: str) -> list[
 
 def generate_all(schema_data: dict) -> str:
     schemas = schema_data["components"]["schemas"]
+    exported_names = load_exported_model_names()
 
     # Separate enums from models
     enums = {k: v for k, v in schemas.items() if "enum" in v}
@@ -208,6 +231,10 @@ def generate_all(schema_data: dict) -> str:
         if ONLY_MODELS and k not in ONLY_MODELS:
             continue
         if not v.get("properties"):
+            continue
+        if k not in exported_names:
+            # Schema exists in openapi.json but the real client never
+            # exported it as a standalone model (see load_exported_model_names).
             continue
         models[k] = v
 

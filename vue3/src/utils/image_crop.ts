@@ -1,3 +1,5 @@
+import type { CropData } from '@/openapi'
+
 /**
  * Computes an object-position string from UserFile.cropData for use with
  * Vuetify's v-img :position prop. The focal point is the center of the
@@ -6,7 +8,7 @@
  *
  * Returns undefined when cropData is null/undefined (no-op for Vuetify).
  */
-export function cropPosition(cropData: Record<string, number> | null | undefined): string | undefined {
+export function cropPosition(cropData: CropData | null | undefined): string | undefined {
     if (!cropData) return undefined
     const x = cropData['x']
     const y = cropData['y']
@@ -37,7 +39,7 @@ export function cropPosition(cropData: Record<string, number> | null | undefined
  */
 export function cropPreviewStyle(
     src: string,
-    cropData: Record<string, number> | null | undefined,
+    cropData: CropData | null | undefined,
     forceCrop = false,
 ): Record<string, string> {
     if (!cropData || !src) {
@@ -119,7 +121,7 @@ export function cropPreviewStyle(
  * this to know whether to wrap the image element in a square inner container.
  */
 export function shouldFitFrame(
-    cropData: Record<string, number> | null | undefined,
+    cropData: CropData | null | undefined,
     forceCrop = false,
 ): boolean {
     return !forceCrop && !!cropData?.['fit']
