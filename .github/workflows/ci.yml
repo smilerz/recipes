@@ -99,7 +99,7 @@ jobs:
             # One upload per push/PR is enough - coverage doesn't vary by matrix leg.
             - name: Upload backend coverage to Codecov
               if: matrix.python-version == '3.13' && matrix.node-version == '24'
-              uses: codecov/codecov-action@v5
+              uses: codecov/codecov-action@v7
               with:
                   token: ${{ secrets.CODECOV_TOKEN }}
                   files: ./docs/reports/coverage/coverage.xml

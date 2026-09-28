@@ -42,7 +42,7 @@ jobs:
       # One upload per push/PR is enough - coverage doesn't vary by Node version.
       - name: Upload frontend coverage to Codecov
         if: matrix.node-version == '24'
-        uses: codecov/codecov-action@v5
+        uses: codecov/codecov-action@v7
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: ./vue3/coverage/lcov.info
