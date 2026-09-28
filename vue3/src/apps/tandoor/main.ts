@@ -8,7 +8,7 @@ import vuetify from "@/vuetify";
 import mavonEditor from 'mavon-editor'
 import 'mavon-editor/dist/css/index.css'
 import 'vite/modulepreload-polyfill';
-import {createRulesPlugin} from 'vuetify/labs/rules'
+import {createRulesPlugin} from 'vuetify'
 
 import {setupI18n} from "@/i18n";
 import MealPlanPage from "@/pages/MealPlanPage.vue";
