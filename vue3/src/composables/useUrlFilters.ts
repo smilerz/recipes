@@ -56,12 +56,12 @@ export function useUrlFilters(
     }
 
     function initFromRoute() {
-        state.clear()
+        const next = new Map<string, string>()
         let matchedAny = false
         for (const def of filterDefs.value) {
             const val = route.query[def.key]
             if (val != null && val !== '') {
-                state.set(def.key, String(val))
+                next.set(def.key, String(val))
                 matchedAny = true
                 continue
             }
@@ -76,7 +76,7 @@ export function useUrlFilters(
                 const gteStr = gte != null && gte !== '' ? String(gte) : ''
                 const lteStr = lte != null && lte !== '' ? String(lte) : ''
                 if (gteStr || lteStr) {
-                    state.set(def.key, `${gteStr}~${lteStr}`)
+                    next.set(def.key, `${gteStr}~${lteStr}`)
                     matchedAny = true
                 }
             }
@@ -89,14 +89,20 @@ export function useUrlFilters(
             if (persisted) {
                 for (const def of filterDefs.value) {
                     const v = persisted[def.key]
-                    if (v != null && v !== '') state.set(def.key, String(v))
+                    if (v != null && v !== '') next.set(def.key, String(v))
                 }
                 // Defer the URL flush until vue-router has committed the initial
                 // navigation; otherwise the router.replace fires mid-transition
                 // during setup and the URL update is silently dropped, leaving
                 // state hydrated but the address bar empty.
-                if (state.size > 0) router.isReady().then(scheduleFlush)
+                if (next.size > 0) router.isReady().then(scheduleFlush)
             }
+        }
+        // route.query also changes for non-filter params (page, ordering), and consumers watch
+        // filterParams to reset to page 1 — so only touch the reactive state when it really differs.
+        if (next.size !== state.size || [...next].some(([k, v]) => state.get(k) !== v)) {
+            state.clear()
+            for (const [k, v] of next) state.set(k, v)
         }
     }
 
