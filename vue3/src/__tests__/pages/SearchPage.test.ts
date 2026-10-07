@@ -17,6 +17,7 @@ import {h} from 'vue'
 import {apiMock, resetApiMock} from '@/__tests__/api-mock'
 import {makeUserPreference} from '@/__tests__/factories'
 import {useUserPreferenceStore} from '@/stores/UserPreferenceStore'
+import {mintSeed, SEED_TTL_MS} from '@/utils/randomSeed'
 
 vi.mock('@/openapi', async (importOriginal) => ({
     ...(await importOriginal<any>()),
@@ -522,11 +523,20 @@ describe('SearchPage (Phase 3 rewrite)', () => {
     })
 
     describe('random sort pagination gating', () => {
-        it('hides v-pagination when ordering is random', async () => {
+        // Random used to reshuffle on every request, so paging was hidden and only a Shuffle
+        // button was offered. With a seed, pages of one random order are stable, so the pager
+        // is shown again and Shuffle stays as the re-roll.
+        it('shows v-pagination and the Shuffle re-roll when ordering is random', async () => {
+            apiMock.apiRecipeList = vi.fn().mockResolvedValue({
+                results: [{id: 1, name: 'Test', image: null, keywords: []}],
+                count: 100,
+                next: null,
+                previous: null,
+            })
             const {wrapper} = await mountSearchPage({ordering: 'random'})
-            // Pagination component is not rendered in random mode; the random
-            // re-roll button is shown instead.
-            expect(wrapper.find('.v-pagination').exists()).toBe(false)
+            await flushPromises()
+            expect(wrapper.find('.v-pagination').exists()).toBe(true)
+            expect(wrapper.text()).toContain('Shuffle')
         })
 
         it('shows v-pagination for non-random ordering', async () => {
@@ -540,6 +550,135 @@ describe('SearchPage (Phase 3 rewrite)', () => {
             const {wrapper} = await mountSearchPage({ordering: '-lastcooked'})
             await flushPromises()
             expect(wrapper.find('.v-pagination').exists()).toBe(true)
+        })
+    })
+
+    // Seeded random: a seed in the URL fixes the order of a random listing so paging, Back and
+    // "View more" see one shuffle. It is re-minted when the sort or any search param changes,
+    // kept when only the page changes, and replaced on entry once it is older than the TTL.
+    describe('seeded random ordering', () => {
+        const lastParams = () => {
+            const calls = (apiMock.apiRecipeList as any).mock.calls
+            return calls[calls.length - 1][0]
+        }
+        const settle = async () => {
+            await flushPromises()
+            vi.advanceTimersByTime(350)
+            await flushPromises()
+            await flushPromises()
+        }
+        const SEED_SHAPE = /^[0-9a-z]+-[0-9a-z]+$/
+
+        beforeEach(() => vi.useFakeTimers({shouldAdvanceTime: true}))
+
+        it('mints a seed for a random deep link without one, sends it, and puts it in the URL', async () => {
+            const {wrapper, router} = await mountSearchPage({ordering: 'random'})
+            await settle()
+            expect(lastParams().seed).toMatch(SEED_SHAPE)
+            expect(router.currentRoute.value.query.seed).toBe(lastParams().seed)
+            wrapper.unmount()
+        })
+
+        it('keeps a fresh seed from the URL', async () => {
+            const seed = mintSeed()
+            const {wrapper, router} = await mountSearchPage({ordering: 'random', seed})
+            await settle()
+            expect(lastParams().seed).toBe(seed)
+            expect(router.currentRoute.value.query.seed).toBe(seed)
+            wrapper.unmount()
+        })
+
+        it('replaces a seed older than the TTL on entry', async () => {
+            const stale = mintSeed(Date.now() - (SEED_TTL_MS + 60_000))
+            const {wrapper, router} = await mountSearchPage({ordering: 'random', seed: stale})
+            await settle()
+            expect(lastParams().seed).toMatch(SEED_SHAPE)
+            expect(lastParams().seed).not.toBe(stale)
+            expect(router.currentRoute.value.query.seed).toBe(lastParams().seed)
+            wrapper.unmount()
+        })
+
+        it('does not send a seed when the sort is not random', async () => {
+            const {wrapper} = await mountSearchPage({ordering: 'name', seed: mintSeed()})
+            await settle()
+            expect(lastParams().seed).toBeUndefined()
+            wrapper.unmount()
+        })
+
+        it('keeps the seed when only the page changes', async () => {
+            const seed = mintSeed()
+            const {wrapper} = await mountSearchPage({ordering: 'random', seed})
+            await settle()
+            ;(wrapper.vm as any).onTableUpdate({itemsPerPage: 25, page: 2})
+            await settle()
+            expect(lastParams().page).toBe(2)
+            expect(lastParams().seed).toBe(seed)
+            wrapper.unmount()
+        })
+
+        it('mints a new seed when the text query changes', async () => {
+            const seed = mintSeed()
+            const {wrapper, router} = await mountSearchPage({ordering: 'random', seed})
+            await settle()
+            await router.push({path: '/advanced-search', query: {ordering: 'random', seed, query: 'chicken'}})
+            await settle()
+            expect(lastParams().query).toBe('chicken')
+            expect(lastParams().seed).toMatch(SEED_SHAPE)
+            expect(lastParams().seed).not.toBe(seed)
+            wrapper.unmount()
+        })
+
+        it('mints a new seed when the page size changes', async () => {
+            const seed = mintSeed()
+            const {wrapper} = await mountSearchPage({ordering: 'random', seed})
+            await settle()
+            ;(wrapper.vm as any).onTableUpdate({itemsPerPage: 50, page: 1})
+            await settle()
+            expect(lastParams().pageSize).toBe(50)
+            expect(lastParams().seed).toMatch(SEED_SHAPE)
+            expect(lastParams().seed).not.toBe(seed)
+            wrapper.unmount()
+        })
+
+        it('re-selecting Random (the toggle flips random to -random) mints a new seed', async () => {
+            const seed = mintSeed()
+            const {wrapper, router} = await mountSearchPage({ordering: 'random', seed})
+            await settle()
+            await router.push({path: '/advanced-search', query: {ordering: '-random', seed}})
+            await settle()
+            expect(lastParams().sortOrder).toBe('-random')
+            expect(lastParams().seed).toMatch(SEED_SHAPE)
+            expect(lastParams().seed).not.toBe(seed)
+            wrapper.unmount()
+        })
+
+        it('switching to another sort stops sending the seed and drops it from the URL', async () => {
+            const seed = mintSeed()
+            const {wrapper, router} = await mountSearchPage({ordering: 'random', seed})
+            await settle()
+            await router.push({path: '/advanced-search', query: {ordering: 'name', seed}})
+            await settle()
+            expect(lastParams().sortOrder).toBe('name')
+            expect(lastParams().seed).toBeUndefined()
+            expect(router.currentRoute.value.query.seed).toBeUndefined()
+            wrapper.unmount()
+        })
+
+        it('Shuffle re-rolls: new seed, back to page 1', async () => {
+            apiMock.apiRecipeList = vi.fn().mockResolvedValue({
+                results: [{id: 1, name: 'Test', image: null, keywords: []}], count: 100, next: null, previous: null,
+            })
+            const seed = mintSeed()
+            const {wrapper} = await mountSearchPage({ordering: 'random', seed, page: '3'})
+            await settle()
+            const shuffle = wrapper.findAll('button').find(b => b.text().includes('Shuffle'))
+            expect(shuffle).toBeTruthy()
+            await shuffle!.trigger('click')
+            await settle()
+            expect(lastParams().page).toBe(1)
+            expect(lastParams().seed).toMatch(SEED_SHAPE)
+            expect(lastParams().seed).not.toBe(seed)
+            wrapper.unmount()
         })
     })
 
