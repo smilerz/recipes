@@ -1,9 +1,13 @@
+export function fdcFoodUrl(fdcId: number): string {
+    return `https://fdc.nal.usda.gov/food-details/${fdcId}/nutrients`
+}
+
 /**
  * for some reason v-btn href does not work in append inner slot of text field so open link with js
  * @param fdcId
  */
 export function openFdcPage(fdcId: number){
-    window.open(`https://fdc.nal.usda.gov/food-details/${fdcId}/nutrients`, '_blank')
+    window.open(fdcFoodUrl(fdcId), '_blank')
 }
 
 /**

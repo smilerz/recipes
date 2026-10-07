@@ -948,7 +948,6 @@ class TestRecipePropertyFilters:
         assert s.r2.id in ids and s.r3.id in ids
 
     def test_has_keywords_true(self, search_recipes, u1_s1, space_1, make_search_request):
-        s = search_recipes
         req = make_search_request(u1_s1)
         results = do_search(req, space_1, has_keywords='true')
         ids = set(results.values_list('id', flat=True))
@@ -957,7 +956,6 @@ class TestRecipePropertyFilters:
                 assert Recipe.objects.get(id=r_id).keywords.exists()
 
     def test_has_keywords_false(self, search_recipes, u1_s1, space_1, make_search_request):
-        s = search_recipes
         req = make_search_request(u1_s1)
         results = do_search(req, space_1, has_keywords='false')
         ids = set(results.values_list('id', flat=True))

@@ -515,7 +515,7 @@ def web_manifest(request):
                 "url": "url",
                 "text": "text"
             }
-        }
+                }
     }
 
     return JsonResponse(manifest_info, json_dumps_params={'indent': 4})

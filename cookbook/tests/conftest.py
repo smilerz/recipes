@@ -332,6 +332,7 @@ def a1_s2(client, space_2):
 def a2_s2(client, space_2):
     return create_user(client, space_2, group='admin')
 
+
 @pytest.fixture()
 def s1_s1(client, space_1):
     client = create_user(client, space_1, group='admin')

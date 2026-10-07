@@ -156,9 +156,9 @@ class Mealie1(Integration):
         for r in recipes_dict.keys():
             if r not in first_step_of_recipe_dict:
                 step = Step.objects.create(instruction='',
-                                    order=0,
-                                    name='',
-                                    space=self.request.space)
+                                           order=0,
+                                           name='',
+                                           space=self.request.space)
                 steps_relation.append(Recipe.steps.through(recipe_id=recipes_dict[r], step_id=step.pk))
                 first_step_of_recipe_dict[r] = step.pk
 
@@ -194,7 +194,7 @@ class Mealie1(Integration):
                         order=i['position'],
                         space=self.request.space,
                     )
-                    ingredients_relation.append(Step.ingredients.through(step_id=get_step_id(i, first_step_of_recipe_dict, step_id_dict,recipe_ingredient_ref_link_dict), ingredient_id=title_ingredient.pk))
+                    ingredients_relation.append(Step.ingredients.through(step_id=get_step_id(i, first_step_of_recipe_dict, step_id_dict, recipe_ingredient_ref_link_dict), ingredient_id=title_ingredient.pk))
                 if i['food_id']:
                     ingredient = Ingredient.objects.create(
                         food_id=foods_dict[i['food_id']] if i['food_id'] in foods_dict else None,
@@ -205,7 +205,7 @@ class Mealie1(Integration):
                         note=i['note'],
                         space=self.request.space,
                     )
-                    ingredients_relation.append(Step.ingredients.through(step_id=get_step_id(i, first_step_of_recipe_dict, step_id_dict,recipe_ingredient_ref_link_dict), ingredient_id=ingredient.pk))
+                    ingredients_relation.append(Step.ingredients.through(step_id=get_step_id(i, first_step_of_recipe_dict, step_id_dict, recipe_ingredient_ref_link_dict), ingredient_id=ingredient.pk))
                 elif i['note'] and i['note'].strip():
                     amount, unit, food, note = ingredient_parser.parse(i['note'].strip())
                     f = ingredient_parser.get_food(food)
@@ -218,7 +218,7 @@ class Mealie1(Integration):
                         original_text=i['original_text'],
                         space=self.request.space,
                     )
-                    ingredients_relation.append(Step.ingredients.through(step_id=get_step_id(i, first_step_of_recipe_dict, step_id_dict,recipe_ingredient_ref_link_dict), ingredient_id=ingredient.pk))
+                    ingredients_relation.append(Step.ingredients.through(step_id=get_step_id(i, first_step_of_recipe_dict, step_id_dict, recipe_ingredient_ref_link_dict), ingredient_id=ingredient.pk))
         Step.ingredients.through.objects.bulk_create(ingredients_relation)
 
         self.import_log.msg += f"Importing {len(mealie_database["recipes_to_categories"]) + len(mealie_database["recipes_to_tags"])} category and keyword relations...\n"
@@ -277,7 +277,7 @@ class Mealie1(Integration):
         for pT in property_types_dict:
             try:
                 property_types_dict[pT].delete()
-            except:
+            except Exception:
                 pass
 
         self.import_log.msg += f"Importing {len(mealie_database["recipe_comments"]) + len(mealie_database["recipe_timeline_events"])} comments and cook logs...\n"
@@ -359,7 +359,7 @@ class Mealie1(Integration):
                         ))
             ShoppingListEntry.objects.bulk_create(shopping_list_items)
 
-        self.import_log.msg += f"Importing Images. This might take some time ...\n"
+        self.import_log.msg += "Importing Images. This might take some time ...\n"
         self.import_log.save()
         for r in mealie_database['recipes']:
             try:

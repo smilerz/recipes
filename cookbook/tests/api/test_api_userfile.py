@@ -81,7 +81,7 @@ def test_crop_data_update_via_json_patch(u1_s1, space_1):
     uf = UserFile.objects.create(name='cropped', file=_make_file('c.txt'), created_by=user, space=space_1)
 
     r = u1_s1.patch(reverse(DETAIL_URL, args=[uf.id]), {'crop_data': {'x': 5, 'y': 5, 'width': 90, 'height': 90}},
-                     content_type='application/json')
+                    content_type='application/json')
     assert r.status_code == 200
     assert json.loads(r.content)['crop_data'] == {'x': 5, 'y': 5, 'width': 90, 'height': 90}
 

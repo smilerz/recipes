@@ -434,6 +434,7 @@ def test_ordering_name(u1_s1, space_1):
 
 # ==================== has_recipe filter ====================
 
+
 def test_filter_has_recipe_true(obj_1, obj_2, recipe_1_s1, u1_s1):
     """obj_1 is attached to recipe_1_s1; obj_2 has no recipes."""
     response = json.loads(u1_s1.get(f'{reverse(LIST_URL)}?has_recipe=true').content)

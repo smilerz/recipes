@@ -332,7 +332,6 @@ def clean_instruction_string(instruction):
         .replace(u"\uE04C", _('spiralizer')) \
         .replace(u"\uE02D", _("sous-vide"))
 
-
     return normalized_string
 
 

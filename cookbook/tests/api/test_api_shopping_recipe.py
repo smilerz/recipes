@@ -8,9 +8,9 @@ from django.urls import reverse
 from django_scopes import scopes_disabled
 
 from cookbook.helper.permission_helper import invalidate_household_cache
-from cookbook.models import Food, Ingredient, ShoppingListEntry, Household, UserSpace
+from cookbook.models import Food, Ingredient, Household, UserSpace
 from cookbook.tests.factories import (InventoryEntryFactory, InventoryLocationFactory,
-                                      MealPlanFactory, RecipeFactory,
+                                      RecipeFactory,
                                       StepFactory, UserFactory)
 
 if settings.DATABASES['default']['ENGINE'] == 'django.db.backends.postgresql':

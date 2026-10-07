@@ -93,12 +93,12 @@ class Nextcloud(Provider):
         }
 
         r = safe_request('GET',
-            url,
-            headers=headers,
-            auth=HTTPBasicAuth(
-                recipe.storage.username, recipe.storage.password
-            )
-        )
+                         url,
+                         headers=headers,
+                         auth=HTTPBasicAuth(
+                             recipe.storage.username, recipe.storage.password
+                             )
+                         )
 
         response_json = r.json()
         for element in response_json['ocs']['data']:

@@ -7,6 +7,7 @@ from cookbook.models import Automation
 
 REGEX_TIMEOUT = 0.05
 
+
 class AutomationEngine:
     request = None
     source = None

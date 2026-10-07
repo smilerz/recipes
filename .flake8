@@ -5,7 +5,9 @@ extend-ignore =
     # Line break occurred before a binary operator - Required for black compatibility
     W503,
     # Comparison to False should be 'if cond is False:' or 'if not cond:'
-    E712
+    E712,
+    # Line too long - what is left over 179 chars is test data and OpenAPI help text, not worth wrapping
+    E501
 exclude =
     .git,
     **/__pycache__,
@@ -18,5 +20,10 @@ exclude =
         **/*.pyc
 per-file-ignores=
     cookbook/apps.py:F401
+    # Package __init__ files re-export (see __all__) or import for side effects
+    cookbook/helper/__init__.py:F401
+    cookbook/views/__init__.py:F401
+    # Migrations are frozen history (many are auto-generated); never edit them for style
+    cookbook/migrations/*:E,F,W
 max-line-length = 179
 

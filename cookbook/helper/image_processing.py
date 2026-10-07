@@ -42,7 +42,7 @@ def rescale_image_webp(image_object, base_width=1020):
 def rescale_image_gif(image_object, base_width=1020):
     image_object = Image.open(image_object)
     im_io = BytesIO()
-    
+
     if getattr(image_object, "is_animated", False):
         image_object.save(im_io, 'GIF', save_all=True)
     else:

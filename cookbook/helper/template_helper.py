@@ -160,7 +160,7 @@ def render_instructions(step):  # TODO deduplicate markdown cleanup code
     except SecurityError:
         return _('Could not parse template code.') + ' Error: Security Error'
     except Exception:
-        return _('Could not parse template code.') + f' Error generating template.'
+        return _('Could not parse template code.') + ' Error generating template.'
 
     # do second cleaning that allows scalable-number
     def validate_scalable_number_attributes(tag, name, value):
@@ -198,7 +198,7 @@ def render_instructions(step):  # TODO deduplicate markdown cleanup code
     instructions = bleach.clean(instructions, allowed_tags, allowed_attributes)
 
     # remove any left over { }
-    instructions = instructions.replace('{','')
-    instructions = instructions.replace('}','')
+    instructions = instructions.replace('{', '')
+    instructions = instructions.replace('}', '')
 
     return instructions

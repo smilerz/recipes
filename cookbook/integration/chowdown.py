@@ -29,12 +29,12 @@ class Chowdown(Integration):
 
         title = "???"
         descriptions = []
-        prep_time = None ## non-standard
-        waiting_time = None ## non-standard
+        prep_time = None  # non-standard
+        waiting_time = None  # non-standard
         serving = None
         image = None
         tags = None
-        source_url = None ## non-standard
+        source_url = None  # non-standard
         ingredients = []
         directions = []
 
@@ -85,8 +85,8 @@ class Chowdown(Integration):
                 recipe.description = description_text
             else:
                 step = Step.objects.create(name="Notes",
-                    instruction=description_text, space=self.request.space,
-                )
+                                           instruction=description_text, space=self.request.space,
+                                           )
                 recipe.steps.add(step)
 
         if prep_time:
@@ -141,7 +141,7 @@ class Chowdown(Integration):
         for ingredient in ingredients:
             commentIdx = ingredient.find("##")
             if commentIdx >= 0:
-              ingredient = ingredient[:commentIdx].strip()
+                ingredient = ingredient[:commentIdx].strip()
             if len(ingredient.strip()) > 0:
                 if ingredient.strip().endswith(":"):
                     first_step.ingredients.add(Ingredient.objects.create(
@@ -203,8 +203,8 @@ class Chowdown(Integration):
         recipeInstructions = []
         recipeIngredient = []
         detailedDescription = ""
-        for i,s in enumerate(recipe.steps.all()):
-            if i==0 and s.name == "Notes":
+        for i, s in enumerate(recipe.steps.all()):
+            if i == 0 and s.name == "Notes":
                 detailedDescription = s.instruction.strip()
             else:
                 recipeInstructions.append(s.instruction.strip())

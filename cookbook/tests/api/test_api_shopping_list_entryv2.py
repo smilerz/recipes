@@ -108,7 +108,7 @@ def test_clear_required_food_returns_400_not_500(u1_s1, sle):
     allow_null=True - clearing it passed serializer validation and hit an IntegrityError
     (uncaught -> 500) instead of a clean 400 (#22)."""
     r = u1_s1.patch(reverse(DETAIL_URL, args={sle[0].id}), {'food': None},
-                     content_type='application/json')
+                    content_type='application/json')
     assert r.status_code == 400
 
 
@@ -262,6 +262,7 @@ def test_recent(sle, u1_s1):
     assert r['count'] == 10
     assert [x['checked'] for x in r['results']].count(False) == 9
 
+
 def test_filter_by_food(sle, u1_s1, space_1):
     """Filter shopping list entries by food id."""
     with scopes_disabled():
@@ -294,7 +295,6 @@ def test_filter_by_checked(u1_s1, space_1):
 def test_entry_food_carries_household_inventory(u1_s1, space_1):
     """Shopping-entry nested food carries in_inventory + household earliest_expiry so the row can
     render the read-only pantry jar (FR-H2). Another household's earlier lot is ignored (FR-B4)."""
-    from cookbook.models import InventoryLocation
     from cookbook.tests.factories import HouseholdFactory, InventoryEntryFactory, InventoryLocationFactory
 
     user = auth.get_user(u1_s1)
@@ -324,7 +324,6 @@ def test_entry_food_carries_household_inventory(u1_s1, space_1):
 def test_entry_food_carries_substitute_onhand(u1_s1, space_1):
     """Shopping-entry nested food surfaces substitute_onhand (Stock Up needs it to skip suggesting
     a restock when a direct substitute already covers the food, mirroring the makenow badge)."""
-    from cookbook.models import InventoryLocation
     from cookbook.tests.factories import InventoryEntryFactory, InventoryLocationFactory
 
     user = auth.get_user(u1_s1)

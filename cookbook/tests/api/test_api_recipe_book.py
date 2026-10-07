@@ -68,12 +68,12 @@ def test_list_filter(obj_1, obj_2, u1_s1):
 
 
 def test_list_ordering(space_1, u1_s1):
-    book1 = RecipeBook.objects.create(name='+3 book1', created_by=auth.get_user(u1_s1), space=space_1, order=3)
-    book2 = RecipeBook.objects.create(name='+1 book2', created_by=auth.get_user(u1_s1), space=space_1, order=1)
-    book3 = RecipeBook.objects.create(name='+2 book3', created_by=auth.get_user(u1_s1), space=space_1, order=2)
-    book4 = RecipeBook.objects.create(name='+0 book4', created_by=auth.get_user(u1_s1), space=space_1, order=0)
-    book5 = RecipeBook.objects.create(name='-1 book5', created_by=auth.get_user(u1_s1), space=space_1, order=-1)
-    book6 = RecipeBook.objects.create(name='+0 book6', created_by=auth.get_user(u1_s1), space=space_1, order=0)
+    RecipeBook.objects.create(name='+3 book1', created_by=auth.get_user(u1_s1), space=space_1, order=3)
+    RecipeBook.objects.create(name='+1 book2', created_by=auth.get_user(u1_s1), space=space_1, order=1)
+    RecipeBook.objects.create(name='+2 book3', created_by=auth.get_user(u1_s1), space=space_1, order=2)
+    RecipeBook.objects.create(name='+0 book4', created_by=auth.get_user(u1_s1), space=space_1, order=0)
+    RecipeBook.objects.create(name='-1 book5', created_by=auth.get_user(u1_s1), space=space_1, order=-1)
+    RecipeBook.objects.create(name='+0 book6', created_by=auth.get_user(u1_s1), space=space_1, order=0)
 
     response = json.loads(u1_s1.get(reverse(LIST_URL)).content)
     assert response['count'] == 6

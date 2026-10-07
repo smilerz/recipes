@@ -73,7 +73,7 @@
                                            @click="fdcSelectedIngredient = ingredient; fdcDialog = true"></v-btn>
                                     <v-btn @click="updateFoodFdcData(ingredient)" icon="fa-solid fa-arrows-rotate" size="small" density="compact" variant="plain"
                                            v-if="ingredient.food.fdcId"></v-btn>
-                                    <v-btn @click="openFdcPage(ingredient.food.fdcId)" :href="`https://fdc.nal.usda.gov/food-details/${ingredient.food.fdcId}/nutrients`"
+                                    <v-btn @click="openFdcPage(ingredient.food.fdcId)" :href="fdcFoodUrl(ingredient.food.fdcId)"
                                            target="_blank"
                                            icon="fa-solid fa-arrow-up-right-from-square"
                                            size="small" variant="plain" v-if="ingredient.food.fdcId"></v-btn>
@@ -189,7 +189,7 @@ import VClosableCardTitle from "@/components/dialogs/VClosableCardTitle.vue";
 import {useUrlSearchParams} from "@vueuse/core";
 import BtnCopy from "@/components/buttons/BtnCopy.vue";
 import FdcSearchDialog from "@/components/dialogs/FdcSearchDialog.vue";
-import {openFdcPage} from "@/utils/fdc.ts";
+import {fdcFoodUrl, openFdcPage} from "@/utils/fdc.ts";
 
 // buildIngredientMap() only ever inserts ingredients that passed an `ingredient.food` truthy
 // check, so every entry actually in `ingredients` has a non-null food — narrow the type to match.

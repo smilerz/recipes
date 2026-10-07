@@ -65,7 +65,6 @@ class ImportExportBase(forms.Form):
     )
 
 
-
 class MultipleFileInput(forms.ClearableFileInput):
     allow_multiple_selected = True
 

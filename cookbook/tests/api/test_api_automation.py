@@ -1,6 +1,5 @@
 import json
 
-import pytest
 from django.contrib import auth
 from django.urls import reverse
 

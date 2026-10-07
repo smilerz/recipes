@@ -89,7 +89,7 @@ class Integration:
             info = filename
 
         if info.file_size > MAX_ZIP_FILE_SIZE:
-            raise Exception(_('File in zip too large') + ' ' + str(info.file_size) + '/' + str(MAX_ZIP_FILE_SIZE) )
+            raise Exception(_('File in zip too large') + ' ' + str(info.file_size) + '/' + str(MAX_ZIP_FILE_SIZE))
 
         return zip_file.read(info)
 

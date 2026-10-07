@@ -19,7 +19,6 @@ import PIL.Image
 import litellm
 import redis
 import requests
-from PIL import UnidentifiedImageError
 from django.contrib import messages
 from django.contrib.admin.utils import NestedObjects
 from django.contrib.auth.models import Group, User
@@ -50,7 +49,6 @@ from litellm.exceptions import Timeout as LitellmTimeout
 from oauth2_provider.models import AccessToken
 from recipe_scrapers import scrape_html
 from recipe_scrapers._exceptions import NoSchemaFoundInWildMode
-from requests.exceptions import MissingSchema
 from rest_framework import decorators, status, viewsets
 from rest_framework import mixins
 from rest_framework.authtoken.views import ObtainAuthToken
@@ -178,7 +176,7 @@ class LoggingMixin(object):
                 pipe.zincrby(f'api:endpoint-request-count:{d}', 1, endpoint)
 
                 pipe.execute()
-            except:
+            except Exception:
                 pass
 
 
@@ -859,7 +857,7 @@ class UserSpaceViewSet(LoggingMixin, viewsets.ModelViewSet):
     @decorators.action(detail=False, methods=['PUT'], serializer_class=UserSpaceBatchUpdateSerializer)
     def batch_update(self, request):
         if self.request.space.created_by != self.request.user:
-            return Response({"msg":"No Permission"}, 403)
+            return Response({"msg": "No Permission"}, 403)
 
         serializer = self.serializer_class(data=request.data, partial=True)
 
@@ -1516,7 +1514,7 @@ class FoodViewSet(OrderingMixin, LoggingMixin, TreeMixin, DeleteRelationMixing):
         # sibling-under-same-root. Build (path_prefix, depth) pairs per level.
         steplen = Food.steplen
         ancestor_q = Q()
-        for _, path, depth in matched:
+        for _node_id, path, depth in matched:
             for k in range(1, depth):
                 ancestor_q |= Q(path=path[:steplen * k], depth=k)
 
@@ -1822,8 +1820,8 @@ class FoodViewSet(OrderingMixin, LoggingMixin, TreeMixin, DeleteRelationMixing):
                     'messages': messages,
                 }
                 if ai_provider.url:
-                    if not ai_provider.url in AI_ALLOWED_URLS:
-                        raise  Exception(f'AI provider URL not allowed: {ai_provider.url}')
+                    if ai_provider.url not in AI_ALLOWED_URLS:
+                        raise Exception(f'AI provider URL not allowed: {ai_provider.url}')
                     ai_request['api_base'] = ai_provider.url
                 ai_response = completion(**ai_request)
 
@@ -2698,8 +2696,8 @@ class RecipeViewSet(LoggingMixin, viewsets.ModelViewSet, DeleteRelationMixing):
                     'messages': messages,
                 }
                 if ai_provider.url:
-                    if not ai_provider.url in AI_ALLOWED_URLS:
-                        raise  Exception(f'AI provider URL not allowed: {ai_provider.url}')
+                    if ai_provider.url not in AI_ALLOWED_URLS:
+                        raise Exception(f'AI provider URL not allowed: {ai_provider.url}')
                     ai_request['api_base'] = ai_provider.url
                 ai_response = completion(**ai_request)
 
@@ -3667,8 +3665,8 @@ class AiImportView(APIView):
                     'messages': messages,
                 }
                 if ai_provider.url:
-                    if not ai_provider.url in AI_ALLOWED_URLS:
-                        raise  Exception(f'AI provider URL not allowed: {ai_provider.url}')
+                    if ai_provider.url not in AI_ALLOWED_URLS:
+                        raise Exception(f'AI provider URL not allowed: {ai_provider.url}')
                     ai_request['api_base'] = ai_provider.url
                 ai_response = completion(**ai_request)
             except LitellmTimeout:
@@ -3781,8 +3779,8 @@ class AiStepSortView(APIView):
                     'messages': messages,
                 }
                 if ai_provider.url:
-                    if not ai_provider.url in AI_ALLOWED_URLS:
-                        raise  Exception(f'AI provider URL not allowed: {ai_provider.url}')
+                    if ai_provider.url not in AI_ALLOWED_URLS:
+                        raise Exception(f'AI provider URL not allowed: {ai_provider.url}')
                     ai_request['api_base'] = ai_provider.url
                 ai_response = completion(**ai_request)
 
@@ -4332,7 +4330,7 @@ def share_link(request, pk):
 
 def meal_plans_to_ical(queryset, filename):
     cal = Calendar()
-    cal.add('prodid', f'-//Tandoor Recipes//')
+    cal.add('prodid', '-//Tandoor Recipes//')
     cal.add('version', TANDOOR_VERSION)
 
     for p in queryset:

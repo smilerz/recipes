@@ -4,6 +4,7 @@ import os
 from unittest.mock import MagicMock
 from cookbook.helper.template_helper import render_instructions
 
+
 def test_markdown_renderer():
     # Setup paths
     base_dir = os.path.dirname(__file__)
@@ -20,13 +21,13 @@ def test_markdown_renderer():
     mock_ingredient.amount = 1.5
     mock_ingredient.no_amount = False
     mock_ingredient.note = "fresh"
-    
+
     # Mock Food
     mock_food = MagicMock()
     mock_food.plural_name = "apples"
     mock_food.__str__.return_value = "apple"
     mock_ingredient.food = mock_food
-    
+
     # Mock Unit
     mock_unit = MagicMock()
     mock_unit.plural_name = "kg"

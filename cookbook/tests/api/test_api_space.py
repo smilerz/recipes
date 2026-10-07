@@ -95,7 +95,7 @@ def test_delete(u1_s1, u1_s2, a1_s1, space_1):
 def test_superuser_parameters(space_1, a1_s1, s1_s1):
     # ------- test as normal user -------
     response = a1_s1.post(reverse(LIST_URL), {'name': 'test', 'ai_enabled': not settings.SPACE_AI_ENABLED, 'ai_credits_monthly': settings.SPACE_AI_CREDITS_MONTHLY + 100, 'ai_credits_balance': 100},
-                           content_type='application/json')
+                          content_type='application/json')
 
     assert response.status_code == 201
     response = json.loads(response.content)

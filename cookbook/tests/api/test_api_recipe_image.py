@@ -18,6 +18,7 @@ def _jpeg_bytes():
     Image.new('RGB', (2, 2), 'red').save(buf, 'JPEG')
     return buf.getvalue()
 
+
 LIST_URL = 'api:recipeimage-list'
 DETAIL_URL = 'api:recipeimage-detail'
 
@@ -208,7 +209,7 @@ def test_list_space(u1_s1, u1_s2, img_1):
 def test_list_filter_by_recipe(u1_s1, img_1, recipe_2_s1, space_1):
     user = auth.get_user(u1_s1)
     with scopes_disabled():
-        img2 = RecipeImage.objects.create(
+        RecipeImage.objects.create(
             recipe=recipe_2_s1,
             file='recipes/r2.jpg',
             is_primary=True,
@@ -302,8 +303,6 @@ def test_from_url_forbidden_on_inaccessible_private_recipe(u2_s1, img_1, recipe_
         content_type='application/json',
     )
     assert r.status_code == 404
-
-
 
 
 # --- crop_data: a square crop of a non-square image legitimately extends past the edges ---
