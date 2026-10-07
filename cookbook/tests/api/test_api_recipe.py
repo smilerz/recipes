@@ -38,6 +38,42 @@ def test_recipe_list_schema_declares_filter_params():
     assert not missing, f'/api/recipe/ list is missing OpenAPI query params: {sorted(missing)}'
 
 
+def test_recipe_list_schema_declares_seed_param():
+    """`seed` must be declared on the list operation or the generated TS client
+    silently drops it and seeded random ordering never reaches the server."""
+    from drf_spectacular.generators import SchemaGenerator
+
+    schema = SchemaGenerator().get_schema(request=None, public=True)
+    params = schema['paths']['/api/recipe/']['get'].get('parameters', [])
+    assert 'seed' in {p['name'] for p in params}
+
+
+def _page_ids(client, page, **params):
+    r = client.get(reverse(LIST_URL), {'sort_order': 'random', 'page_size': 4, 'page': page, **params})
+    assert r.status_code == 200
+    return [x['id'] for x in json.loads(r.content)['results']]
+
+
+def test_random_with_seed_pages_are_stable_and_disjoint(u1_s1, space_1):
+    """The point of the seed: page 1 then page 2 of a random listing are two
+    slices of ONE order, and asking again gives the same slices."""
+    RecipeFactory.create_batch(10, space=space_1, steps__count=0, keywords__count=0)
+
+    p1 = _page_ids(u1_s1, 1, seed='api-seed')
+    p2 = _page_ids(u1_s1, 2, seed='api-seed')
+
+    assert len(p1) == 4 and len(p2) == 4
+    assert not set(p1) & set(p2)
+    assert _page_ids(u1_s1, 1, seed='api-seed') == p1
+    assert _page_ids(u1_s1, 2, seed='api-seed') == p2
+
+
+def test_random_with_invalid_seed_returns_400(u1_s1, space_1):
+    RecipeFactory.create(space=space_1, steps__count=0, keywords__count=0)
+    r = u1_s1.get(reverse(LIST_URL), {'sort_order': 'random', 'seed': 'not valid!'})
+    assert r.status_code == 400
+
+
 # TODO need to add extensive tests against recipe search to go through all of the combinations of parameters
 # probably needs to include a far more extensive set of initial recipes to effectively test results
 # and to ensure that all parts of the code are exercised.
