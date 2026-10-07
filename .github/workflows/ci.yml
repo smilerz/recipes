@@ -36,6 +36,8 @@ jobs:
             # cache-apt-pkgs-action >=1.6.3 no longer runs `apt update` on GitHub runners, so a
             # cache-cold install resolves against the runner image's stale lists and 404s.
             - name: Refresh apt package lists
+              # apt-get update normally takes seconds but can hang on the runner's mirrors; fail fast so a re-run is quick.
+              timeout-minutes: 5
               run: sudo apt-get update
             - uses: awalsh128/cache-apt-pkgs-action@v1.6.3
               with:
