@@ -84,7 +84,7 @@ export interface ServerSettings {
      * @type {string}
      * @memberof ServerSettings
      */
-    logoColor32?: string;
+    logoColor32?: string | null;
     /**
      * 
      * @type {string}

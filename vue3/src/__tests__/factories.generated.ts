@@ -21,6 +21,7 @@ import type {
     BookmarkletImportList,
     ConnectorConfig,
     CookLog,
+    CropData,
     CustomFilter,
     DrawDown,
     DrawDownItem,
@@ -59,6 +60,8 @@ import type {
     MealPlan,
     MealType,
     NutritionInformation,
+    PortableDataExportRequest,
+    PortableDataImportRequest,
     Property,
     PropertyType,
     Recipe,
@@ -94,6 +97,7 @@ import type {
     SourceImportStep,
     SourceImportUnit,
     Space,
+    SpaceBackup,
     Step,
     StockUp,
     StockUpItem,
@@ -444,7 +448,7 @@ export function makeConnectorConfig(overrides: Partial<ConnectorConfig> = {}): C
         id: 1,
         name: 'Test name',
         type: 'HomeAssistant' as any,
-        url: 'https://example.com',
+        url: undefined as any,
         token: '',
         todoEntity: '',
         enabled: false,
@@ -523,6 +527,36 @@ export function makeEdgeCaseCookLog(overrides: Partial<CookLog> = {}): CookLog {
         updatedAt: new Date(0),
         ...overrides,
     } as CookLog
+}
+
+export function makeCropData(overrides: Partial<CropData> = {}): CropData {
+    return {
+        x: 0,
+        y: 0,
+        width: 1,
+        height: 0,
+        rotate: '0' as any,
+        fit: false,
+        ...overrides,
+    } as CropData
+}
+
+export function makeMinimalCropData(overrides: Partial<CropData> = {}): CropData {
+    return {
+        ...overrides,
+    } as CropData
+}
+
+export function makeEdgeCaseCropData(overrides: Partial<CropData> = {}): CropData {
+    return {
+        x: 0,
+        y: 0,
+        width: 0,
+        height: 0,
+        rotate: '270' as any,
+        fit: false,
+        ...overrides,
+    } as CropData
 }
 
 export function makeCustomFilter(overrides: Partial<CustomFilter> = {}): CustomFilter {
@@ -770,6 +804,8 @@ export function makeFood(overrides: Partial<Food> = {}): Food {
         preferredUnit: undefined as any,
         preferredShoppingUnit: undefined as any,
         shelfLifeDays: 0,
+        shelfLifeDaysFrozen: 0,
+        shelfLifeDaysOpened: 0,
         shoppingAmount: 1,
         ...overrides,
     } as Food
@@ -831,6 +867,8 @@ export function makeEdgeCaseFood(overrides: Partial<Food> = {}): Food {
         preferredUnit: null,
         preferredShoppingUnit: null,
         shelfLifeDays: null,
+        shelfLifeDaysFrozen: null,
+        shelfLifeDaysOpened: null,
         shoppingAmount: null,
         ...overrides,
     } as Food
@@ -1540,6 +1578,7 @@ export function makeInventoryEntry(overrides: Partial<InventoryEntry> = {}): Inv
         unit: undefined as any,
         amount: 1,
         expires: new Date('2026-01-01T00:00:00Z'),
+        openedAt: new Date('2026-01-01T00:00:00Z'),
         note: '',
         label: '',
         createdAt: new Date('2026-01-01T00:00:00Z'),
@@ -1554,6 +1593,7 @@ export function makeMinimalInventoryEntry(overrides: Partial<InventoryEntry> = {
         inventoryLocation: undefined as any,
         food: undefined as any,
         unit: undefined as any,
+        openedAt: new Date('2026-01-01T00:00:00Z'),
         label: '',
         createdAt: new Date('2026-01-01T00:00:00Z'),
         createdBy: 0,
@@ -1571,6 +1611,7 @@ export function makeEdgeCaseInventoryEntry(overrides: Partial<InventoryEntry> = 
         unit: null,
         amount: 0,
         expires: null,
+        openedAt: null,
         note: null,
         label: '',
         createdAt: new Date(0),
@@ -1638,7 +1679,7 @@ export function makeEdgeCaseInventoryLog(overrides: Partial<InventoryLog> = {}):
     return {
         id: 0,
         entry: makeMinimalInventoryEntry(),
-        bookingType: 'move' as any,
+        bookingType: 'open' as any,
         oldAmount: 0,
         newAmount: 0,
         oldInventoryLocation: makeMinimalInventoryLocation(),
@@ -1653,7 +1694,7 @@ export function makeInviteLink(overrides: Partial<InviteLink> = {}): InviteLink 
     return {
         id: 1,
         uuid: '',
-        email: 'test@example.com',
+        email: undefined as any,
         group: makeGroup(),
         household: undefined as any,
         validUntil: new Date('2026-01-01T00:00:00Z'),
@@ -1684,7 +1725,7 @@ export function makeEdgeCaseInviteLink(overrides: Partial<InviteLink> = {}): Inv
     return {
         id: 0,
         uuid: '',
-        email: '',
+        email: undefined as any,
         group: makeMinimalGroup(),
         household: null,
         validUntil: new Date(0),
@@ -1943,6 +1984,56 @@ export function makeEdgeCaseNutritionInformation(overrides: Partial<NutritionInf
     } as NutritionInformation
 }
 
+export function makePortableDataExportRequest(overrides: Partial<PortableDataExportRequest> = {}): PortableDataExportRequest {
+    return {
+        includeFoods: false,
+        includeKeywords: false,
+        includeBooks: false,
+        ...overrides,
+    } as PortableDataExportRequest
+}
+
+export function makeMinimalPortableDataExportRequest(overrides: Partial<PortableDataExportRequest> = {}): PortableDataExportRequest {
+    return {
+        ...overrides,
+    } as PortableDataExportRequest
+}
+
+export function makeEdgeCasePortableDataExportRequest(overrides: Partial<PortableDataExportRequest> = {}): PortableDataExportRequest {
+    return {
+        includeFoods: false,
+        includeKeywords: false,
+        includeBooks: false,
+        ...overrides,
+    } as PortableDataExportRequest
+}
+
+export function makePortableDataImportRequest(overrides: Partial<PortableDataImportRequest> = {}): PortableDataImportRequest {
+    return {
+        mode: '',
+        export: undefined as any,
+        mergePolicy: '',
+        ...overrides,
+    } as PortableDataImportRequest
+}
+
+export function makeMinimalPortableDataImportRequest(overrides: Partial<PortableDataImportRequest> = {}): PortableDataImportRequest {
+    return {
+        mode: '',
+        export: undefined as any,
+        ...overrides,
+    } as PortableDataImportRequest
+}
+
+export function makeEdgeCasePortableDataImportRequest(overrides: Partial<PortableDataImportRequest> = {}): PortableDataImportRequest {
+    return {
+        mode: '',
+        export: undefined as any,
+        mergePolicy: '',
+        ...overrides,
+    } as PortableDataImportRequest
+}
+
 export function makeProperty(overrides: Partial<Property> = {}): Property {
     return {
         id: 1,
@@ -2097,6 +2188,7 @@ export function makeRecipeBatchUpdate(overrides: Partial<RecipeBatchUpdate> = {}
         keywordsRemove: [],
         keywordsSet: [],
         keywordsRemoveAll: false,
+        bookAdd: 0,
         workingTime: 0,
         waitingTime: 0,
         servings: 0,
@@ -2132,6 +2224,7 @@ export function makeEdgeCaseRecipeBatchUpdate(overrides: Partial<RecipeBatchUpda
         keywordsRemove: [],
         keywordsSet: [],
         keywordsRemoveAll: false,
+        bookAdd: null,
         workingTime: null,
         waitingTime: null,
         servings: null,
@@ -2652,7 +2745,7 @@ export function makeEdgeCaseServerSettings(overrides: Partial<ServerSettings> = 
         version: '',
         unauthenticatedThemeFromSpace: 0,
         forceThemeFromSpace: 0,
-        logoColor32: '',
+        logoColor32: null,
         logoColor128: '',
         logoColor144: '',
         logoColor180: '',
@@ -3249,6 +3342,51 @@ export function makeEdgeCaseSpace(overrides: Partial<Space> = {}): Space {
     } as Space
 }
 
+export function makeSpaceBackup(overrides: Partial<SpaceBackup> = {}): SpaceBackup {
+    return {
+        id: 1,
+        running: false,
+        msg: '',
+        totalItems: 0,
+        processedItems: 0,
+        file: '',
+        fileSizeKb: 0,
+        createdBy: 0,
+        createdAt: new Date('2026-01-01T00:00:00Z'),
+        ...overrides,
+    } as SpaceBackup
+}
+
+export function makeMinimalSpaceBackup(overrides: Partial<SpaceBackup> = {}): SpaceBackup {
+    return {
+        id: 1,
+        running: false,
+        msg: '',
+        totalItems: 0,
+        processedItems: 0,
+        file: '',
+        fileSizeKb: 0,
+        createdBy: 0,
+        createdAt: new Date('2026-01-01T00:00:00Z'),
+        ...overrides,
+    } as SpaceBackup
+}
+
+export function makeEdgeCaseSpaceBackup(overrides: Partial<SpaceBackup> = {}): SpaceBackup {
+    return {
+        id: 0,
+        running: false,
+        msg: '',
+        totalItems: 0,
+        processedItems: 0,
+        file: null,
+        fileSizeKb: 0,
+        createdBy: 0,
+        createdAt: new Date(0),
+        ...overrides,
+    } as SpaceBackup
+}
+
 export function makeStep(overrides: Partial<Step> = {}): Step {
     return {
         id: 1,
@@ -3262,6 +3400,7 @@ export function makeStep(overrides: Partial<Step> = {}): Step {
         file: undefined as any,
         stepRecipe: 0,
         stepRecipeData: undefined as any,
+        stepRecipeScale: 0,
         showIngredientsTable: false,
         ...overrides,
     } as Step
@@ -3290,6 +3429,7 @@ export function makeEdgeCaseStep(overrides: Partial<Step> = {}): Step {
         file: null,
         stepRecipe: null,
         stepRecipeData: undefined as any,
+        stepRecipeScale: 0,
         showIngredientsTable: false,
         ...overrides,
     } as Step
@@ -3353,7 +3493,7 @@ export function makeStorage(overrides: Partial<Storage> = {}): Storage {
         username: 'Test username',
         password: '',
         token: '',
-        url: 'https://example.com',
+        url: undefined as any,
         path: '',
         createdBy: 0,
         ...overrides,
@@ -3713,7 +3853,7 @@ export function makeEdgeCaseUserFile(overrides: Partial<UserFile> = {}): UserFil
     return {
         id: 0,
         name: '',
-        file: '',
+        file: null,
         fileDownload: '',
         preview: '',
         fileSizeKb: 0,

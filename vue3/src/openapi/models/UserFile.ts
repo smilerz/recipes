@@ -51,7 +51,7 @@ export interface UserFile {
      * @type {string}
      * @memberof UserFile
      */
-    file?: string;
+    file?: string | null;
     /**
      * 
      * @type {string}

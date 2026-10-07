@@ -610,6 +610,8 @@ paths:
         * ``ordering_plain_fields`` — params that order by their own name as-is.
 
         Any ``ordering`` value not in the union of these is ignored (no ordering applied).
+        Ignored entirely while a ``query`` search is active, so relevance ordering wins (every
+        consuming viewset's OpenAPI doc already documents this contract).
       parameters:
       - in: query
         name: limit
@@ -669,10 +671,6 @@ paths:
           type: string
         description: if model has an updated_at timestamp, filter only models updated
           at or after datetime
-        examples:
-          DateFormat:
-            value: '1972-12-05'
-            summary: Date Format
       tags:
       - api
       security:
@@ -697,6 +695,8 @@ paths:
         * ``ordering_plain_fields`` — params that order by their own name as-is.
 
         Any ``ordering`` value not in the union of these is ignored (no ordering applied).
+        Ignored entirely while a ``query`` search is active, so relevance ordering wins (every
+        consuming viewset's OpenAPI doc already documents this contract).
       tags:
       - api
       requestBody:
@@ -734,6 +734,8 @@ paths:
         * ``ordering_plain_fields`` — params that order by their own name as-is.
 
         Any ``ordering`` value not in the union of these is ignored (no ordering applied).
+        Ignored entirely while a ``query`` search is active, so relevance ordering wins (every
+        consuming viewset's OpenAPI doc already documents this contract).
       parameters:
       - in: path
         name: id
@@ -765,6 +767,8 @@ paths:
         * ``ordering_plain_fields`` — params that order by their own name as-is.
 
         Any ``ordering`` value not in the union of these is ignored (no ordering applied).
+        Ignored entirely while a ``query`` search is active, so relevance ordering wins (every
+        consuming viewset's OpenAPI doc already documents this contract).
       parameters:
       - in: path
         name: id
@@ -808,6 +812,8 @@ paths:
         * ``ordering_plain_fields`` — params that order by their own name as-is.
 
         Any ``ordering`` value not in the union of these is ignored (no ordering applied).
+        Ignored entirely while a ``query`` search is active, so relevance ordering wins (every
+        consuming viewset's OpenAPI doc already documents this contract).
       parameters:
       - in: path
         name: id
@@ -850,6 +856,8 @@ paths:
         * ``ordering_plain_fields`` — params that order by their own name as-is.
 
         Any ``ordering`` value not in the union of these is ignored (no ordering applied).
+        Ignored entirely while a ``query`` search is active, so relevance ordering wins (every
+        consuming viewset's OpenAPI doc already documents this contract).
       parameters:
       - in: path
         name: id
@@ -878,6 +886,8 @@ paths:
         * ``ordering_plain_fields`` — params that order by their own name as-is.
 
         Any ``ordering`` value not in the union of these is ignored (no ordering applied).
+        Ignored entirely while a ``query`` search is active, so relevance ordering wins (every
+        consuming viewset's OpenAPI doc already documents this contract).
       tags:
       - api
       security:
@@ -1342,6 +1352,8 @@ paths:
         * ``ordering_plain_fields`` — params that order by their own name as-is.
 
         Any ``ordering`` value not in the union of these is ignored (no ordering applied).
+        Ignored entirely while a ``query`` search is active, so relevance ordering wins (every
+        consuming viewset's OpenAPI doc already documents this contract).
       parameters:
       - in: query
         name: ordering
@@ -1396,6 +1408,8 @@ paths:
         * ``ordering_plain_fields`` — params that order by their own name as-is.
 
         Any ``ordering`` value not in the union of these is ignored (no ordering applied).
+        Ignored entirely while a ``query`` search is active, so relevance ordering wins (every
+        consuming viewset's OpenAPI doc already documents this contract).
       tags:
       - api
       requestBody:
@@ -1433,6 +1447,8 @@ paths:
         * ``ordering_plain_fields`` — params that order by their own name as-is.
 
         Any ``ordering`` value not in the union of these is ignored (no ordering applied).
+        Ignored entirely while a ``query`` search is active, so relevance ordering wins (every
+        consuming viewset's OpenAPI doc already documents this contract).
       parameters:
       - in: path
         name: id
@@ -1464,6 +1480,8 @@ paths:
         * ``ordering_plain_fields`` — params that order by their own name as-is.
 
         Any ``ordering`` value not in the union of these is ignored (no ordering applied).
+        Ignored entirely while a ``query`` search is active, so relevance ordering wins (every
+        consuming viewset's OpenAPI doc already documents this contract).
       parameters:
       - in: path
         name: id
@@ -1507,6 +1525,8 @@ paths:
         * ``ordering_plain_fields`` — params that order by their own name as-is.
 
         Any ``ordering`` value not in the union of these is ignored (no ordering applied).
+        Ignored entirely while a ``query`` search is active, so relevance ordering wins (every
+        consuming viewset's OpenAPI doc already documents this contract).
       parameters:
       - in: path
         name: id
@@ -1549,6 +1569,8 @@ paths:
         * ``ordering_plain_fields`` — params that order by their own name as-is.
 
         Any ``ordering`` value not in the union of these is ignored (no ordering applied).
+        Ignored entirely while a ``query`` search is active, so relevance ordering wins (every
+        consuming viewset's OpenAPI doc already documents this contract).
       parameters:
       - in: path
         name: id
@@ -1577,6 +1599,8 @@ paths:
         * ``ordering_plain_fields`` — params that order by their own name as-is.
 
         Any ``ordering`` value not in the union of these is ignored (no ordering applied).
+        Ignored entirely while a ``query`` search is active, so relevance ordering wins (every
+        consuming viewset's OpenAPI doc already documents this contract).
       parameters:
       - in: query
         name: limit
@@ -1629,10 +1653,6 @@ paths:
           type: string
         description: if model has an updated_at timestamp, filter only models updated
           at or after datetime
-        examples:
-          DateFormat:
-            value: '1972-12-05'
-            summary: Date Format
       tags:
       - api
       security:
@@ -1657,6 +1677,8 @@ paths:
         * ``ordering_plain_fields`` — params that order by their own name as-is.
 
         Any ``ordering`` value not in the union of these is ignored (no ordering applied).
+        Ignored entirely while a ``query`` search is active, so relevance ordering wins (every
+        consuming viewset's OpenAPI doc already documents this contract).
       tags:
       - api
       requestBody:
@@ -1694,6 +1716,8 @@ paths:
         * ``ordering_plain_fields`` — params that order by their own name as-is.
 
         Any ``ordering`` value not in the union of these is ignored (no ordering applied).
+        Ignored entirely while a ``query`` search is active, so relevance ordering wins (every
+        consuming viewset's OpenAPI doc already documents this contract).
       parameters:
       - in: path
         name: id
@@ -1725,6 +1749,8 @@ paths:
         * ``ordering_plain_fields`` — params that order by their own name as-is.
 
         Any ``ordering`` value not in the union of these is ignored (no ordering applied).
+        Ignored entirely while a ``query`` search is active, so relevance ordering wins (every
+        consuming viewset's OpenAPI doc already documents this contract).
       parameters:
       - in: path
         name: id
@@ -1768,6 +1794,8 @@ paths:
         * ``ordering_plain_fields`` — params that order by their own name as-is.
 
         Any ``ordering`` value not in the union of these is ignored (no ordering applied).
+        Ignored entirely while a ``query`` search is active, so relevance ordering wins (every
+        consuming viewset's OpenAPI doc already documents this contract).
       parameters:
       - in: path
         name: id
@@ -1810,6 +1838,8 @@ paths:
         * ``ordering_plain_fields`` — params that order by their own name as-is.
 
         Any ``ordering`` value not in the union of these is ignored (no ordering applied).
+        Ignored entirely while a ``query`` search is active, so relevance ordering wins (every
+        consuming viewset's OpenAPI doc already documents this contract).
       parameters:
       - in: path
         name: id
@@ -2027,6 +2057,37 @@ paths:
       responses:
         '204':
           description: No response body
+  /api/export-portable-data/:
+    post:
+      operationId: apiExportPortableDataCreate
+      description: |-
+        Version-agnostic Food/Keyword/RecipeBook export (Part 2 of the pantry-expiration-and-
+        data-portability plan) — a thin, synchronous wrapper around build_portable_export.
+        Deliberately NOT the ExportLog/background-thread pattern AppExportView uses: this is pure
+        JSON with no images, so the async machinery that pattern exists for doesn't apply here.
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PortableDataExportRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PortableDataExportRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PortableDataExportRequest'
+      security:
+      - ApiKeyAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+          description: ''
   /api/fdc-search/:
     get:
       operationId: apiFdcSearchRetrieve
@@ -2067,6 +2128,8 @@ paths:
         * ``ordering_plain_fields`` — params that order by their own name as-is.
 
         Any ``ordering`` value not in the union of these is ignored (no ordering applied).
+        Ignored entirely while a ``query`` search is active, so relevance ordering wins (every
+        consuming viewset's OpenAPI doc already documents this contract).
       parameters:
       - in: query
         name: expired
@@ -2201,6 +2264,8 @@ paths:
         * ``ordering_plain_fields`` — params that order by their own name as-is.
 
         Any ``ordering`` value not in the union of these is ignored (no ordering applied).
+        Ignored entirely while a ``query`` search is active, so relevance ordering wins (every
+        consuming viewset's OpenAPI doc already documents this contract).
       tags:
       - api
       requestBody:
@@ -2277,6 +2342,8 @@ paths:
         * ``ordering_plain_fields`` — params that order by their own name as-is.
 
         Any ``ordering`` value not in the union of these is ignored (no ordering applied).
+        Ignored entirely while a ``query`` search is active, so relevance ordering wins (every
+        consuming viewset's OpenAPI doc already documents this contract).
       parameters:
       - in: path
         name: id
@@ -2308,6 +2375,8 @@ paths:
         * ``ordering_plain_fields`` — params that order by their own name as-is.
 
         Any ``ordering`` value not in the union of these is ignored (no ordering applied).
+        Ignored entirely while a ``query`` search is active, so relevance ordering wins (every
+        consuming viewset's OpenAPI doc already documents this contract).
       parameters:
       - in: path
         name: id
@@ -2351,6 +2420,8 @@ paths:
         * ``ordering_plain_fields`` — params that order by their own name as-is.
 
         Any ``ordering`` value not in the union of these is ignored (no ordering applied).
+        Ignored entirely while a ``query`` search is active, so relevance ordering wins (every
+        consuming viewset's OpenAPI doc already documents this contract).
       parameters:
       - in: path
         name: id
@@ -2393,6 +2464,8 @@ paths:
         * ``ordering_plain_fields`` — params that order by their own name as-is.
 
         Any ``ordering`` value not in the union of these is ignored (no ordering applied).
+        Ignored entirely while a ``query`` search is active, so relevance ordering wins (every
+        consuming viewset's OpenAPI doc already documents this contract).
       parameters:
       - in: path
         name: id
@@ -2421,6 +2494,8 @@ paths:
         * ``ordering_plain_fields`` — params that order by their own name as-is.
 
         Any ``ordering`` value not in the union of these is ignored (no ordering applied).
+        Ignored entirely while a ``query`` search is active, so relevance ordering wins (every
+        consuming viewset's OpenAPI doc already documents this contract).
       parameters:
       - in: path
         name: id
@@ -2547,6 +2622,8 @@ paths:
         * ``ordering_plain_fields`` — params that order by their own name as-is.
 
         Any ``ordering`` value not in the union of these is ignored (no ordering applied).
+        Ignored entirely while a ``query`` search is active, so relevance ordering wins (every
+        consuming viewset's OpenAPI doc already documents this contract).
       parameters:
       - in: path
         name: id
@@ -2597,6 +2674,8 @@ paths:
         * ``ordering_plain_fields`` — params that order by their own name as-is.
 
         Any ``ordering`` value not in the union of these is ignored (no ordering applied).
+        Ignored entirely while a ``query`` search is active, so relevance ordering wins (every
+        consuming viewset's OpenAPI doc already documents this contract).
       parameters:
       - in: path
         name: id
@@ -2729,6 +2808,8 @@ paths:
         * ``ordering_plain_fields`` — params that order by their own name as-is.
 
         Any ``ordering`` value not in the union of these is ignored (no ordering applied).
+        Ignored entirely while a ``query`` search is active, so relevance ordering wins (every
+        consuming viewset's OpenAPI doc already documents this contract).
       parameters:
       - in: path
         name: id
@@ -2773,6 +2854,8 @@ paths:
         * ``ordering_plain_fields`` — params that order by their own name as-is.
 
         Any ``ordering`` value not in the union of these is ignored (no ordering applied).
+        Ignored entirely while a ``query`` search is active, so relevance ordering wins (every
+        consuming viewset's OpenAPI doc already documents this contract).
       parameters:
       - in: path
         name: id
@@ -2805,6 +2888,8 @@ paths:
         * ``ordering_plain_fields`` — params that order by their own name as-is.
 
         Any ``ordering`` value not in the union of these is ignored (no ordering applied).
+        Ignored entirely while a ``query`` search is active, so relevance ordering wins (every
+        consuming viewset's OpenAPI doc already documents this contract).
       tags:
       - api
       requestBody:
@@ -2872,6 +2957,8 @@ paths:
         * ``ordering_plain_fields`` — params that order by their own name as-is.
 
         Any ``ordering`` value not in the union of these is ignored (no ordering applied).
+        Ignored entirely while a ``query`` search is active, so relevance ordering wins (every
+        consuming viewset's OpenAPI doc already documents this contract).
       tags:
       - api
       security:
@@ -3335,6 +3422,36 @@ paths:
               schema:
                 $ref: '#/components/schemas/ImportOpenDataResponse'
           description: ''
+  /api/import-portable-data/:
+    post:
+      operationId: apiImportPortableDataCreate
+      description: |-
+        Import/merge for the portable-data envelope (see PortableDataExportView). Two modes:
+        'analyze' (dry-run diff preview, zero writes) and 'apply' (commit, per merge_policy).
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PortableDataImportRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PortableDataImportRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PortableDataImportRequest'
+        required: true
+      security:
+      - ApiKeyAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+          description: ''
   /api/ingredient/:
     get:
       operationId: apiIngredientList
@@ -3531,7 +3648,11 @@ paths:
   /api/inventory-entry/:
     get:
       operationId: apiInventoryEntryList
-      description: logs request counts to redis cache total/per user/
+      description: |-
+        Batch-compute substitute_onhand/substitute_inventory for the page's nested foods
+        (same pattern as FoodViewSet.list()) instead of letting FoodSerializer fall back to a
+        per-food query for each — that fallback only skips when this context is pre-populated,
+        and nothing did that for this endpoint until now.
       parameters:
       - in: query
         name: code
@@ -3798,6 +3919,57 @@ paths:
               schema:
                 $ref: '#/components/schemas/PaginatedGenericModelReferenceList'
           description: ''
+  /api/inventory-entry/{id}/open/:
+    post:
+      operationId: apiInventoryEntryOpenCreate
+      description: |-
+        Mark a lot opened (POST) or undo that (DELETE) — starts/clears the Opened shelf-life
+        clock (see recompute_lot_expiry). Both are idempotent: opening an already-opened lot,
+        or un-opening an already-unopened one, is a no-op — neither resets opened_at nor
+        recomputes (and potentially overwrites a custom) expires.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this inventory entry.
+        required: true
+      tags:
+      - api
+      security:
+      - ApiKeyAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InventoryEntry'
+          description: ''
+    delete:
+      operationId: apiInventoryEntryOpenDestroy
+      description: |-
+        Mark a lot opened (POST) or undo that (DELETE) — starts/clears the Opened shelf-life
+        clock (see recompute_lot_expiry). Both are idempotent: opening an already-opened lot,
+        or un-opening an already-unopened one, is a no-op — neither resets opened_at nor
+        recomputes (and potentially overwrites a custom) expires.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this inventory entry.
+        required: true
+      tags:
+      - api
+      security:
+      - ApiKeyAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InventoryEntry'
+          description: ''
   /api/inventory-entry/{id}/protecting/:
     get:
       operationId: apiInventoryEntryProtectingList
@@ -3894,6 +4066,11 @@ paths:
       operationId: apiInventoryLocationList
       description: logs request counts to redis cache total/per user/
       parameters:
+      - in: query
+        name: limit
+        schema:
+          type: string
+        description: limit number of entries to return
       - name: page
         required: false
         in: query
@@ -3906,6 +4083,22 @@ paths:
         description: Number of results to return per page.
         schema:
           type: integer
+      - in: query
+        name: query
+        schema:
+          type: string
+        description: lookup if query string is contained within the name, case insensitive
+      - in: query
+        name: random
+        schema:
+          type: string
+        description: randomly orders entries (only works together with limit)
+      - in: query
+        name: updated_at
+        schema:
+          type: string
+        description: if model has an updated_at timestamp, filter only models updated
+          at or after datetime
       tags:
       - api
       security:
@@ -4438,6 +4631,8 @@ paths:
         * ``ordering_plain_fields`` — params that order by their own name as-is.
 
         Any ``ordering`` value not in the union of these is ignored (no ordering applied).
+        Ignored entirely while a ``query`` search is active, so relevance ordering wins (every
+        consuming viewset's OpenAPI doc already documents this contract).
       parameters:
       - in: query
         name: has_children
@@ -4528,6 +4723,8 @@ paths:
         * ``ordering_plain_fields`` — params that order by their own name as-is.
 
         Any ``ordering`` value not in the union of these is ignored (no ordering applied).
+        Ignored entirely while a ``query`` search is active, so relevance ordering wins (every
+        consuming viewset's OpenAPI doc already documents this contract).
       tags:
       - api
       requestBody:
@@ -4565,6 +4762,8 @@ paths:
         * ``ordering_plain_fields`` — params that order by their own name as-is.
 
         Any ``ordering`` value not in the union of these is ignored (no ordering applied).
+        Ignored entirely while a ``query`` search is active, so relevance ordering wins (every
+        consuming viewset's OpenAPI doc already documents this contract).
       parameters:
       - in: path
         name: id
@@ -4596,6 +4795,8 @@ paths:
         * ``ordering_plain_fields`` — params that order by their own name as-is.
 
         Any ``ordering`` value not in the union of these is ignored (no ordering applied).
+        Ignored entirely while a ``query`` search is active, so relevance ordering wins (every
+        consuming viewset's OpenAPI doc already documents this contract).
       parameters:
       - in: path
         name: id
@@ -4639,6 +4840,8 @@ paths:
         * ``ordering_plain_fields`` — params that order by their own name as-is.
 
         Any ``ordering`` value not in the union of these is ignored (no ordering applied).
+        Ignored entirely while a ``query`` search is active, so relevance ordering wins (every
+        consuming viewset's OpenAPI doc already documents this contract).
       parameters:
       - in: path
         name: id
@@ -4681,6 +4884,8 @@ paths:
         * ``ordering_plain_fields`` — params that order by their own name as-is.
 
         Any ``ordering`` value not in the union of these is ignored (no ordering applied).
+        Ignored entirely while a ``query`` search is active, so relevance ordering wins (every
+        consuming viewset's OpenAPI doc already documents this contract).
       parameters:
       - in: path
         name: id
@@ -4750,6 +4955,8 @@ paths:
         * ``ordering_plain_fields`` — params that order by their own name as-is.
 
         Any ``ordering`` value not in the union of these is ignored (no ordering applied).
+        Ignored entirely while a ``query`` search is active, so relevance ordering wins (every
+        consuming viewset's OpenAPI doc already documents this contract).
       parameters:
       - in: path
         name: id
@@ -4800,6 +5007,8 @@ paths:
         * ``ordering_plain_fields`` — params that order by their own name as-is.
 
         Any ``ordering`` value not in the union of these is ignored (no ordering applied).
+        Ignored entirely while a ``query`` search is active, so relevance ordering wins (every
+        consuming viewset's OpenAPI doc already documents this contract).
       parameters:
       - in: path
         name: id
@@ -4932,6 +5141,8 @@ paths:
         * ``ordering_plain_fields`` — params that order by their own name as-is.
 
         Any ``ordering`` value not in the union of these is ignored (no ordering applied).
+        Ignored entirely while a ``query`` search is active, so relevance ordering wins (every
+        consuming viewset's OpenAPI doc already documents this contract).
       tags:
       - api
       security:
@@ -5553,6 +5764,11 @@ paths:
             - PRICE
         description: Return the PropertyTypes matching the property category.  Repeat
           for multiple.
+      - in: query
+        name: limit
+        schema:
+          type: string
+        description: limit number of entries to return
       - name: page
         required: false
         in: query
@@ -5565,6 +5781,22 @@ paths:
         description: Number of results to return per page.
         schema:
           type: integer
+      - in: query
+        name: query
+        schema:
+          type: string
+        description: lookup if query string is contained within the name, case insensitive
+      - in: query
+        name: random
+        schema:
+          type: string
+        description: randomly orders entries (only works together with limit)
+      - in: query
+        name: updated_at
+        schema:
+          type: string
+        description: if model has an updated_at timestamp, filter only models updated
+          at or after datetime
       tags:
       - api
       security:
@@ -6171,6 +6403,13 @@ paths:
           type: integer
         description: Rating a recipe should have or smaller.
       - in: query
+        name: seed
+        schema:
+          type: string
+        description: 'Fixes the order of randomized results so paging through them
+          is stable: the same seed gives the same order. 1-64 letters, digits, "_"
+          or "-". Only used together with random ordering.'
+      - in: query
         name: servings_gte
         schema:
           type: integer
@@ -6398,10 +6637,6 @@ paths:
           type: string
         description: if model has an updated_at timestamp, filter only models updated
           at or after datetime
-        examples:
-          DateFormat:
-            value: '1972-12-05'
-            summary: Date Format
       tags:
       - api
       security:
@@ -7870,10 +8105,6 @@ paths:
           type: string
         description: if model has an updated_at timestamp, filter only models updated
           at or after datetime
-        examples:
-          DateFormat:
-            value: '1972-12-05'
-            summary: Date Format
       tags:
       - api
       security:
@@ -8608,6 +8839,188 @@ paths:
               schema:
                 $ref: '#/components/schemas/Space'
           description: ''
+  /api/space-backup/:
+    get:
+      operationId: apiSpaceBackupList
+      description: |-
+        Part 3 (In-App Backup/Restore) of the pantry-expiration-and-data-portability plan.
+        create() kicks off build in a background thread (same convention as AppExportView) since
+        a full-space backup can cover thousands of rows; restore() runs synchronously (same
+        simplification Part 2's portable-data import made — restore is a deliberate, infrequent,
+        admin-only action, not a hot path).
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      tags:
+      - api
+      security:
+      - ApiKeyAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedSpaceBackupList'
+          description: ''
+    post:
+      operationId: apiSpaceBackupCreate
+      description: |-
+        Part 3 (In-App Backup/Restore) of the pantry-expiration-and-data-portability plan.
+        create() kicks off build in a background thread (same convention as AppExportView) since
+        a full-space backup can cover thousands of rows; restore() runs synchronously (same
+        simplification Part 2's portable-data import made — restore is a deliberate, infrequent,
+        admin-only action, not a hot path).
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SpaceBackup'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/SpaceBackup'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/SpaceBackup'
+      security:
+      - ApiKeyAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SpaceBackup'
+          description: ''
+  /api/space-backup/{id}/:
+    get:
+      operationId: apiSpaceBackupRetrieve
+      description: |-
+        Part 3 (In-App Backup/Restore) of the pantry-expiration-and-data-portability plan.
+        create() kicks off build in a background thread (same convention as AppExportView) since
+        a full-space backup can cover thousands of rows; restore() runs synchronously (same
+        simplification Part 2's portable-data import made — restore is a deliberate, infrequent,
+        admin-only action, not a hot path).
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this space backup.
+        required: true
+      tags:
+      - api
+      security:
+      - ApiKeyAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SpaceBackup'
+          description: ''
+    delete:
+      operationId: apiSpaceBackupDestroy
+      description: |-
+        Part 3 (In-App Backup/Restore) of the pantry-expiration-and-data-portability plan.
+        create() kicks off build in a background thread (same convention as AppExportView) since
+        a full-space backup can cover thousands of rows; restore() runs synchronously (same
+        simplification Part 2's portable-data import made — restore is a deliberate, infrequent,
+        admin-only action, not a hot path).
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this space backup.
+        required: true
+      tags:
+      - api
+      security:
+      - ApiKeyAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/space-backup/{id}/restore/:
+    post:
+      operationId: apiSpaceBackupRestoreCreate
+      description: |-
+        Part 3 (In-App Backup/Restore) of the pantry-expiration-and-data-portability plan.
+        create() kicks off build in a background thread (same convention as AppExportView) since
+        a full-space backup can cover thousands of rows; restore() runs synchronously (same
+        simplification Part 2's portable-data import made — restore is a deliberate, infrequent,
+        admin-only action, not a hot path).
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this space backup.
+        required: true
+      tags:
+      - api
+      security:
+      - ApiKeyAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+          description: ''
+  /api/space-backup/{id}/restore-preview/:
+    post:
+      operationId: apiSpaceBackupRestorePreviewCreate
+      description: |-
+        Part 3 (In-App Backup/Restore) of the pantry-expiration-and-data-portability plan.
+        create() kicks off build in a background thread (same convention as AppExportView) since
+        a full-space backup can cover thousands of rows; restore() runs synchronously (same
+        simplification Part 2's portable-data import made — restore is a deliberate, infrequent,
+        admin-only action, not a hot path).
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this space backup.
+        required: true
+      tags:
+      - api
+      security:
+      - ApiKeyAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+          description: ''
   /api/space/{id}/:
     get:
       operationId: apiSpaceRetrieve
@@ -9204,10 +9617,6 @@ paths:
           type: string
         description: if model has an updated_at timestamp, filter only models updated
           at or after datetime
-        examples:
-          DateFormat:
-            value: '1972-12-05'
-            summary: Date Format
       tags:
       - api
       security:
@@ -10397,6 +10806,8 @@ paths:
         * ``ordering_plain_fields`` — params that order by their own name as-is.
 
         Any ``ordering`` value not in the union of these is ignored (no ordering applied).
+        Ignored entirely while a ``query`` search is active, so relevance ordering wins (every
+        consuming viewset's OpenAPI doc already documents this contract).
       parameters:
       - in: query
         name: has_recipe
@@ -10466,6 +10877,8 @@ paths:
         * ``ordering_plain_fields`` — params that order by their own name as-is.
 
         Any ``ordering`` value not in the union of these is ignored (no ordering applied).
+        Ignored entirely while a ``query`` search is active, so relevance ordering wins (every
+        consuming viewset's OpenAPI doc already documents this contract).
       tags:
       - api
       requestBody:
@@ -10671,6 +11084,8 @@ paths:
         * ``ordering_plain_fields`` — params that order by their own name as-is.
 
         Any ``ordering`` value not in the union of these is ignored (no ordering applied).
+        Ignored entirely while a ``query`` search is active, so relevance ordering wins (every
+        consuming viewset's OpenAPI doc already documents this contract).
       parameters:
       - in: path
         name: id
@@ -10702,6 +11117,8 @@ paths:
         * ``ordering_plain_fields`` — params that order by their own name as-is.
 
         Any ``ordering`` value not in the union of these is ignored (no ordering applied).
+        Ignored entirely while a ``query`` search is active, so relevance ordering wins (every
+        consuming viewset's OpenAPI doc already documents this contract).
       parameters:
       - in: path
         name: id
@@ -10745,6 +11162,8 @@ paths:
         * ``ordering_plain_fields`` — params that order by their own name as-is.
 
         Any ``ordering`` value not in the union of these is ignored (no ordering applied).
+        Ignored entirely while a ``query`` search is active, so relevance ordering wins (every
+        consuming viewset's OpenAPI doc already documents this contract).
       parameters:
       - in: path
         name: id
@@ -10787,6 +11206,8 @@ paths:
         * ``ordering_plain_fields`` — params that order by their own name as-is.
 
         Any ``ordering`` value not in the union of these is ignored (no ordering applied).
+        Ignored entirely while a ``query`` search is active, so relevance ordering wins (every
+        consuming viewset's OpenAPI doc already documents this contract).
       parameters:
       - in: path
         name: id
@@ -10856,6 +11277,8 @@ paths:
         * ``ordering_plain_fields`` — params that order by their own name as-is.
 
         Any ``ordering`` value not in the union of these is ignored (no ordering applied).
+        Ignored entirely while a ``query`` search is active, so relevance ordering wins (every
+        consuming viewset's OpenAPI doc already documents this contract).
       parameters:
       - in: path
         name: id
@@ -10988,6 +11411,8 @@ paths:
         * ``ordering_plain_fields`` — params that order by their own name as-is.
 
         Any ``ordering`` value not in the union of these is ignored (no ordering applied).
+        Ignored entirely while a ``query`` search is active, so relevance ordering wins (every
+        consuming viewset's OpenAPI doc already documents this contract).
       tags:
       - api
       security:
@@ -11069,10 +11494,6 @@ paths:
           type: string
         description: if model has an updated_at timestamp, filter only models updated
           at or after datetime
-        examples:
-          DateFormat:
-            value: '1972-12-05'
-            summary: Date Format
       tags:
       - api
       security:
@@ -11656,6 +12077,8 @@ paths:
         * ``ordering_plain_fields`` — params that order by their own name as-is.
 
         Any ``ordering`` value not in the union of these is ignored (no ordering applied).
+        Ignored entirely while a ``query`` search is active, so relevance ordering wins (every
+        consuming viewset's OpenAPI doc already documents this contract).
       parameters:
       - in: query
         name: ordering
@@ -11705,6 +12128,8 @@ paths:
         * ``ordering_plain_fields`` — params that order by their own name as-is.
 
         Any ``ordering`` value not in the union of these is ignored (no ordering applied).
+        Ignored entirely while a ``query`` search is active, so relevance ordering wins (every
+        consuming viewset's OpenAPI doc already documents this contract).
       tags:
       - api
       requestBody:
@@ -11742,6 +12167,8 @@ paths:
         * ``ordering_plain_fields`` — params that order by their own name as-is.
 
         Any ``ordering`` value not in the union of these is ignored (no ordering applied).
+        Ignored entirely while a ``query`` search is active, so relevance ordering wins (every
+        consuming viewset's OpenAPI doc already documents this contract).
       parameters:
       - in: path
         name: id
@@ -11773,6 +12200,8 @@ paths:
         * ``ordering_plain_fields`` — params that order by their own name as-is.
 
         Any ``ordering`` value not in the union of these is ignored (no ordering applied).
+        Ignored entirely while a ``query`` search is active, so relevance ordering wins (every
+        consuming viewset's OpenAPI doc already documents this contract).
       parameters:
       - in: path
         name: id
@@ -11816,6 +12245,8 @@ paths:
         * ``ordering_plain_fields`` — params that order by their own name as-is.
 
         Any ``ordering`` value not in the union of these is ignored (no ordering applied).
+        Ignored entirely while a ``query`` search is active, so relevance ordering wins (every
+        consuming viewset's OpenAPI doc already documents this contract).
       parameters:
       - in: path
         name: id
@@ -11858,6 +12289,8 @@ paths:
         * ``ordering_plain_fields`` — params that order by their own name as-is.
 
         Any ``ordering`` value not in the union of these is ignored (no ordering applied).
+        Ignored entirely while a ``query`` search is active, so relevance ordering wins (every
+        consuming viewset's OpenAPI doc already documents this contract).
       parameters:
       - in: path
         name: id
@@ -12147,11 +12580,13 @@ components:
       - add
       - remove
       - move
+      - open
       type: string
       description: |-
         * `add` - Add
         * `remove` - Remove
         * `move` - Move
+        * `open` - Open
     BookmarkletImport:
       type: object
       properties:
@@ -12208,10 +12643,13 @@ components:
         type:
           $ref: '#/components/schemas/ConnectorConfigTypeEnum'
         url:
-          type: string
-          format: uri
           nullable: true
-          maxLength: 200
+          oneOf:
+          - type: string
+            format: uri
+            maxLength: 200
+          - type: string
+            maxLength: 0
         token:
           type: string
           writeOnly: true
@@ -12284,6 +12722,37 @@ components:
       - recipe
       - recipe_name
       - updated_at
+    CropData:
+      type: object
+      description: |-
+        Schema-only shape for the ``crop_data``/``image_crop_data`` JSONField
+        on UserFile and RecipeImage. Never used for actual (de)serialization -
+        both fields stay plain JSONField with their own imperative validation.
+        UserFileSerializer.check_crop_data clamps x/y/width/height to [0,100];
+        RecipeImageSerializer.check_crop_data deliberately allows negative/>100
+        values (soft-clamped to [-1000,1000]/<=2000) to support non-square crops
+        of non-square images. No min/max is declared here since the two models'
+        rules genuinely differ - a single shared schema can't assert either
+        model's range without misrepresenting the other. This exists purely so
+        drf-spectacular emits a real object schema instead of `any`, so the
+        generated OpenAPI client can serialize it (see anyToJSON regression).
+      properties:
+        x:
+          type: number
+          format: double
+        y:
+          type: number
+          format: double
+        width:
+          type: number
+          format: double
+        height:
+          type: number
+          format: double
+        rotate:
+          $ref: '#/components/schemas/RotateEnum'
+        fit:
+          type: boolean
     CustomFilter:
       type: object
       description: Adds nested create feature
@@ -12625,6 +13094,16 @@ components:
           - $ref: '#/components/schemas/Unit'
           nullable: true
         shelf_life_days:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+          nullable: true
+        shelf_life_days_frozen:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+          nullable: true
+        shelf_life_days_opened:
           type: integer
           maximum: 2147483647
           minimum: 0
@@ -13322,6 +13801,11 @@ components:
           type: string
           format: date
           nullable: true
+        opened_at:
+          type: string
+          format: date
+          readOnly: true
+          nullable: true
         note:
           type: string
           nullable: true
@@ -13342,6 +13826,7 @@ components:
       - food
       - inventory_location
       - label
+      - opened_at
       - unit
     InventoryLocation:
       type: object
@@ -13448,9 +13933,12 @@ components:
           format: uuid
           readOnly: true
         email:
-          type: string
-          format: email
-          maxLength: 254
+          oneOf:
+          - type: string
+            format: email
+            maxLength: 254
+          - type: string
+            maxLength: 0
         group:
           $ref: '#/components/schemas/Group'
         household:
@@ -14510,6 +14998,32 @@ components:
         timestamp:
           type: string
           format: date-time
+    PaginatedSpaceBackupList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/SpaceBackup'
+        timestamp:
+          type: string
+          format: date-time
     PaginatedSpaceList:
       type: object
       required:
@@ -14971,10 +15485,13 @@ components:
         type:
           $ref: '#/components/schemas/ConnectorConfigTypeEnum'
         url:
-          type: string
-          format: uri
           nullable: true
-          maxLength: 200
+          oneOf:
+          - type: string
+            format: uri
+            maxLength: 200
+          - type: string
+            maxLength: 0
         token:
           type: string
           writeOnly: true
@@ -15261,6 +15778,16 @@ components:
           maximum: 2147483647
           minimum: 0
           nullable: true
+        shelf_life_days_frozen:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+          nullable: true
+        shelf_life_days_opened:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+          nullable: true
         shopping_amount:
           type: number
           format: double
@@ -15400,6 +15927,11 @@ components:
           type: string
           format: date
           nullable: true
+        opened_at:
+          type: string
+          format: date
+          readOnly: true
+          nullable: true
         note:
           type: string
           nullable: true
@@ -15475,9 +16007,12 @@ components:
           format: uuid
           readOnly: true
         email:
-          type: string
-          format: email
-          maxLength: 254
+          oneOf:
+          - type: string
+            format: email
+            maxLength: 254
+          - type: string
+            maxLength: 0
         group:
           $ref: '#/components/schemas/Group'
         household:
@@ -15750,6 +16285,8 @@ components:
           nullable: true
           readOnly: true
         image_crop_data:
+          allOf:
+          - $ref: '#/components/schemas/CropData'
           nullable: true
           readOnly: true
         images:
@@ -15899,6 +16436,8 @@ components:
           type: string
           format: uri
         crop_data:
+          allOf:
+          - $ref: '#/components/schemas/CropData'
           nullable: true
         order:
           type: integer
@@ -16245,6 +16784,13 @@ components:
           nullable: true
         step_recipe_data:
           readOnly: true
+        step_recipe_scale:
+          type: number
+          format: double
+          maximum: 10000
+          minimum: -10000
+          exclusiveMaximum: true
+          exclusiveMinimum: true
         show_ingredients_table:
           type: boolean
     PatchedStorage:
@@ -16274,10 +16820,13 @@ components:
           nullable: true
           maxLength: 4098
         url:
-          type: string
-          format: uri
           nullable: true
-          maxLength: 200
+          oneOf:
+          - type: string
+            format: uri
+            maxLength: 200
+          - type: string
+            maxLength: 0
         path:
           type: string
           maxLength: 256
@@ -16582,6 +17131,7 @@ components:
         file:
           type: string
           format: uri
+          nullable: true
           writeOnly: true
         file_download:
           type: string
@@ -16593,6 +17143,8 @@ components:
           type: integer
           readOnly: true
         crop_data:
+          allOf:
+          - $ref: '#/components/schemas/CropData'
           nullable: true
         created_by:
           allOf:
@@ -16742,6 +17294,30 @@ components:
           type: string
           format: date-time
           readOnly: true
+    PortableDataExportRequest:
+      type: object
+      properties:
+        include_foods:
+          type: boolean
+          default: true
+        include_keywords:
+          type: boolean
+          default: true
+        include_books:
+          type: boolean
+          default: true
+    PortableDataImportRequest:
+      type: object
+      properties:
+        mode:
+          type: string
+        export: {}
+        merge_policy:
+          type: string
+          default: fill_gaps
+      required:
+      - export
+      - mode
     Property:
       type: object
       description: |-
@@ -16847,6 +17423,8 @@ components:
           nullable: true
           readOnly: true
         image_crop_data:
+          allOf:
+          - $ref: '#/components/schemas/CropData'
           nullable: true
           readOnly: true
         images:
@@ -16967,6 +17545,9 @@ components:
         keywords_remove_all:
           type: boolean
           default: false
+        book_add:
+          type: integer
+          nullable: true
         working_time:
           type: integer
           nullable: true
@@ -17088,6 +17669,8 @@ components:
           nullable: true
           readOnly: true
         image_crop_data:
+          allOf:
+          - $ref: '#/components/schemas/CropData'
           nullable: true
           readOnly: true
       required:
@@ -17144,6 +17727,8 @@ components:
           type: string
           format: uri
         crop_data:
+          allOf:
+          - $ref: '#/components/schemas/CropData'
           nullable: true
         order:
           type: integer
@@ -17211,6 +17796,8 @@ components:
           nullable: true
           readOnly: true
         image_crop_data:
+          allOf:
+          - $ref: '#/components/schemas/CropData'
           nullable: true
           readOnly: true
         keywords:
@@ -17347,6 +17934,18 @@ components:
       - private
       - total
       - unrated
+    RotateEnum:
+      enum:
+      - 0
+      - 90
+      - 180
+      - 270
+      type: integer
+      description: |-
+        * `0` - 0
+        * `90` - 90
+        * `180` - 180
+        * `270` - 270
     SearchEnum:
       enum:
       - plain
@@ -17480,6 +18079,7 @@ components:
         logo_color_32:
           type: string
           format: uri
+          nullable: true
         logo_color_128:
           type: string
         logo_color_144:
@@ -17988,6 +18588,48 @@ components:
       - max_users
       - recipe_count
       - user_count
+    SpaceBackup:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: false
+        running:
+          type: boolean
+          readOnly: true
+        msg:
+          type: string
+          readOnly: true
+        total_items:
+          type: integer
+          readOnly: true
+        processed_items:
+          type: integer
+          readOnly: true
+        file:
+          type: string
+          format: uri
+          nullable: true
+          readOnly: true
+        file_size_kb:
+          type: integer
+          readOnly: true
+        created_by:
+          type: integer
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - created_at
+      - created_by
+      - file
+      - file_size_kb
+      - msg
+      - processed_items
+      - running
+      - total_items
     SpaceThemeEnum:
       enum:
       - BLANK
@@ -18044,6 +18686,13 @@ components:
           nullable: true
         step_recipe_data:
           readOnly: true
+        step_recipe_scale:
+          type: number
+          format: double
+          maximum: 10000
+          minimum: -10000
+          exclusiveMaximum: true
+          exclusiveMinimum: true
         show_ingredients_table:
           type: boolean
       required:
@@ -18112,10 +18761,13 @@ components:
           nullable: true
           maxLength: 4098
         url:
-          type: string
-          format: uri
           nullable: true
-          maxLength: 200
+          oneOf:
+          - type: string
+            format: uri
+            maxLength: 200
+          - type: string
+            maxLength: 0
         path:
           type: string
           maxLength: 256
@@ -18503,6 +19155,7 @@ components:
         file:
           type: string
           format: uri
+          nullable: true
           writeOnly: true
         file_download:
           type: string
@@ -18514,6 +19167,8 @@ components:
           type: integer
           readOnly: true
         crop_data:
+          allOf:
+          - $ref: '#/components/schemas/CropData'
           nullable: true
         created_by:
           allOf:
@@ -18549,8 +19204,10 @@ components:
           type: integer
           readOnly: true
         crop_data:
-          readOnly: true
+          allOf:
+          - $ref: '#/components/schemas/CropData'
           nullable: true
+          readOnly: true
         created_by:
           allOf:
           - $ref: '#/components/schemas/User'

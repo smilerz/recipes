@@ -51,7 +51,7 @@ export interface PatchedUserFile {
      * @type {string}
      * @memberof PatchedUserFile
      */
-    file?: string;
+    file?: string | null;
     /**
      * 
      * @type {string}

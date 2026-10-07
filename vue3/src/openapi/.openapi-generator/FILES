@@ -15,6 +15,7 @@ models/BookmarkletImport.ts
 models/BookmarkletImportList.ts
 models/ConnectorConfig.ts
 models/ConnectorConfigTypeEnum.ts
+models/ConnectorConfigUrl.ts
 models/CookLog.ts
 models/CropData.ts
 models/CustomFilter.ts
@@ -50,6 +51,7 @@ models/InventoryEntry.ts
 models/InventoryLocation.ts
 models/InventoryLog.ts
 models/InviteLink.ts
+models/InviteLinkEmail.ts
 models/Keyword.ts
 models/KeywordLabel.ts
 models/KeywordModeEnum.ts
