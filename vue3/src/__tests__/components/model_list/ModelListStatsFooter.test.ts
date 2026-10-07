@@ -17,6 +17,15 @@ function mountFooter(statDefs: StatDef[], stats: Record<string, number>) {
 }
 
 describe('ModelListStatsFooter', () => {
+    // The stats object is catalog-wide (not filtered), so its `total` must not be the
+    // denominator of "Showing N / M": that chip describes the list on screen, which is
+    // the filtered itemCount the table footer also reports.
+    it('"Showing" uses the filtered itemCount, not the catalog-wide stats.total', () => {
+        const w = mountFooter([], {total: 591})
+        expect(w.text()).toContain('Showing 3 / 42')
+        expect(w.text()).not.toContain('591')
+    })
+
     it('renders stat chips with counts from the stats object', () => {
         const defs: StatDef[] = [
             {key: 'fooBar', labelKey: 'FooBar', icon: 'fa-solid fa-x', color: 'info'},
