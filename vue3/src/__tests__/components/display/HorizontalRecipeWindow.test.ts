@@ -6,6 +6,7 @@ import { createRouter, createMemoryHistory, type Router } from 'vue-router'
 import { DateTime } from 'luxon'
 import { apiMock, resetApiMock } from '@/__tests__/api-mock'
 import type { StartPageSectionMode } from '@/types/settings'
+import { mintSeed, SEED_TTL_MS } from '@/utils/randomSeed'
 
 // Spread the real module so branch-specific exports pulled in transitively
 // (e.g. AutomationTypeEnum via Models.ts on food-filters+) stay defined; only
@@ -85,9 +86,10 @@ describe('HorizontalRecipeWindow — New section "More" link (#4646)', () => {
 describe('HorizontalRecipeWindow — "More" link keeps the section sort order', () => {
     beforeEach(() => {
         resetApiMock()
+        sessionStorage.clear()
     })
 
-    async function mountMode(mode: StartPageSectionMode) {
+    async function mountMode(mode: StartPageSectionMode, extraProps: Record<string, unknown> = {}) {
         apiMock.apiRecipeList = vi.fn().mockResolvedValue({ count: 1, results: [{ id: 2, name: 'Viewed', recent: '5' }] })
 
         const pinia = createPinia()
@@ -102,7 +104,7 @@ describe('HorizontalRecipeWindow — "More" link keeps the section sort order', 
         const push = vi.spyOn(router, 'push')
 
         const wrapper = mount(HorizontalRecipeWindow, {
-            props: { mode },
+            props: { mode, ...extraProps },
             global: {
                 plugins: [pinia, i18n, router],
                 stubs: { RecipeCard: { template: '<div class="stub-card"/>' } },
@@ -111,6 +113,62 @@ describe('HorizontalRecipeWindow — "More" link keeps the section sort order', 
         await flushPromises()
         return { wrapper, push }
     }
+
+    // The Random section keeps a seed (per section, in sessionStorage) until it expires, so a
+    // refresh keeps the same shuffle and "More" opens the search on exactly the set shown here.
+    describe('Random section seed', () => {
+        const SEED_SHAPE = /^[0-9a-z]+-[0-9a-z]+$/
+        const requestSeed = () => (apiMock.apiRecipeList as any).mock.calls[0][0].seed
+        const moreQuery = (push: any) => (push.mock.calls[0][0] as { query: Record<string, unknown> }).query
+
+        it('requests its recipes with a seed and passes the same seed in "More"', async () => {
+            const { wrapper, push } = await mountMode('random')
+            expect(requestSeed()).toMatch(SEED_SHAPE)
+
+            await wrapper.find('h4').trigger('click')
+
+            expect(moreQuery(push)).toEqual({ ordering: 'random', seed: requestSeed() })
+        })
+
+        it('keeps the same seed across a remount (page refresh) while it has not expired', async () => {
+            await mountMode('random')
+            const first = requestSeed()
+            expect(first).toMatch(SEED_SHAPE)
+
+            await mountMode('random')
+            const calls = (apiMock.apiRecipeList as any).mock.calls
+
+            expect(calls[calls.length - 1][0].seed).toBe(first)
+        })
+
+        it('gives each Random section its own seed (the default layout has two)', async () => {
+            await mountMode('random', { seedKey: '4' })
+            const a = requestSeed()
+            await mountMode('random', { seedKey: '8' })
+            const calls = (apiMock.apiRecipeList as any).mock.calls
+
+            expect(calls[calls.length - 1][0].seed).not.toBe(a)
+        })
+
+        it('replaces a stored seed older than the TTL', async () => {
+            const stale = mintSeed(Date.now() - (SEED_TTL_MS + 60_000))
+            sessionStorage.setItem('random_seed:home:random', stale)
+
+            await mountMode('random')
+
+            expect(requestSeed()).toMatch(SEED_SHAPE)
+            expect(requestSeed()).not.toBe(stale)
+        })
+
+        it('does not seed the Recently viewed section', async () => {
+            const { wrapper, push } = await mountMode('recent')
+            expect((apiMock.apiRecipeList as any).mock.calls[0][0].seed).toBeUndefined()
+
+            await wrapper.find('h4').trigger('click')
+
+            expect(moreQuery(push)).not.toHaveProperty('seed')
+        })
+    })
 
     it.each<[StartPageSectionMode, string]>([
         ['recent', '-lastviewed'],
