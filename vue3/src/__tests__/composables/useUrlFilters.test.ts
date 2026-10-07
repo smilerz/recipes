@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { computed, reactive, ref, nextTick } from 'vue'
+import { computed, reactive, ref, nextTick, watch } from 'vue'
 import type { FilterDef } from '@/composables/modellist/types'
 
 const mockQuery = ref<Record<string, string | string[]>>({})
@@ -261,6 +261,49 @@ describe('useUrlFilters (multi-param)', () => {
             const last = replacedQueries[replacedQueries.length - 1]
             expect(last).toHaveProperty('page', '3')
             expect(last).not.toHaveProperty('onHand')
+        })
+    })
+
+    describe('route changes unrelated to filters', () => {
+        // A page change rewrites route.query, which re-runs initFromRoute. Consumers
+        // (SearchPage, ModelListPage) watch filterParams and reset to page 1 whenever it
+        // changes, so a page change with an active filter must leave filterParams untouched.
+        it('does not replace filterParams when only a non-filter query param (page) changes', async () => {
+            mockQuery.value = { onHand: '1' }
+            const defs = computed(() => makeDefs([{ key: 'onHand', type: 'tristate' }]))
+            const { filterParams } = useUrlFilters(defs)
+            const before = filterParams.value
+            let fired = 0
+            watch(filterParams, () => { fired++ })
+
+            mockQuery.value = { onHand: '1', page: '2' }
+            await nextTick()
+            await nextTick()
+
+            expect(fired).toBe(0)
+            expect(filterParams.value).toBe(before)
+        })
+
+        it('still updates filterParams when a filter value in the route actually changes', async () => {
+            mockQuery.value = { onHand: '1' }
+            const defs = computed(() => makeDefs([{ key: 'onHand', type: 'tristate' }]))
+            const { filterParams } = useUrlFilters(defs)
+
+            mockQuery.value = { onHand: '0' }
+            await nextTick()
+
+            expect(filterParams.value).toEqual({ onHand: 0 })
+        })
+
+        it('still clears filterParams when the filter is removed from the route', async () => {
+            mockQuery.value = { onHand: '1' }
+            const defs = computed(() => makeDefs([{ key: 'onHand', type: 'tristate' }]))
+            const { filterParams } = useUrlFilters(defs)
+
+            mockQuery.value = {}
+            await nextTick()
+
+            expect(filterParams.value).toEqual({})
         })
     })
 
