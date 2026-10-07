@@ -72,7 +72,6 @@ class RecipeShoppingEditor():
     def _servings_factor(self):
         return Decimal(self.servings) / Decimal(self._recipe_servings)
 
-
     @staticmethod
     def get_shopping_list_recipe(id, user, space):
         # TODO this sucks since it wont find SLR's that no longer have any entries
@@ -174,7 +173,7 @@ class RecipeShoppingEditor():
             return True
 
         for sle in ShoppingListEntry.objects.filter(list_recipe=self._shopping_list_recipe):
-            if sle.ingredient: # TODO temporarily dont scale manual entries until ingredient_amount or some other base amount has been migrated to SLE
+            if sle.ingredient:  # TODO temporarily dont scale manual entries until ingredient_amount or some other base amount has been migrated to SLE
                 sle.amount = sle.ingredient.amount * Decimal(self._servings_factor)
                 sle.save()
         self._shopping_list_recipe.servings = self.servings
@@ -198,7 +197,7 @@ class RecipeShoppingEditor():
 
         entries = []
         for i in [x for x in add_ingredients if x.food]:
-            entry =  ShoppingListEntry(
+            entry = ShoppingListEntry(
                 list_recipe=self._shopping_list_recipe,
                 food=i.food,
                 unit=i.unit,

@@ -14,15 +14,15 @@ def test_food_property(space_1, space_2, u1_s1):
         unit_gram = Unit.objects.create(name='gram', base_unit='g', space=space_1)
         unit_kg = Unit.objects.create(name='kg', base_unit='kg', space=space_1)
         unit_pcs = Unit.objects.create(name='pcs', base_unit='', space=space_1)
-        unit_floz1 = Unit.objects.create(name='fl. oz 1', base_unit='imperial_fluid_ounce', space=space_1)  # US and UK use different volume systems (US vs imperial)
-        unit_floz2 = Unit.objects.create(name='fl. oz 2', base_unit='fluid_ounce', space=space_1)
-        unit_fantasy = Unit.objects.create(name='Fantasy Unit', base_unit='', space=space_1)
+        Unit.objects.create(name='fl. oz 1', base_unit='imperial_fluid_ounce', space=space_1)  # US and UK use different volume systems (US vs imperial)
+        Unit.objects.create(name='fl. oz 2', base_unit='fluid_ounce', space=space_1)
+        Unit.objects.create(name='Fantasy Unit', base_unit='', space=space_1)
 
         food_1 = Food.objects.create(name='food_1', space=space_1, properties_food_unit=unit_gram, properties_food_amount=100)
         food_2 = Food.objects.create(name='food_2', space=space_1, properties_food_unit=unit_gram, properties_food_amount=100)
 
         property_fat = PropertyType.objects.create(name='property_fat', space=space_1)
-        property_calories = PropertyType.objects.create(name='property_calories', space=space_1)
+        PropertyType.objects.create(name='property_calories', space=space_1)
         property_nuts = PropertyType.objects.create(name='property_nuts', space=space_1)
         property_price = PropertyType.objects.create(name='property_price', space=space_1)
 

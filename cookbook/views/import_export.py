@@ -76,7 +76,7 @@ def get_integration(request, export_type):
     if export_type == ImportExportBase.COPYMETHAT:
         return CopyMeThat(request, export_type)
     if export_type == ImportExportBase.PDF:
-    #     return PDFexport(request, export_type)  # pyppeteer dependency removed
+        #     return PDFexport(request, export_type)  # pyppeteer dependency removed
         raise NotImplementedError('PDF export is no longer available. Use your browser\'s print function (Ctrl+P) to save recipes as PDF.')
     if export_type == ImportExportBase.MELARECIPES:
         return MelaRecipes(request, export_type)

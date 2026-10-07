@@ -53,10 +53,10 @@ class OpenDataImporter:
         for field in field_list:
             if isinstance(getattr(obj, field), float) or isinstance(getattr(obj, field), Decimal):
                 if abs(float(getattr(obj, field)) - float(existing_obj[field])) > 0.001:  # convert both to float and check if basically equal
-                    #print(f'comparing FLOAT {obj} failed because field {field} is not equal ({getattr(obj, field)} != {existing_obj[field]})')
+                    # print(f'comparing FLOAT {obj} failed because field {field} is not equal ({getattr(obj, field)} != {existing_obj[field]})')
                     return False
             elif getattr(obj, field) != existing_obj[field]:
-                #print(f'comparing {obj} failed because field {field} is not equal ({getattr(obj, field)} != {existing_obj[field]})')
+                # print(f'comparing {obj} failed because field {field} is not equal ({getattr(obj, field)} != {existing_obj[field]})')
                 return False
         return True
 

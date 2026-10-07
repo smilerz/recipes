@@ -119,7 +119,7 @@ def test_unit_conversions(space_1, space_2, u1_s1):
         print(uch.get_conversions(ingredient_food_2_pcs))
 
         print('\n----------- TEST CUSTOM CONVERSION - PCS TO MULTIPLE BASE ---------------')
-        uc1 = UnitConversion.objects.create(
+        UnitConversion.objects.create(
             base_amount=1,
             base_unit=unit_pcs,
             converted_amount=200,
@@ -188,6 +188,7 @@ def test_unit_conversions(space_1, space_2, u1_s1):
         assert next(x for x in conversions if x.unit == unit_kg_space_2) is not None
         assert abs(next(x for x in conversions if x.unit == unit_kg_space_2).amount - Decimal(0.1)) < 0.0001
         print(conversions)
+
 
 def test_multi_step_conversion(space_1, u1_s1):
     """
@@ -366,4 +367,4 @@ def test_conversion_with_zero(space_1, space_2, u1_s1):
         )
         conversions = uch.get_conversions(ingredient_food_1_gram)
 
-        assert len(conversions) == 1 # conversion always includes the ingredient, if count is 1 no other conversion was found
+        assert len(conversions) == 1  # conversion always includes the ingredient, if count is 1 no other conversion was found

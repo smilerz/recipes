@@ -3,8 +3,8 @@ from django.templatetags.static import static
 from django.test import RequestFactory
 from django_scopes import scopes_disabled
 
-from cookbook.models import Space, UserPreference, UserFile
-from cookbook.templatetags.theming_tags import theme_values, get_theming_values
+from cookbook.models import Space, UserPreference
+from cookbook.templatetags.theming_tags import get_theming_values
 
 
 def test_theming_function(space_1, u1_s1):

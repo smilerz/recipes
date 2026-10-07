@@ -14,7 +14,7 @@ class Command(BaseCommand):
             user.set_password('test')
             user.save()
 
-            space = Space.objects.get_or_create(
+            Space.objects.get_or_create(
                 name='Test Space',
                 created_by=user
-            )[0]
+            )

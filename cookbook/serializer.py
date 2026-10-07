@@ -9,7 +9,6 @@ from drf_spectacular.utils import extend_schema_field
 
 from django.forms.models import model_to_dict
 from django.contrib.auth.models import AnonymousUser, Group, User
-from django.core.cache import caches
 from django.core.mail import send_mail
 from django.db.models import Q, QuerySet, Sum
 from django.http import BadHeaderError
@@ -66,7 +65,7 @@ class WritableNestedModelSerializer(WNMS):
                     pk_data = [x for x in data[f] if isinstance(x, int)]
                     # merge non-pk values with retrieved values
                     data[f] = [x for x in data[f] if not isinstance(x, int)] \
-                              + list(self.fields[f].child.Meta.model.objects.filter(id__in=pk_data).values(*required_fields))
+                        + list(self.fields[f].child.Meta.model.objects.filter(id__in=pk_data).values(*required_fields))
         return super().to_internal_value(data)
 
 
@@ -559,7 +558,7 @@ class UserSpaceSerializer(WritableNestedModelSerializer):
 
     class Meta:
         model = UserSpace
-        fields = ('id', 'user', 'space', 'groups', 'household','active', 'internal_note', 'invite_link', 'created_at', 'updated_at',)
+        fields = ('id', 'user', 'space', 'groups', 'household', 'active', 'internal_note', 'invite_link', 'created_at', 'updated_at',)
         read_only_fields = ('id', 'invite_link', 'created_at', 'updated_at', 'space')
 
 
@@ -1020,7 +1019,7 @@ class FoodSerializer(UniqueFieldsMixin, WritableNestedModelSerializer, RecipeCou
     def get_available_substitutes(self, obj):
         """Return the subset of this food's substitutes (direct + siblings/
         children when flagged) that are currently on-hand for the caller's
-        household. 
+        household.
         Returns a list of FoodSimpleSerializer-shaped dicts. Empty list for
         anonymous callers, no shared users, or no on-hand substitutes.
         """
@@ -1572,7 +1571,6 @@ class UserSpaceBatchUpdateSerializer(serializers.Serializer):
 
     household = serializers.IntegerField(required=False, allow_null=True)
     group_set = serializers.ListField(child=serializers.IntegerField())
-
 
 
 class CustomFilterSerializer(SpacedModelSerializer, WritableNestedModelSerializer):

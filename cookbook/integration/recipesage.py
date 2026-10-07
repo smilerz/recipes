@@ -32,9 +32,9 @@ class RecipeSage(Integration):
         except Exception as e:
             print('failed to parse time ', str(e))
 
-        if 'isBasedOn' in file and file['isBasedOn']!="":
+        if 'isBasedOn' in file and file['isBasedOn'] != "":
             recipe.source_url = file['isBasedOn'].strip()
-        if 'description' in file and file['description'].strip()!="" and len(file['description'])<500:
+        if 'description' in file and file['description'].strip() != "" and len(file['description']) < 500:
             recipe.description = html.unescape(file['description'].strip())
 
         recipe.save()
@@ -42,9 +42,9 @@ class RecipeSage(Integration):
         ingredient_parser = IngredientParser(self.request, True)
         ingredients_added = False
         for s in file['recipeInstructions']:
-            txt=html.unescape(s['text'].strip())
+            txt = html.unescape(s['text'].strip())
             if txt != "":
-                if txt[0]=='[' and txt[-1]==']':
+                if txt[0] == '[' and txt[-1] == ']':
                     step = Step.objects.create(
                             instruction=txt[1:-1], space=self.request.space, show_ingredients_table=self.request.user.userpreference.show_step_ingredients,
                     )
@@ -56,10 +56,10 @@ class RecipeSage(Integration):
                 ingredients_added = True
 
                 for ingredient in file['recipeIngredient']:
-                    ingredient=html.unescape(ingredient.strip())
-                    if ingredient!="":
-                        if ingredient[0]=='[' and ingredient[-1]==']':
-                            step.ingredients.add(Ingredient.objects.create(is_header=True, original_text=ingredient[1:-1],space=self.request.space,note=ingredient[1:-1],))
+                    ingredient = html.unescape(ingredient.strip())
+                    if ingredient != "":
+                        if ingredient[0] == '[' and ingredient[-1] == ']':
+                            step.ingredients.add(Ingredient.objects.create(is_header=True, original_text=ingredient[1:-1], space=self.request.space, note=ingredient[1:-1],))
                         else:
                             amount, unit, food, note = ingredient_parser.parse(ingredient.strip())
                             f = ingredient_parser.get_food(food)
@@ -69,8 +69,6 @@ class RecipeSage(Integration):
                             ))
             recipe.steps.add(step)
 
-                
-
         if len(file['image']) > 0:
             try:
                 url = file['image'][0]
@@ -79,8 +77,7 @@ class RecipeSage(Integration):
             except Exception as e:
                 print('failed to import image ', str(e))
 
-
-        if 'recipeCategory' in file and file['recipeCategory']!=[]:
+        if 'recipeCategory' in file and file['recipeCategory'] != []:
             try:
                 for k in file['recipeCategory']:
                     recipe.keywords.add(Keyword.objects.get_or_create(space=self.request.space, name=k)[0])
@@ -130,7 +127,7 @@ class RecipeSage(Integration):
 
     def split_recipe_file(self, file):
         try:
-            data=json.loads(file.read().decode("utf-8"))
+            data = json.loads(file.read().decode("utf-8"))
             if 'recipes' in data:
                 return data['recipes']
             else:

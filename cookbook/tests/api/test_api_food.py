@@ -858,7 +858,7 @@ def test_batch_onhand_no_household_does_not_partial_write(u1_s1, space_1, cat_1)
 def test_shopping_status_scoped_to_household(u1_s1, u2_s1, space_1):
     """shopping_status annotation should only reflect entries from household members, not all space users."""
     user1 = auth.get_user(u1_s1)
-    user2 = auth.get_user(u2_s1)
+    auth.get_user(u2_s1)
 
     with scopes_disabled():
         food = FoodFactory(space=space_1)
@@ -1210,7 +1210,7 @@ def test_filter_recipe_exact(u1_s1, space_1):
         food_other_recipe = FoodFactory(space=space_1)
         food_other_recipe.recipe = recipe_2
         food_other_recipe.save()
-        food_unlinked = FoodFactory(space=space_1)
+        FoodFactory(space=space_1)
 
     response = get_filter_results(u1_s1, f'?recipe={recipe_1.id}')
     result_ids = [x['id'] for x in response['results']]
@@ -1421,8 +1421,8 @@ def test_ordering_supermarket_category_name(u1_s1, space_1, cat_1, cat_2):
 def test_ordering_created_at(u1_s1, space_1):
     """Ordering by created_at should sort by creation date (recently added)."""
     with scopes_disabled():
-        old = FoodFactory(name='OldFood', space=space_1)
-        new = FoodFactory(name='NewFood', space=space_1)
+        FoodFactory(name='OldFood', space=space_1)
+        FoodFactory(name='NewFood', space=space_1)
 
     response = get_filter_results(u1_s1, '?ordering=created_at')
     names = [x['name'] for x in response['results']]
@@ -2061,7 +2061,6 @@ def test_tree_search_excludes_unrelated_siblings(u1_s1, space_1):
     assert branch_b.id not in ids  # unrelated ancestor branch
 
 
-
 # --- C2: FoodViewSet.shopping add path (regression: create+return were dropped
 #     when the substitutes action was added, so the non-delete PUT fell off the
 #     end returning None -> 500). ---
@@ -2101,8 +2100,8 @@ def test_create_from_recipe_creates_and_links_food(u1_s1, space_1):
         recipe = RecipeFactory(space=space_1)
 
     r = u1_s1.post(reverse('api:food-create-from-recipe'),
-                    {'recipe': recipe.id, 'name': 'Sourdough Bread'},
-                    content_type='application/json')
+                   {'recipe': recipe.id, 'name': 'Sourdough Bread'},
+                   content_type='application/json')
     assert r.status_code == 201
     with scopes_disabled():
         food = Food.objects.get(recipe=recipe)
@@ -2117,11 +2116,11 @@ def test_create_from_recipe_is_idempotent(u1_s1, space_1):
         recipe = RecipeFactory(space=space_1)
 
     first = u1_s1.post(reverse('api:food-create-from-recipe'),
+                       {'recipe': recipe.id, 'name': 'Sourdough Bread'},
+                       content_type='application/json')
+    second = u1_s1.post(reverse('api:food-create-from-recipe'),
                         {'recipe': recipe.id, 'name': 'Sourdough Bread'},
                         content_type='application/json')
-    second = u1_s1.post(reverse('api:food-create-from-recipe'),
-                         {'recipe': recipe.id, 'name': 'Sourdough Bread'},
-                         content_type='application/json')
     assert second.status_code == 200
     assert json.loads(first.content)['id'] == json.loads(second.content)['id']
     with scopes_disabled():
@@ -2130,7 +2129,7 @@ def test_create_from_recipe_is_idempotent(u1_s1, space_1):
 
 def test_create_from_recipe_requires_recipe(u1_s1, space_1):
     r = u1_s1.post(reverse('api:food-create-from-recipe'),
-                    {'name': 'Sourdough Bread'}, content_type='application/json')
+                   {'name': 'Sourdough Bread'}, content_type='application/json')
     assert r.status_code == 400
 
 
@@ -2139,8 +2138,8 @@ def test_create_from_recipe_recipe_must_be_in_space(u1_s1, space_2):
         other_space_recipe = RecipeFactory(space=space_2)
 
     r = u1_s1.post(reverse('api:food-create-from-recipe'),
-                    {'recipe': other_space_recipe.id, 'name': 'Sourdough Bread'},
-                    content_type='application/json')
+                   {'recipe': other_space_recipe.id, 'name': 'Sourdough Bread'},
+                   content_type='application/json')
     assert r.status_code == 400
 
 
@@ -2154,14 +2153,14 @@ def test_create_from_recipe_name_collision_with_different_recipe_is_rejected(u1_
         recipe_a = RecipeFactory(space=space_1)
         recipe_b = RecipeFactory(space=space_1)
         first = u1_s1.post(reverse('api:food-create-from-recipe'),
-                            {'recipe': recipe_a.id, 'name': 'Milk'},
-                            content_type='application/json')
+                           {'recipe': recipe_a.id, 'name': 'Milk'},
+                           content_type='application/json')
         assert first.status_code == 201
         food_id = json.loads(first.content)['id']
 
     r = u1_s1.post(reverse('api:food-create-from-recipe'),
-                    {'recipe': recipe_b.id, 'name': 'Milk'},
-                    content_type='application/json')
+                   {'recipe': recipe_b.id, 'name': 'Milk'},
+                   content_type='application/json')
     assert r.status_code == 400
     with scopes_disabled():
         food = Food.objects.get(id=food_id)

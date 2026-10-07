@@ -85,7 +85,7 @@ class Paprika(Integration):
             # Paprika exports can have images in either of image_url, or photo_data.
             # If a user takes an image himself, only photo_data will be set.
             # If a user imports an image, both will be set. But the photo_data will be a center-cropped square resized version, so the image_url is preferred.
-            
+
             # Try to download image if possible
             try:
                 if recipe_json.get("image_url", None):

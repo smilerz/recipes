@@ -85,9 +85,9 @@ urlpatterns = [
 
     path('setup/', views.setup, name='view_setup'),
     path('no-group/', views.no_groups, name='view_no_group'),
-    #path('space-overview/', views.space_overview, name='view_space_overview'),
-    #path('switch-space/<int:space_id>', views.switch_space, name='view_switch_space'),
-    #path('no-perm/', views.no_perm, name='view_no_perm'),
+    # path('space-overview/', views.space_overview, name='view_space_overview'),
+    # path('switch-space/<int:space_id>', views.switch_space, name='view_switch_space'),
+    # path('no-perm/', views.no_perm, name='view_no_perm'),
     path('invite/<slug:token>', views.invite_link, name='view_invite'),
     path('invite/<slug:token>/', views.invite_link, name='view_invite'),
 
@@ -115,7 +115,7 @@ urlpatterns = [
     path('api/ai-import/', api.AiImportView.as_view(), name='api_ai_import'),
     path('api/ai-step-sort/', api.AiStepSortView.as_view(), name='api_ai_step_sort'),
     path('api/import-open-data/', api.ImportOpenData.as_view(), name='api_import_open_data'),
-    #path('api/ingredient-from-string/', api.ingredient_from_string, name='api_ingredient_from_string'),
+    # path('api/ingredient-from-string/', api.ingredient_from_string, name='api_ingredient_from_string'),
     path('api/fdc-search/', api.FdcSearchView.as_view(), name='api_fdc_search'),
     path('api/share-link/<int:pk>', api.share_link, name='api_share_link'),
     path('api/reset-food-inheritance/', api.reset_food_inheritance, name='api_reset_food_inheritance'),

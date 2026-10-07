@@ -9,7 +9,6 @@ from datetime import timedelta
 import pytest
 from django.conf import settings
 from django.contrib import auth
-from django.utils import timezone
 from django.utils.timezone import localtime
 from django_scopes import scope
 

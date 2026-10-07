@@ -101,6 +101,7 @@ admin.site.register(AiProvider, AiProviderAdmin)
 class AiLogAdmin(admin.ModelAdmin):
     list_display = ('ai_provider', 'function', 'credit_cost', 'created_by', 'created_at',)
 
+
 admin.site.register(AiLog, AiLogAdmin)
 
 

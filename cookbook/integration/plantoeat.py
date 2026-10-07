@@ -46,7 +46,7 @@ class Plantoeat(Integration):
                         ingredients.append(line.strip())
                 if direction_mode:
                     if len(line) > 2:
-                        directions.append(line.strip() + '\n')                
+                        directions.append(line.strip() + '\n')
 
         recipe = Recipe.objects.create(**fields, created_by=self.request.user, internal=True, space=self.request.space)
 
@@ -55,7 +55,7 @@ class Plantoeat(Integration):
         )
 
         if tags:
-            tags = tags.replace('^',',')
+            tags = tags.replace('^', ',')
             for k in tags.split(','):
                 keyword, created = Keyword.objects.get_or_create(name=k.strip(), space=self.request.space)
                 recipe.keywords.add(keyword)

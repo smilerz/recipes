@@ -50,6 +50,7 @@ def test_list_space(recipe_1_s1, u1_s1, u1_s2, space_2):
     assert json.loads(u1_s1.get(reverse(LIST_URL)).content)['count'] == 0
     assert json.loads(u1_s2.get(reverse(LIST_URL)).content)['count'] == 2
 
+
 @pytest.mark.parametrize("arg", [
     ['a_u', 403],
     ['g1_s1', 403],
@@ -75,6 +76,7 @@ def test_update(arg, request, recipe_1_s1):
         assert r.status_code == arg[1]
         if r.status_code == 200:
             assert response['instruction'] == 'new'
+
 
 @pytest.mark.parametrize("arg", [
     ['a_u', 403],
@@ -104,6 +106,7 @@ def test_update_privater_recipe(arg, request, recipe_1_s1):
         assert r.status_code == arg[1]
         if r.status_code == 200:
             assert response['instruction'] == 'new'
+
 
 @pytest.mark.parametrize("arg", [
     ['a_u', 403],
