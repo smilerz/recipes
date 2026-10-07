@@ -188,14 +188,14 @@ requestParameters.random = 'true' as any
     switch (props.mode) {
         case 'recent':
             requestParameters.numRecent = 16
-            queryParams.value = {sortOrder: '-created_at'}
+            queryParams.value = {ordering: '-lastviewed'}
             break
         case 'random':
             // ApiRecipeListRequest.random is generated as `boolean`, but every other endpoint's `random`
 // param (and this component's own existing test) uses the string 'true' - matches the actual
 // wire contract; typed here rather than changed to avoid altering the generated client.
 requestParameters.random = 'true' as any
-            queryParams.value = {sortOrder: 'random'}
+            queryParams.value = {ordering: 'random'}
             break
         case 'new':
             requestParameters._new = true
