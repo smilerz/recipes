@@ -24,8 +24,13 @@ import {
 /**
  * Schema-only shape for the ``crop_data``/``image_crop_data`` JSONField
  * on UserFile and RecipeImage. Never used for actual (de)serialization -
- * both fields stay plain JSONField with their own imperative validation,
- * which differs slightly between the two models. This exists purely so
+ * both fields stay plain JSONField with their own imperative validation.
+ * UserFileSerializer.check_crop_data clamps x/y/width/height to [0,100];
+ * RecipeImageSerializer.check_crop_data deliberately allows negative/>100
+ * values (soft-clamped to [-1000,1000]/<=2000) to support non-square crops
+ * of non-square images. No min/max is declared here since the two models'
+ * rules genuinely differ - a single shared schema can't assert either
+ * model's range without misrepresenting the other. This exists purely so
  * drf-spectacular emits a real object schema instead of `any`, so the
  * generated OpenAPI client can serialize it (see anyToJSON regression).
  * @export
