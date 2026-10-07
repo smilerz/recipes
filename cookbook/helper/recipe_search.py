@@ -1,10 +1,12 @@
+import re
 from dataclasses import dataclass, field
 
 from django.contrib.postgres.search import SearchQuery
 from django.core.cache import cache
-from django.db.models import F, Q
-from django.db.models.functions import Lower
+from django.db.models import F, Q, TextField, Value
+from django.db.models.functions import MD5, Cast, Concat, Lower
 from django.utils import translation
+from rest_framework.exceptions import ParseError
 
 from cookbook.helper.HelperFunctions import str2bool
 from cookbook.managers import DICTIONARY, TextSearchConfig
@@ -18,6 +20,9 @@ _NULLS_LAST = frozenset({'lastcooked', 'lastviewed', 'rating'})
 # fuzzy "allow N missing" path (>= 0). A negative missing count is otherwise
 # meaningless, so -1 is reserved for the exclude branch.
 MAKENOW_EXCLUDE = -1
+
+# Opaque client-chosen string that fixes the order of a random listing (see _seeded_random_key).
+_SEED_RE = re.compile(r'[A-Za-z0-9_-]{1,64}')
 
 
 def _sort_includes(orderby, *fields):
@@ -79,6 +84,7 @@ class SearchParams:
     internal: bool | None = None
     sort_order: list | str | None = None
     random: bool = False
+    seed: str | None = None
     new: bool = False
     num_recent: int = 0
     include_children: bool = True
@@ -160,6 +166,10 @@ class SearchParams:
         else:
             random = str2bool(_s(params, 'random', False))
 
+        seed = _s(params, 'seed')
+        if seed is not None and not _SEED_RE.fullmatch(str(seed)):
+            raise ParseError(translation.gettext('Parameter seed must be 1-64 letters, digits, "_" or "-"'))
+
         query_raw = _s(params, 'query')
 
         def _str_or_none(val):
@@ -178,6 +188,7 @@ class SearchParams:
             internal=str2bool(_s(params, 'internal')),
             sort_order=sort_order,
             random=random,
+            seed=str(seed) if seed is not None else None,
             new=str2bool(_s(params, 'new', False)),
             num_recent=int(_s(params, 'num_recent', 0)),
             include_children=str2bool(_s(params, 'include_children', True)),
@@ -322,6 +333,8 @@ class RecipeSearch:
             qs = qs.with_last_viewed(user, space)
         if _sort_includes(orderby, 'favorite'):
             qs = qs.with_favorite(user, space)
+        if params.random and params.seed:
+            qs = qs.annotate(_random_key=self._seeded_random_key(params.seed))
         if params.num_recent:
             qs = qs.with_recent(user, space, params.num_recent)
         if params.new:
@@ -420,9 +433,21 @@ class RecipeSearch:
 
         return qs.distinct().order_by(*_finalize_ordering(orderby))
 
+    @staticmethod
+    def _seeded_random_key(seed):
+        """Per-recipe sort key that is stable for a given seed and shuffled between seeds.
+
+        Unlike ORDER BY RANDOM() it lets paging, Back-navigation and "View more" see one order.
+        A hash (not Postgres setseed()) so it works on SQLite too and is safe across pooled connections.
+        """
+        return MD5(Concat(Cast('pk', TextField()), Value(seed), output_field=TextField()))
+
     def _build_sort_order(self):
         params = self._params
         if params.random:
+            if params.seed:
+                # expressions (not strings) so they bypass the user-input sort allowlist; pk makes ties deterministic
+                return [F('_random_key').asc(), F('pk').asc()]
             return ['?']
 
         # Pinned sorts: float recent/new recipes to the top

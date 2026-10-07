@@ -2342,6 +2342,7 @@ class RecipePagination(PageNumberPagination):
     OpenApiParameter(name='createdby', description=_('Filter recipes for ones created by the given user ID'), type=int),
     OpenApiParameter(name='internal', description=_('If only internal recipes should be returned. [''true''/''<b>false</b>'']'), type=bool),
     OpenApiParameter(name='random', description=_('Returns the results in randomized order. [''true''/''<b>false</b>'']'), type=bool),
+    OpenApiParameter(name='seed', description=_('Fixes the order of randomized results so paging through them is stable: the same seed gives the same order. 1-64 letters, digits, "_" or "-". Only used together with random ordering.'), type=str),
     OpenApiParameter(name='sort_order', description=_(
         'Determines the order of the results. Options are: score,-score,name,-name,lastcooked,-lastcooked,rating,-rating,times_cooked,-times_cooked,created_at,-created_at,lastviewed,-lastviewed'),
                      type=str),

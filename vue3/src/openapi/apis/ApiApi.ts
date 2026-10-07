@@ -1698,6 +1698,7 @@ export interface ApiRecipeListRequest {
     rating?: number;
     ratingGte?: number;
     ratingLte?: number;
+    seed?: string;
     servingsGte?: number;
     servingsLte?: number;
     sortOrder?: string;
@@ -13094,6 +13095,10 @@ export class ApiApi extends runtime.BaseAPI {
 
         if (requestParameters['ratingLte'] != null) {
             queryParameters['rating_lte'] = requestParameters['ratingLte'];
+        }
+
+        if (requestParameters['seed'] != null) {
+            queryParameters['seed'] = requestParameters['seed'];
         }
 
         if (requestParameters['servingsGte'] != null) {
