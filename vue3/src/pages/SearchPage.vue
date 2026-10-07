@@ -231,7 +231,7 @@
         <v-row>
             <v-col cols="12" md="6" offset-md="3" class="text-center">
                 <v-pagination
-                    v-if="ordering !== 'random' && tableItemCount > 0"
+                    v-if="tableItemCount > 0"
                     v-model="page"
                     :length="Math.ceil(tableItemCount / pageSize)"
                     @update:model-value="searchRecipes({page})"
@@ -239,12 +239,12 @@
                     size="small"
                 />
                 <v-btn
-                    v-if="ordering === 'random'"
+                    v-if="isRandomOrdering"
                     size="x-large"
                     rounded="xl"
                     prepend-icon="fa-solid fa-dice"
                     variant="tonal"
-                    @click="searchRecipes({page: 1})"
+                    @click="shuffle"
                 >
                     {{ $t('Shuffle') }}
                 </v-btn>
@@ -406,6 +406,7 @@
 import {computed, onMounted, ref, watch} from 'vue'
 import {useRouter, useRoute} from 'vue-router'
 import {useRouteQuery} from '@vueuse/router'
+import {isSeedExpired, mintSeed} from '@/utils/randomSeed'
 import {useDebounceFn} from '@vueuse/core'
 import {useI18n} from 'vue-i18n'
 import {useDisplay} from 'vuetify'
@@ -470,11 +471,12 @@ const router = useRouter()
 const route = useRoute()
 const {mobile} = useDisplay()
 
-// ─── Filter / sort / paging state (5 useRouteQuery slots total) ─────────
+// ─── Filter / sort / paging state (6 useRouteQuery slots total) ─────────
 const urlFilters = useUrlFilters(computed(() => RECIPE_FILTER_DEFS))
 const {filterDefs, groupedFilterDefs, filterParams, activeFilterCount, getFilter, setFilter, clearFilter, clearAllFilters} = urlFilters
 const query = useRouteQuery<string>('query', '')
 const ordering = useRouteQuery<string>('ordering', '')
+const seed = useRouteQuery<string>('seed', '')
 const page = useRouteQuery('page', 1, {transform: Number})
 const pageSize = useRouteQuery('pageSize', useUserPreferenceStore().deviceSettings.search_itemsPerPage, {transform: Number})
 
@@ -636,8 +638,23 @@ function buildSearchParams(): ApiRecipeListRequest {
         pageSize: pageSize.value,
         ...(query.value ? {query: query.value} : {}),
         ...(ordering.value ? {sortOrder: ordering.value} : {}),
+        ...(isRandomOrdering.value && seed.value ? {seed: seed.value} : {}),
         includeChildren: useUserPreferenceStore().deviceSettings.search_includeChildren ?? true,
     }
+}
+
+// A random listing carries a seed in the URL so paging, Back and "View more" all see one order.
+// -random is the sort toggle's flipped state; the backend treats both as random.
+const isRandomOrdering = computed(() => ordering.value === 'random' || ordering.value === '-random')
+
+/** New seed when the sort is random, none otherwise. Page changes deliberately do not call this. */
+function rerollSeed() {
+    seed.value = isRandomOrdering.value ? mintSeed() : ''
+}
+
+function shuffle() {
+    rerollSeed()
+    searchRecipes({page: 1})
 }
 
 function searchRecipes(opts?: {page?: number}) {
@@ -682,7 +699,10 @@ function handleRowClick(_event: PointerEvent, data: any) {
 }
 
 // Watcher attached in onMounted after first fetch to avoid double-fire on legacy URL migration.
-const debouncedSearch = useDebounceFn(() => searchRecipes({page: 1}), 300)
+const debouncedSearch = useDebounceFn(() => {
+    rerollSeed()
+    searchRecipes({page: 1})
+}, 300)
 let stopReQueryWatcher: (() => void) | null = null
 function startReQueryWatcher() {
     if (stopReQueryWatcher) return
@@ -727,6 +747,7 @@ function loadSelectedCustomFilter() {
     // without a sort_order leaves the current ordering untouched (sort is optional).
     includeSort.value = hasSort
     if (hasSort && ord != null) ordering.value = ord
+    rerollSeed()
     unknownStash.value = stash
     snapshotFilters()
     startReQueryWatcher()
@@ -839,6 +860,8 @@ function applyStatFilter(filter: Record<string, FilterValue>) {
 /* ─── Lifecycle ─────────────────────────────────────────────────────── */
 
 onMounted(async () => {
+    // A random deep link without a seed, or with one older than the TTL, gets a fresh seed before the first fetch.
+    if (isRandomOrdering.value && (!seed.value || isSeedExpired(seed.value))) seed.value = mintSeed()
     // Deep-link from the database page's Edit action: preload the saved search and
     // open it in edit mode. loadSelectedCustomFilter() starts the watcher + searches.
     const editFilterId = Number(route.query.editFilter)
