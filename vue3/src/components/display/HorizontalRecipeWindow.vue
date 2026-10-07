@@ -45,6 +45,7 @@ import RecipeCard from "@/components/display/RecipeCard.vue";
 import {useDisplay} from "vuetify";
 import {ApiApi, ApiRecipeListRequest, Recipe, RecipeOverview} from "@/openapi";
 import {homePageCols} from "@/utils/breakpoint_utils";
+import {getOrMintStoredSeed} from "@/utils/randomSeed";
 import {useI18n} from "vue-i18n";
 import {DateTime} from "luxon";
 import {useRouter} from "vue-router";
@@ -85,6 +86,9 @@ const props = withDefaults(defineProps<{
     // Only meaningful for the sample modes below; recent/new are date-ordered and `random` is
     // always random.
     randomize?: boolean
+    // Distinguishes sections of the same mode (the default layout has two Random sections) so
+    // each keeps its own stored seed; falls back to the mode.
+    seedKey?: string
 }>(), {
     randomize: true,
 })
@@ -195,7 +199,8 @@ requestParameters.random = 'true' as any
 // param (and this component's own existing test) uses the string 'true' - matches the actual
 // wire contract; typed here rather than changed to avoid altering the generated client.
 requestParameters.random = 'true' as any
-            queryParams.value = {ordering: 'random'}
+            requestParameters.seed = getOrMintStoredSeed(`home:${props.seedKey ?? props.mode}`)
+            queryParams.value = {ordering: 'random', seed: requestParameters.seed}
             break
         case 'new':
             requestParameters._new = true

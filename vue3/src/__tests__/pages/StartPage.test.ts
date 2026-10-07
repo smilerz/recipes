@@ -51,6 +51,20 @@ describe('StartPage', () => {
         expect(wrapper.findAll('.stub-horizontal-recipe-scroller').length).toBeGreaterThan(0)
     })
 
+    // Each Random section keeps its own stored seed; the default layout has two Random
+    // sections, which would show identical recipes if they shared one.
+    it('gives each Random section its own seed key', async () => {
+        apiMock.apiRecipeList.mockResolvedValue({ results: [{}], count: 30 })
+        const wrapper = mountPage(StartPage)
+        await flushPromises()
+        const keys = wrapper.findAll('.stub-horizontal-recipe-scroller')
+            .filter(w => w.attributes('mode') === 'random')
+            .map(w => w.attributes('seed-key'))
+        expect(keys).toHaveLength(2)
+        expect(keys[0]).toBeTruthy()
+        expect(new Set(keys).size).toBe(2)
+    })
+
     it('shows random scroller even with few recipes', async () => {
         apiMock.apiRecipeList.mockResolvedValue({ results: [{}], count: 5 })
         const wrapper = mountPage(StartPage)
