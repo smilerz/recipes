@@ -5,6 +5,7 @@ Uses SearchScenario fixtures from conftest.py.
 """
 from datetime import timedelta
 
+import pytest
 from django.contrib import auth
 from django.utils import timezone
 from django_scopes import scope, scopes_disabled
@@ -1272,3 +1273,57 @@ class TestSortOrders:
         req = make_search_request(u1_s1)
         results = do_search(req, space_1, sort_order='-random')
         assert results.count() == 13
+
+    def _random_ids(self, req, space_1, **params):
+        return list(do_search(req, space_1, **params).values_list('id', flat=True))
+
+    def test_sort_random_with_seed_is_repeatable(self, search_recipes, u1_s1, space_1, make_search_request):
+        """The same seed must give the same order on every request, so paging through
+        a random listing (and navigating Back to it) does not reshuffle."""
+        req = make_search_request(u1_s1)
+        first = self._random_ids(req, space_1, sort_order='random', seed='mgq3k1-x9f2ab')
+        second = self._random_ids(req, space_1, sort_order='random', seed='mgq3k1-x9f2ab')
+        assert len(first) == 13
+        assert first == second
+
+    def test_sort_random_with_different_seeds_differ(self, search_recipes, u1_s1, space_1, make_search_request):
+        req = make_search_request(u1_s1)
+        a = self._random_ids(req, space_1, sort_order='random', seed='seed-one')
+        b = self._random_ids(req, space_1, sort_order='random', seed='seed-two')
+        assert sorted(a) == sorted(b)
+        assert a != b
+
+    def test_sort_random_with_seed_pages_without_gaps_or_duplicates(self, search_recipes, u1_s1, space_1, make_search_request):
+        """Consecutive pages cut from separate evaluations must tile the full order."""
+        req = make_search_request(u1_s1)
+        full = self._random_ids(req, space_1, sort_order='random', seed='tile')
+        page1 = list(do_search(req, space_1, sort_order='random', seed='tile').values_list('id', flat=True)[:5])
+        page2 = list(do_search(req, space_1, sort_order='random', seed='tile').values_list('id', flat=True)[5:10])
+        assert page1 + page2 == full[:10]
+        assert len(set(page1 + page2)) == 10
+
+    def test_sort_descending_random_with_seed_matches_ascending(self, search_recipes, u1_s1, space_1, make_search_request):
+        """-random is the sort toggle's descending state; random has no direction."""
+        req = make_search_request(u1_s1)
+        asc = self._random_ids(req, space_1, sort_order='random', seed='dir')
+        desc = self._random_ids(req, space_1, sort_order='-random', seed='dir')
+        assert asc == desc
+
+    def test_seed_is_ignored_when_not_random(self, search_recipes, u1_s1, space_1, make_search_request):
+        req = make_search_request(u1_s1)
+        plain = self._random_ids(req, space_1, sort_order='name')
+        seeded = self._random_ids(req, space_1, sort_order='name', seed='ignored')
+        assert plain == seeded
+
+    def test_invalid_seed_is_rejected(self, search_recipes, u1_s1, space_1, make_search_request):
+        from rest_framework.exceptions import ParseError
+        req = make_search_request(u1_s1)
+        for bad in ('has space', 'semi;colon', 'x' * 65):
+            with pytest.raises(ParseError):
+                do_search(req, space_1, sort_order='random', seed=bad)
+
+    def test_empty_seed_is_treated_as_absent(self, search_recipes, u1_s1, space_1, make_search_request):
+        """_resolve_params drops empty params for every key, so ?seed= means no seed
+        (plain random), not a validation error."""
+        req = make_search_request(u1_s1)
+        assert len(self._random_ids(req, space_1, sort_order='random', seed='')) == 13
