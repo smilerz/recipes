@@ -5,6 +5,7 @@ import { createI18n } from 'vue-i18n'
 import { createRouter, createMemoryHistory, type Router } from 'vue-router'
 import { DateTime } from 'luxon'
 import { apiMock, resetApiMock } from '@/__tests__/api-mock'
+import type { StartPageSectionMode } from '@/types/settings'
 
 // Spread the real module so branch-specific exports pulled in transitively
 // (e.g. AutomationTypeEnum via Models.ts on food-filters+) stay defined; only
@@ -74,6 +75,54 @@ describe('HorizontalRecipeWindow — New section "More" link (#4646)', () => {
         expect(query).not.toHaveProperty('createdonGte')
         expect(query).not.toHaveProperty('sortOrder')
         expect(query.createdon_gte).not.toBe(DateTime.now().minus({ days: 14 }).toISODate())
+    })
+})
+
+// The Recently viewed and Random sections' "More" links must carry their sort order
+// to SearchPage, which hydrates it from the `ordering` URL key. They used to emit
+// `sortOrder` (silently dropped), and `recent` asked for `-created_at` instead of
+// last-viewed order, so "More" lost the section's ordering.
+describe('HorizontalRecipeWindow — "More" link keeps the section sort order', () => {
+    beforeEach(() => {
+        resetApiMock()
+    })
+
+    async function mountMode(mode: StartPageSectionMode) {
+        apiMock.apiRecipeList = vi.fn().mockResolvedValue({ count: 1, results: [{ id: 2, name: 'Viewed', recent: '5' }] })
+
+        const pinia = createPinia()
+        const i18n = createI18n({ legacy: false, locale: 'en', messages: { en: {} }, missingWarn: false, fallbackWarn: false })
+        const router: Router = createRouter({
+            history: createMemoryHistory(),
+            routes: [
+                { path: '/', component: { template: '<div/>' } },
+                { path: '/advanced-search', name: 'SearchPage', component: { template: '<div/>' } },
+            ],
+        })
+        const push = vi.spyOn(router, 'push')
+
+        const wrapper = mount(HorizontalRecipeWindow, {
+            props: { mode },
+            global: {
+                plugins: [pinia, i18n, router],
+                stubs: { RecipeCard: { template: '<div class="stub-card"/>' } },
+            },
+        })
+        await flushPromises()
+        return { wrapper, push }
+    }
+
+    it.each<[StartPageSectionMode, string]>([
+        ['recent', '-lastviewed'],
+        ['random', 'random'],
+    ])('%s mode "More" passes ordering=%s, not the ignored sortOrder key', async (mode, expectedOrdering) => {
+        const { wrapper, push } = await mountMode(mode)
+
+        await wrapper.find('h4').trigger('click')
+
+        const query = (push.mock.calls[0][0] as { query: Record<string, unknown> }).query
+        expect(query.ordering).toBe(expectedOrdering)
+        expect(query).not.toHaveProperty('sortOrder')
     })
 })
 
