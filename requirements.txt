@@ -26,8 +26,6 @@ icalendar==7.3.0
 pyyaml==6.0.3
 uritemplate==4.2.0
 beautifulsoup4==4.15.0
-microdata==0.8.0
-mock==5.2.0
 Jinja2==3.1.6
 django-allauth[mfa,socialaccount]==65.19.7
 recipe-scrapers==15.12.0
@@ -53,9 +51,8 @@ python3-openid==3.2.0
 python3-saml==1.16.0
 django-vite==3.2.0
 litellm==1.103.3
-thefuzz==0.22.1
+rapidfuzz==3.14.6
 stripe==15.6.1
-frappe-client==0.1.0.dev0
 regex==2026.9.29
 
 # Development

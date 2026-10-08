@@ -1,10 +1,9 @@
 import uuid
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
 import pytest
 from django.contrib import auth
 from django_scopes import scope
-from mock.mock import Mock
 
 from cookbook.connectors.connector import Connector, ShoppingListEntryDTO
 from cookbook.connectors.connector_manager import ActionType, ConnectorManager, run_connectors

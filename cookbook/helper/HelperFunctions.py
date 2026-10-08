@@ -1,7 +1,9 @@
 from django.db.models import Func
-from thefuzz import fuzz
-from thefuzz import process as fuzz_process
+from rapidfuzz import fuzz, process as fuzz_process, utils as fuzz_utils
 from requests_hardened import Config, Manager
+
+# Characters 128-255 are deleted before comparing, as the thefuzz library this replaced did.
+_NON_ASCII_LATIN1 = {i: None for i in range(128, 256)}
 
 
 class Round(Func):
@@ -48,7 +50,11 @@ def match_or_fuzzymatch(check_string: str, key_dict: dict) -> tuple[str, int]:
         if check_string.lower() in [match.lower() for match in key_dict[key]]:
             return (key, 100)
     for key in key_dict:
-        key_score = fuzz_process.extract(check_string, key_dict[key], limit=1, scorer=fuzz.partial_token_sort_ratio)[0]
-        if key_score[1] > score[1]:
-            score = (key, key_score[1])
+        best_score = round(fuzz_process.extractOne(check_string, key_dict[key], scorer=fuzz.partial_token_sort_ratio, processor=_normalize_for_fuzzy_match)[1])
+        if best_score > score[1]:
+            score = (key, best_score)
     return score
+
+
+def _normalize_for_fuzzy_match(text: str) -> str:
+    return fuzz_utils.default_process(str(text).translate(_NON_ASCII_LATIN1))
