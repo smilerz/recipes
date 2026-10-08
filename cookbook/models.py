@@ -5,7 +5,7 @@ import uuid
 from datetime import date, timedelta
 
 import oauth2_provider.models
-from annoying.fields import AutoOneToOneField
+from cookbook.fields import AutoOneToOneField
 from django.contrib import auth
 from django.contrib.auth.models import Group, User
 from django.contrib.postgres.indexes import GinIndex
