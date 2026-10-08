@@ -1,7 +1,6 @@
 import re
 from gettext import gettext as _
 
-import bleach
 import markdown as md
 from django import template
 from django.db.models import Avg
@@ -13,6 +12,7 @@ from rest_framework.authtoken.models import Token
 
 from cookbook.helper.mdx_attributes import MarkdownFormatExtension
 from cookbook.helper.mdx_urlize import UrlizeExtension
+from cookbook.helper.template_helper import clean_html
 from cookbook.models import get_model_name
 from recipes import settings
 from recipes.settings import PLUGINS
@@ -71,7 +71,7 @@ def markdown(value):
 
     parsed_md = parsed_md[3:]  # remove outer paragraph
     parsed_md = parsed_md[:len(parsed_md) - 4]
-    return bleach.clean(parsed_md, tags, markdown_attrs)
+    return clean_html(parsed_md, tags, markdown_attrs)
 
 
 @register.simple_tag
