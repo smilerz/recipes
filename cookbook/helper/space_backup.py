@@ -97,10 +97,16 @@ def discover_space_scoped_models():
     return [(model, paths[model]) for model in ordered]
 
 
+def _is_forward_field(field):
+    """False for the reverse-relation objects get_fields() also returns. `concrete` cannot tell them
+    apart: Django 6.1 reports many-to-many fields as non-concrete (they have no column)."""
+    return not field.auto_created
+
+
 def _referenced_pks(model, related_model, rows):
     """All pks referencing `related_model` via any FK or M2M field on `model`, across `rows`."""
     field_names = [(f.name, f.many_to_many) for f in model._meta.get_fields()
-                   if f.concrete and f.related_model is related_model and (f.many_to_one or f.many_to_many)]
+                   if _is_forward_field(f) and f.related_model is related_model and (f.many_to_one or f.many_to_many)]
     pks = set()
     for row in rows:
         for field_name, is_m2m in field_names:
