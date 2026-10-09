@@ -1,7 +1,9 @@
 name: "Code scanning - action"
 
 on:
+  # Pushes only on preview (the alert baseline); PR branches are covered by pull_request.
   push:
+    branches: [preview]
   pull_request:
   schedule:
     - cron: '0 13 * * 2'
