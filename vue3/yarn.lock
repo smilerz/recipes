@@ -4227,10 +4227,10 @@ vite-plugin-vuetify@^2.1.3:
     debug "^4.3.3"
     upath "^2.0.1"
 
-vite@8.3.2, "vite@^6.0.0 || ^7.0.0 || ^8.0.0":
-  version "8.3.2"
-  resolved "https://registry.yarnpkg.com/vite/-/vite-8.3.2.tgz#391d1e62761b343435b8e4b512e449a4f90670a3"
-  integrity sha512-SQr1x6W5vVSbROg7vsyXIaxK9b0G7zsT68acdWWRmnBUsgDieLCRG+Rep9WdZgcposvv/GSnr4GUUBqB3vXq6w==
+vite@8.3.3, "vite@^6.0.0 || ^7.0.0 || ^8.0.0":
+  version "8.3.3"
+  resolved "https://registry.yarnpkg.com/vite/-/vite-8.3.3.tgz#12651726ab1cca0a9e1e649e3cb4dca5b6b006a9"
+  integrity sha512-cTAldKPImjg6c+gk48U19POPn3GCBzZwpdsN8ZMEEcbpes+6/wvfqUd0C2y3qYY4wsj8PwgFwrZ/1jBPVttMSg==
   dependencies:
     lightningcss "^1.33.0"
     picomatch "^4.0.7"
@@ -4341,10 +4341,10 @@ vue@^3.5.32, vue@^3.5.43:
     "@vue/server-renderer" "3.5.43"
     "@vue/shared" "3.5.43"
 
-vuetify@^4.2.3:
-  version "4.2.3"
-  resolved "https://registry.yarnpkg.com/vuetify/-/vuetify-4.2.3.tgz#a59d2e9b7291031561e2bda1a98b00b05225e601"
-  integrity sha512-guUzwFh5LhIKgt0iBaxo1d7UJg2X3P6L4OhnthGwXeGLO/sIOzpn1E2E9uh5bYPm5CgeARuuFmIaG50QPoeNKQ==
+vuetify@^4.2.4:
+  version "4.2.4"
+  resolved "https://registry.yarnpkg.com/vuetify/-/vuetify-4.2.4.tgz#20f47f5503ca9a50e1b96b1d87249d7d8700a75d"
+  integrity sha512-zLYtVGJcg2hK3DHoeiBXSImpzg4E0N19p3zCgGnNhMp/YwaVQZXP4cPkIKeL/evVnUeLP/CjSnFsFBThWSl2Ew==
   dependencies:
     "@vuetify/v0" "^1.2.1"
 
