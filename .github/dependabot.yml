@@ -25,7 +25,6 @@ updates:
     labels:
       - "python"
       - "dependencies"
-      - "automerge"
 
   - package-ecosystem: "npm"
     open-pull-requests-limit: 20
@@ -63,7 +62,6 @@ updates:
     labels:
       - "javascript"
       - "dependencies"
-      - "automerge"
 
   - package-ecosystem: "github-actions"
     open-pull-requests-limit: 20
@@ -82,7 +80,6 @@ updates:
     labels:
       - "github_actions"
       - "dependencies"
-      - "automerge"
 
   - package-ecosystem: "docker"
     open-pull-requests-limit: 5
@@ -97,7 +94,6 @@ updates:
     labels:
       - "docker"
       - "dependencies"
-      - "automerge"
     ignore:
       # Held on python 3.13 on purpose. The old reason (litellm's
       # Requires-Python <3.14) no longer applies: litellm allows <3.15 and the
@@ -114,4 +110,3 @@ updates:
     labels:
       - "devcontainers"
       - "dependencies"
-      - "automerge"
