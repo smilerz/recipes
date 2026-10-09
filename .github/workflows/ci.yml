@@ -1,10 +1,7 @@
 name: Continuous Integration
 
 on:
-    push:
-        # Preview pushes go through preview-orchestrator.yml to chain CI → docker.
-        # All other branch pushes fire CI directly.
-        branches-ignore: [preview]
+    # PRs only: a push trigger as well would run everything twice per commit.
     pull_request:
     workflow_call:
 

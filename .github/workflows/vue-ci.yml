@@ -1,8 +1,7 @@
 name: Vue Continuous Integration
 
 on:
-  push:
-    branches-ignore: [preview]
+  # PRs only: a push trigger as well would run everything twice per commit.
   pull_request:
   workflow_call:
 
