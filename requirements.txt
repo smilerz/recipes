@@ -35,7 +35,6 @@ boto3==1.43.108
 # Pinned to a master commit: the released 2.5.0 caps Django <6.1 but master supports 6.1 (django-commons/django-prometheus#537).
 # Switch back to a PyPI release once one allows Django 6.1+.
 django-prometheus @ git+https://github.com/django-commons/django-prometheus.git@c04929aac027bde8410bde20af6ca864a1e6929d
-django-hCaptcha==0.2.0
 python-ldap==3.4.8
 django-auth-ldap==5.3.0
 pytubefix==11.2.0
