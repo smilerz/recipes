@@ -1,0 +1,65 @@
+name: Auto-merge
+
+# Turns on GitHub's native auto-merge for every PR into preview authored by smilerz (the maintainer) or by
+# Dependabot. Modelled on smilerz/ricette's auto-merge.yml, without its major-bump exclusion.
+#
+# Auto-merge only queues the PR. GitHub still waits for every required check on preview to pass, and a force-push
+# or closing the PR cancels it on its own. Draft PRs are skipped because GitHub cannot auto-merge a draft.
+#
+# This repo's ruleset requires one approving review, which the smilerz-merge-bot App that enables auto-merge
+# supplies (GitHub's `--auto` precheck blocks on REVIEW_REQUIRED, and being a bypass actor only helps when the App
+# merges directly). The App did not author these PRs, so it can approve them.
+#
+# pull_request_target, not pull_request: for a same-repo PR, `pull_request` runs the workflow definition FROM the
+# PR's own branch with write permissions, so a PR editing this file could evaluate its own edited rule against
+# itself. pull_request_target always runs the default branch's copy. The usual risk with pull_request_target
+# (secrets reaching untrusted checked-out code) does not apply: nothing is checked out here, only PR metadata is
+# read, and it reaches the shell through env vars rather than being interpolated into the script.
+#
+# Auto-merge is enabled with the App token, not GITHUB_TOKEN: GitHub does not start new workflow runs for events
+# caused by GITHUB_TOKEN, and that includes the merge this triggers once checks pass, so the preview-push
+# workflows (Docker publish, CodeQL baseline) would silently stop running for auto-merged PRs.
+on:
+  pull_request_target:
+    types: [opened, reopened, synchronize, ready_for_review]
+    branches: [preview]
+
+permissions:
+  contents: read
+
+jobs:
+  enable-auto-merge:
+    # same-repo only: rejects fork-originated PRs, including ones whose author field claims to be dependabot
+    if: >-
+      github.event.pull_request.draft == false
+      && github.event.pull_request.head.repo.full_name == github.repository
+      && (github.event.pull_request.user.login == 'smilerz'
+          || (github.event.pull_request.user.login == 'dependabot[bot]'
+              && startsWith(github.event.pull_request.head.ref, 'dependabot/')))
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    steps:
+      - name: Mint an installation token for the auto-merge app
+        id: app
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1  # v3.2.0
+        with:
+          app-id: ${{ secrets.BOT_APP_ID }}
+          private-key: ${{ secrets.BOT_PRIVATE_KEY }}
+
+      - name: Approve
+        uses: hmarr/auto-approve-action@b40d6c9ed2fa10c9a2749eca7eb004418a705501  # v4.0.0
+        with:
+          github-token: ${{ steps.app.outputs.token }}
+          review-message: |
+            Approved by smilerz-merge-bot. Will merge automatically once required checks pass.
+
+      - name: Enable auto-merge
+        env:
+          GH_TOKEN: ${{ steps.app.outputs.token }}
+          URL: ${{ github.event.pull_request.html_url }}
+        run: |
+          # Squash, not rebase: the update-branch REST API (used to bring a stale PR up to date) creates a merge
+          # commit on top of the branch, and `--rebase` then fails because that commit cannot be replayed linearly.
+          gh pr merge --auto --squash "$URL"

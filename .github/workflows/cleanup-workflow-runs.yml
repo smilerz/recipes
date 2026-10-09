@@ -90,17 +90,17 @@ jobs:
           delete_workflow_pattern: codeql-analysis.yml
           dry_run: ${{ inputs.dry_run || false }}
 
-      # dependabot-automerge — initially deferred ("first 2 cycles") but
+      # auto-merge (formerly dependabot-automerge) — initially deferred ("first 2 cycles") but
       # the workflow has been stable since 2026-04-23 (3+ weeks); 504 runs
       # accumulated by 2026-04-27. Treat like CI churn.
-      - name: Cleanup dependabot-automerge.yml runs
+      - name: Cleanup auto-merge.yml runs
         uses: Mattraks/delete-workflow-runs@v2
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           repository: ${{ github.repository }}
           retain_days: 30
           keep_minimum_runs: 10
-          delete_workflow_pattern: dependabot-automerge.yml
+          delete_workflow_pattern: auto-merge.yml
           dry_run: ${{ inputs.dry_run || false }}
 
       # GitHub dynamic workflows — these have no yml files in the repo; the
