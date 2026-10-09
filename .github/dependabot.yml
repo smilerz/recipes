@@ -99,8 +99,11 @@ updates:
       - "dependencies"
       - "automerge"
     ignore:
-      # python 3.14+ is incompatible with our pinned litellm (Requires-Python
-      # <3.14). Stay on 3.13 until litellm supports 3.14 (dependabot #719).
+      # Held on python 3.13 on purpose. The old reason (litellm's
+      # Requires-Python <3.14) no longer applies: litellm allows <3.15 and the
+      # 3.14 CI canary passes. Lift this once the docker-build check is a
+      # required status check, so an auto-merged Python bump cannot reach
+      # docker-publish without its Alpine image build having passed first.
       - dependency-name: "python"
         versions: [">=3.14"]
 

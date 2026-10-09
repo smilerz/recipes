@@ -1,0 +1,76 @@
+name: Docker build check
+
+# Builds the image on PRs that could break it, without pushing anything. The image is otherwise first built by
+# docker-publish.yml after a merge to preview, so a change that passes the Ubuntu test suite but fails the Alpine
+# (musl, compile-from-source) build would publish nothing and be found only after it had merged. That matters most
+# for Dependabot's Python base-image and requirements bumps, which auto-merge.
+#
+# The check is meant to be a REQUIRED status check, so it must report on every PR: path filters at the workflow level
+# would leave it pending forever on PRs that do not touch the image. Instead the job always runs, decides in its
+# first step whether the PR touches anything the build depends on, and skips the expensive steps if not (a skipped
+# step leaves the job, and the check, green).
+#
+# amd64 only: the arm64 build in docker-publish.yml runs under QEMU and takes far longer. The cache is read from
+# the preview build and never written, so PRs do not add to the repository's Actions cache.
+on:
+  pull_request:
+    branches: [preview]
+
+permissions:
+  contents: read
+
+jobs:
+  docker-build:
+    name: docker-build
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 2
+
+      - name: Does this PR touch the image build?
+        id: relevant
+        run: |
+          # On pull_request the checkout is the merge commit, so HEAD^1 is the base branch.
+          changed=$(git diff --name-only HEAD^1 HEAD)
+          echo "$changed"
+          if echo "$changed" | grep -q -E '^(Dockerfile|\.dockerignore|requirements\.txt|boot\.sh|version\.py|http\.d/|\.github/workflows/docker-build-check\.yml$)'; then
+            echo "build=true" | tee -a "$GITHUB_OUTPUT"
+          else
+            echo "build=false" | tee -a "$GITHUB_OUTPUT"
+            echo "Nothing the image build depends on changed; skipping."
+          fi
+
+      - uses: actions/setup-node@v7
+        if: steps.relevant.outputs.build == 'true'
+        with:
+          node-version: '24'
+          cache: yarn
+          cache-dependency-path: vue3/yarn.lock
+
+      - name: Install dependencies
+        if: steps.relevant.outputs.build == 'true'
+        working-directory: ./vue3
+        run: yarn install --frozen-lockfile
+
+      - name: Build frontend
+        if: steps.relevant.outputs.build == 'true'
+        working-directory: ./vue3
+        run: yarn build
+
+      - name: Set up Docker Buildx
+        if: steps.relevant.outputs.build == 'true'
+        uses: docker/setup-buildx-action@v4
+
+      - name: Build image (not pushed)
+        if: steps.relevant.outputs.build == 'true'
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          file: Dockerfile
+          pull: true
+          push: false
+          platforms: linux/amd64
+          cache-from: type=gha
