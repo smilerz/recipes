@@ -95,13 +95,13 @@ updates:
       - "docker"
       - "dependencies"
     ignore:
-      # Held on python 3.13 on purpose. The old reason (litellm's
-      # Requires-Python <3.14) no longer applies: litellm allows <3.15 and the
-      # 3.14 CI canary passes. Lift this once the docker-build check is a
+      # The image runs python 3.14. Hold 3.15 and later back on purpose: move
+      # one minor at a time, and only once the docker-build check is a
       # required status check, so an auto-merged Python bump cannot reach
       # docker-publish without its Alpine image build having passed first.
+      # (Alpine tag updates within 3.14 still come through.)
       - dependency-name: "python"
-        versions: [">=3.14"]
+        versions: [">=3.15"]
 
   - package-ecosystem: "devcontainers"
     directory: "/"

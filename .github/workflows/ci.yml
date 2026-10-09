@@ -21,10 +21,10 @@ jobs:
                 python-version: ["3.13"]
                 node-version: ["24"]
                 include:
-                    # Forward-looking canary: 3.14 is not viable until litellm drops
-                    # its Requires-Python <3.14 cap (and any other <3.14 deps follow).
-                    # Non-blocking — build (3.14, 24) is NOT a required status check;
-                    # when it flips green, 3.14 is ready to adopt.
+                    # 3.14 is the Python the Docker image runs. Non-blocking for now:
+                    # build (3.14, 24) is NOT a required status check; the required
+                    # one is still build (3.13, 24), which needs the ruleset edited
+                    # before the primary version can move.
                     - python-version: "3.14"
                       node-version: "24"
                       experimental: true
