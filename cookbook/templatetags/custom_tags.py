@@ -54,7 +54,7 @@ def markdown(value):
         "img",
         "a",
         "sub", "sup",
-        'pre', 'table', 'td', 'tr', 'th', 'tbody', 'style', 'thead'
+        'pre', 'table', 'td', 'tr', 'th', 'tbody', 'thead'
     }
     parsed_md = md.markdown(
         value,

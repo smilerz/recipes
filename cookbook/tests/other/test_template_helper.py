@@ -445,8 +445,19 @@ class TestRenderInstructionsCustomTags:
 class TestMarkdownFilterSanitizes:
     @pytest.mark.parametrize('payload', XSS_PAYLOADS)
     def test_payload_is_inert(self, payload):
-        # the markdown filter deliberately allows <style>, so that one tag is outside this invariant
-        _assert_inert(markdown_filter(f'text {payload} more'), forbidden_tags=('script', 'iframe', 'svg', 'object', 'embed', 'form', 'input', 'link', 'meta', 'base'))
+        _assert_inert(markdown_filter(f'text {payload} more'))
+
+    @pytest.mark.parametrize('css', [
+        '<style>body{display:none}</style>',
+        '<style>@import url(//evil.example/x.css);</style>',
+        '<style type="text/css">a{background:url(//evil.example/x)}</style>',
+        '<STYLE>p{color:red}</STYLE>',
+    ])
+    def test_style_element_is_removed_with_its_css(self, css):
+        out = markdown_filter(f'before {css} after')
+        assert not _dom(out).find('style')
+        assert 'display:none' not in out and 'evil.example' not in out and 'color:red' not in out
+        assert 'before' in out and 'after' in out
 
     def test_formatting_and_safe_link_survive(self):
         out = _dom(markdown_filter('a **bold** [link](https://example.org/)'))
