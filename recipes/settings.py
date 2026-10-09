@@ -103,8 +103,8 @@ LOGGING = {
 }
 
 # zip import limits (in MB)
-MAX_ZIP_FILE_SIZE = int(os.getenv('MAX_ZIP_FILE_SIZE', 10)) * 1024 * 1024 # default 10MB
-MAX_ZIP_TOTAL_SIZE = int(os.getenv('MAX_ZIP_TOTAL_SIZE', 500)) * 1024 * 1024 # default 500MB
+MAX_ZIP_FILE_SIZE = int(os.getenv('MAX_ZIP_FILE_SIZE', 10)) * 1024 * 1024  # default 10MB
+MAX_ZIP_TOTAL_SIZE = int(os.getenv('MAX_ZIP_TOTAL_SIZE', 500)) * 1024 * 1024  # default 500MB
 MAX_ZIP_FILE_COUNT = int(os.getenv('MAX_ZIP_FILE_COUNT', 2000))
 MAX_ZIP_NESTING_DEPTH = int(os.getenv('MAX_ZIP_NESTING_DEPTH', 2))
 
@@ -394,7 +394,7 @@ READ_SCOPE = 'read'
 WRITE_SCOPE = 'write'
 
 ##################################################################
-####### change DEFAULT_SCHEMA_CLASS below to regenerate legacy API
+# change DEFAULT_SCHEMA_CLASS below to regenerate legacy API
 ##################################################################
 
 REST_FRAMEWORK = {
@@ -409,7 +409,7 @@ REST_FRAMEWORK = {
 }
 
 ##################################################################
-####### change DEFAULT_SCHEMA_CLASS above to regenerate legacy API
+# change DEFAULT_SCHEMA_CLASS above to regenerate legacy API
 ##################################################################
 
 SPECTACULAR_SETTINGS = {
