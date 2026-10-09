@@ -199,7 +199,6 @@ INSTALLED_APPS = [
     'drf_spectacular_sidecar',
     'django_cleanup.apps.CleanupConfig',
     'django_vite',
-    'hcaptcha',
 
     'allauth',
     'allauth.account',

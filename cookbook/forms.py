@@ -10,7 +10,8 @@ from django.forms import widgets
 from django.utils.translation import gettext_lazy as _
 from django_scopes import scopes_disabled
 from django_scopes.forms import SafeModelChoiceField
-from hcaptcha.fields import hCaptchaField
+
+from cookbook.helper.hcaptcha import hCaptchaField
 
 from .models import InviteLink, Recipe, Space, User, UserPreference, UserSpace
 
