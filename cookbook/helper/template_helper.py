@@ -1,8 +1,8 @@
 import html
 from gettext import gettext as _
 
-import bleach
 import markdown as md
+import nh3
 from jinja2 import TemplateSyntaxError, UndefinedError
 from jinja2.exceptions import SecurityError
 from jinja2.sandbox import SandboxedEnvironment
@@ -10,6 +10,43 @@ from markdown.extensions.tables import TableExtension
 
 from cookbook.helper.mdx_attributes import MarkdownFormatExtension
 from cookbook.helper.mdx_urlize import UrlizeExtension
+
+# what bleach.clean() allowed when called without arguments
+DEFAULT_ALLOWED_TAGS = {'a', 'abbr', 'acronym', 'b', 'blockquote', 'code', 'em', 'i', 'li', 'ol', 'strong', 'ul'}
+DEFAULT_ALLOWED_ATTRIBUTES = {'a': ['href', 'title'], 'abbr': ['title'], 'acronym': ['title']}
+ALLOWED_URL_SCHEMES = {'http', 'https', 'mailto'}
+
+
+def clean_html(text, tags=None, attributes=None, attribute_validators=None):
+    """Sanitize an HTML fragment against an allow-list.
+
+    :param tags: allowed tag names (default: basic inline formatting)
+    :param attributes: {tag or "*": [allowed attribute names]}
+    :param attribute_validators: {tag: {attribute: fn(value) -> bool}}, an allowed attribute is dropped if its validator rejects the value
+    """
+    if tags is None:
+        tags, attributes = DEFAULT_ALLOWED_TAGS, DEFAULT_ALLOWED_ATTRIBUTES
+    tags = set(tags)
+    allowed = {tag: set(names) for tag, names in (attributes or {}).items()}
+    # nh3 allows `title` and `lang` on every tag unless "*" is given explicitly
+    allowed.setdefault('*', set())
+    validators = attribute_validators or {}
+
+    def attribute_filter(tag, attribute, value):
+        validator = validators.get(tag, {}).get(attribute)
+        if validator is not None and not validator(value):
+            return None
+        return value
+
+    return nh3.clean(
+        text,
+        tags=tags,
+        attributes=allowed,
+        attribute_filter=attribute_filter,
+        url_schemes=ALLOWED_URL_SCHEMES,
+        link_rel=None,
+        clean_content_tags={'script', 'style'} - tags,
+    )
 
 
 def _resolve_unit_name(ingredient):
@@ -79,10 +116,10 @@ class IngredientObject(object):
                 amount_val = 0.0
             self.amount = f"<scalable-number v-bind:number='{amount_val}' v-bind:factor='ingredient_factor'></scalable-number>"
             self.numeric_amount = amount_val
-        self.unit = bleach.clean(_resolve_unit_name(ingredient))
+        self.unit = clean_html(_resolve_unit_name(ingredient))
         if ingredient.food:
             if ingredient.food.plural_name in (None, ""):
-                self.food = bleach.clean(_resolve_food_name(ingredient))
+                self.food = clean_html(_resolve_food_name(ingredient))
             else:
                 self.food = _plural_name_tag(
                     str(ingredient.food),
@@ -92,7 +129,7 @@ class IngredientObject(object):
                 )
         else:
             self.food = ""
-        self.note = bleach.clean(str(ingredient.note))
+        self.note = clean_html(str(ingredient.note))
 
     def __str__(self):
         ingredient = self.amount
@@ -123,7 +160,7 @@ def render_instructions(step):  # TODO deduplicate markdown cleanup code
     }
 
     # do a first, strict round of cleaning
-    instructions = bleach.clean(instructions, allowed_tags, allowed_attributes)
+    instructions = clean_html(instructions, allowed_tags, allowed_attributes)
 
     # parse markdown
     instructions = md.markdown(
@@ -162,40 +199,32 @@ def render_instructions(step):  # TODO deduplicate markdown cleanup code
     except Exception:
         return _('Could not parse template code.') + ' Error generating template.'
 
-    # do second cleaning that allows scalable-number
-    def validate_scalable_number_attributes(tag, name, value):
-        if name == 'v-bind:number':
-            try:
-                float(value)
-                return True
-            except (ValueError, TypeError):
-                return False
-        if name == 'v-bind:factor':
-            return value == 'ingredient_factor'
-        return False
-
-    def validate_plural_name_attributes(tag, name, value):
-        if name == 'v-bind:amount':
-            try:
-                float(value)
-                return True
-            except (ValueError, TypeError):
-                return False
-        if name == 'v-bind:factor':
-            return value == 'ingredient_factor'
-        if name == ':no-amount':
-            return value == 'true' or value == 'false'
-        if name in ["singular", "plural", ]:
+    # do second cleaning that allows scalable-number and plural-name
+    def is_number(value):
+        try:
+            float(value)
             return True
-        return False
+        except (ValueError, TypeError):
+            return False
 
-    allowed_attributes["scalable-number"] = validate_scalable_number_attributes
-    allowed_attributes["plural-name"] = validate_plural_name_attributes
+    allowed_attributes["scalable-number"] = ['v-bind:number', 'v-bind:factor']
+    allowed_attributes["plural-name"] = ['v-bind:amount', 'v-bind:factor', ':no-amount', 'singular', 'plural']
+    attribute_validators = {
+        "scalable-number": {
+            'v-bind:number': is_number,
+            'v-bind:factor': lambda value: value == 'ingredient_factor',
+        },
+        "plural-name": {
+            'v-bind:amount': is_number,
+            'v-bind:factor': lambda value: value == 'ingredient_factor',
+            ':no-amount': lambda value: value in ('true', 'false'),
+        },
+    }
 
     allowed_tags.append('scalable-number')
     allowed_tags.append('plural-name')
 
-    instructions = bleach.clean(instructions, allowed_tags, allowed_attributes)
+    instructions = clean_html(instructions, allowed_tags, allowed_attributes, attribute_validators)
 
     # remove any left over { }
     instructions = instructions.replace('{', '')
