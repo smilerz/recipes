@@ -18,7 +18,7 @@ DATABASES['default']['CONN_MAX_AGE'] = 0
 
 UNINSTALL_MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware', 'django.middleware.security.SecurityMiddleware', 'whitenoise.middleware.WhiteNoiseMiddleware',
-    'django.middleware.common.CommonMiddleware', 'django.middleware.csrf.CsrfViewMiddleware', 
+    'django.middleware.common.CommonMiddleware', 'django.middleware.csrf.CsrfViewMiddleware',
     'django.middleware.locale.LocaleMiddleware', 'django.middleware.clickjacking.XFrameOptionsMiddleware'
 ]
 
