@@ -22,7 +22,7 @@
         :aria-label="props.label || undefined"
         :variant="props.variant === 'outlined' ? 'outlined' : undefined"
         :density="props.inline ? 'compact' : (props.density || undefined)"
-        :class="['model-select', {'model-select--inline': props.inline}]"
+        :class="['model-select', {'model-select--inline': props.inline, 'model-select--tight': tight}]"
         :clearable="props.canClear"
         clear-icon="$close"
         persistent-clear
@@ -71,6 +71,7 @@
 </template>
 
 <script lang="ts" setup>
+import {useTightFieldIcons} from "@/composables/useTightFieldIcons"
 import {computed, onBeforeUnmount, onMounted, ref, shallowReactive, shallowRef, useTemplateRef, watch} from "vue"
 import {useI18n} from "vue-i18n"
 import {EditorSupportedModels, GenericModel, getGenericModelFromString} from "@/types/Models"
@@ -184,6 +185,9 @@ const selectedLabel = computed(() => {
     const found = known.find(item => item[itemValue.value] === value)
     return found ? String(found[itemLabel.value] ?? '') : ''
 })
+
+/** True while the selected text is too long to sit beside the icons: they are then shown only on hover or focus. */
+const tight = useTightFieldIcons({get value() { return field.value?.$el }}, () => selectedLabel.value)
 
 /** Vuetify echoes the selection into the text box: its label, or while that is still unknown the raw id. Never a user search. */
 const searchIsEchoOfSelection = computed(() => {
@@ -422,6 +426,12 @@ onMounted(async () => {
     font-size: 14px;
     opacity: 1;
     color: rgba(var(--v-theme-on-surface), 0.4);
+}
+
+/* a value too long to sit beside the icons gets the room they would take; they come back on hover or focus (tap on touch) */
+.model-select--tight:not(:hover):not(:focus-within) :deep(.v-field__clearable),
+.model-select--tight:not(:hover):not(:focus-within) :deep(.v-field__append-inner) {
+    display: none;
 }
 
 /* inline: sits beside compact fields in a dense row, so the value text gets as much of the narrow column as it can.
