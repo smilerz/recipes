@@ -174,9 +174,9 @@ const items = ref([] as EditorIngredient[])
 
 const tableHeaders = [
     {title: t('Amount'), key: 'amount', minWidth: '120px', cellProps: {class: 'pr-0'}},
-    {title: t('Unit'), key: 'unit', minWidth: '120px', cellProps: {class: 'pr-0'}},
-    {title: t('Food'), key: 'food', minWidth: '120px', cellProps: {class: 'pr-0'}},
-    {title: t('Note'), key: 'note', minWidth: '120px', cellProps: {class: 'pr-0'}},
+    {title: t('Unit'), key: 'unit', minWidth: '140px', cellProps: {class: 'pr-0'}},
+    {title: t('Food'), key: 'food', minWidth: '170px', cellProps: {class: 'pr-0'}},
+    {title: t('Note'), key: 'note', minWidth: '140px', cellProps: {class: 'pr-0'}},
     {key: 'action', width: '1%', noBreak: true, align: 'end' as const},
 ]
 
