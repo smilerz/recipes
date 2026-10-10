@@ -32,7 +32,6 @@ const DEFAULT_STUBS: Record<string, Component> = {
     PropertiesEditor: { template: '<div class="stub-properties-editor"/>' },
     GlobalSearchDialog: { template: '<div class="stub-global-search-dialog"/>' },
     OpenDataImportSettings: { template: '<div class="stub-open-data-import-settings"/>' },
-    Multiselect: { template: '<div class="stub-multiselect"/>' },
     SyncDialog: { template: '<div class="stub-sync-dialog"/>' },
     BatchEditUserSpaceDialog: { template: '<div class="stub-batch-edit-user-space-dialog"/>' },
     // Model list components (food-filters)

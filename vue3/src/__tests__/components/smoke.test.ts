@@ -106,7 +106,6 @@ function smokeMount(component: Component, props: Record<string, any> = {}, extra
             stubs: {
                 ModelSelect: { template: '<div class="stub-model-select"/>' },
                 VClosableCardTitle: { template: '<div class="stub-closable-title"/>' },
-                Multiselect: { template: '<div class="stub-multiselect"/>' },
                 RecipeContextMenu: { template: '<div class="stub-context-menu"/>' },
                 RecipeImage: { template: '<div class="stub-recipe-image"/>' },
                 IngredientsTable: { template: '<div class="stub-ingredients-table"/>' },
