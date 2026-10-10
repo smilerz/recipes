@@ -8,7 +8,7 @@ import type {Plugin} from 'vite'
 import vue from '@vitejs/plugin-vue'
 import vuetify, {transformAssetUrls} from 'vite-plugin-vuetify'
 import {VitePWA} from "vite-plugin-pwa";
-import {PluginModule} from "./src/types/Plugins";
+import type {PluginModule} from "./src/types/Plugins.ts";
 import {readFileSync, existsSync} from "node:fs";
 
 // https://vitejs.dev/config/
