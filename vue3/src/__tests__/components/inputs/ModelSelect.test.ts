@@ -689,6 +689,52 @@ describe('ModelSelect — browser spellcheck only helps while a new name is bein
     })
 })
 
+describe('ModelSelect — the menu fits the room around the field', () => {
+    afterEach(() => vi.restoreAllMocks())
+
+    it('shrinks to the room below when neither side has room for the full menu (a short window), instead of covering the field', async () => {
+        vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockReturnValue({top: 273, bottom: 329, left: 0, right: 300, width: 300, height: 56, x: 0, y: 273, toJSON: () => ({})} as DOMRect)
+        vi.stubGlobal('innerHeight', 616)
+        const {wrapper} = mountAutocomplete()
+        await openMenu(wrapper)
+        expect(field(wrapper).props('menuProps')).toMatchObject({location: 'bottom', maxHeight: 275})
+        vi.unstubAllGlobals()
+    })
+
+    it('keeps the full height when there is room', async () => {
+        vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockReturnValue({top: 100, bottom: 156, left: 0, right: 300, width: 300, height: 56, x: 0, y: 100, toJSON: () => ({})} as DOMRect)
+        vi.stubGlobal('innerHeight', 900)
+        const {wrapper} = mountAutocomplete()
+        await openMenu(wrapper)
+        expect(field(wrapper).props('menuProps')).toMatchObject({location: 'bottom', maxHeight: 310})
+        vi.unstubAllGlobals()
+    })
+})
+
+describe('ModelSelect — a tag field only makes room for its input while something is typed', () => {
+    const rootOf = (wrapper: ReturnType<typeof mountAutocomplete>['wrapper']) => wrapper.find('.model-select')
+
+    it('is not marked as typing when nothing has been typed', () => {
+        const {wrapper} = mountAutocomplete({mode: 'tags'})
+        expect(rootOf(wrapper).classes()).not.toContain('model-select--typing')
+    })
+
+    it('is marked as typing once text is typed (so a narrow field may wrap the input below its chips)', async () => {
+        const {wrapper} = mountAutocomplete({mode: 'tags'})
+        await openMenu(wrapper)
+        await typeSearch(wrapper, 'afr')
+        expect(rootOf(wrapper).classes()).toContain('model-select--typing')
+    })
+
+    it('goes back to not typing when the text is cleared', async () => {
+        const {wrapper} = mountAutocomplete({mode: 'tags'})
+        await openMenu(wrapper)
+        await typeSearch(wrapper, 'afr')
+        await typeSearch(wrapper, '')
+        expect(rootOf(wrapper).classes()).not.toContain('model-select--typing')
+    })
+})
+
 describe('ModelSelect — tags and multiple mode (Phase 2, T1–T11)', () => {
     const tags = (props: Record<string, any> = {}, extra: Record<string, any> = {}) => mountAutocomplete({mode: 'tags', ...props}, extra)
     const chipsIn = (wrapper: ReturnType<typeof mountAutocomplete>['wrapper']) => wrapper.findAll('.v-chip')

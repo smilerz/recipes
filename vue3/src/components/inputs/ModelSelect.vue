@@ -2,7 +2,7 @@
     <v-autocomplete
         ref="field"
         :menu="menu"
-        :menu-props="{maxWidth: menuMaxWidth}"
+        :menu-props="{maxWidth: menuMaxWidth, ...menuPlace}"
         :model-value="fieldValue"
         :search="visibleSearch"
         :items="displayedItems"
@@ -23,7 +23,7 @@
         :aria-label="props.label || undefined"
         :variant="props.variant === 'outlined' ? 'outlined' : undefined"
         :density="props.inline ? 'compact' : (props.density || undefined)"
-        :class="['model-select', {'model-select--inline': props.inline, 'model-select--tight': tight}]"
+        :class="['model-select', {'model-select--inline': props.inline, 'model-select--tight': tight, 'model-select--typing': typedQuery !== ''}]"
         :clearable="props.canClear"
         clear-icon="$close"
         persistent-clear
@@ -74,6 +74,7 @@
 <script lang="ts" setup>
 import {useTightFieldIcons} from "@/composables/useTightFieldIcons"
 import {FIELD_ICONS_WIDTH, INLINE_FIELD_ICONS_WIDTH} from "@/utils/field_fit"
+import {menuPlacement} from "@/utils/menu_placement"
 import {computed, onBeforeUnmount, onMounted, ref, shallowReactive, shallowRef, useTemplateRef, watch} from "vue"
 import {useI18n} from "vue-i18n"
 import {EditorSupportedModels, GenericModel, getGenericModelFromString} from "@/types/Models"
@@ -136,6 +137,7 @@ const itemLabel = computed(() => modelClass.model.itemLabel ?? 'name')
 const field = useTemplateRef<{ $el: HTMLElement }>('field')
 const menu = ref(false)
 const menuMaxWidth = ref<number | undefined>(undefined)
+const menuPlace = ref<{ location?: 'bottom' | 'top', maxHeight?: number }>({})
 const search = ref('')
 const loading = ref(false)
 const hasMoreItems = ref(false)
@@ -310,7 +312,12 @@ function onMenu(open: boolean) {
     if (open && pickedSince) return
     menu.value = open
     // Vuetify widens a menu to fit its longest item; the dropdown must stay as wide as the field (L9)
-    if (open) menuMaxWidth.value = field.value?.$el.getBoundingClientRect().width
+    if (open && field.value) {
+        menuMaxWidth.value = field.value.$el.getBoundingClientRect().width
+        // placed from the field itself, not the whole input: the hint below it is not where the menu opens from
+        const rect = (field.value.$el.querySelector('.v-field') ?? field.value.$el).getBoundingClientRect()
+        menuPlace.value = menuPlacement({fieldTop: rect.top, fieldBottom: rect.bottom, viewportHeight: window.innerHeight})
+    }
     // typing already schedules its own fetch, so only an untouched search box needs one on open
     if (!open || props.items || typedQuery.value !== '') return
     void fetchItems('')
@@ -431,6 +438,23 @@ onMounted(async () => {
     font-size: 14px;
     opacity: 1;
     color: rgba(var(--v-theme-on-surface), 0.4);
+}
+
+/* The chip's close x is Vuetify's 18px, one and a half times the 12px chip text. It is drawn at 14px like the field's own icons,
+   inside the same 18px tap area so it is no harder to hit. */
+.model-select :deep(.v-chip__close) {
+    font-size: 14px;
+    width: 14px;
+    height: 14px;
+    padding: 2px;
+    box-sizing: content-box;
+}
+
+/* Vuetify gives a focused input a 64px minimum width, so in a narrow tag field it wraps below the chip and the field grows
+   from 40px to 68px as soon as it is clicked. An empty input needs no room: it stays on the chip's line, and the normal
+   minimum (the text must be visible) only applies once something is typed. */
+.model-select.v-autocomplete--multiple:not(.model-select--typing) :deep(.v-field--focused input) {
+    min-width: 0;
 }
 
 /* a value too long to sit beside the icons gets the room they would take; they come back on hover or focus (tap on touch) */
