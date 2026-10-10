@@ -196,3 +196,31 @@ describe('list-mobile-collapse — log mobile rows render recipe name + date', (
         expect(model.listSettings?.defaults?.mobileSubtitle).toContain('createdAt')
     })
 })
+
+describe('list-ignores-query — endpoints that cannot filter are flagged so pickers narrow client-side', () => {
+    // The generated client is the ground truth: a list request without a `query` parameter cannot search on the server.
+    const api = readFileSync(resolve(__dirname, '../../openapi/apis/ApiApi.ts'), 'utf8')
+    const withoutQuery: string[] = []
+    for (const m of api.matchAll(/export interface Api(\w+?)ListRequest \{([\s\S]*?)\n\}/g)) {
+        if (m[2].includes('query')) continue
+        try {
+            const model = (getGenericModelFromString(m[1] as EditorSupportedModels, t) as GenericModel)?.model
+            // non-paginated models are already narrowed by the picker for that reason
+            if (model && model.isPaginated !== false) withoutQuery.push(m[1])
+        } catch { /* not a registered model */ }
+    }
+
+    it('found the endpoints without a query parameter (guards the scan itself)', () => {
+        expect(withoutQuery).toEqual(expect.arrayContaining(['MealType', 'Household', 'AiProvider', 'InventoryEntry', 'Storage']))
+    })
+
+    it.each(withoutQuery)('%s is flagged listIgnoresQuery', (name) => {
+        const model = (getGenericModelFromString(name as EditorSupportedModels, t) as GenericModel).model
+        expect(model.listIgnoresQuery).toBe(true)
+    })
+
+    it.each(['Food', 'Keyword', 'Unit', 'Recipe', 'Supermarket'])('%s can filter on the server, so it is not flagged', (name) => {
+        const model = (getGenericModelFromString(name as EditorSupportedModels, t) as GenericModel).model
+        expect(model.listIgnoresQuery).toBeFalsy()
+    })
+})
