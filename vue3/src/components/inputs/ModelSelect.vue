@@ -155,13 +155,21 @@ const sourceItems = computed(() => props.items ?? fetchedItems.value)
 
 const isMulti = computed(() => props.mode !== 'single')
 
+/** Hosts often start from `''` or `{}` to mean "nothing picked". */
+function isBlank(value: any): boolean {
+    return value == null || value === '' || (typeof value === 'object' && !Array.isArray(value) && Object.keys(value).length === 0)
+}
+
 /** What is selected, as a list: the array in tags mode, the single value (if any) otherwise. */
 const selectedValues = computed<any[]>(() => {
     if (isMulti.value) return Array.isArray(model.value) ? model.value : []
-    return model.value == null || model.value === '' ? [] : [model.value]
+    return isBlank(model.value) ? [] : [model.value]
 })
 
-const fieldValue = computed(() => isMulti.value ? selectedValues.value : model.value)
+const fieldValue = computed(() => {
+    if (isMulti.value) return selectedValues.value
+    return isBlank(model.value) ? null : model.value
+})
 
 /** Records of the selection that are known from outside the loaded options (looked up by id). */
 const hydratedRecords = computed(() => selectedValues.value.map(value => hydrated.get(value)).filter(record => record != null))
@@ -207,9 +215,9 @@ function withSelection(list: any[]): any[] {
     return missing.length ? [...list, ...missing] : list
 }
 
-/** A non-paginated endpoint (e.g. User) ignores the typed text and returns everything, so narrow it here. */
+/** An endpoint that cannot search (non-paginated, e.g. User, or listIgnoresQuery, e.g. MealType) returns everything, so narrow it here. */
 function narrowedByTypedText(list: any[]): any[] {
-    if (modelClass.model.isPaginated !== false || typedQuery.value === '') return list
+    if ((modelClass.model.isPaginated !== false && !modelClass.model.listIgnoresQuery) || typedQuery.value === '') return list
     const needle = typedQuery.value.toLowerCase()
     return list.filter(item => String(item[itemLabel.value] ?? '').toLowerCase().includes(needle))
 }
