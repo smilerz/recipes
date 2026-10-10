@@ -31,8 +31,7 @@
                         <recipe-image-editor v-if="isUpdate()" :recipe-id="editingObj.id!" :source-url="editingObj.sourceUrl" v-model:images="editingObj.images" />
 
                         <v-label>{{ $t('Keywords') }}</v-label>
-                        <model-autocomplete v-if="newPicker" mode="tags" v-model="editingObj.keywords" model="Keyword" allow-create></model-autocomplete>
-                        <model-select v-else mode="tags" v-model="editingObj.keywords" model="Keyword" allow-create></model-select>
+                        <model-select mode="tags" v-model="editingObj.keywords" model="Keyword" allow-create></model-select>
                         <v-row density="compact">
                             <v-col cols="12" md="6">
                                 <v-number-input :label="$t('WaitingTime')" v-model="editingObj.waitingTime" :step="5"></v-number-input>
@@ -127,7 +126,7 @@
                         <v-text-field :label="$t('Imported_From')" v-model="editingObj.sourceUrl"></v-text-field>
                         <v-checkbox :label="$t('Private_Recipe')" persistent-hint :hint="$t('Private_Recipe_Help')" v-model="editingObj._private"></v-checkbox>
                         <model-select mode="tags" model="User" :label="$t('Share')" persistent-hint v-model="editingObj.shared"
-                                      append-to-body v-if="editingObj._private"></model-select>
+                                      v-if="editingObj._private"></model-select>
 
                         <div class="mt-2" v-if="editingObj.filePath">
                             {{ $t('ExternalRecipe') }}
@@ -193,8 +192,6 @@ import {ApiApi, Food, Ingredient, Recipe, Step} from "@/openapi";
 import ModelEditorBase from "@/components/model_editors/ModelEditorBase.vue";
 import {useModelEditorFunctions} from "@/composables/useModelEditorFunctions";
 import ModelSelect from "@/components/inputs/ModelSelect.vue";
-import ModelAutocomplete from "@/components/inputs/ModelAutocomplete.vue";
-import {useModelSelectPrototypeOn} from "@/composables/useModelSelectPrototype";
 import StepEditor from "@/components/inputs/StepEditor.vue";
 import RecipeImageEditor from "@/components/inputs/RecipeImageEditor.vue";
 import {VueDraggable} from "vue-draggable-plus";
@@ -241,9 +238,6 @@ watch([() => props.item, () => props.itemId], () => {
 // object specific data (for selects/display)
 const {mobile} = useDisplay()
 const {t} = useI18n()
-// in-context trial of ModelAutocomplete on the Keywords field; ?ms=new / ?ms=old (temporary).
-// A literal <model-select> stays the default so tests that stub it by name still apply.
-const newPicker = useModelSelectPrototypeOn()
 
 const tab = ref("recipe")
 const dialogStepManager = ref(false)

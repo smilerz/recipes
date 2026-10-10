@@ -13,7 +13,7 @@
                 <v-row>
                     <v-col cols="12" md="6">
 
-                        <model-select model="Food" v-model="selectedFood" @update:modelValue="refreshPage()" append-to-body>
+                        <model-select model="Food" v-model="selectedFood" @update:modelValue="refreshPage()">
                             <template #append>
                                 <v-btn icon variant="plain">
                                     <v-icon icon="$menu"></v-icon>
@@ -49,7 +49,7 @@
                         </model-select>
                     </v-col>
                     <v-col cols="12" md="6">
-                        <model-select model="Unit" v-model="selectedUnit" @update:modelValue="refreshPage()" append-to-body>
+                        <model-select model="Unit" v-model="selectedUnit" @update:modelValue="refreshPage()">
                             <template #append>
                                 <v-btn icon variant="plain">
                                     <v-icon icon="$menu"></v-icon>
@@ -119,12 +119,12 @@
                                     @update:modelValue="item.changed = true" :precision="2"></v-number-input>
                 </template>
                 <template v-slot:item.unit="{ item }">
-                    <model-select model="Unit" v-model="item.unit" density="compact" hide-details allow-create append-to-body
+                    <model-select model="Unit" v-model="item.unit" density="compact" hide-details allow-create
                                   @update:modelValue="item.changed = true">
                     </model-select>
                 </template>
                 <template v-slot:item.food="{ item }">
-                    <model-select model="Food" v-model="item.food" density="compact" hide-details allow-create append-to-body
+                    <model-select model="Food" v-model="item.food" density="compact" hide-details allow-create
                                   @update:modelValue="item.changed = true"></model-select>
                 </template>
                 <template v-slot:item.note="{ item }">

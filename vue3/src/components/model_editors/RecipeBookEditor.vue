@@ -27,14 +27,14 @@
                         <v-text-field :label="$t('Name')" v-model="editingObj.name"></v-text-field>
                         <v-textarea :label="$t('Description')" v-model="editingObj.description" rows="3"></v-textarea>
                         <user-file-field v-model="editingObj.image" :label="$t('Image')" />
-                        <model-select model="User" :label="$t('Shared')" :hint="$t('SharedHelp')" v-model="editingObj.shared" mode="tags" append-to-body></model-select>
-                        <model-select model="CustomFilter" :label="$t('SavedSearch')" v-model="editingObj.filter" append-to-body></model-select>
+                        <model-select model="User" :label="$t('Shared')" :hint="$t('SharedHelp')" v-model="editingObj.shared" mode="tags"></model-select>
+                        <model-select model="CustomFilter" :label="$t('SavedSearch')" v-model="editingObj.filter"></model-select>
                         <v-number-input :label="$t('Order')" :hint="$t('OrderInformation')" v-model="editingObj.order"></v-number-input>
                     </v-form>
                 </v-tabs-window-item>
 
                 <v-tabs-window-item value="recipes">
-                    <model-select model="Recipe" v-model="selectedRecipe" append-to-body>
+                    <model-select model="Recipe" v-model="selectedRecipe">
                         <template #append>
                             <v-btn icon color="create" @click="addRecipeToBook()">
                                 <v-icon icon="$create"></v-icon>

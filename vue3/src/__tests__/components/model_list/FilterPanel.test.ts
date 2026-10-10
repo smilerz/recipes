@@ -10,9 +10,9 @@ import type {FilterDef} from '@/composables/modellist/types'
 
 const ModelSelectStub = {
     name: 'ModelSelect',
-    props: ['model', 'modelValue', 'mode', 'appendToBody'],
+    props: ['model', 'modelValue', 'mode'],
     emits: ['update:modelValue'],
-    render(ctx: any) { return h('div', {class: 'model-select-stub', 'data-append-to-body': String(ctx.appendToBody)}) },
+    render() { return h('div', {class: 'model-select-stub'}) },
 }
 
 const TriStateToggleStub = {
@@ -82,40 +82,6 @@ describe('FilterPanel', () => {
             )
             const dateInputs = wrapper.findAll('input[type="date"]')
             expect(dateInputs.length).toBe(2)
-        })
-    })
-
-    // Filter dropdowns always body-teleport (append-to-body) so the drawer's
-    // overflow-y: auto can't clip them. A prior inline attempt (fe6cca553) was
-    // reverted because it clipped dropdowns to 1-2 visible rows.
-    describe('dropdown teleporting', () => {
-        it('model-select dropdowns are body-teleported', () => {
-            const wrapper = mountPanel([
-                {key: 'created_by', labelKey: 'CreatedBy', type: 'model-select', modelName: 'User' as any},
-            ])
-            expect(wrapper.find('.model-select-stub').attributes('data-append-to-body')).toBe('true')
-        })
-
-        it('tag-select dropdowns are body-teleported', () => {
-            const wrapper = mountPanel(
-                [{key: 'keywords_or', labelKey: 'Keywords', type: 'tag-select' as any, modelName: 'Keyword' as any}],
-            )
-            expect(wrapper.find('.model-select-stub').attributes('data-append-to-body')).toBe('true')
-        })
-
-        it('tag-group (RecipeTagFilterGroup) dropdowns are body-teleported', () => {
-            const wrapper = mountPanel(
-                [{
-                    key: 'keywords', labelKey: 'Keywords', type: 'tag-group' as any,
-                    modelName: 'Keyword' as any,
-                    variantKeys: ['keywords', 'keywordsAnd', 'keywordsOrNot', 'keywordsAndNot'] as any,
-                }],
-            )
-            const stubs = wrapper.findAll('.model-select-stub')
-            expect(stubs.length).toBeGreaterThan(0)
-            for (const s of stubs) {
-                expect(s.attributes('data-append-to-body')).toBe('true')
-            }
         })
     })
 })

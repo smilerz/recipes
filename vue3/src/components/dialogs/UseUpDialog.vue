@@ -47,7 +47,7 @@
                                 <v-number-input v-model="row.amount" :precision="2" :min="0" :max="row.newUnit ? undefined : row.original"
                                                 control-variant="stacked" hide-details density="compact"></v-number-input>
                                 <model-select :label="$t('Unit')" :placeholder="row.unit?.name || undefined" v-model="row.newUnit"
-                                              model="Unit" hide-details density="compact" append-to-body inline></model-select>
+                                              model="Unit" hide-details density="compact" inline></model-select>
                                 <v-btn icon="fa-solid fa-minus" variant="text" size="small" data-test="consumed-btn"
                                        :color="row.amount === 0 && row.original !== 0 ? 'warning' : undefined"
                                        :title="$t('Consumed')" :aria-label="$t('Consumed')"

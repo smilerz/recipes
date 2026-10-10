@@ -30,8 +30,8 @@
                         <v-textarea :label="$t('Description')" v-model="editingObj.description"></v-textarea>
                         <!-- TODO fix card overflow invisible, overflow-visible class is not working -->
                         <user-file-field v-model="editingObj.foodImage" :label="$t('Image')" />
-                        <model-select :label="$t('Category')" v-model="editingObj.supermarketCategory" model="SupermarketCategory" allow-create append-to-body></model-select>
-                        <model-select :label="$t('ShoppingList')" :hint="$t('DefaultShoppingListHelp')" v-model="editingObj.shoppingLists" model="ShoppingList" mode="tags" allow-create append-to-body></model-select>
+                        <model-select :label="$t('Category')" v-model="editingObj.supermarketCategory" model="SupermarketCategory" allow-create></model-select>
+                        <model-select :label="$t('ShoppingList')" :hint="$t('DefaultShoppingListHelp')" v-model="editingObj.shoppingLists" model="ShoppingList" mode="tags" allow-create></model-select>
 
                         <div class="text-caption text-medium-emphasis mb-1">{{ $t('ShelfLife') }}</div>
 
@@ -92,13 +92,13 @@
                                 <v-number-input :label="$t('ShoppingAmount')" v-model="editingObj.shoppingAmount" :precision="2" :min="0" control-variant="hidden" clearable hide-details></v-number-input>
                             </v-col>
                             <v-col cols="5">
-                                <model-select :label="$t('ShoppingUnit')" v-model="editingObj.preferredShoppingUnit" model="Unit" append-to-body hide-details></model-select>
+                                <model-select :label="$t('ShoppingUnit')" v-model="editingObj.preferredShoppingUnit" model="Unit" hide-details></model-select>
                             </v-col>
                         </v-row>
 
                         <v-row density="compact" align="center">
                             <v-col cols="6">
-                                <model-select :label="$t('PreferredUnit')" v-model="editingObj.preferredUnit" model="Unit" append-to-body></model-select>
+                                <model-select :label="$t('PreferredUnit')" v-model="editingObj.preferredUnit" model="Unit"></model-select>
                             </v-col>
                         </v-row>
                     </v-form>

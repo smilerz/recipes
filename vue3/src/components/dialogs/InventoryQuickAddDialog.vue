@@ -37,8 +37,7 @@
                     <v-divider class="mb-3" />
                 </template>
 
-                <component
-                    :is="PickerSelect"
+                <model-select
                     v-model="selectedLocationId"
                     model="InventoryLocation"
                     :items="msLocationItems"
@@ -48,7 +47,6 @@
                     variant="outlined"
                     density="compact"
                     hide-details
-                    append-to-body
                     class="mb-3"
                 />
 
@@ -64,8 +62,7 @@
                     class="mb-3"
                 />
 
-                <component
-                    :is="PickerSelect"
+                <model-select
                     model="Unit"
                     v-model="selectedUnit"
                     :label="$t('Unit')"
@@ -73,7 +70,6 @@
                     density="compact"
                     can-clear
                     hide-details
-                    append-to-body
                 />
 
                 <v-text-field
@@ -127,7 +123,6 @@ import {DateTime} from 'luxon'
 import VClosableCardTitle from '@/components/dialogs/VClosableCardTitle.vue'
 import ExpiryPresetDialog from '@/components/dialogs/ExpiryPresetDialog.vue'
 import ModelSelect from '@/components/inputs/ModelSelect.vue'
-import {useModelSelectPrototype} from '@/composables/useModelSelectPrototype'
 import {useI18n} from 'vue-i18n'
 import {ApiApi, type InventoryEntry, type Unit} from '@/openapi'
 import {ErrorMessageType, useMessageStore} from '@/stores/MessageStore'
@@ -144,8 +139,6 @@ export type InventoryQuickAddResult = {
 type LocationItem = {value: number, label: string, household?: {id: number, name: string}, isFreezer?: boolean}
 
 const {t} = useI18n()
-// in-context trial of ModelAutocomplete on the Location / Unit pickers; ?ms=new / ?ms=old (temporary)
-const PickerSelect = useModelSelectPrototype()
 
 const dialog = ref(false)
 const title = ref('')

@@ -34,7 +34,6 @@
                             density="compact"
                             :can-clear="true"
                             :search-on-load="false"
-                            :append-to-body="true"
                             :hide-details="true"
                         />
                     </div>

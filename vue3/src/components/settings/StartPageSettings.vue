@@ -63,7 +63,6 @@
                             hide-details
                             search-on-load
                             can-clear
-                            append-to-body
                             :placeholder="t('any_random', {target: modeLabel(section.mode)})"
                         />
                     </div>
@@ -76,7 +75,6 @@
                         density="compact"
                         hide-details
                         can-clear
-                        append-to-body
                         :placeholder="t('any_random', {target: t('User')})"
                         style="max-width: 280px"
                     />

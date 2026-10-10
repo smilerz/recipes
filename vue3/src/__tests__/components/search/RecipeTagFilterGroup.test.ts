@@ -8,7 +8,7 @@ import {h, ref, nextTick} from 'vue'
 
 const ModelSelectStub = {
     name: 'ModelSelect',
-    props: ['model', 'modelValue', 'mode', 'appendToBody'],
+    props: ['model', 'modelValue', 'mode'],
     emits: ['update:modelValue'],
     render() {
         return h('div', {class: 'model-select-stub', 'data-model-value': JSON.stringify((this as any).modelValue)})
@@ -212,17 +212,5 @@ describe('RecipeTagFilterGroup', () => {
             const badge = wrapper.find('.v-badge')
             expect(badge.text()).toContain('3')
         })
-    })
-
-    describe('drawer teleport', () => {
-        it('defaults to appending multiselect dropdowns to body (inline card usage)', () => {
-            const {wrapper} = mountWidget({keywords: '1', keywordsAnd: '2', keywordsOrNot: '3', keywordsAndNot: '4'})
-            const selects = wrapper.findAllComponents(ModelSelectStub)
-            expect(selects.length).toBeGreaterThan(0)
-            for (const s of selects) {
-                expect(s.props('appendToBody')).toBe(true)
-            }
-        })
-
     })
 })
