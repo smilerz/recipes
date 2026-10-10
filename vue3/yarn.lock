@@ -1888,11 +1888,6 @@
   resolved "https://registry.yarnpkg.com/@vue/tsconfig/-/tsconfig-0.9.1.tgz#6aa901e9f89242b26e1e564c98747278df6882e5"
   integrity sha512-buvjm+9NzLCJL29KY1j1991YYJ5e6275OiK+G4jtmfIb+z4POywbdm0wXusT9adVWqe0xqg70TbI7+mRx4uU9w==
 
-"@vueform/multiselect@^2.6.11":
-  version "2.6.11"
-  resolved "https://registry.yarnpkg.com/@vueform/multiselect/-/multiselect-2.6.11.tgz#3585bf1989b969019cd6f8095c8a27d4d45c61e7"
-  integrity sha512-iG4TGfqE3baftbSGF0PhoS+xZOCnV0ChkDo9rwhJ/Qi2YlCdb6tyQCjvyug3jnzncga8+d85kx0WvG7rDYFqiA==
-
 "@vuetify/loader-shared@^2.1.2":
   version "2.1.2"
   resolved "https://registry.yarnpkg.com/@vuetify/loader-shared/-/loader-shared-2.1.2.tgz#faf27cb8c40ba5a45b930b9a2785e35525e9c96f"

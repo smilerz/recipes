@@ -457,16 +457,6 @@ router.afterEach((to, from) => {
 
 }
 
-/* vueform/multiselect */
-
-.multiselect-option.is-pointed {
-    background: #b98766 !important;
-}
-
-.multiselect-option.is-selected {
-    background: #b55e4f !important;
-}
-
 /*
  * Vuetify 4.0.6 emits .text-X / .bg-X theme color rules into
  * <style id="vuetify-theme-stylesheet"> wrapped in @layer

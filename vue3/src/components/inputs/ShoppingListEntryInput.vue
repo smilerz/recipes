@@ -11,35 +11,35 @@
         </template>
     </v-text-field>
 
-    <Multiselect
+    <!-- picking a food adds an entry for it; typed text goes to the ingredient parser when Enter is pressed -->
+    <v-autocomplete
         v-if="useUserPreferenceStore().deviceSettings.shopping_input_autocomplete"
-        :placeholder="$t('Shopping_input_placeholder')"
-        class="material-multiselect "
-        v-model="ingredientModelInput"
-        :options="search"
-        :on-create="createObject"
-        create-option
-        @select="selectObject"
-        valueProp="id"
-        label="name"
-        :delay="300"
-        :searchable="true"
-        :strict="false"
-        :classes="{
-                dropdown: 'multiselect-dropdown z-3000',
-                containerActive: '',
-            }"
-    />
+        :label="$t('Shopping_input_placeholder')"
+        :model-value="null"
+        :search="searchText"
+        :items="foodOptions"
+        item-title="name"
+        item-value="id"
+        return-object
+        no-filter
+        hide-no-data
+        hide-details
+        density="compact"
+        :loading="loading || props.loading"
+        @update:model-value="onPick"
+        @update:search="onSearch"
+        @keydown.enter="onEnter"
+        @focus="onFocus"
+    ></v-autocomplete>
 </template>
 
 <script setup lang="ts">
 
 
-import {PropType, ref} from "vue";
+import {nextTick, onBeforeUnmount, PropType, ref} from "vue";
 import {ApiApi, Food, FoodSimple,  ShoppingListEntry, ShoppingListRecipe, Unit} from "@/openapi";
 import {useShoppingStore} from "@/stores/ShoppingStore";
 import {ErrorMessageType, useMessageStore} from "@/stores/MessageStore";
-import Multiselect from "@vueform/multiselect";
 import {useUserPreferenceStore} from "@/stores/UserPreferenceStore";
 
 const props = defineProps({
@@ -51,8 +51,8 @@ const props = defineProps({
 const ingredientInput = ref('')
 const ingredientInputIcon = ref('fa-solid fa-plus')
 
-const ingredientModelInput = ref({} as Food)
-const searchQuery = ref('')
+const searchText = ref('')
+const foodOptions = ref<Food[]>([])
 
 const loading = ref(false)
 
@@ -96,73 +96,60 @@ function parseIngredient() {
     })
 }
 
-// ----------- FUNCTIONS FOR TESTING MULTISELECT INPUT -------------
+// ----------- AUTOCOMPLETE INPUT -------------
 
-function createObject(object: any, select$: Multiselect) {
-    ingredientInput.value = object['name']
-    ingredientModelInput.value = {} as Food
-    select$.close()
-    select$.clearSearch()
-    parseIngredient()
-    return false
-}
+let picked = false
+let searchTimer: ReturnType<typeof setTimeout> | undefined
 
-function selectObject(foodId: number, food: Food, select$: Multiselect) {
-    //ingredientInput.value = food.name
-    ingredientModelInput.value = {} as Food
+function onPick(food: Food | null) {
+    if (!food) return
+    picked = true
+    setTimeout(() => picked = false)
+    clearTimeout(searchTimer)
+    searchText.value = ''
     addIngredient(1, null, food)
-    return false
 }
+
+/** Enter on typed text sends it to the parser, unless that same Enter just picked a highlighted food. */
+function onEnter() {
+    const text = searchText.value.trim()
+    nextTick(() => {
+        if (picked || text === '') return
+        searchText.value = ''
+        ingredientInput.value = text
+        parseIngredient()
+    })
+}
+
+function onSearch(query: string | null) {
+    if (picked) return // Vuetify echoes the picked name into the search box right after a selection
+    searchText.value = query ?? ''
+    clearTimeout(searchTimer)
+    searchTimer = setTimeout(() => searchFoods(searchText.value), 300)
+}
+
+function onFocus() {
+    if (foodOptions.value.length === 0) searchFoods('')
+}
+
+onBeforeUnmount(() => clearTimeout(searchTimer))
+
+let latestSearch = 0
 
 /**
  * performs the API request to search for the selected input
  * @param query input to search for on the API
  */
-function search(query: string) {
+function searchFoods(query: string) {
+    const request = ++latestSearch
     loading.value = true
-    let api = new ApiApi()
-
-    return api.apiFoodList({query: query, page: 1, pageSize: 25}).then(r => {
-        return r.results
+    return new ApiApi().apiFoodList({query: query, page: 1, pageSize: 25}).then(r => {
+        if (request === latestSearch) foodOptions.value = r.results
     }).catch((err: any) => {
         useMessageStore().addError(ErrorMessageType.FETCH_ERROR, err)
     }).finally(() => {
-        loading.value = false
+        if (request === latestSearch) loading.value = false
     })
 }
 
 </script>
-
-<style src="@vueform/multiselect/themes/default.css"></style>
-<!-- style can't be scoped (for whatever reason) -->
-<style>
-.material-multiselect {
-    --ms-bg: rgba(210, 210, 210, 0.1);
-    --ms-border-color: 0;
-    --ms-border-color-active: 0;
-    border-bottom: inset 1px rgba(50, 50, 50, 0.8);
-    border-bottom-left-radius: 0;
-    border-bottom-right-radius: 0;
-}
-
-.model-select--density-compact {
-    --ms-line-height: 1.3;
-}
-
-.model-select--density-comfortable {
-    --ms-line-height: 1.8;
-}
-
-.model-select--density-default {
-    --ms-line-height: 2.3;
-}
-
-
-.multiselect-tag {
-    background-color: #b98766 !important;
-}
-
-.z-3000 {
-    z-index: 3000;
-}
-</style>

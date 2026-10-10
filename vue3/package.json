@@ -22,7 +22,6 @@
   "dependencies": {
     "@types/luxon": "^3.7.6",
     "@types/sortablejs": "^1.15.9",
-    "@vueform/multiselect": "^2.6.11",
     "@vueuse/core": "^14.4.0",
     "@vueuse/router": "^14.4.0",
     "cropperjs": "^2.2.0",
