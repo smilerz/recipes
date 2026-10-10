@@ -1,5 +1,5 @@
 import {describe, expect, it} from 'vitest'
-import {FIELD_ICONS_WIDTH, textFitsBesideIcons} from '@/utils/field_fit'
+import {FIELD_ICONS_WIDTH, INLINE_FIELD_ICONS_WIDTH, textFitsBesideIcons} from '@/utils/field_fit'
 
 describe('textFitsBesideIcons', () => {
     const base = {textWidth: 35, inputWidth: 108, horizontalPadding: 0, iconsShown: true}
@@ -26,5 +26,12 @@ describe('textFitsBesideIcons', () => {
 
     it('says it fits when nothing has been laid out yet (width 0)', () => {
         expect(textFitsBesideIcons({...base, inputWidth: 0, textWidth: 0})).toBe(true)
+    })
+
+    it('uses the narrower icons of the inline variant when told to', () => {
+        // the Stock-up dialog: "tablespoon" is 80px wide in a 122px text area whose icons (18 + 14px) take about 40px
+        const inline = {textWidth: 80, inputWidth: 122, horizontalPadding: 0, iconsShown: false}
+        expect(textFitsBesideIcons(inline)).toBe(false) // with the standard 52px reserve it looks too tight
+        expect(textFitsBesideIcons({...inline, iconsWidth: INLINE_FIELD_ICONS_WIDTH})).toBe(true)
     })
 })

@@ -72,6 +72,7 @@
 
 <script lang="ts" setup>
 import {useTightFieldIcons} from "@/composables/useTightFieldIcons"
+import {FIELD_ICONS_WIDTH, INLINE_FIELD_ICONS_WIDTH} from "@/utils/field_fit"
 import {computed, onBeforeUnmount, onMounted, ref, shallowReactive, shallowRef, useTemplateRef, watch} from "vue"
 import {useI18n} from "vue-i18n"
 import {EditorSupportedModels, GenericModel, getGenericModelFromString} from "@/types/Models"
@@ -187,7 +188,7 @@ const selectedLabel = computed(() => {
 })
 
 /** True while the selected text is too long to sit beside the icons: they are then shown only on hover or focus. */
-const tight = useTightFieldIcons({get value() { return field.value?.$el }}, () => selectedLabel.value)
+const tight = useTightFieldIcons({get value() { return field.value?.$el }}, () => selectedLabel.value, () => props.inline ? INLINE_FIELD_ICONS_WIDTH : FIELD_ICONS_WIDTH)
 
 /** Vuetify echoes the selection into the text box: its label, or while that is still unknown the raw id. Never a user search. */
 const searchIsEchoOfSelection = computed(() => {

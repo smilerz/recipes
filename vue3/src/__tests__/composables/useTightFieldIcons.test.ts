@@ -44,11 +44,11 @@ beforeEach(() => {
 
 afterEach(() => vi.unstubAllGlobals())
 
-function mountWith(field: ReturnType<typeof fakeField>, label = ref('fl oz')) {
+function mountWith(field: ReturnType<typeof fakeField>, label = ref('fl oz'), iconsWidth?: () => number) {
     let tight: any
     const wrapper = mount(defineComponent({
         setup() {
-            tight = useTightFieldIcons(ref(field.root), () => label.value)
+            tight = useTightFieldIcons(ref(field.root), () => label.value, iconsWidth)
             return () => h('span')
         },
     }))
@@ -73,6 +73,16 @@ describe('useTightFieldIcons', () => {
         const {tight} = mountWith(field)
         await nextTick()
         expect(tight()).toBe(false)
+    })
+
+    it('counts the icon width it is given, so the narrower inline icons leave more room', async () => {
+        const make = () => fakeField({input: 122, text: 80, iconsShown: false})
+        const standard = mountWith(make())
+        await nextTick()
+        expect(standard.tight()).toBe(true)
+        const inline = mountWith(make(), ref('tablespoon'), () => 40)
+        await nextTick()
+        expect(inline.tight()).toBe(false)
     })
 
     it('measures again when the field is resized', async () => {
