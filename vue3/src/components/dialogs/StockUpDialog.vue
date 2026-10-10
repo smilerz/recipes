@@ -34,10 +34,10 @@
                         </v-card-text>
                         <v-card-text class="pt-0" :class="{'text-medium-emphasis': !row.checked}">
                             <v-row density="compact" align="center">
-                                <v-col cols="12" sm="3">
+                                <v-col cols="12" sm="2">
                                     <v-number-input :label="$t('Amount')" v-model="row.amount" :precision="2" :min="0" control-variant="hidden" hide-details density="compact" :disabled="!row.checked"></v-number-input>
                                 </v-col>
-                                <v-col cols="6" sm="3">
+                                <v-col cols="6" sm="4">
                                     <model-select :label="$t('Unit')" v-model="row.unit" model="Unit" hide-details density="compact" inline :disabled="!row.checked"></model-select>
                                 </v-col>
                                 <v-col cols="6" sm="3">
