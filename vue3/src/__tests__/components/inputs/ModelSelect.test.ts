@@ -652,6 +652,43 @@ describe('ModelSelect — an empty-object value counts as no value', () => {
     })
 })
 
+describe('ModelSelect — browser spellcheck only helps while a new name is being typed', () => {
+    const spellcheckOf = (wrapper: ReturnType<typeof mountAutocomplete>['wrapper']) =>
+        wrapper.find('input:not([type=hidden])').attributes('spellcheck')
+
+    it('is off in a picker that cannot create anything, even while typing (searching existing choices)', async () => {
+        const {wrapper} = mountAutocomplete()
+        await openMenu(wrapper)
+        await typeSearch(wrapper, 'Appel')
+        expect(spellcheckOf(wrapper)).toBe('false')
+    })
+
+    it('is off in a picker that can create, until something is typed', () => {
+        const {wrapper} = mountAutocomplete({allowCreate: true})
+        expect(spellcheckOf(wrapper)).toBe('false')
+    })
+
+    it('is on while a new name is being typed in a picker that can create', async () => {
+        const {wrapper} = mountAutocomplete({allowCreate: true})
+        await openMenu(wrapper)
+        await typeSearch(wrapper, 'Brocoli')
+        expect(spellcheckOf(wrapper)).toBe('true')
+    })
+
+    it('is off while a chosen value is on display, even in a picker that can create', async () => {
+        const {wrapper} = mountAutocomplete({allowCreate: true, modelValue: FOODS[0]})
+        await flushPromises()
+        expect(spellcheckOf(wrapper)).toBe('false')
+    })
+
+    it('is on while typing in a tags picker that can create', async () => {
+        const {wrapper} = mountAutocomplete({allowCreate: true, mode: 'tags'})
+        await openMenu(wrapper)
+        await typeSearch(wrapper, 'vegtarian')
+        expect(spellcheckOf(wrapper)).toBe('true')
+    })
+})
+
 describe('ModelSelect — tags and multiple mode (Phase 2, T1–T11)', () => {
     const tags = (props: Record<string, any> = {}, extra: Record<string, any> = {}) => mountAutocomplete({mode: 'tags', ...props}, extra)
     const chipsIn = (wrapper: ReturnType<typeof mountAutocomplete>['wrapper']) => wrapper.findAll('.v-chip')

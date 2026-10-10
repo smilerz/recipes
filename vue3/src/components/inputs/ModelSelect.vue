@@ -13,6 +13,7 @@
         :chips="isMulti"
         :closable-chips="isMulti && !props.disabled"
         :hide-selected="isMulti"
+        :spellcheck="spellcheck"
         :clear-on-select="isMulti"
         @pointerdown.capture="pickedSince = false"
         @keydown.capture="pickedSince = false"
@@ -204,6 +205,9 @@ const visibleSearch = computed(() => {
 })
 
 const typedQuery = computed(() => searchIsEchoOfSelection.value ? '' : search.value)
+
+/** The browser's spellcheck only helps while a new name is being typed; searching existing choices, or a value on display, it is noise. */
+const spellcheck = computed(() => props.allowCreate && typedQuery.value !== '')
 
 /**
  * In id mode Vuetify finds a label by looking the id up in the list, so the selection must be in it even when it is beyond
