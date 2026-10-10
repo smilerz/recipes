@@ -49,7 +49,7 @@
         </template>
 
         <template #item="{props: itemProps, item}">
-            <v-list-item v-bind="itemProps" role="option">
+            <v-list-item v-bind="itemProps" role="option" :aria-label="item.__create__ ? `${$t('Create')} ${item[itemLabel]}` : undefined">
                 <template v-if="item.__create__" #append>
                     <v-chip size="x-small" variant="flat" color="create" class="ml-2">
                         <v-icon icon="$create"></v-icon>
@@ -81,7 +81,7 @@ const SEARCH_DEBOUNCE_MS = 300
 
 const {t} = useI18n()
 
-const emit = defineEmits(['update:modelValue', 'create'])
+const emit = defineEmits(['create'])
 
 const props = withDefaults(defineProps<{
     model: EditorSupportedModels
@@ -95,9 +95,6 @@ const props = withDefaults(defineProps<{
     object?: boolean
     allowCreate?: boolean
     placeholder?: string
-    // accepted for compatibility with ModelSelect, which never used them
-    noOptionsText?: string
-    noResultsText?: string
     label?: string
     hint?: string
     hideDetails?: boolean
@@ -117,8 +114,6 @@ const props = withDefaults(defineProps<{
     object: true,
     allowCreate: false,
     placeholder: undefined,
-    noOptionsText: undefined,
-    noResultsText: undefined,
     label: '',
     hint: '',
     hideDetails: false,
@@ -369,25 +364,34 @@ async function lookUp(value: any) {
         const record = await modelClass.retrieve(Number(value))
         if (record) hydrated.set(value, record)
         else unresolvable.add(value)
-    } catch {
-        // an id that cannot be resolved simply stays unlabelled (and is not asked for again)
-        unresolvable.add(value)
+    } catch (err: any) {
+        // an id that cannot be resolved stays unlabelled; only a record that is gone for good (404) is not asked for again,
+        // so a lookup that failed because the network was down is retried on the next change
+        if (err?.response?.status === 404) unresolvable.add(value)
     } finally {
         lookingUp.delete(value)
     }
 }
 
-/** Looks up, once each, the selected ids that are not already known from the loaded options. */
+/**
+ * Keeps hold of the record behind every selected id: copied from what is loaded right now (the list is replaced as soon as
+ * the typed text is cleared, which would otherwise take the label with it), or looked up once when it is not loaded.
+ */
 function hydrateSelection() {
     if (props.object || props.items || modelClass.model.disableRetrieve) return
-    const known = new Set([...fetchedItems.value, ...(props.pinnedItems ?? [])].map(item => item[itemValue.value]))
-    const toLookUp = new Set(selectedValues.value.filter(value =>
-        value != null && value !== '' && Number.isFinite(Number(value))
-        && !known.has(value) && !hydrated.has(value) && !lookingUp.has(value) && !unresolvable.has(value)))
+    const loaded = [...fetchedItems.value, ...(browseItems.value ?? []), ...(props.pinnedItems ?? [])]
+    const toLookUp = new Set<any>()
+    for (const value of selectedValues.value) {
+        if (value == null || value === '' || hydrated.has(value)) continue
+        const record = loaded.find(item => item[itemValue.value] === value)
+        if (record) hydrated.set(value, record)
+        else if (Number.isFinite(Number(value)) && !lookingUp.has(value) && !unresolvable.has(value)) toLookUp.add(value)
+    }
     toLookUp.forEach(value => void lookUp(value))
 }
 
-watch(model, () => hydrateSelection(), {deep: true})
+// only ids can need a lookup; watching the ids (not the value) keeps a full record in `object` mode from being traversed
+watch(() => props.object ? undefined : [...selectedValues.value], () => hydrateSelection())
 
 // once the label is known, it replaces the raw id Vuetify echoed into the text box before that
 watch(selectedLabel, label => {

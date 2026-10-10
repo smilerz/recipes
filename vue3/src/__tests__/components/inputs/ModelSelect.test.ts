@@ -1,5 +1,5 @@
 /**
- * ModelSelect (Phase 1: single mode) — the Vuetify `v-autocomplete` replacement for ModelSelect.
+ * ModelSelect — the Vuetify `v-autocomplete` entity picker (single and tags modes).
  *
  * Requirement IDs (L = layout, U = interaction, B = as-is behaviour) refer to
  * `.claude/data/MODEL_SELECT_AUTOCOMPLETE_REQUIREMENTS.md`. Tests assert on what is handed to the Vuetify field and
@@ -736,6 +736,37 @@ describe('ModelSelect — tags and multiple mode (Phase 2, T1–T11)', () => {
         })
     })
 
+    describe('a picked id keeps its label after the list is replaced (review F1)', () => {
+        async function pickFromSearchThenBackToBrowse(wrapper: ReturnType<typeof mountAutocomplete>['wrapper'], picked: number, multiple: boolean) {
+            await wrapper.find('input:not([type=hidden])').trigger('focus')
+            await openMenu(wrapper)
+            listSpy.mockResolvedValue(envelope([FOODS[2]]))
+            await typeSearch(wrapper, 'pie')
+            await new Promise(r => setTimeout(r, 350))
+            await flushPromises()
+            field(wrapper).vm.$emit('update:modelValue', multiple ? [picked] : picked)
+            await wrapper.setProps({modelValue: multiple ? [picked] : picked})
+            await flushPromises()
+            // Vuetify clears the typed text after a pick, which refetches the first page (which does not hold the pick)
+            listSpy.mockResolvedValue(envelope([FOODS[0], FOODS[1]]))
+            await typeSearch(wrapper, '')
+            await new Promise(r => setTimeout(r, 350))
+            await flushPromises()
+        }
+
+        it('tags: the chip of an id picked from search results is still there once the first page is back', async () => {
+            const {wrapper} = tags({object: false, modelValue: []})
+            await pickFromSearchThenBackToBrowse(wrapper, 3, true)
+            expect(chipTexts(wrapper)).toEqual(['apple pie'])
+        })
+
+        it('single: an id picked from search results is still resolvable once the first page is back', async () => {
+            const {wrapper} = mountAutocomplete({object: false, modelValue: null})
+            await pickFromSearchThenBackToBrowse(wrapper, 3, false)
+            expect(itemsOf(wrapper).some(i => i.id === 3)).toBe(true)
+        })
+    })
+
     describe('the list never goes blank while the text is being cleared', () => {
         it('clearing the typed text shows the last browse list straight away, not the last (empty) search result', async () => {
             const {wrapper} = tags()
@@ -833,6 +864,29 @@ describe('ModelSelect — tags and multiple mode (Phase 2, T1–T11)', () => {
             expect(chipTexts(wrapper)).toEqual(['Apple'])
         })
 
+        it('a record that no longer exists (404) is not asked for again on the next change (review F2)', async () => {
+            retrieveSpy.mockImplementation(async (id: number) => {
+                if (id === 58) throw Object.assign(new Error('not found'), {response: {status: 404}})
+                return {id, name: 'Other'}
+            })
+            const {wrapper} = tags({object: false, modelValue: [58]})
+            await flushPromises()
+            await wrapper.setProps({modelValue: [58, 59]})
+            await flushPromises()
+            expect(retrieveSpy.mock.calls.filter(c => c[0] === 58)).toHaveLength(1)
+        })
+
+        it('a lookup that failed for another reason (e.g. offline) is retried on the next change (review F2)', async () => {
+            retrieveSpy.mockImplementationOnce(async () => { throw new Error('network down') })
+            retrieveSpy.mockImplementation(async (id: number) => ({id, name: id === 58 ? 'Back Online' : 'Other'}))
+            const {wrapper} = tags({object: false, modelValue: [58]})
+            await flushPromises()
+            expect(chipTexts(wrapper)).toEqual([])
+            await wrapper.setProps({modelValue: [58, 59]})
+            await flushPromises()
+            expect(chipTexts(wrapper)).toContain('Back Online')
+        })
+
         it('never asks for a value that is not a number', async () => {
             tags({object: false, modelValue: ['abc', null, '']})
             await flushPromises()
@@ -893,6 +947,13 @@ describe('ModelSelect — creating (U6, B10–B12)', () => {
         await flushPromises()
         return mounted
     }
+
+    it('the Create row is announced as "Create <name>" even where its visible label is hidden (review F7)', async () => {
+        listSpy.mockResolvedValue(envelope([]))
+        await withQuery('zzz')
+        const row = document.body.querySelector('[role="option"][aria-label]')
+        expect(row?.getAttribute('aria-label')).toBe('Create zzz')
+    })
 
     it('B10: offers a Create row first when the typed text matches nothing', async () => {
         const {wrapper} = await withQuery('Cherry')
