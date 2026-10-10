@@ -306,7 +306,7 @@ defineExpose({open})
 /* D4: fixed columns so steppers, unit pickers, and consumed buttons form clean vertical lines. */
 .useup-grid {
     display: grid;
-    grid-template-columns: 1fr 130px 140px 40px;
+    grid-template-columns: 1fr 130px 190px 40px;
     gap: 12px;
     align-items: center;
 }
