@@ -15,7 +15,7 @@ import {VAutocomplete} from 'vuetify/components'
 import {createI18n} from 'vue-i18n'
 import {ErrorMessageType, PreparedMessage} from '@/stores/MessageStore'
 
-const modelState = vi.hoisted(() => ({isPaginated: true}))
+const modelState = vi.hoisted(() => ({isPaginated: true, listIgnoresQuery: false}))
 const listSpy = vi.fn()
 const createSpy = vi.fn()
 const retrieveSpy = vi.fn()
@@ -42,6 +42,7 @@ vi.mock('@/types/Models', async (importOriginal) => {
                 itemValue: 'id',
                 itemLabel: 'name',
                 isPaginated: modelState.isPaginated,
+                listIgnoresQuery: modelState.listIgnoresQuery,
                 disableRetrieve: false,
             },
         }),
@@ -91,6 +92,7 @@ async function typeSearch(wrapper: ReturnType<typeof mountAutocomplete>['wrapper
 
 beforeEach(() => {
     modelState.isPaginated = true
+    modelState.listIgnoresQuery = false
     listSpy.mockReset()
     createSpy.mockReset()
     retrieveSpy.mockReset()
@@ -615,6 +617,38 @@ describe('ModelSelect — models whose endpoint cannot filter (non-paginated, e.
         await new Promise(r => setTimeout(r, 350))
         await flushPromises()
         expect(itemsOf(wrapper).map(i => i.name)).toEqual(['Apple', 'Banana', 'apple pie'])
+    })
+})
+
+describe('ModelSelect — paginated models whose endpoint takes no query (MealType, Household, …)', () => {
+    async function typed(text: string) {
+        modelState.listIgnoresQuery = true
+        listSpy.mockResolvedValue(envelope(FOODS)) // the server ignores the query and returns the first page
+        const mounted = mountAutocomplete({allowCreate: true})
+        await openMenu(mounted.wrapper)
+        await mounted.wrapper.find('input:not([type=hidden])').trigger('focus')
+        await typeSearch(mounted.wrapper, text)
+        await new Promise(r => setTimeout(r, 350))
+        await flushPromises()
+        return mounted.wrapper
+    }
+
+    it('narrows the returned list by what was typed, ignoring case', async () => {
+        const wrapper = await typed('APPLE')
+        expect(itemsOf(wrapper).filter(i => !i.__create__).map(i => i.name)).toEqual(['Apple', 'apple pie'])
+    })
+
+    it('offers Create, and only Create, for text that matches nothing', async () => {
+        const wrapper = await typed('zzzzq')
+        expect(itemsOf(wrapper).map(i => !!i.__create__)).toEqual([true])
+    })
+})
+
+describe('ModelSelect — an empty-object value counts as no value', () => {
+    it('shows nothing (not "[object Object]") when a host starts from {}', async () => {
+        const {wrapper} = mountAutocomplete({modelValue: {}})
+        await flushPromises()
+        expect((wrapper.find('input:not([type=hidden])').element as HTMLInputElement).value).toBe('')
     })
 })
 

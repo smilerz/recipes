@@ -190,6 +190,8 @@ export type Model = {
     disableUpdate?: boolean | undefined,
     disableDelete?: boolean | undefined,
     disableSearch?: boolean | undefined,
+    /** the list endpoint takes no `query` parameter, so it cannot search on the server (pickers narrow the first page themselves) */
+    listIgnoresQuery?: boolean | undefined,
 
     isAdvancedDelete: boolean | undefined,
     isPaginated: boolean | undefined,
@@ -439,6 +441,7 @@ registerModel(TStep)
 
 export const TIngredient = {
     name: 'Ingredient',
+    listIgnoresQuery: true,
     localizationKey: 'Ingredient',
     localizationKeyDescription: 'IngredientHelp',
     icon: 'fa-solid fa-jar',
@@ -456,6 +459,7 @@ registerModel(TIngredient)
 
 export const TMealType = {
     name: 'MealType',
+    listIgnoresQuery: true,
     disableSearch: true,
     localizationKey: 'Meal_Type',
     localizationKeyDescription: 'MealTypeHelp',
@@ -480,6 +484,7 @@ registerModel(TMealType)
 
 export const TMealPlan = {
     name: 'MealPlan',
+    listIgnoresQuery: true,
     localizationKey: 'Meal_Plan',
     localizationKeyDescription: 'MealPlanHelp',
     icon: 'fa-solid fa-calendar-days',
@@ -520,6 +525,7 @@ registerModel(TRecipeBook)
 
 export const TRecipeBookEntry = {
     name: 'RecipeBookEntry',
+    listIgnoresQuery: true,
     localizationKey: 'Recipe_Book',
     localizationKeyDescription: 'RecipeBookEntryHelp',
     icon: 'fa-solid fa-book-bookmark',
@@ -671,6 +677,7 @@ registerModel(TShoppingList)
 
 export const TShoppingListEntry = {
     name: 'ShoppingListEntry',
+    listIgnoresQuery: true,
     localizationKey: 'ShoppingListEntry',
     localizationKeyDescription: 'ShoppingListEntryHelp',
     icon: 'fa-solid fa-list-check',
@@ -715,6 +722,7 @@ registerModel(TPropertyType)
 
 export const TProperty = {
     name: 'Property',
+    listIgnoresQuery: true,
     localizationKey: 'Property',
     localizationKeyDescription: 'PropertyHelp',
     icon: 'fa-solid fa-database',
@@ -875,6 +883,7 @@ registerModel(TAccessToken)
 
 export const THousehold = {
     name: 'Household',
+    listIgnoresQuery: true,
     localizationKey: 'Household',
     localizationKeyDescription: 'HouseholdHelp',
     icon: 'fa-solid fa-house-chimney-user',
@@ -893,6 +902,7 @@ registerModel(THousehold)
 
 export const TUserSpace = {
     name: 'UserSpace',
+    listIgnoresQuery: true,
     disableSearch: true,
     localizationKey: 'SpaceMembers',
     localizationKeyDescription: 'SpaceMembersHelp',
@@ -945,6 +955,7 @@ registerModel(TInviteLink)
 
 export const TSpace = {
     name: 'Space',
+    listIgnoresQuery: true,
     disableSearch: true,
     localizationKey: 'Space',
     localizationKeyDescription: 'SpaceHelp',
@@ -984,6 +995,7 @@ registerModel(TSpace)
 
 export const TStorage = {
     name: 'Storage',
+    listIgnoresQuery: true,
     localizationKey: 'Storage',
     localizationKeyDescription: 'StorageHelp',
     icon: 'fa-solid fa-cloud',
@@ -1029,6 +1041,7 @@ registerModel(TInventoryLocation)
 
 export const TInventoryEntry = {
     name: 'InventoryEntry',
+    listIgnoresQuery: true,
     localizationKey: 'InventoryEntry',
     localizationKeyDescription: 'InventoryEntryHelp',
     icon: 'fa-solid fa-jar-wheat',
@@ -1053,6 +1066,7 @@ registerModel(TInventoryEntry)
 
 export const TInventoryLog = {
     name: 'InventoryLog',
+    listIgnoresQuery: true,
     localizationKey: 'InventoryLog',
     localizationKeyDescription: 'InventoryLogHelp',
     icon: 'fa-solid fa-clipboard-list',
@@ -1075,6 +1089,7 @@ registerModel(TInventoryLog)
 
 export const TSync = {
     name: 'Sync',
+    listIgnoresQuery: true,
     localizationKey: 'SyncedPath',
     localizationKeyDescription: 'SyncedPathHelp',
     icon: 'fa-solid fa-folder-plus',
@@ -1101,6 +1116,7 @@ registerModel(TSync)
 
 export const TSyncLog = {
     name: 'SyncLog',
+    listIgnoresQuery: true,
     localizationKey: 'SyncLog',
     localizationKeyDescription: 'SyncLogHelp',
     icon: 'fa-solid fa-bars-staggered',
@@ -1123,6 +1139,7 @@ registerModel(TSyncLog)
 
 export const TRecipeImport = {
     name: 'RecipeImport',
+    listIgnoresQuery: true,
     localizationKey: 'ExternalRecipeImport',
     localizationKeyDescription: 'ExternalRecipeImportHelp',
     icon: 'fa-solid fa-file-half-dashed',
@@ -1163,6 +1180,7 @@ registerModel(TRecipeImport)
 
 export const TConnectorConfig = {
     name: 'ConnectorConfig',
+    listIgnoresQuery: true,
     localizationKey: 'ConnectorConfig',
     localizationKeyDescription: 'ConnectorConfigHelp',
     icon: 'fa-solid fa-arrows-turn-to-dots',
@@ -1187,6 +1205,7 @@ registerModel(TConnectorConfig)
 
 export const TAiProvider = {
     name: 'AiProvider',
+    listIgnoresQuery: true,
     localizationKey: 'AiProvider',
     localizationKeyDescription: 'AiProviderHelp',
     icon: 'fa-solid fa-wand-magic-sparkles',
@@ -1213,6 +1232,7 @@ registerModel(TAiProvider)
 
 export const TAiLog = {
     name: 'AiLog',
+    listIgnoresQuery: true,
     localizationKey: 'AiLog',
     localizationKeyDescription: 'AiLogHelp',
     icon: 'fa-solid fa-wand-magic-sparkles',
