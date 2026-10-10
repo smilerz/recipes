@@ -39,13 +39,8 @@
     <v-number-input :label="$t('Amount')" :precision="2" v-model="form.amount.value"
                     v-if="bookingMode === 'add' || (bookingMode === 'edit' && form.editTab.value === 'amount')"></v-number-input>
     <model-select model="Unit" :label="$t('Unit')" allow-create v-model="form.unit.value" hide-details
-                  v-if="bookingMode === 'add' || (bookingMode === 'edit' && form.editTab.value === 'amount')">
-        <template #append-inner>
-            <v-chip v-for="u in form.commonUnits.value" :key="u.id" @click="form.unit.value = u" size="small" class="mr-1">
-                {{ u.name }}
-            </v-chip>
-        </template>
-    </model-select>
+               :pinned-items="form.commonUnits.value"
+               v-if="bookingMode === 'add' || (bookingMode === 'edit' && form.editTab.value === 'amount')"></model-select>
 
     <v-date-input :label="$t('Expires')" v-model="form.expires.value" v-if="bookingMode === 'add'">
         <template #append-inner v-if="form.inventoryLocation.value?.isFreezer">

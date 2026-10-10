@@ -47,7 +47,6 @@
                     variant="outlined"
                     density="compact"
                     hide-details
-                    append-to-body
                     class="mb-3"
                 />
 
@@ -71,7 +70,6 @@
                     density="compact"
                     can-clear
                     hide-details
-                    append-to-body
                 />
 
                 <v-text-field

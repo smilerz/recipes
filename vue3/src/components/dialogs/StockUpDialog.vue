@@ -38,11 +38,11 @@
                                     <v-number-input :label="$t('Amount')" v-model="row.amount" :precision="2" :min="0" control-variant="hidden" hide-details density="compact" :disabled="!row.checked"></v-number-input>
                                 </v-col>
                                 <v-col cols="6" sm="3">
-                                    <model-select :label="$t('Unit')" v-model="row.unit" model="Unit" hide-details density="compact" append-to-body inline :disabled="!row.checked"></model-select>
+                                    <model-select :label="$t('Unit')" v-model="row.unit" model="Unit" hide-details density="compact" inline :disabled="!row.checked"></model-select>
                                 </v-col>
                                 <v-col cols="6" sm="3">
                                     <model-select :label="$t('Location')" v-model="row.location" model="InventoryLocation" :items="locations"
-                                                  hide-details density="compact" append-to-body inline :disabled="!row.checked" @update:model-value="onRowLocationChange(row)"></model-select>
+                                                  hide-details density="compact" inline :disabled="!row.checked" @update:model-value="onRowLocationChange(row)"></model-select>
                                 </v-col>
                                 <v-col cols="12" sm="3">
                                     <v-text-field :label="$t('Expires')" v-model="row.expires" type="date" hide-details density="compact" :disabled="!row.checked">

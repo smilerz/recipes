@@ -3,7 +3,7 @@
         <v-card :loading="recipeLoading || propertyTypesLoading">
             <v-card-title>{{ $t('Property_Editor') }}</v-card-title>
             <v-card-text>
-                <model-select append-to-body model="Recipe" v-model="recipe" @update:model-value="recipe != undefined && loadRecipe(recipe.id!)">
+                <model-select model="Recipe" v-model="recipe" @update:model-value="recipe != undefined && loadRecipe(recipe.id!)">
                     <template #append>
                         <v-btn icon="fa-solid fa-arrow-up-right-from-square" :to="{name : 'RecipeViewPage', params: {id: recipe.id }}" v-if="recipe != undefined"></v-btn>
                     </template>
@@ -87,8 +87,7 @@
                             </v-number-input>
                         </td>
                         <td>
-                            <model-select model="Unit" density="compact" v-model="ingredient.food.propertiesFoodUnit" hide-details @update:model-value="updateFood(ingredient)"
-                                          :loading="ingredient.loading"></model-select>
+                            <model-select model="Unit" density="compact" v-model="ingredient.food.propertiesFoodUnit" hide-details @update:model-value="updateFood(ingredient)"></model-select>
                         </td>
                         <td v-for="p in ingredient.food.properties" v-bind:key="`${ingredient.food.id}_${p.propertyType.id}`">
                             <v-number-input v-model="p.propertyAmount" density="compact" hide-details v-if="p.propertyAmount != null" @change="updateFood(ingredient)"

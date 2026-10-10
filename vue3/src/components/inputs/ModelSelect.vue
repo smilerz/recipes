@@ -1,113 +1,100 @@
 <template>
-    <div>
-    <v-input :hint="props.hint" persistent-hint :hide-details="props.hideDetails" :disabled="props.disabled">
-        <template #prepend v-if="$slots.prepend">
+    <v-autocomplete
+        ref="field"
+        :menu="menu"
+        :menu-props="{maxWidth: menuMaxWidth}"
+        :model-value="fieldValue"
+        :search="visibleSearch"
+        :items="displayedItems"
+        :item-title="itemLabel"
+        :item-value="itemValue"
+        :return-object="props.object"
+        :multiple="isMulti"
+        :chips="isMulti"
+        :closable-chips="isMulti && !props.disabled"
+        :hide-selected="isMulti"
+        :clear-on-select="isMulti"
+        @pointerdown.capture="pickedSince = false"
+        @keydown.capture="pickedSince = false"
+        :id="props.id"
+        :label="showFloatingLabel ? props.label : undefined"
+        :placeholder="effectivePlaceholder"
+        :aria-label="props.label || undefined"
+        :variant="props.variant === 'outlined' ? 'outlined' : undefined"
+        :density="props.inline ? 'compact' : (props.density || undefined)"
+        :class="['model-select', {'model-select--inline': props.inline}]"
+        :clearable="props.canClear"
+        clear-icon="$close"
+        persistent-clear
+        :disabled="props.disabled"
+        :hint="props.hint"
+        :persistent-hint="!!props.hint"
+        :hide-details="props.hideDetails"
+        :loading="loading"
+        no-filter
+        @update:model-value="onSelect"
+        @update:search="onSearch"
+        @update:menu="onMenu"
+    >
+        <template v-if="$slots.prepend" #prepend>
             <slot name="prepend"></slot>
         </template>
-
-        <!-- Persistent floating notch label. Rendered as a ::before on the multiselect root (which
-             @vueform already sets position:relative), NOT a positioned wrapper — a wrapper would
-             become the multiselect's offsetParent and shift @vueform's append-to-body popper on
-             first open. Suppressed for the inline variant, which shows the label as the placeholder. -->
-        <!-- TODO resolve-on-load false for now, race condition with model class, make prop once better solution is found -->
-        <!-- `delay` below is remote-search-only: once it's above @vueform's own default of -1, it
-             registers a search watcher that unconditionally calls `options.value(...)` as a
-             function on every keystroke/selection — a static `:items` array has no such function
-             and this throws "options.value is not a function". Only debounce in remote-search mode. -->
-        <Multiselect
-            :ref="`ref_${props.id}`"
-            :key="`${props.id}-hydration-${hydrationVersion}`"
-            class="material-multiselect "
-            :data-label="showFloatingLabel ? props.label : undefined"
-            :class="{'model-select--density-compact': props.density == 'compact', 'model-select--density-comfortable': props.density == 'comfortable', 'model-select--density-default': props.density == '', 'model-select--inline': props.inline, 'model-select--outlined': props.variant === 'outlined', 'model-select--underline': props.variant === 'underline'}"
-            :resolve-on-load="props.searchOnLoad"
-            v-model="multiselectModel"
-            :options="props.items ?? search"
-            :on-create="createObject"
-            :createOption="props.allowCreate"
-            :delay="props.items ? -1 : 300"
-            :object="effectiveObject"
-            :valueProp="itemValue"
-            :label="itemLabel"
-            :searchable="true"
-            :strict="false"
-            :disabled="props.disabled"
-            :mode="props.mode"
-            :can-clear="props.canClear"
-            :can-deselect="props.canClear"
-            :limit="props.limit"
-            :placeholder="effectivePlaceholder"
-            :aria="props.label ? {'aria-label': props.label} : undefined"
-            :noOptionsText="$t('No_Results')"
-            :noResultsText="$t('No_Results')"
-            :loading="loading"
-            @open="onOpen"
-            :append-to-body="props.appendToBody"
-            :classes="{
-                dropdown: 'multiselect-dropdown z-3000',
-                containerActive: '',
-                containerDisabled: 'text-disabled'
-            }"
-        >
-            <template #option="{ option }" v-if="props.allowCreate">
-                <div class="d-flex align-center justify-space-between w-100">
-                    <span>{{ option[itemLabel] }}</span>
-                    <v-chip size="x-small" variant="flat" color="create" class="ml-2" v-if="option.__CREATE__">
-                        <v-icon icon="$create"></v-icon>
-                        <template class="d-none d-lg-block"> {{ $t('Create') }}</template>
-                    </v-chip>
-                </div>
-            </template>
-
-            <template #clear="{ clear }" v-if="props.canClear">
-                <span @click="clear" aria-hidden="true" tabindex="-1" role="button" data-clear="" aria-roledescription="❎" class="multiselect-clear">
-                  <span class="multiselect-clear-icon"></span>
-                </span>
-            </template>
-
-            <template v-if="hasMoreItems && !loading" #afterlist>
-                <span class="text-disabled font-italic text-caption ms-3">{{ $t('ModelSelectResultsHelp') }}</span>
-            </template>
-        </Multiselect>
-
-        <template #append v-if="$slots.append">
-            <slot name="append">
-
-            </slot>
+        <template v-if="$slots.append" #append>
+            <slot name="append"></slot>
         </template>
-    </v-input>
-    </div>
+
+        <template v-if="isMulti" #chip="{item, props: chipProps}">
+            <!-- an id that is still being looked up arrives as the bare id, not a record: show nothing for it (it stays in the value) -->
+            <v-chip v-if="item !== null && typeof item === 'object'" v-bind="chipProps" color="primary" variant="flat" rounded="sm" close-icon="$close"></v-chip>
+        </template>
+
+        <template #item="{props: itemProps, item}">
+            <v-list-item v-bind="itemProps" role="option" :aria-label="item.__create__ ? `${$t('Create')} ${item[itemLabel]}` : undefined">
+                <template v-if="item.__create__" #append>
+                    <v-chip size="x-small" variant="flat" color="create" class="ml-2">
+                        <v-icon icon="$create"></v-icon>
+                        <span class="d-none d-lg-inline ml-1">{{ $t('Create') }}</span>
+                    </v-chip>
+                </template>
+            </v-list-item>
+        </template>
+
+        <template #no-data>
+            <!-- the menu must stay enabled while loading (Vuetify closes a disabled one and never reopens it), so only the text changes -->
+            <v-list-item :title="loading ? $t('Loading') : $t('No_Results')"></v-list-item>
+        </template>
+
+        <template v-if="hasMoreItems && !loading" #append-item>
+            <v-list-item class="text-disabled font-italic text-caption" :title="$t('ModelSelectResultsHelp')"></v-list-item>
+        </template>
+    </v-autocomplete>
 </template>
 
 <script lang="ts" setup>
-import {computed, onBeforeMount, ref, shallowRef, useTemplateRef} from "vue"
+import {computed, onBeforeUnmount, onMounted, ref, shallowReactive, shallowRef, useTemplateRef, watch} from "vue"
+import {useI18n} from "vue-i18n"
 import {EditorSupportedModels, GenericModel, getGenericModelFromString} from "@/types/Models"
-import Multiselect from '@vueform/multiselect'
-import {ErrorMessageType, PreparedMessage, useMessageStore} from "@/stores/MessageStore";
-import {useI18n} from "vue-i18n";
-import {useMultiselectHydration} from "@/composables/useMultiselectHydration";
+import {ErrorMessageType, PreparedMessage, useMessageStore} from "@/stores/MessageStore"
+
+const CREATE_VALUE = '__create__'
+const SEARCH_DEBOUNCE_MS = 300
 
 const {t} = useI18n()
 
-const emit = defineEmits(['update:modelValue', 'create'])
+const emit = defineEmits(['create'])
 
 const props = withDefaults(defineProps<{
     model: EditorSupportedModels
     id?: string
-    // When provided, these static options replace the remote model fetch — the caller owns the
-    // list (a shared parent fetch or a caller-supplied set) while ModelSelect keeps its styling,
-    // label, and binding. Omit to have ModelSelect fetch/search the model itself.
+    // When provided, these static options replace the remote model fetch.
     items?: any[]
     limit?: number
     disabled?: boolean
     canClear?: boolean
-    mode?: 'single' | 'multiple' | 'tags'
-    appendToBody?: boolean
+    mode?: 'single' | 'tags'
     object?: boolean
     allowCreate?: boolean
     placeholder?: string
-    noOptionsText?: string
-    noResultsText?: string
     label?: string
     hint?: string
     hideDetails?: boolean
@@ -115,19 +102,18 @@ const props = withDefaults(defineProps<{
     searchOnLoad?: boolean
     inline?: boolean
     variant?: 'underline' | 'outlined'
+    // choices to list first (e.g. the most used), alphabetically and above a divider, while nothing is typed
+    pinnedItems?: any[]
 }>(), {
-    id: () => Math.floor(Math.random() * 10000).toString(),
+    id: undefined,
     items: undefined,
     limit: 25,
     disabled: false,
     canClear: true,
     mode: 'single',
-    appendToBody: false,
     object: true,
     allowCreate: false,
     placeholder: undefined,
-    noOptionsText: undefined,
-    noResultsText: undefined,
     label: '',
     hint: '',
     hideDetails: false,
@@ -135,291 +121,311 @@ const props = withDefaults(defineProps<{
     searchOnLoad: false,
     inline: false,
     variant: 'underline',
+    pinnedItems: undefined,
 })
 
-/**
- * check if model has a non-standard value attribute defined, if not use "id" as the value attribute
- */
-const itemValue = computed(() => {
-    if (modelClass.value.model.itemValue) {
-        return modelClass.value.model.itemValue
-    }
-    return 'id'
-})
+const model = defineModel<any>()
 
-/**
- * check if model has a non-standard label attribute defined, if not use "name" as the value attribute
- */
-const itemLabel = computed(() => {
-    if (modelClass.value.model.itemLabel) {
-        return modelClass.value.model.itemLabel
-    }
-    return 'name'
-})
+const modelClass = (getGenericModelFromString(props.model, t) || getGenericModelFromString('Food', t)) as GenericModel
+const itemValue = computed(() => modelClass.model.itemValue ?? 'id')
+const itemLabel = computed(() => modelClass.model.itemLabel ?? 'name')
 
-// Persistent floating label (native-field parity); the inline variant shows the label as the
-// placeholder instead, for dense rows.
-const showFloatingLabel = computed(() => !!props.label && !props.inline)
-
-const model = defineModel()
-const modelClass = shallowRef({} as GenericModel)
+const field = useTemplateRef<{ $el: HTMLElement }>('field')
+const menu = ref(false)
+const menuMaxWidth = ref<number | undefined>(undefined)
+const search = ref('')
 const loading = ref(false)
 const hasMoreItems = ref(false)
+const fetchedItems = shallowRef<any[]>([])
+/** The last result for an empty search, so clearing the typed text never shows a blank list while the next fetch runs. */
+const browseItems = shallowRef<any[] | null>(null)
+/** In id mode, selected records that are not among the loaded options (e.g. beyond the first page), by id. */
+const hydrated = shallowReactive(new Map<any, any>())
 
-// Native filled-field behavior: when a labelled (non-inline) field is empty AND unfocused, the
-// floating label doubles as the placeholder (CSS drops the ::before into the value slot), so
-// @vueform must NOT render its own placeholder too (that produced a duplicate label). Inline and
-// unlabelled fields keep a real placeholder. An explicit placeholder prop always wins.
+const showFloatingLabel = computed(() => !!props.label && !props.inline)
+
 const effectivePlaceholder = computed(() => {
     if (props.placeholder) return props.placeholder
-    if (showFloatingLabel.value) return ''
+    if (showFloatingLabel.value) return undefined
     if (props.inline && props.label) return props.label
-    return t(modelClass.value.model?.localizationKey ?? '')
+    return t(modelClass.model?.localizationKey ?? '')
 })
 
-// the ref name is genuinely dynamic (keyed off props.id, since a page can render multiple
-// ModelSelects) - useTemplateRef's Keys generic wants a static literal, so vue-tsc can't infer
-// it from a runtime template-literal expression passed directly; compute it as a separately-typed
-// value first.
-const multiselectRefName = `ref_${props.id}`
-const multiselect = useTemplateRef<HTMLElement>(multiselectRefName)
+const sourceItems = computed(() => props.items ?? fetchedItems.value)
+
+const isMulti = computed(() => props.mode !== 'single')
+
+/** What is selected, as a list: the array in tags mode, the single value (if any) otherwise. */
+const selectedValues = computed<any[]>(() => {
+    if (isMulti.value) return Array.isArray(model.value) ? model.value : []
+    return model.value == null || model.value === '' ? [] : [model.value]
+})
+
+const fieldValue = computed(() => isMulti.value ? selectedValues.value : model.value)
+
+/** Records of the selection that are known from outside the loaded options (looked up by id). */
+const hydratedRecords = computed(() => selectedValues.value.map(value => hydrated.get(value)).filter(record => record != null))
+
+/** Vuetify echoes the chosen label into the search box; that text is not something the user searched for. */
+const selectedLabel = computed(() => {
+    if (isMulti.value) return ''
+    const value = model.value
+    if (value == null || value === '') return ''
+    if (props.object) return String(value[itemLabel.value] ?? '')
+    const known = [...sourceItems.value, ...(props.pinnedItems ?? []), ...hydratedRecords.value]
+    const found = known.find(item => item[itemValue.value] === value)
+    return found ? String(found[itemLabel.value] ?? '') : ''
+})
+
+/** Vuetify echoes the selection into the text box: its label, or while that is still unknown the raw id. Never a user search. */
+const searchIsEchoOfSelection = computed(() => {
+    if (isMulti.value || search.value === '') return false
+    if (selectedLabel.value !== '' && search.value === selectedLabel.value) return true
+    return !props.object && model.value != null && search.value === String(model.value)
+})
+
+/** The text box content; a raw id echoed before the label is known is hidden rather than shown. */
+const visibleSearch = computed(() => {
+    const rawIdEcho = !isMulti.value && !props.object && model.value != null && search.value === String(model.value) && selectedLabel.value === ''
+    return rawIdEcho ? '' : search.value
+})
+
+const typedQuery = computed(() => searchIsEchoOfSelection.value ? '' : search.value)
 
 /**
- * On open, refresh options and deterministically correct @vueform's append-to-body first-open
- * offset. That popper is created with a centered placement + a sameWidth modifier, and @vueform
- * positions it (nextTick) before the dropdown has painted its width, so the first open centers
- * using width 0 and lands at the field's midpoint (self-corrects only on reopen). Rather than
- * guess a frame delay, watch the dropdown's size: the instant it reports a real width, re-run
- * @vueform's own updatePopper() (now width-aware → correct) and stop observing. No-op in-tree
- * (non-append) where there is no popper.
+ * In id mode Vuetify finds a label by looking the id up in the list, so the selection must be in it even when it is beyond
+ * `limit` (static items) or beyond the loaded page (looked-up records). In tags mode the selected ones are hidden from the
+ * dropdown anyway, so they are always kept; in single mode they are only added while browsing, never into search results.
  */
-function onOpen() {
-    const ms = multiselect.value as any
-    // refreshOptions() re-invokes the async options *function* for fresh remote data. With a static
-    // :items array there is no function to call — @vueform would run options.value() on the array
-    // and throw "options.value is not a function" — so skip it in the static path.
+function withSelection(list: any[]): any[] {
+    if (props.object) return list
+    if (!isMulti.value && typedQuery.value !== '') return list
+    const missing = selectedValues.value
+        .filter(value => value != null && value !== '' && !list.some(item => item[itemValue.value] === value))
+        .map(value => props.items?.find(item => item[itemValue.value] === value) ?? hydrated.get(value))
+        .filter(record => record != null)
+    return missing.length ? [...list, ...missing] : list
+}
+
+/** A non-paginated endpoint (e.g. User) ignores the typed text and returns everything, so narrow it here. */
+function narrowedByTypedText(list: any[]): any[] {
+    if (modelClass.model.isPaginated !== false || typedQuery.value === '') return list
+    const needle = typedQuery.value.toLowerCase()
+    return list.filter(item => String(item[itemLabel.value] ?? '').toLowerCase().includes(needle))
+}
+
+const visibleItems = computed(() => {
     if (!props.items) {
-        ms?.refreshOptions?.()
+        const base = typedQuery.value === '' && browseItems.value ? browseItems.value : fetchedItems.value
+        return withSelection(narrowedByTypedText(base))
     }
-    const dropdown = ms?.dropdown as HTMLElement | undefined
-    if (!dropdown || typeof ResizeObserver === 'undefined') {
+    const needle = typedQuery.value.toLowerCase()
+    return withSelection(props.items
+        .filter(item => String(item[itemLabel.value] ?? '').toLowerCase().includes(needle))
+        .slice(0, props.limit))
+})
+
+const createItem = computed(() => {
+    const name = typedQuery.value.trim()
+    if (!props.allowCreate || name === '') return null
+    const exists = [...sourceItems.value, ...(props.pinnedItems ?? []), ...hydratedRecords.value].some(item => String(item[itemLabel.value] ?? '').trim().toLowerCase() === name.toLowerCase())
+    if (exists) return null
+    return {[itemValue.value]: CREATE_VALUE, [itemLabel.value]: name, __create__: true}
+})
+
+/** Pinned choices in alphabetical order, then a divider — only while browsing, never while the user is typing. */
+const pinnedBlock = computed(() => {
+    const pinned = props.pinnedItems ?? []
+    if (pinned.length === 0 || typedQuery.value !== '') return []
+    const alphabetical = [...pinned].sort((a, b) =>
+        String(a[itemLabel.value] ?? '').localeCompare(String(b[itemLabel.value] ?? ''), undefined, {sensitivity: 'base'}))
+    return [...alphabetical, {type: 'divider'}]
+})
+
+const listedAfterPinned = computed(() => {
+    if (pinnedBlock.value.length === 0) return visibleItems.value
+    const pinnedValues = new Set((props.pinnedItems ?? []).map(item => item[itemValue.value]))
+    return visibleItems.value.filter(item => !pinnedValues.has(item[itemValue.value]))
+})
+
+const displayedItems = computed(() => createItem.value ? [createItem.value, ...visibleItems.value] : [...pinnedBlock.value, ...listedAfterPinned.value])
+
+let latestRequest = 0
+
+async function fetchItems(query: string) {
+    const request = ++latestRequest
+    loading.value = true
+    try {
+        const result = await modelClass.list({query: query, page: 1, pageSize: props.limit})
+        if (request !== latestRequest) return
+        fetchedItems.value = result.results
+        if (query === '') browseItems.value = result.results
+        hasMoreItems.value = !!result.next
+    } catch (err: any) {
+        if (request !== latestRequest) return
+        fetchedItems.value = []
+        hasMoreItems.value = false
+        useMessageStore().addError(ErrorMessageType.FETCH_ERROR, err)
+    } finally {
+        if (request === latestRequest) loading.value = false
+    }
+}
+
+let searchTimer: ReturnType<typeof setTimeout> | undefined
+
+function fetchSoon(query: string) {
+    clearTimeout(searchTimer)
+    searchTimer = setTimeout(() => void fetchItems(query), SEARCH_DEBOUNCE_MS)
+}
+
+onBeforeUnmount(() => clearTimeout(searchTimer))
+
+function onSearch(value: string | null) {
+    search.value = value ?? ''
+    if (props.items || searchIsEchoOfSelection.value) return
+    fetchSoon(search.value)
+}
+
+/** Set by a pick in tags mode; Vuetify reopens the menu by itself when the list refills, which the user did not ask for. */
+let pickedSince = false
+
+function onMenu(open: boolean) {
+    if (open && pickedSince) return
+    menu.value = open
+    // Vuetify widens a menu to fit its longest item; the dropdown must stay as wide as the field (L9)
+    if (open) menuMaxWidth.value = field.value?.$el.getBoundingClientRect().width
+    // typing already schedules its own fetch, so only an untouched search box needs one on open
+    if (!open || props.items || typedQuery.value !== '') return
+    void fetchItems('')
+}
+
+function isCreate(value: any): boolean {
+    return value === CREATE_VALUE || value?.__create__ === true
+}
+
+function uniqueByValue(values: any[]): any[] {
+    const seen = new Set<any>()
+    return values.filter(value => {
+        const key = props.object ? value?.[itemValue.value] : value
+        if (seen.has(key)) return false
+        seen.add(key)
+        return true
+    })
+}
+
+async function onSelect(value: any) {
+    if (isMulti.value) {
+        await onSelectMany(value)
         return
     }
-    const ro = new ResizeObserver(() => {
-        if (dropdown.offsetWidth > 0) {
-            ms?.updatePopper?.()
-            ro.disconnect()
-        }
-    })
-    ro.observe(dropdown)
+    if (isCreate(value)) {
+        const created = await createRecord(value)
+        if (created !== undefined) model.value = props.object ? created : created[itemValue.value]
+        return
+    }
+    model.value = value ?? null
 }
 
-const {multiselectModel, effectiveObject, version: hydrationVersion, hydrate, mergeIntoResults} =
-    useMultiselectHydration(model, modelClass, () => props.mode, () => props.object, itemValue, itemLabel, multiselect)
+async function onSelectMany(value: any) {
+    const picked: any[] = Array.isArray(value) ? value : []
+    const wantsCreate = picked.find(isCreate)
+    let result = picked.filter(item => !isCreate(item))
+    if (wantsCreate !== undefined) {
+        const created = await createRecord(wantsCreate)
+        if (created === undefined) return
+        result = [...result, props.object ? created : created[itemValue.value]]
+    }
+    model.value = uniqueByValue(result)
+    pickedSince = true
+    menu.value = false
+}
 
-onBeforeMount(() => {
-    modelClass.value = getGenericModelFromString(props.model, t) || getGenericModelFromString('Food', t) as GenericModel
-    void hydrate()
-})
+/** Creates the record behind a Create row; resolves to it, or to undefined (after reporting) if that failed. */
+async function createRecord(value: any): Promise<any | undefined> {
+    const name = props.object ? value[itemLabel.value] : (displayedItems.value.find(item => item[itemValue.value] === CREATE_VALUE)?.[itemLabel.value] ?? '')
+    try {
+        const created = await modelClass.create({name: name})
+        useMessageStore().addPreparedMessage(PreparedMessage.CREATE_SUCCESS, created)
+        emit('create', {[itemValue.value]: name, [itemLabel.value]: name})
+        return created
+    } catch (err: any) {
+        useMessageStore().addError(ErrorMessageType.CREATE_ERROR, err)
+        search.value = name
+        return undefined
+    }
+}
 
-function search(query: string) {
-    loading.value = true
-    return modelClass.value.list({query: query, page: 1, pageSize: props.limit}).then((r: any) => {
-        // list() now always resolves a {count, results, next} envelope (non-paginated models
-        // are normalized in GenericModel.list), so no per-shape branch is needed here.
-        hasMoreItems.value = !!r.next
-        return mergeIntoResults(r.results)
-    }).catch((err: any) => {
-        useMessageStore().addError(ErrorMessageType.FETCH_ERROR, err)
-    }).finally(() => {
-        loading.value = false
-    })
+const lookingUp = new Set<any>()
+const unresolvable = new Set<any>()
+
+async function lookUp(value: any) {
+    lookingUp.add(value)
+    try {
+        const record = await modelClass.retrieve(Number(value))
+        if (record) hydrated.set(value, record)
+        else unresolvable.add(value)
+    } catch (err: any) {
+        // an id that cannot be resolved stays unlabelled; only a record that is gone for good (404) is not asked for again,
+        // so a lookup that failed because the network was down is retried on the next change
+        if (err?.response?.status === 404) unresolvable.add(value)
+    } finally {
+        lookingUp.delete(value)
+    }
 }
 
 /**
- * handle new object being created
- *
- * @param object object with two keys (itemValue/itemLabel) both having the string of the newly created item (query) as a value {<itemValue>: query, <itemLabel>: query}
- * @param select$ reference to multiselect instance
+ * Keeps hold of the record behind every selected id: copied from what is loaded right now (the list is replaced as soon as
+ * the typed text is cleared, which would otherwise take the label with it), or looked up once when it is not loaded.
  */
-async function createObject(object: any, select$: Multiselect) {
-    return await modelClass.value.create({name: object[itemLabel.value]}).then((createdObj: any) => {
-        useMessageStore().addPreparedMessage(PreparedMessage.CREATE_SUCCESS, createdObj)
-        emit('create', object)
-        return createdObj
-    }).catch((err: any) => {
-        useMessageStore().addError(ErrorMessageType.CREATE_ERROR, err)
-    })
+function hydrateSelection() {
+    if (props.object || props.items || modelClass.model.disableRetrieve) return
+    const loaded = [...fetchedItems.value, ...(browseItems.value ?? []), ...(props.pinnedItems ?? [])]
+    const toLookUp = new Set<any>()
+    for (const value of selectedValues.value) {
+        if (value == null || value === '' || hydrated.has(value)) continue
+        const record = loaded.find(item => item[itemValue.value] === value)
+        if (record) hydrated.set(value, record)
+        else if (Number.isFinite(Number(value)) && !lookingUp.has(value) && !unresolvable.has(value)) toLookUp.add(value)
+    }
+    toLookUp.forEach(value => void lookUp(value))
 }
 
+// only ids can need a lookup; watching the ids (not the value) keeps a full record in `object` mode from being traversed
+watch(() => props.object ? undefined : [...selectedValues.value], () => hydrateSelection())
 
+// once the label is known, it replaces the raw id Vuetify echoed into the text box before that
+watch(selectedLabel, label => {
+    if (label !== '' && !props.object && model.value != null && search.value === String(model.value)) search.value = label
+})
+
+onMounted(async () => {
+    if (props.searchOnLoad && !props.items) {
+        await fetchItems('')
+    }
+    hydrateSelection()
+})
 </script>
 
-<style src="@vueform/multiselect/themes/default.css"></style>
-<!-- style can't be scoped (for whatever reason) -->
-<style>
-.material-multiselect {
-    /* theme-derived fill matching the native filled-field overlay (on-surface @ 0.04) */
-    --ms-bg: rgba(var(--v-theme-on-surface), 0.04);
-    --ms-border-color: 0;
-    --ms-border-color-active: 0;
-    /* Height is density-driven (native Vuetify: default 56 / comfortable 48 / compact 40) and
-       applied to EVERY select — labelled or not — so they line up in a shared form. */
-    min-height: 56px;
+<style scoped>
+/* The clear ✕ and the caret are small, plain and light (on-surface at 40 %, the grey the old picker used) rather
+   than Vuetify's 24 px near-black defaults. */
+.model-select :deep(.v-field__clearable .v-icon),
+.model-select :deep(.v-autocomplete__menu-icon) {
+    font-size: 14px;
+    opacity: 1;
+    color: rgba(var(--v-theme-on-surface), 0.4);
 }
 
-/* Border variants. underline = filled field with a bottom rule (default), outlined = full border
-   — the two native Vuetify field looks. Colors are theme-derived (on-surface), matching the native
-   filled underline (on-surface @ ~0.38) rather than hardcoded greys. */
-.material-multiselect.model-select--underline {
-    border-bottom: 1px solid rgba(var(--v-theme-on-surface), 0.38);
-    border-bottom-left-radius: 0;
-    border-bottom-right-radius: 0;
+/* inline: sits beside compact fields in a dense row, so the value text gets as much of the narrow column as it can.
+   The spacing variables must be set on .v-field itself (Vuetify redefines them there, so a value on the root is ignored),
+   and the clear/caret icons get a tighter box. */
+.model-select--inline :deep(.v-field) {
+    --v-field-padding-start: 8px;
+    --v-field-padding-end: 4px;
 }
 
-.material-multiselect.model-select--outlined {
-    border: thin solid rgba(var(--v-theme-on-surface), 0.38);
-    border-radius: 4px;
-    --ms-bg: transparent; /* outlined fields have no fill */
-}
-
-/* Filled-field parity: a labelled ModelSelect reads like a native Vuetify field. Field HEIGHT is
-   density-driven (see base + density rules) and applies whether or not there's a label, so labelled
-   and unlabelled selects line up. The label is the multiselect root's ::before (root is already
-   position:relative), so no positioned wrapper is needed — a wrapper would become the multiselect's
-   offsetParent and shift @vueform's append-to-body popper on first open. */
-.material-multiselect[data-label]::before {
-    content: attr(data-label);
-    position: absolute;
-    top: 7px;
-    left: 16px;
-    z-index: 1;
-    max-width: calc(100% - 32px);
-    font-size: 0.75rem;
-    line-height: 18px;
-    letter-spacing: 0.0094em;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    /* Match the native filled-field floated label exactly: on-surface color at high-emphasis
-       alpha, dimmed by a medium-emphasis element opacity (Vuetify layers the two → grey, not
-       black). Both theme-derived, no hardcoded colors. */
-    color: rgba(var(--v-theme-on-surface), var(--v-high-emphasis-opacity, 0.87));
-    opacity: var(--v-medium-emphasis-opacity, 0.6);
-    background: transparent;
-    pointer-events: none;
-}
-
-/* compact: notch sits higher in the shorter (40px) field */
-.material-multiselect.model-select--density-compact[data-label]::before {
-    top: 3px;
-}
-
-/* outlined: the label rides the top border — cut it with a surface swatch; the value stays
-   centered (no push-down), as in a native outlined field. */
-.material-multiselect.model-select--outlined[data-label]::before {
-    top: -8px;
-    padding: 0 4px;
-    background: rgb(var(--v-theme-surface));
-}
-
-/* Empty AND closed → the label doubles as the placeholder: centered, at value size. As soon as the
-   field is opened (@vueform toggles .is-open / .is-open-top) or holds a value / tags, the notch
-   rules above take over. Transparent + no padding so an outlined field's centered placeholder does
-   not cut the border. */
-.material-multiselect[data-label]:not(.is-open):not(.is-open-top):not(:has(.multiselect-single-label)):not(:has(.multiselect-tag))::before {
-    top: 50%;
-    transform: translateY(-50%);
-    font-size: 1rem;
-    line-height: 24px;
-    letter-spacing: normal;
-    padding: 0;
-    background: transparent;
-}
-
-/* @vueform hardcodes the tags-mode search input white; make it transparent so the field fill
-   (--ms-bg) shows through instead of a white band. */
-.material-multiselect .multiselect-tags-search {
-    background: transparent;
-}
-
-/* Same fix as .multiselect-tags-search above, for single/simple mode: .multiselect-search is an
-   absolutely-positioned input covering the ENTIRE field, also filled with --ms-bg by @vueform's
-   own theme. Left un-overridden, two identical translucent (0.04 alpha) layers stack — root +
-   search input — compounding to ~0.078 effective opacity, visibly darker than every other
-   (single-layer) Vuetify filled field despite either layer's OWN computed background-color
-   inspecting as the same 0.04. Root-caused 2026-08-24 from a UAT report that model-selects "look
-   darker" than native fields. */
-.material-multiselect .multiselect-search {
-    background: transparent;
-}
-
-/* Seat the value / placeholder / search text exactly where a native filled input seats it:
-   line-height 24px, pushed down with padding-top 24px (native uses padding-top:24; padding-bottom:4;
-   line-height:24 inside a 56px field). Overrides @vueform's tall --ms-line-height so the value
-   doesn't ride ~7px high. */
-.material-multiselect.model-select--underline[data-label] .multiselect-single-label,
-.material-multiselect.model-select--underline[data-label] .multiselect-placeholder,
-.material-multiselect.model-select--underline[data-label] .multiselect-multiple-label {
-    align-items: flex-start;
-    padding-top: 24px;
-    padding-bottom: 4px;
-    line-height: 24px;
-    left: 16px;
-}
-
-.material-multiselect.model-select--underline[data-label] .multiselect-tags {
-    padding-top: 22px;
-    padding-left: 12px;
-}
-
-.material-multiselect.model-select--underline[data-label] .multiselect-search {
-    padding-top: 24px;
-    padding-left: 16px;
-    line-height: 24px;
-}
-
-/* compact filled (40px): value/search seat higher so they fit below the compact notch */
-.material-multiselect.model-select--underline.model-select--density-compact[data-label] .multiselect-single-label,
-.material-multiselect.model-select--underline.model-select--density-compact[data-label] .multiselect-placeholder,
-.material-multiselect.model-select--underline.model-select--density-compact[data-label] .multiselect-multiple-label,
-.material-multiselect.model-select--underline.model-select--density-compact[data-label] .multiselect-search {
-    padding-top: 16px;
-    line-height: 20px;
-}
-
-.material-multiselect.model-select--density-compact {
-    --ms-line-height: 1.3;
-    min-height: 40px;
-}
-
-.material-multiselect.model-select--density-comfortable {
-    --ms-line-height: 1.8;
-    min-height: 48px;
-}
-
-.model-select--density-default {
-    --ms-line-height: 2.3;
-}
-
-/* inline: no external label; sized to sit beside Vuetify compact fields in a row.
-   Double class beats the density classes by specificity, not source order. */
-.material-multiselect.model-select--inline {
-    --ms-line-height: 1.3;
-    /* Tighter horizontal padding for dense inline rows: @vueform reserves 1.25rem + 3×--ms-px on
-       the right for the clear+caret chrome (62px at the default --ms-px), which starves the value
-       text in narrow columns and truncates unit names. Halving --ms-px keeps clear+caret clear of
-       the text while giving the value far more room. */
-    --ms-px: 0.5rem;
-    min-height: 40px;
-}
-
-
-.multiselect-tag {
-    background-color: #b98766 !important;
-}
-
-.z-3000 {
-    z-index: 3000;
+.model-select--inline :deep(.v-field__clearable .v-icon),
+.model-select--inline :deep(.v-autocomplete__menu-icon) {
+    width: 1em;
 }
 </style>

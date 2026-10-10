@@ -137,12 +137,6 @@ function doAutoPlan() {
     min-width: 0;
 }
 
-.keyword-row :deep(.multiselect) {
-    border: thin solid rgba(0, 0, 0, 0.12) !important;
-    border-right: none !important;
-    border-radius: 4px 0 0 4px !important;
-}
-
 .keyword-toggle {
     height: auto !important;
     border-top-left-radius: 0 !important;
