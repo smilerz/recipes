@@ -88,7 +88,7 @@
                                                       :disabled="ingredient.noAmount"></model-select>
                                     </div>
                                     <div class="flex-col flex-grow-1  ma-1" style="min-width: 15%" v-if="!ingredient.isHeader">
-                                        <model-select model="Food" v-model="ingredient.food" density="compact" allow-create hide-details></model-select>
+                                        <component :is="FoodSelect" model="Food" v-model="ingredient.food" density="compact" allow-create hide-details></component>
                                     </div>
                                     <div class="flex-col ma-1" style="min-width: 15%" :class="{'flex-grow-1': ingredient.isHeader, 'flex-grow-0': !ingredient.isHeader}"
                                          @keydown.tab="event => handleIngredientNoteTab(event, index)">
@@ -210,8 +210,8 @@
                     <model-select model="Unit" v-model="step.ingredients[editingIngredientIndex].unit" :label="$t('Unit')" v-if="!step.ingredients[editingIngredientIndex].isHeader"
                                   :disabled="step.ingredients[editingIngredientIndex].noAmount"
                                   allow-create></model-select>
-                    <model-select model="Food" v-model="step.ingredients[editingIngredientIndex].food" :label="$t('Food')" v-if="!step.ingredients[editingIngredientIndex].isHeader"
-                                  allow-create></model-select>
+                    <component :is="FoodSelect" model="Food" v-model="step.ingredients[editingIngredientIndex].food" :label="$t('Food')" v-if="!step.ingredients[editingIngredientIndex].isHeader"
+                                  allow-create></component>
                     <v-text-field :label="(step.ingredients[editingIngredientIndex].isHeader) ?$t('Headline')  : $t('Note')"
                                   v-model="step.ingredients[editingIngredientIndex].note"></v-text-field>
 
@@ -245,6 +245,7 @@ import {nextTick, ref} from 'vue'
 import {ApiApi, Ingredient, Recipe, Step} from "@/openapi";
 import StepMarkdownEditor from "@/components/inputs/StepMarkdownEditor.vue";
 import ModelSelect from "@/components/inputs/ModelSelect.vue";
+import {useModelSelectPrototype} from "@/composables/useModelSelectPrototype";
 import CropImage from "@/components/display/CropImage.vue";
 import {useDisplay} from "vuetify";
 import {VueDraggable} from "vue-draggable-plus";
@@ -263,6 +264,8 @@ const props = defineProps({
 })
 
 const {mobile} = useDisplay()
+// in-context trial of ModelAutocomplete on the Food field only; ?ms=new / ?ms=old (temporary)
+const FoodSelect = useModelSelectPrototype()
 
 const showName = ref(false)
 const showTime = ref(false)

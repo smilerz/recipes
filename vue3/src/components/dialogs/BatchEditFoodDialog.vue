@@ -24,21 +24,21 @@
 
                                     <v-spacer></v-spacer>
                                     <v-label :text="$t('Substitutes')"></v-label>
-                                    <model-select model="Food" v-model="batchUpdateRequest.foodBatchUpdate.substituteAdd" :object="false" allow-create mode="tags">
+                                    <component :is="Picker" model="Food" v-model="batchUpdateRequest.foodBatchUpdate.substituteAdd" :object="false" allow-create mode="tags">
                                         <template #prepend>
                                             <v-icon icon="fa-solid fa-add"></v-icon>
                                         </template>
-                                    </model-select>
-                                    <model-select model="Food" v-model="batchUpdateRequest.foodBatchUpdate.substituteRemove" :object="false" allow-create mode="tags">
+                                    </component>
+                                    <component :is="Picker" model="Food" v-model="batchUpdateRequest.foodBatchUpdate.substituteRemove" :object="false" allow-create mode="tags">
                                         <template #prepend>
                                             <v-icon icon="fa-solid fa-minus"></v-icon>
                                         </template>
-                                    </model-select>
-                                    <model-select model="Food" v-model="batchUpdateRequest.foodBatchUpdate.substituteSet" :object="false" allow-create mode="tags">
+                                    </component>
+                                    <component :is="Picker" model="Food" v-model="batchUpdateRequest.foodBatchUpdate.substituteSet" :object="false" allow-create mode="tags">
                                         <template #prepend>
                                             <v-icon icon="fa-solid fa-equals"></v-icon>
                                         </template>
-                                    </model-select>
+                                    </component>
                                     <v-checkbox :label="$t('RemoveAllType', {type: $t('Substitutes')})" hide-details
                                                 v-model="batchUpdateRequest.foodBatchUpdate.substituteRemoveAll"></v-checkbox>
 
@@ -64,21 +64,21 @@
                                     <v-spacer></v-spacer>
 
                                     <v-label :text="$t('InheritFields')"></v-label>
-                                    <model-select model="FoodInheritField" v-model="batchUpdateRequest.foodBatchUpdate.inheritFieldsAdd" :object="false" allow-create mode="tags">
+                                    <component :is="Picker" model="FoodInheritField" v-model="batchUpdateRequest.foodBatchUpdate.inheritFieldsAdd" :object="false" allow-create mode="tags">
                                         <template #prepend>
                                             <v-icon icon="fa-solid fa-add"></v-icon>
                                         </template>
-                                    </model-select>
-                                    <model-select model="FoodInheritField" v-model="batchUpdateRequest.foodBatchUpdate.inheritFieldsRemove" :object="false" allow-create mode="tags">
+                                    </component>
+                                    <component :is="Picker" model="FoodInheritField" v-model="batchUpdateRequest.foodBatchUpdate.inheritFieldsRemove" :object="false" allow-create mode="tags">
                                         <template #prepend>
                                             <v-icon icon="fa-solid fa-minus"></v-icon>
                                         </template>
-                                    </model-select>
-                                    <model-select model="FoodInheritField" v-model="batchUpdateRequest.foodBatchUpdate.inheritFieldsSet" :object="false" allow-create mode="tags">
+                                    </component>
+                                    <component :is="Picker" model="FoodInheritField" v-model="batchUpdateRequest.foodBatchUpdate.inheritFieldsSet" :object="false" allow-create mode="tags">
                                         <template #prepend>
                                             <v-icon icon="fa-solid fa-equals"></v-icon>
                                         </template>
-                                    </model-select>
+                                    </component>
                                     <v-checkbox :label="$t('RemoveAllType', {type: $t('InheritFields')})" hide-details
                                                 v-model="batchUpdateRequest.foodBatchUpdate.inheritFieldsRemoveAll"></v-checkbox>
 
@@ -86,21 +86,21 @@
                                     <v-spacer></v-spacer>
                                     <v-label :text="$t('ChildInheritFields')"></v-label>
 
-                                    <model-select model="FoodInheritField" v-model="batchUpdateRequest.foodBatchUpdate.childInheritFieldsAdd" :object="false" allow-create mode="tags">
+                                    <component :is="Picker" model="FoodInheritField" v-model="batchUpdateRequest.foodBatchUpdate.childInheritFieldsAdd" :object="false" allow-create mode="tags">
                                         <template #prepend>
                                             <v-icon icon="fa-solid fa-add"></v-icon>
                                         </template>
-                                    </model-select>
-                                    <model-select model="FoodInheritField" v-model="batchUpdateRequest.foodBatchUpdate.childInheritFieldsRemove" :object="false" allow-create mode="tags">
+                                    </component>
+                                    <component :is="Picker" model="FoodInheritField" v-model="batchUpdateRequest.foodBatchUpdate.childInheritFieldsRemove" :object="false" allow-create mode="tags">
                                         <template #prepend>
                                             <v-icon icon="fa-solid fa-minus"></v-icon>
                                         </template>
-                                    </model-select>
-                                    <model-select model="FoodInheritField" v-model="batchUpdateRequest.foodBatchUpdate.childInheritFieldsSet" :object="false" allow-create mode="tags">
+                                    </component>
+                                    <component :is="Picker" model="FoodInheritField" v-model="batchUpdateRequest.foodBatchUpdate.childInheritFieldsSet" :object="false" allow-create mode="tags">
                                         <template #prepend>
                                             <v-icon icon="fa-solid fa-equals"></v-icon>
                                         </template>
-                                    </model-select>
+                                    </component>
                                     <v-checkbox :label="$t('RemoveAllType', {type: $t('ChildInheritFields')})" hide-details
                                                 v-model="batchUpdateRequest.foodBatchUpdate.childInheritFieldsRemoveAll"></v-checkbox>
 
@@ -130,6 +130,10 @@ import {useI18n} from "vue-i18n";
 import {ApiApi, ApiFoodBatchUpdateUpdateRequest, ApiRecipeBatchUpdateUpdateRequest, Food, Recipe, RecipeOverview} from "@/openapi";
 import {ErrorMessageType, useMessageStore} from "@/stores/MessageStore.ts";
 import ModelSelect from "@/components/inputs/ModelSelect.vue";
+import {useModelSelectPrototype} from "@/composables/useModelSelectPrototype";
+
+// in-context trial of ModelAutocomplete on the multi-select fields; ?ms=new / ?ms=old (temporary)
+const Picker = useModelSelectPrototype()
 
 const emit = defineEmits(['change'])
 

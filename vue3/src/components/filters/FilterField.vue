@@ -9,7 +9,8 @@
     />
     <div v-else-if="def.type === 'model-select' && def.modelName" :class="wrapClass" @click.stop>
         <span class="text-body-2 text-medium-emphasis">{{ $t(def.labelKey) }}</span>
-        <ModelSelect
+        <component
+            :is="PickerSelect"
             :model="def.modelName"
             :model-value="getFilter(def.key) ? Number(getFilter(def.key)) : null"
             @update:model-value="setFilter(def.key, $event != null ? String($event) : undefined)"
@@ -180,6 +181,10 @@ import type {FilterDef, FilterValue} from '@/composables/modellist/types'
 import {parseRangePart, buildRangeUpdate} from '@/utils/filterRange'
 import TriStateToggle from '@/components/common/TriStateToggle.vue'
 import ModelSelect from '@/components/inputs/ModelSelect.vue'
+import {useModelSelectPrototype} from '@/composables/useModelSelectPrototype'
+
+// in-context trial of ModelAutocomplete on the model-select filter; ?ms=new / ?ms=old (temporary)
+const PickerSelect = useModelSelectPrototype()
 
 const props = withDefaults(defineProps<{
     def: FilterDef

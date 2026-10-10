@@ -1,5 +1,5 @@
 <template>
-    <v-card v-bind="$attrs" class="pa-2" style="overflow: visible">
+    <v-card v-bind="$attrs" class="pa-2" :class="{'picker-is-new': pickerIsNew}" style="overflow: visible">
         <div class="d-flex align-center" style="min-height: 32px">
             <v-badge :model-value="totalCount > 0" :content="totalCount" color="primary" inline>
                 <span class="text-subtitle-2 flex-shrink-0">{{ label }}</span>
@@ -20,7 +20,7 @@
             <div class="d-flex align-center ga-1 mt-3">
                 <div class="floating-label-wrap flex-grow-1" @click.stop>
                     <span class="floating-label text-medium-emphasis">{{ $t('with') }}</span>
-                    <ModelSelect :model="modelName" :placeholder="selectPlaceholder" :model-value="row1Values" @update:model-value="v => onUpdate(row1Key, v)"
+                    <component :is="Picker" :model="modelName" :placeholder="selectPlaceholder" :model-value="row1Values" @update:model-value="v => onUpdate(row1Key, v)"
                         :object="false" mode="tags" density="compact" :can-clear="true" :search-on-load="false" :append-to-body="true" :hide-details="true" />
                 </div>
                 <v-btn-toggle :model-value="includeMode" @update:model-value="toggleIncludeMode" mandatory density="compact" color="primary" class="flex-shrink-0" @click.stop>
@@ -31,7 +31,7 @@
             <div class="d-flex align-center ga-1 mt-3">
                 <div class="floating-label-wrap flex-grow-1" @click.stop>
                     <span class="floating-label text-medium-emphasis">{{ $t('without') }}</span>
-                    <ModelSelect :model="modelName" :placeholder="selectPlaceholder" :model-value="row2Values" @update:model-value="v => onUpdate(row2Key, v)"
+                    <component :is="Picker" :model="modelName" :placeholder="selectPlaceholder" :model-value="row2Values" @update:model-value="v => onUpdate(row2Key, v)"
                         :object="false" mode="tags" density="compact" :can-clear="true" :search-on-load="false" :append-to-body="true" :hide-details="true" />
                 </div>
                 <v-btn-toggle :model-value="excludeMode" @update:model-value="toggleExcludeMode" mandatory density="compact" color="primary" class="flex-shrink-0" @click.stop>
@@ -43,7 +43,7 @@
                 <div class="d-flex align-center ga-1 mt-3">
                     <div class="floating-label-wrap flex-grow-1" @click.stop>
                         <span class="floating-label text-medium-emphasis">{{ $t('with') }}</span>
-                        <ModelSelect :model="modelName" :placeholder="selectPlaceholder" :model-value="row3Values" @update:model-value="v => onUpdate(row3Key, v)"
+                        <component :is="Picker" :model="modelName" :placeholder="selectPlaceholder" :model-value="row3Values" @update:model-value="v => onUpdate(row3Key, v)"
                             :object="false" mode="tags" density="compact" :can-clear="true" :search-on-load="false" :append-to-body="true" :hide-details="true" />
                     </div>
                     <v-btn-toggle :model-value="row3ModeLabel" @update:model-value="toggleIncludeMode" mandatory density="compact" color="primary" class="flex-shrink-0" @click.stop>
@@ -54,7 +54,7 @@
                 <div class="d-flex align-center ga-1 mt-3">
                     <div class="floating-label-wrap flex-grow-1" @click.stop>
                         <span class="floating-label text-medium-emphasis">{{ $t('without') }}</span>
-                        <ModelSelect :model="modelName" :placeholder="selectPlaceholder" :model-value="row4Values" @update:model-value="v => onUpdate(row4Key, v)"
+                        <component :is="Picker" :model="modelName" :placeholder="selectPlaceholder" :model-value="row4Values" @update:model-value="v => onUpdate(row4Key, v)"
                             :object="false" mode="tags" density="compact" :can-clear="true" :search-on-load="false" :append-to-body="true" :hide-details="true" />
                     </div>
                     <v-btn-toggle :model-value="row4ModeLabel" @update:model-value="toggleExcludeMode" mandatory density="compact" color="primary" class="flex-shrink-0" @click.stop>
@@ -70,7 +70,7 @@
             <div class="d-flex align-center ga-2 mt-3">
                 <div class="floating-label-wrap flex-grow-1" @click.stop>
                     <span class="floating-label text-medium-emphasis">{{ $t('with') }}</span>
-                    <ModelSelect :model="modelName" :placeholder="selectPlaceholder" :model-value="row1Values" @update:model-value="v => onUpdate(row1Key, v)"
+                    <component :is="Picker" :model="modelName" :placeholder="selectPlaceholder" :model-value="row1Values" @update:model-value="v => onUpdate(row1Key, v)"
                         :object="false" mode="tags" density="compact" :can-clear="true" :search-on-load="false" :append-to-body="true" :hide-details="true" />
                 </div>
                 <v-btn-toggle v-if="showToggles" :model-value="includeMode" @update:model-value="toggleIncludeMode" mandatory density="compact" color="primary" class="flex-shrink-0" @click.stop>
@@ -81,7 +81,7 @@
             <div class="d-flex align-center ga-2 mt-3">
                 <div class="floating-label-wrap flex-grow-1" @click.stop>
                     <span class="floating-label text-medium-emphasis">{{ $t('without') }}</span>
-                    <ModelSelect :model="modelName" :placeholder="selectPlaceholder" :model-value="row2Values" @update:model-value="v => onUpdate(row2Key, v)"
+                    <component :is="Picker" :model="modelName" :placeholder="selectPlaceholder" :model-value="row2Values" @update:model-value="v => onUpdate(row2Key, v)"
                         :object="false" mode="tags" density="compact" :can-clear="true" :search-on-load="false" :append-to-body="true" :hide-details="true" />
                 </div>
                 <v-btn-toggle v-if="showToggles" :model-value="excludeMode" @update:model-value="toggleExcludeMode" mandatory density="compact" color="primary" class="flex-shrink-0" @click.stop>
@@ -92,7 +92,7 @@
             <div v-if="expanded" class="d-flex align-center ga-2 mt-3">
                 <div class="floating-label-wrap flex-grow-1" @click.stop>
                     <span class="floating-label text-medium-emphasis">{{ $t('with') }}</span>
-                    <ModelSelect :model="modelName" :placeholder="selectPlaceholder" :model-value="row3Values" @update:model-value="v => onUpdate(row3Key, v)"
+                    <component :is="Picker" :model="modelName" :placeholder="selectPlaceholder" :model-value="row3Values" @update:model-value="v => onUpdate(row3Key, v)"
                         :object="false" mode="tags" density="compact" :can-clear="true" :search-on-load="false" :append-to-body="true" :hide-details="true" />
                 </div>
                 <v-btn-toggle v-if="showToggles" :model-value="row3ModeLabel" @update:model-value="toggleIncludeMode" mandatory density="compact" color="primary" class="flex-shrink-0" @click.stop>
@@ -103,7 +103,7 @@
             <div v-if="expanded" class="d-flex align-center ga-2 mt-3">
                 <div class="floating-label-wrap flex-grow-1" @click.stop>
                     <span class="floating-label text-medium-emphasis">{{ $t('without') }}</span>
-                    <ModelSelect :model="modelName" :placeholder="selectPlaceholder" :model-value="row4Values" @update:model-value="v => onUpdate(row4Key, v)"
+                    <component :is="Picker" :model="modelName" :placeholder="selectPlaceholder" :model-value="row4Values" @update:model-value="v => onUpdate(row4Key, v)"
                         :object="false" mode="tags" density="compact" :can-clear="true" :search-on-load="false" :append-to-body="true" :hide-details="true" />
                 </div>
                 <v-btn-toggle v-if="showToggles" :model-value="row4ModeLabel" @update:model-value="toggleExcludeMode" mandatory density="compact" color="primary" class="flex-shrink-0" @click.stop>
@@ -122,8 +122,12 @@ import {computed, ref, watch} from 'vue'
 import {useI18n} from 'vue-i18n'
 import type {EditorSupportedModels} from '@/types/Models'
 import type {FilterValue} from '@/composables/modellist/types'
-import ModelSelect from '@/components/inputs/ModelSelect.vue'
+import {useModelSelectPrototype, useModelSelectPrototypeOn} from "@/composables/useModelSelectPrototype";
 import ActionConfirmDialog from '@/components/dialogs/ActionConfirmDialog.vue'
+
+// in-context trial of ModelAutocomplete on the multi-select fields; ?ms=new / ?ms=old (temporary)
+const Picker = useModelSelectPrototype()
+const pickerIsNew = useModelSelectPrototypeOn()
 
 // Two root nodes (the card + ActionConfirmDialog) make this a fragment component, so Vue
 // can't auto-forward fallthrough attrs (e.g. a class from a Transition wrapper) - direct
@@ -275,6 +279,11 @@ defineExpose({onCollapse, confirmDialogRef})
    border, so its interior read lighter than the surrounding card. Render it as a
    clean outlined field — transparent background + a theme-aware border — which
    matches the floating-label notch pattern and the rest of the inputs. */
+/* the new picker is a filled field with no border to notch, so the label must not paint over it */
+.picker-is-new .floating-label {
+    background: transparent;
+    font-size: 0.6875rem;
+}
 .floating-label-wrap :deep(.material-multiselect) {
     --ms-bg: transparent;
     border: thin solid rgba(var(--v-border-color), var(--v-border-opacity));

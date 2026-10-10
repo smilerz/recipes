@@ -28,11 +28,11 @@
             <v-number-input v-model="searchPreferences.trigramThreshold" :precision="2" :min="0.01" :max="1" :step="0.1" :label="$t('TrigramThreshold')" persistent-hint
                             :hint="$t('TrigramThresholdHelp')"></v-number-input>
 
-            <ModelSelect model="SearchFields" mode="tags" v-model="searchPreferences.unaccent" :label="$t('IgnoreAccents')" :hint="$t('IgnoreAccentsHelp')"></ModelSelect>
-            <ModelSelect model="SearchFields" mode="tags" v-model="searchPreferences.icontains" :label="$t('PartialMatch')" :hint="$t('PartialMatchHelp')"></ModelSelect>
-            <ModelSelect model="SearchFields" mode="tags" v-model="searchPreferences.istartswith" :label="$t('StartsWith')" :hint="$t('StartsWithHelp')"></ModelSelect>
-            <ModelSelect model="SearchFields" mode="tags" v-model="searchPreferences.fulltext" :label="$t('Fulltext')" :hint="$t('FulltextHelp')"></ModelSelect>
-            <ModelSelect model="SearchFields" mode="tags" v-model="searchPreferences.trigram" :label="$t('TrigramFields')" :hint="$t('TrigramFieldsHelp')"></ModelSelect>
+            <component :is="Picker" model="SearchFields" mode="tags" v-model="searchPreferences.unaccent" :label="$t('IgnoreAccents')" :hint="$t('IgnoreAccentsHelp')"></component>
+            <component :is="Picker" model="SearchFields" mode="tags" v-model="searchPreferences.icontains" :label="$t('PartialMatch')" :hint="$t('PartialMatchHelp')"></component>
+            <component :is="Picker" model="SearchFields" mode="tags" v-model="searchPreferences.istartswith" :label="$t('StartsWith')" :hint="$t('StartsWithHelp')"></component>
+            <component :is="Picker" model="SearchFields" mode="tags" v-model="searchPreferences.fulltext" :label="$t('Fulltext')" :hint="$t('FulltextHelp')"></component>
+            <component :is="Picker" model="SearchFields" mode="tags" v-model="searchPreferences.trigram" :label="$t('TrigramFields')" :hint="$t('TrigramFieldsHelp')"></component>
 
             <v-btn class="mt-3" color="success" @click="updateSearchSettings()" prepend-icon="$save" :loading="loading">
                 {{ $t('Save') }}
@@ -48,7 +48,11 @@ import {onMounted, ref} from "vue";
 import {ApiApi, SearchFields, SearchPreference} from "@/openapi";
 import {ErrorMessageType, PreparedMessage, useMessageStore} from "@/stores/MessageStore";
 import {useUserPreferenceStore} from "@/stores/UserPreferenceStore.ts";
-import ModelSelect from "@/components/inputs/ModelSelect.vue";
+;
+import {useModelSelectPrototype} from "@/composables/useModelSelectPrototype";
+
+// in-context trial of ModelAutocomplete on the multi-select fields; ?ms=new / ?ms=old (temporary)
+const Picker = useModelSelectPrototype()
 
 const searchMethods = ref([
     {title: 'Simple', value: 'plain'},

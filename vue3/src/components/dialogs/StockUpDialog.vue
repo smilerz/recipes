@@ -38,10 +38,13 @@
                                     <v-number-input :label="$t('Amount')" v-model="row.amount" :precision="2" :min="0" control-variant="hidden" hide-details density="compact" :disabled="!row.checked"></v-number-input>
                                 </v-col>
                                 <v-col cols="6" sm="3">
-                                    <model-select :label="$t('Unit')" v-model="row.unit" model="Unit" hide-details density="compact" append-to-body inline :disabled="!row.checked"></model-select>
+                                    <model-autocomplete v-if="newPicker" :label="$t('Unit')" v-model="row.unit" model="Unit" hide-details density="compact" append-to-body inline :disabled="!row.checked"></model-autocomplete>
+                                    <model-select v-else :label="$t('Unit')" v-model="row.unit" model="Unit" hide-details density="compact" append-to-body inline :disabled="!row.checked"></model-select>
                                 </v-col>
                                 <v-col cols="6" sm="3">
-                                    <model-select :label="$t('Location')" v-model="row.location" model="InventoryLocation" :items="locations"
+                                    <model-autocomplete v-if="newPicker" :label="$t('Location')" v-model="row.location" model="InventoryLocation" :items="locations"
+                                                  hide-details density="compact" append-to-body inline :disabled="!row.checked" @update:model-value="onRowLocationChange(row)"></model-autocomplete>
+                                    <model-select v-else :label="$t('Location')" v-model="row.location" model="InventoryLocation" :items="locations"
                                                   hide-details density="compact" append-to-body inline :disabled="!row.checked" @update:model-value="onRowLocationChange(row)"></model-select>
                                 </v-col>
                                 <v-col cols="12" sm="3">
@@ -80,6 +83,8 @@ import {DateTime} from "luxon";
 import {ApiApi, FoodShopping, InventoryLocation, Unit} from "@/openapi";
 import {parseBooleanAnnotation} from "@/utils/model_utils";
 import ModelSelect from "@/components/inputs/ModelSelect.vue";
+import ModelAutocomplete from "@/components/inputs/ModelAutocomplete.vue";
+import {useModelSelectPrototypeOn} from "@/composables/useModelSelectPrototype";
 import VClosableCardTitle from "@/components/dialogs/VClosableCardTitle.vue";
 import ExpiryPresetDialog from "@/components/dialogs/ExpiryPresetDialog.vue";
 import ClosableHelpAlert from "@/components/display/ClosableHelpAlert.vue";
@@ -100,6 +105,9 @@ interface Row {
 }
 
 const {t} = useI18n()
+// in-context trial of ModelAutocomplete on the Unit / Location pickers; ?ms=new / ?ms=old (temporary).
+// A literal <model-select> stays the default so tests that stub it by name still apply.
+const newPicker = useModelSelectPrototypeOn()
 const {mobile} = useDisplay()
 const emit = defineEmits(['stocked'])
 

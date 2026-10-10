@@ -12,7 +12,8 @@
         :editing-object="editingObj">
         <v-card-text>
             <v-form>
-                <model-select :label="$t('Role')" model="Group" :items="groups" mode="multiple" v-model="editingObj.groups"></model-select>
+                <model-autocomplete v-if="newPicker" :label="$t('Role')" model="Group" :items="groups" mode="tags" v-model="editingObj.groups"></model-autocomplete>
+                <model-select v-else :label="$t('Role')" model="Group" :items="groups" mode="multiple" v-model="editingObj.groups"></model-select>
                 <model-select model="Household" :label="$t('Household')" v-model="editingObj.household" allow-create></model-select>
 
                 <v-spacer class="mt-10"></v-spacer>
@@ -33,7 +34,12 @@ import {ErrorMessageType, useMessageStore} from "@/stores/MessageStore";
 import ModelEditorBase from "@/components/model_editors/ModelEditorBase.vue";
 import {useModelEditorFunctions} from "@/composables/useModelEditorFunctions";
 import ModelSelect from "@/components/inputs/ModelSelect.vue";
+import ModelAutocomplete from "@/components/inputs/ModelAutocomplete.vue";
+import {useModelSelectPrototypeOn} from "@/composables/useModelSelectPrototype";
 import {useUserPreferenceStore} from "@/stores/UserPreferenceStore.ts";
+
+// in-context trial of ModelAutocomplete on the Role field; ?ms=new / ?ms=old (temporary)
+const newPicker = useModelSelectPrototypeOn()
 
 const props = defineProps({
     item: {type: {} as PropType<UserSpace>, required: false, default: null},

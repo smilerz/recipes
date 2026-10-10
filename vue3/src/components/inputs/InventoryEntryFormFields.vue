@@ -3,7 +3,7 @@
                   @update:modelValue="form.inventoryEntrySelected()">
     </model-select>
 
-    <model-select model="Food" :label="$t('Food')" allow-create v-model="form.food.value" v-if="bookingMode === 'add'"></model-select>
+    <component :is="PickerSelect" model="Food" :label="$t('Food')" allow-create v-model="form.food.value" v-if="bookingMode === 'add'"></component>
 
     <slot name="after-identity"></slot>
 
@@ -12,7 +12,7 @@
         <v-tab value="location">{{ $t('InventoryLocation') }}</v-tab>
     </v-tabs>
 
-    <model-select model="InventoryLocation" :label="$t('InventoryLocation')" v-model="form.inventoryLocation.value"
+    <component :is="PickerSelect" model="InventoryLocation" :label="$t('InventoryLocation')" v-model="form.inventoryLocation.value"
                   v-if="bookingMode === 'add' || (bookingMode === 'edit' && form.editTab.value === 'location')">
         <template #append>
             <v-btn icon>
@@ -20,7 +20,7 @@
                 <model-edit-dialog model="InventoryLocation" @create="(args: InventoryLocation) => form.inventoryLocation.value = args"></model-edit-dialog>
             </v-btn>
         </template>
-    </model-select>
+    </component>
     <v-text-field :label="$t('SubLocation')" :hint="$t('SubLocationHelp')" v-model="form.subLocation.value"
                   v-if="bookingMode === 'add' || (bookingMode === 'edit' && form.editTab.value === 'location')"></v-text-field>
 
@@ -38,14 +38,9 @@
 
     <v-number-input :label="$t('Amount')" :precision="2" v-model="form.amount.value"
                     v-if="bookingMode === 'add' || (bookingMode === 'edit' && form.editTab.value === 'amount')"></v-number-input>
-    <model-select model="Unit" :label="$t('Unit')" allow-create v-model="form.unit.value" hide-details
-                  v-if="bookingMode === 'add' || (bookingMode === 'edit' && form.editTab.value === 'amount')">
-        <template #append-inner>
-            <v-chip v-for="u in form.commonUnits.value" :key="u.id" @click="form.unit.value = u" size="small" class="mr-1">
-                {{ u.name }}
-            </v-chip>
-        </template>
-    </model-select>
+    <component :is="PickerSelect" model="Unit" :label="$t('Unit')" allow-create v-model="form.unit.value" hide-details
+               :pinned-items="form.commonUnits.value"
+               v-if="bookingMode === 'add' || (bookingMode === 'edit' && form.editTab.value === 'amount')"></component>
 
     <v-date-input :label="$t('Expires')" v-model="form.expires.value" v-if="bookingMode === 'add'">
         <template #append-inner v-if="form.inventoryLocation.value?.isFreezer">
@@ -60,6 +55,7 @@
 <script setup lang="ts">
 import {ref} from "vue";
 import ModelSelect from "@/components/inputs/ModelSelect.vue";
+import {useModelSelectPrototype} from "@/composables/useModelSelectPrototype";
 import ModelEditDialog from "@/components/dialogs/ModelEditDialog.vue";
 import ClosableHelpAlert from "@/components/display/ClosableHelpAlert.vue";
 import ExpiryPresetDialog from "@/components/dialogs/ExpiryPresetDialog.vue";
@@ -73,4 +69,6 @@ defineProps<{
 }>()
 
 const freezerExpiryDialog = ref(false)
+// in-context trial of ModelAutocomplete on the Food / Location / Unit pickers; ?ms=new / ?ms=old (temporary)
+const PickerSelect = useModelSelectPrototype()
 </script>
