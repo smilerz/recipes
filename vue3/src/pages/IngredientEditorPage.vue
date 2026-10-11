@@ -86,6 +86,15 @@
             </v-card-text>
         </v-card>
 
+        <!-- phones: the table scrolls sideways, so Save All cannot live in its last column -->
+        <v-sheet v-if="mobile" class="save-bar d-flex align-center px-3 py-2 mt-2" data-test="save-bar" border rounded>
+            <v-chip v-if="changedCount > 0" size="small" color="warning" variant="tonal" data-test="unsaved-count">{{ changedCount }} {{ $t('unsaved') }}</v-chip>
+            <v-spacer></v-spacer>
+            <v-btn size="small" color="save" data-test="save-all-button" :disabled="!hasChanges" @click="updateAllIngredients()">
+                <v-icon icon="$save"></v-icon>
+            </v-btn>
+        </v-sheet>
+
         <v-card class="mt-2">
             <v-data-table-server
                 @update:options="loadItems"
@@ -94,6 +103,7 @@
                 :items-per-page="tablePageSize"
                 :headers="tableHeaders"
                 :expanded="items.flatMap((i:Ingredient) => i.id != null ? [String(i.id)] : [])"
+                :row-props="rowProps"
                 :page="tablePage"
                 :loading="ingredientsLoading"
                 disable-sort
@@ -131,6 +141,21 @@
                     <v-text-field v-model="item.note" :title="item.note" class="note-input" :label="$t('Note')" density="compact" hide-details @update:modelValue="item.changed = true"></v-text-field>
                 </template>
 
+                <template v-slot:item.rowmenu="{ item }">
+                    <v-menu>
+                        <template #activator="{ props: menuProps }">
+                            <v-btn v-bind="menuProps" data-test="row-menu" icon="fa-solid fa-ellipsis-v" variant="text" size="small" :loading="item.loading" :aria-label="$t('Actions')"></v-btn>
+                        </template>
+                        <v-list density="compact">
+                            <v-list-item data-test="row-save" prepend-icon="$save" :title="$t('Save')" :disabled="!item.changed" @click="updateIngredient(item)"></v-list-item>
+                            <v-list-item data-test="row-delete" prepend-icon="$delete" class="text-delete">
+                                {{ $t('Delete') }}
+                                <delete-confirm-dialog :model-name="$t('Ingredient')" @delete="deleteIngredient(item)"></delete-confirm-dialog>
+                            </v-list-item>
+                        </v-list>
+                    </v-menu>
+                </template>
+
                 <template v-slot:item.action="{ item }">
                     <v-btn-group density="comfortable">
                         <v-btn size="small" color="save" :loading="item.loading" @click="updateIngredient(item)" :disabled="!item.changed">
@@ -157,6 +182,7 @@ import ModelSelect from "@/components/inputs/ModelSelect.vue";
 import ClosableHelpAlert from "@/components/display/ClosableHelpAlert.vue";
 import {ApiApi, ApiIngredientListRequest, Food, Ingredient, Unit} from "@/openapi";
 import {computed, onMounted, ref} from "vue";
+import {useDisplay} from "vuetify";
 import {useI18n} from "vue-i18n";
 import {ErrorMessageType, useMessageStore} from "@/stores/MessageStore";
 import {useUrlSearchParams} from "@vueuse/core";
@@ -172,13 +198,19 @@ type EditorIngredient = Ingredient & { changed: boolean, loading: boolean }
 
 const items = ref([] as EditorIngredient[])
 
-const tableHeaders = [
+const {mobile} = useDisplay()
+
+const dataHeaders = [
     {title: t('Amount'), key: 'amount', minWidth: '120px', cellProps: {class: 'pr-0'}},
     {title: t('Unit'), key: 'unit', minWidth: '140px', cellProps: {class: 'pr-0'}},
     {title: t('Food'), key: 'food', minWidth: '170px', cellProps: {class: 'pr-0'}},
     {title: t('Note'), key: 'note', minWidth: '140px', cellProps: {class: 'pr-0'}},
-    {key: 'action', width: '1%', noBreak: true, align: 'end' as const},
 ]
+
+// phones get the row actions as a menu at the start of the row (visible without scrolling); desktop keeps them in the last column
+const tableHeaders = computed(() => mobile.value
+    ? [{key: 'rowmenu', width: '1%', noBreak: true}, ...dataHeaders]
+    : [...dataHeaders, {key: 'action', width: '1%', noBreak: true, align: 'end' as const}])
 
 const tablePage = ref(1)
 const tablePageSize = ref(25)
@@ -193,6 +225,12 @@ const selectedUnit = ref<null | Unit>(null)
 const deleteConfirmDialog = ref(false)
 
 const hasChanges = computed(() => items.value.some(i => i.changed))
+const changedCount = computed(() => items.value.filter(i => i.changed).length)
+
+/** a row with an unsaved edit gets a coloured edge on phones, where the Save button is not in view */
+function rowProps({item}: { item: EditorIngredient }) {
+    return {class: mobile.value && item.changed ? 'ingredient-row--changed' : ''}
+}
 
 onMounted(() => {
     getAndLoadParameters()
@@ -359,5 +397,15 @@ function deleteUnit() {
 <style scoped>
 .note-input :deep(input) {
     text-overflow: ellipsis;
+}
+
+.save-bar {
+    position: sticky;
+    top: var(--v-layout-top, 56px);
+    z-index: 4;
+}
+
+:deep(.ingredient-row--changed td:first-child) {
+    box-shadow: inset 3px 0 0 rgb(var(--v-theme-primary));
 }
 </style>
