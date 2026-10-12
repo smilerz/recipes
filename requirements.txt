@@ -3,7 +3,7 @@ cryptography===50.0.2
 django-cleanup==9.0.0
 django-crispy-forms==2.7
 crispy-bootstrap4==2026.2
-djangorestframework==3.18.1
+djangorestframework==3.18.3
 drf-spectacular==0.30.0
 drf-spectacular-sidecar==2026.10.1
 django-oauth-toolkit==3.4.1
@@ -30,7 +30,7 @@ django-scopes==2.1.0
 django-treebeard==7.0.2
 django-cors-headers==4.9.0
 django-storages==1.14.6
-boto3==1.43.108
+boto3==1.43.110
 # Pinned to a master commit: the released 2.5.0 caps Django <6.1 but master supports 6.1 (django-commons/django-prometheus#537).
 # Switch back to a PyPI release once one allows Django 6.1+.
 django-prometheus @ git+https://github.com/django-commons/django-prometheus.git@c04929aac027bde8410bde20af6ca864a1e6929d
