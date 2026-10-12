@@ -337,3 +337,11 @@ def test_crop_data_clamps_abuse_magnitude(u1_s1, img_1):
                     content_type='application/json')
     assert r.status_code == 200, r.content
     assert json.loads(r.content)['crop_data']['x'] == 1000  # clamped to the abuse-guard cap
+
+
+def test_serializer_does_not_validate_the_one_primary_per_recipe_constraint_itself():
+    """DRF >= 3.18.3 turns the conditional unique constraint (one is_primary per recipe) into a serializer-level check, which rejects
+    'make this image primary' with a 400 before the viewset demotes the current primary. The viewset resolves the conflict (the database
+    constraint stays the safety net), so the serializer must not run that check."""
+    from cookbook.serializer import RecipeImageSerializer
+    assert RecipeImageSerializer().get_validators() == []
