@@ -209,7 +209,8 @@ const visibleSearch = computed(() => {
 const typedQuery = computed(() => searchIsEchoOfSelection.value ? '' : search.value)
 
 /** The browser's spellcheck only helps while a new name is being typed; searching existing choices, or a value on display, it is noise. */
-const spellcheck = computed(() => props.allowCreate && typedQuery.value !== '')
+const canCreate = computed(() => props.allowCreate && !modelClass.model.disableCreate)
+const spellcheck = computed(() => canCreate.value && typedQuery.value !== '')
 
 /**
  * In id mode Vuetify finds a label by looking the id up in the list, so the selection must be in it even when it is beyond
@@ -246,7 +247,7 @@ const visibleItems = computed(() => {
 
 const createItem = computed(() => {
     const name = typedQuery.value.trim()
-    if (!props.allowCreate || name === '') return null
+    if (!canCreate.value || name === '') return null
     const exists = [...sourceItems.value, ...(props.pinnedItems ?? []), ...hydratedRecords.value].some(item => String(item[itemLabel.value] ?? '').trim().toLowerCase() === name.toLowerCase())
     if (exists) return null
     return {[itemValue.value]: CREATE_VALUE, [itemLabel.value]: name, __create__: true}

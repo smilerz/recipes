@@ -15,7 +15,7 @@ import {VAutocomplete} from 'vuetify/components'
 import {createI18n} from 'vue-i18n'
 import {ErrorMessageType, PreparedMessage} from '@/stores/MessageStore'
 
-const modelState = vi.hoisted(() => ({isPaginated: true, listIgnoresQuery: false}))
+const modelState = vi.hoisted(() => ({isPaginated: true, listIgnoresQuery: false, disableCreate: false}))
 const listSpy = vi.fn()
 const createSpy = vi.fn()
 const retrieveSpy = vi.fn()
@@ -43,6 +43,7 @@ vi.mock('@/types/Models', async (importOriginal) => {
                 itemLabel: 'name',
                 isPaginated: modelState.isPaginated,
                 listIgnoresQuery: modelState.listIgnoresQuery,
+                disableCreate: modelState.disableCreate,
                 disableRetrieve: false,
             },
         }),
@@ -93,6 +94,7 @@ async function typeSearch(wrapper: ReturnType<typeof mountAutocomplete>['wrapper
 beforeEach(() => {
     modelState.isPaginated = true
     modelState.listIgnoresQuery = false
+    modelState.disableCreate = false
     listSpy.mockReset()
     createSpy.mockReset()
     retrieveSpy.mockReset()
@@ -1086,6 +1088,20 @@ describe('ModelSelect — creating (U6, B10–B12)', () => {
 
     it('B10: does not offer Create without allowCreate', async () => {
         const {wrapper} = await withQuery('Cherry', {})
+        expect(itemsOf(wrapper).some(i => i.__create__)).toBe(false)
+    })
+
+    // Batch Edit offers allow-create pickers for FoodInheritField and User, which cannot be created: the row led only to
+    // the error "Cannot create on this model!"
+    it('does not offer Create for a model that cannot be created', async () => {
+        modelState.disableCreate = true
+        const {wrapper} = await withQuery('Cherry')
+        expect(itemsOf(wrapper).some(i => i.__create__)).toBe(false)
+    })
+
+    it('does not offer Create for a model that cannot be created, in tags mode either', async () => {
+        modelState.disableCreate = true
+        const {wrapper} = await withQuery('Cherry', {allowCreate: true, mode: 'tags'})
         expect(itemsOf(wrapper).some(i => i.__create__)).toBe(false)
     })
 
