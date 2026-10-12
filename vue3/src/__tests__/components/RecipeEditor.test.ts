@@ -44,6 +44,7 @@ vi.mock('@vueuse/core', async (importOriginal) => {
 })
 
 import RecipeEditor from '@/components/model_editors/RecipeEditor.vue'
+import ModelEditorBase from '@/components/model_editors/ModelEditorBase.vue'
 
 function mountEditor(item: any) {
     const pinia = createPinia()
@@ -161,6 +162,25 @@ describe('RecipeEditor - add first step from the empty-steps state', () => {
         await flushPromises()
 
         expect((w.vm as any).editingObj.steps.length).toBe(1)
+
+        w.unmount()
+    })
+})
+
+// RecipeEditor listened for a `save-and-close` event that ModelEditorBase never emits, which made Vue warn
+// "Extraneous non-emits event listeners (saveAndClose)" every time the recipe editor loaded.
+describe('RecipeEditor - listeners on ModelEditorBase', () => {
+    beforeEach(() => {
+        resetApiMock()
+    })
+
+    it('only listens for events that ModelEditorBase declares', () => {
+        const w = mountEditor(makeRecipe({id: 5, name: 'Sourdough Bread'}))
+        const passed = Object.keys(w.findComponent(ModelEditorBase).vm.$attrs).filter(k => /^on[A-Z]/.test(k))
+        const declared = ((ModelEditorBase as any).emits as string[]).map(e => 'on' + e[0].toUpperCase() + e.slice(1))
+
+        expect(passed.length).toBeGreaterThan(0)
+        expect(passed.filter(l => !declared.includes(l))).toEqual([])
 
         w.unmount()
     })
