@@ -7,42 +7,12 @@
                 <v-stepper v-model="stepper">
                     <template v-slot:default="{ prev, next }">
                         <v-stepper-header>
-                            <v-stepper-item :title="$t('Type')" value="type"></v-stepper-item>
-                            <v-divider></v-divider>
-
-                            <template v-if="['url','ai', 'source'].includes(importType)">
-                                <v-stepper-item :title="$t('Import')" value="url"></v-stepper-item>
-                                <v-divider></v-divider>
-                                <template v-if="importResponse.duplicates && importResponse.duplicates.length > 0">
-                                    <v-stepper-item :title="$t('Duplicate')" value="duplicates"></v-stepper-item>
-                                    <v-divider></v-divider>
-                                </template>
-                                <v-stepper-item :title="$t('Image')" value="image_chooser"></v-stepper-item>
-                                <v-divider></v-divider>
-                                <v-stepper-item :title="$t('Keywords')" value="keywords_chooser"></v-stepper-item>
-                                <v-divider></v-divider>
-                                <v-stepper-item :title="$t('Steps')" value="step_editor"></v-stepper-item>
-                                <v-divider></v-divider>
-                                <v-stepper-item :title="$t('Save')" value="confirm"></v-stepper-item>
+                            <template v-for="(step, index) in importSteps" :key="step.value">
+                                <v-divider v-if="index > 0"></v-divider>
+                                <v-stepper-item :title="step.title" :value="step.value">
+                                    <template #icon>{{ index + 1 }}</template>
+                                </v-stepper-item>
                             </template>
-                            <template v-if="importType == 'app'">
-                                <v-stepper-item :title="$t('App')" value="app"></v-stepper-item>
-                                <v-divider></v-divider>
-                                <v-stepper-item :title="$t('File')" value="file"></v-stepper-item>
-                                <v-divider></v-divider>
-                                <v-stepper-item :title="$t('Import')" value="import_log"></v-stepper-item>
-                            </template>
-
-                            <template v-if="importType == 'bookmarklet'">
-                                <v-stepper-item :title="$t('Bookmarklet')" value="bookmarklet"></v-stepper-item>
-                            </template>
-
-                            <template v-if="importType == 'url-list'">
-                                <v-stepper-item :title="$t('UrlList')" value="url_list_input"></v-stepper-item>
-                                <v-divider></v-divider>
-                                <v-stepper-item :title="$t('Import')" value="url_list_import"></v-stepper-item>
-                            </template>
-
                         </v-stepper-header>
 
                         <v-stepper-window>
@@ -711,6 +681,20 @@ const editAfterImport = ref(false)
 const bookmarkletToken = ref("")
 
 const importResponse = ref({} as RecipeFromSourceResponse)
+
+/** The steps shown in the header, in order: the circle of each shows its position, so it follows the Duplicate step when it appears. */
+const importSteps = computed(() => {
+    const steps = [{value: 'type', title: t('Type')}]
+    if (['url', 'ai', 'source'].includes(importType.value)) {
+        steps.push({value: 'url', title: t('Import')})
+        if (importResponse.value.duplicates && importResponse.value.duplicates.length > 0) steps.push({value: 'duplicates', title: t('Duplicate')})
+        steps.push({value: 'image_chooser', title: t('Image')}, {value: 'keywords_chooser', title: t('Keywords')}, {value: 'step_editor', title: t('Steps')}, {value: 'confirm', title: t('Save')})
+    }
+    if (importType.value == 'app') steps.push({value: 'app', title: t('App')}, {value: 'file', title: t('File')}, {value: 'import_log', title: t('Import')})
+    if (importType.value == 'bookmarklet') steps.push({value: 'bookmarklet', title: t('Bookmarklet')})
+    if (importType.value == 'url-list') steps.push({value: 'url_list_input', title: t('UrlList')}, {value: 'url_list_import', title: t('Import')})
+    return steps
+})
 // Images the user picked to import, in selection order; the first becomes the recipe's primary.
 const selectedImages = ref<string[]>([])
 // Pre-select the scraped primary when a source loads; the user adds/removes from the grid. Only

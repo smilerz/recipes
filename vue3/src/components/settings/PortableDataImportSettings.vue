@@ -4,9 +4,9 @@
 
     <v-stepper v-model="stepper" class="mt-2" flat>
         <v-stepper-header>
-            <v-stepper-item :title="$t('Upload')" value="upload"></v-stepper-item>
+            <v-stepper-item :title="$t('Upload')" value="upload"><template #icon>1</template></v-stepper-item>
             <v-divider></v-divider>
-            <v-stepper-item :title="$t('Confirm')" value="confirm"></v-stepper-item>
+            <v-stepper-item :title="$t('Confirm')" value="confirm"><template #icon>2</template></v-stepper-item>
         </v-stepper-header>
 
         <v-stepper-window>
