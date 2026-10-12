@@ -725,3 +725,35 @@ def test_unopen_is_idempotent(u1_s1, space_1):
     assert r.status_code == 200
     assert r.json()['opened_at'] is None
     assert r.json()['expires'] == custom_expires.isoformat()
+
+
+@pytest.mark.django_db
+def test_label_has_no_code_prefix_when_the_lot_has_no_code(u1_s1, space_1):
+    """code is optional on a lot; a lot without one used to be labelled '#None - 1.00 (cup) Yogurt'."""
+    user = auth.get_user(u1_s1)
+    with scopes_disabled():
+        household = Household.objects.create(name='hh', space=space_1)
+        UserSpace.objects.filter(user=user, space=space_1).update(household=household)
+        location = InventoryLocationFactory(space=space_1, household=household)
+        entry = InventoryEntryFactory(space=space_1, food=FoodFactory(space=space_1, name='Yogurt'), unit=UnitFactory(space=space_1, name='cup'),
+                                      inventory_location=location, amount=1, code=None)
+
+    label = {e['id']: e['label'] for e in json.loads(u1_s1.get(reverse(LIST_URL)).content)['results']}[entry.id]
+    assert not label.startswith('#')
+    assert 'None' not in label
+    assert label.endswith('(cup) Yogurt')
+
+
+@pytest.mark.django_db
+def test_label_keeps_the_code_prefix_when_the_lot_has_a_code(u1_s1, space_1):
+    user = auth.get_user(u1_s1)
+    with scopes_disabled():
+        household = Household.objects.create(name='hh', space=space_1)
+        UserSpace.objects.filter(user=user, space=space_1).update(household=household)
+        location = InventoryLocationFactory(space=space_1, household=household)
+        entry = InventoryEntryFactory(space=space_1, food=FoodFactory(space=space_1, name='Yogurt'), unit=UnitFactory(space=space_1, name='cup'),
+                                      inventory_location=location, amount=1, code='ABC')
+
+    label = {e['id']: e['label'] for e in json.loads(u1_s1.get(reverse(LIST_URL)).content)['results']}[entry.id]
+    assert label.startswith('#ABC - ')
+    assert label.endswith('(cup) Yogurt')
