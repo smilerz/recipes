@@ -64,7 +64,7 @@ vi.mock('@/components/dialogs/HelpDialog.vue', () => ({ default: { template: '<d
 vi.mock('@/components/inputs/GlobalSearchDialog.vue', () => ({ default: { template: '<div/>' } }))
 vi.mock('@/components/inputs/RecipeViewSettingsDrawer.vue', () => ({ default: { template: '<div/>' } }))
 vi.mock('@/components/display/VSnackbarQueued.vue', () => ({ default: { template: '<div/>' } }))
-vi.mock('@/components/display/NavigationDrawerContextMenu.vue', () => ({ default: { template: '<div/>' } }))
+vi.mock('@/components/display/NavigationDrawerContextMenu.vue', () => ({ default: { props: { actionsOnly: Boolean }, template: '<div class="stub-nav-context-menu" :data-actions-only="String(!!actionsOnly)"/>' } }))
 vi.mock('@/components/display/MenuUserInfo.vue', () => ({ default: { template: '<div/>' } }))
 
 import Tandoor from '@/apps/tandoor/Tandoor.vue'
@@ -102,7 +102,7 @@ function mountApp() {
                 GlobalSearchDialog: { template: '<div/>' },
                 RecipeViewSettingsDrawer: { template: '<div/>' },
                 VSnackbarQueued: { template: '<div/>' },
-                NavigationDrawerContextMenu: { template: '<div/>' },
+                NavigationDrawerContextMenu: { props: { actionsOnly: Boolean }, template: '<div class="stub-nav-context-menu" :data-actions-only="String(!!actionsOnly)"/>' },
                 HelpDialog: { template: '<div/>' },
                 MenuUserInfo: { template: '<div/>' },
             },
@@ -147,6 +147,44 @@ describe('Tandoor nav-item forwarding', () => {
         ;(item as HTMLElement).click()
 
         expect(bottomOnClick).toHaveBeenCalled()
+
+        wrapper.unmount()
+    })
+
+    // The page-specific entries (the Meal Plan's Auto Planner and calendar export) live in a context menu that sat only in the
+    // desktop drawer, so a phone had no way to reach them.
+    it('shows the page-specific context menu in the desktop drawer, with its settings', async () => {
+        mobileRef.value = false
+        apiMock.apiUserPreferenceList.mockResolvedValue({ results: [] })
+        const wrapper = mountApp()
+        await flushPromises()
+
+        const menu = wrapper.find('.stub-nav-context-menu')
+        expect(menu.exists()).toBe(true)
+        expect(menu.attributes('data-actions-only')).toBe('false')
+
+        wrapper.unmount()
+    })
+
+    it('shows the page-specific actions in the mobile menu sheet, and a click on them does not close the sheet', async () => {
+        mobileRef.value = true
+        apiMock.apiUserPreferenceList.mockResolvedValue({ results: [] })
+        const wrapper = mountApp()
+        await flushPromises()
+
+        const menuButton = wrapper.findAll('button').find(b => b.find('.fa-bars').exists())
+        await menuButton!.trigger('click')
+        await flushPromises()
+
+        const menu = document.body.querySelector('.stub-nav-context-menu') as HTMLElement
+        expect(menu).toBeTruthy()
+        expect(menu.getAttribute('data-actions-only')).toBe('true')
+
+        // the sheet closes on a click on its content; the dialogs opened from these items must not lose their item with it
+        expect(document.body.querySelector('.v-bottom-sheet.v-overlay--active')).toBeTruthy()
+        menu.click()
+        await flushPromises()
+        expect(document.body.querySelector('.v-bottom-sheet.v-overlay--active')).toBeTruthy()
 
         wrapper.unmount()
     })
