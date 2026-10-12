@@ -271,7 +271,7 @@
         <model-merge-dialog :model="model" :source="singleMergeSource" v-model="singleMergeDialog" activator="model"
                             @change="reloadAfterMutation()"></model-merge-dialog>
 
-        <batch-edit-food-dialog :items="(selectedItems as any)" v-model="batchEditDialog" v-if="model === 'Food'" activator="model"
+        <batch-edit-food-dialog :items="(selectedItems as any)" v-model="batchEditDialog" v-if="genericModel.model.name === 'Food'" activator="model"
                                 @change="reloadAfterMutation(); exitSelectMode()"></batch-edit-food-dialog>
 
         <sync-dialog v-if="syncDialogItem" :sync="(syncDialogItem as any)" v-model="syncDialogOpen" activator="model" />
@@ -279,7 +279,7 @@
         <action-confirm-dialog ref="confirmDialogRef" />
         <inventory-quick-add-dialog ref="inventoryQuickAddRef" />
 
-        <batch-edit-user-space-dialog :items="(selectedItems as any)" v-model="batchEditDialog" v-if="model == 'UserSpace'" activator="model"
+        <batch-edit-user-space-dialog :items="(selectedItems as any)" v-model="batchEditDialog" v-if="genericModel.model.name === 'UserSpace'" activator="model"
                                 @change="loadItems({page: page, itemsPerPage: pageSize})"></batch-edit-user-space-dialog>
 
     </v-container>
