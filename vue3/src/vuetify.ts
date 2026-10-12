@@ -143,6 +143,7 @@ export const vuetifyOptions = {
             edit: 'fa-solid fa-pencil',
             create: 'fa-solid fa-plus',
             upload: 'fa-solid fa-file-arrow-up',
+            download: 'fa-solid fa-download',
             search: 'fa-solid fa-magnifying-glass',
             copy: 'fa-solid fa-copy',
             add: 'fa-solid fa-plus',
