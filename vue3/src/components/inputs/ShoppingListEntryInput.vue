@@ -94,6 +94,8 @@ function parseIngredient() {
     api.apiIngredientParserPostCreate({ingredientParserRequest: {ingredient: ingredientInput.value}}).then(r => {
         if (r.ingredient) {
             addIngredient(r.ingredient.amount, r.ingredient.unit, r.ingredient.food)
+        } else {
+            loading.value = false
         }
     }).catch(err => {
         useMessageStore().addError(ErrorMessageType.CREATE_ERROR, err)
