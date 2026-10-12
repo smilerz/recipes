@@ -108,3 +108,11 @@ describe('PortableDataImportSettings', () => {
         expect(wrapper.find('[data-test="portable-import-continue"]').exists()).toBe(false)
     })
 })
+
+describe('PortableDataImportSettings stepper header', () => {
+    it('numbers its two steps instead of showing their ids in the circles', () => {
+        const wrapper = mountSettings()
+        const items = wrapper.findAll('.v-stepper-item')
+        expect(items.map(item => item.find('.v-stepper-item__avatar').text())).toEqual(['1', '2'])
+    })
+})
