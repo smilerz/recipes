@@ -21,13 +21,10 @@ jobs:
                 python-version: ["3.13"]
                 node-version: ["24"]
                 include:
-                    # 3.14 is the Python the Docker image runs. Non-blocking for now:
-                    # build (3.14, 24) is NOT a required status check; the required
-                    # one is still build (3.13, 24), which needs the ruleset edited
-                    # before the primary version can move.
+                    # 3.14 is the Python the Docker image runs, so it is tested like 3.13.
+                    # Add `experimental: true` to an entry to let it fail without blocking.
                     - python-version: "3.14"
                       node-version: "24"
-                      experimental: true
         steps:
             - uses: actions/checkout@v7
             # cache-apt-pkgs-action >=1.6.3 no longer runs `apt update` on GitHub runners, so a
