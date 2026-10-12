@@ -1,5 +1,5 @@
 import {describe, it, expect, vi, beforeEach} from 'vitest'
-import {mount} from '@vue/test-utils'
+import {mount, flushPromises} from '@vue/test-utils'
 import {createPinia, setActivePinia, type PiniaPlugin} from 'pinia'
 import {createI18n} from 'vue-i18n'
 import {createVuetify} from 'vuetify'
@@ -28,7 +28,7 @@ vi.mock('@vueuse/router', () => ({
 
 import ShoppingListEntryInput from '@/components/inputs/ShoppingListEntryInput.vue'
 
-function mountInput(autocomplete = false) {
+function mountPlugins(autocomplete = false) {
     const prePopulate: PiniaPlugin = ({store}) => {
         if (store.$id === 'user_preference_store') {
             // false: manual free-text mode (v-text-field); true: autocomplete mode (v-combobox)
@@ -40,8 +40,12 @@ function mountInput(autocomplete = false) {
     const i18n = createI18n({legacy: false, locale: 'en', messages: {en: {}}, missingWarn: false, fallbackWarn: false})
     const vuetify = createVuetify({components, directives})
     const router = createRouter({history: createMemoryHistory(), routes: []})
+    return [pinia, i18n, vuetify, router]
+}
+
+function mountInput(autocomplete = false) {
     return mount(ShoppingListEntryInput, {
-        global: {plugins: [pinia, i18n, vuetify, router]},
+        global: {plugins: mountPlugins(autocomplete)},
     })
 }
 
@@ -118,12 +122,12 @@ describe('ShoppingListEntryInput autocomplete mode', () => {
         expect(field(wrapper).props('search')).toBe('')
     })
 
-    it('the field stays empty after a pick, even though Vuetify echoes the picked name into the search box', async () => {
+    it('the field stays empty after a pick and no further food search starts', async () => {
         const wrapper = mountInput(true)
         await type(wrapper, 'flou')
         apiFoodListMock.mockClear()
         field(wrapper).vm.$emit('update:modelValue', FLOUR)
-        field(wrapper).vm.$emit('update:search', 'Flour') // what Vuetify does right after a selection
+        field(wrapper).vm.$emit('update:search', '') // what Vuetify does right after a selection while a selection slot is present
         await new Promise(r => setTimeout(r, 350))
         expect(field(wrapper).props('search')).toBe('')
         expect(apiFoodListMock).not.toHaveBeenCalled()
@@ -149,14 +153,14 @@ describe('ShoppingListEntryInput autocomplete mode', () => {
         expect(createObjectMock).not.toHaveBeenCalled()
     })
 
-    it('an Enter that picks a food does not also send the leftover text to the parser', async () => {
+    // The parser can answer without an ingredient (the mock's default); the field's spinner used to stay on after that.
+    it('stops the loading spinner when the parser finds no ingredient in the typed text', async () => {
         const wrapper = mountInput(true)
-        const input = await type(wrapper, 'flou')
-        field(wrapper).vm.$emit('update:modelValue', FLOUR) // Vuetify selects the highlighted row on Enter
+        const input = await type(wrapper, 'hmm')
         await input.trigger('keydown', {key: 'Enter'})
-        await wrapper.vm.$nextTick()
-        expect(createObjectMock).toHaveBeenCalledTimes(1)
-        expect(apiIngredientParserPostCreateMock).not.toHaveBeenCalled()
+        await flushPromises()
+        expect(apiIngredientParserPostCreateMock).toHaveBeenCalledTimes(1)
+        expect(field(wrapper).props('loading')).toBe(false)
     })
 
     it('Enter on an empty field does nothing', async () => {
@@ -165,5 +169,99 @@ describe('ShoppingListEntryInput autocomplete mode', () => {
         await wrapper.vm.$nextTick()
         expect(apiIngredientParserPostCreateMock).not.toHaveBeenCalled()
         expect(createObjectMock).not.toHaveBeenCalled()
+    })
+
+    // Real Vuetify, no simulated events: what the field does when a suggestion is actually clicked and when Enter is
+    // actually pressed with suggestions showing.
+    describe('with the real Vuetify field', () => {
+        async function withSuggestions() {
+            const wrapper = mount(ShoppingListEntryInput, {
+                attachTo: document.body,
+                global: {plugins: mountPlugins(true)},
+            })
+            const input = wrapper.find('input')
+            await input.trigger('focus')
+            await input.setValue('flo')
+            await new Promise(r => setTimeout(r, 350))
+            await flushPromises()
+            return {wrapper, input}
+        }
+
+        it('clicking a suggestion adds that food once, leaves the field empty and searches nothing more', async () => {
+            const {wrapper, input} = await withSuggestions()
+            apiFoodListMock.mockClear()
+            await wrapper.find('.v-field').trigger('click')
+            await flushPromises()
+            const row = [...document.body.querySelectorAll('.v-list-item')].find(r => r.textContent?.includes('Flour')) as HTMLElement
+            expect(row).toBeTruthy()
+            row.click()
+            await new Promise(r => setTimeout(r, 350))
+            await flushPromises()
+            expect(createObjectMock).toHaveBeenCalledTimes(1)
+            expect(createObjectMock).toHaveBeenCalledWith(expect.objectContaining({amount: 1, food: expect.objectContaining({id: 1})}), true)
+            expect((input.element as HTMLInputElement).value).toBe('')
+            expect(apiFoodListMock).not.toHaveBeenCalled()
+            wrapper.unmount()
+        })
+
+        it('after Enter the old matches are dropped: nothing is searched or shown until the field is focused again', async () => {
+            const {wrapper, input} = await withSuggestions()
+            apiFoodListMock.mockClear()
+            await input.trigger('keydown', {key: 'Enter'})
+            await new Promise(r => setTimeout(r, 350))
+            await flushPromises()
+            expect(apiFoodListMock).not.toHaveBeenCalled()
+            expect(document.body.querySelectorAll('.v-overlay--active .v-list-item')).toHaveLength(0)
+            await input.trigger('focus')
+            await flushPromises()
+            expect(apiFoodListMock.mock.calls.map(c => c[0].query)).toEqual([''])
+            wrapper.unmount()
+        })
+
+        it('clicking the field again after Enter, while it is still focused, loads the unfiltered list', async () => {
+            const {wrapper, input} = await withSuggestions()
+            ;(input.element as HTMLInputElement).focus() // really focused, so a click does not fire another focus event
+            await input.trigger('keydown', {key: 'Enter'})
+            await new Promise(r => setTimeout(r, 350))
+            await flushPromises()
+            apiFoodListMock.mockClear()
+            await wrapper.find('.v-field').trigger('click')
+            await flushPromises()
+            expect(apiFoodListMock.mock.calls.map(c => c[0].query)).toEqual([''])
+            wrapper.unmount()
+        })
+
+        it('a first click on the field (focus, then click) loads the unfiltered list once', async () => {
+            const wrapper = mount(ShoppingListEntryInput, {attachTo: document.body, global: {plugins: mountPlugins(true)}})
+            apiFoodListMock.mockClear()
+            ;(wrapper.find('input').element as HTMLInputElement).focus()
+            await wrapper.find('.v-field').trigger('click')
+            await flushPromises()
+            expect(apiFoodListMock.mock.calls.map(c => c[0].query)).toEqual([''])
+            wrapper.unmount()
+        })
+
+        it('a search still in flight when Enter is pressed does not bring the old matches back', async () => {
+            const {wrapper, input} = await withSuggestions()
+            let finish: (value: any) => void = () => {}
+            apiFoodListMock.mockImplementationOnce(() => new Promise(resolve => { finish = resolve }))
+            await input.setValue('flou')
+            await new Promise(r => setTimeout(r, 350))
+            await input.trigger('keydown', {key: 'Enter'})
+            finish({results: [FLOUR]})
+            await flushPromises()
+            expect(document.body.querySelectorAll('.v-overlay--active .v-list-item')).toHaveLength(0)
+            wrapper.unmount()
+        })
+
+        it('Enter with suggestions showing sends the typed text to the parser and picks no food', async () => {
+            const {wrapper, input} = await withSuggestions()
+            await input.trigger('keydown', {key: 'Enter'})
+            await flushPromises()
+            expect(apiIngredientParserPostCreateMock).toHaveBeenCalledTimes(1)
+            expect(apiIngredientParserPostCreateMock).toHaveBeenCalledWith({ingredientParserRequest: {ingredient: 'flo'}})
+            expect(createObjectMock).not.toHaveBeenCalled()
+            wrapper.unmount()
+        })
     })
 })
