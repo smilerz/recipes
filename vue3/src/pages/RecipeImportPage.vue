@@ -570,7 +570,7 @@
         </v-row>
     </v-container>
 
-    <step-ingredient-sorter-dialog :step-index="editingStepIndex" :step="editingStep" :recipe="importResponse.recipe!" v-model="dialogIngredientSorter"
+    <step-ingredient-sorter-dialog v-if="importResponse.recipe" :step-index="editingStepIndex" :step="editingStep" :recipe="importResponse.recipe" v-model="dialogIngredientSorter"
                                    :ingredient-index="editingIngredientIndex"></step-ingredient-sorter-dialog>
 
 </template>
