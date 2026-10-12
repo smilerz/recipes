@@ -29,14 +29,19 @@
         @update:model-value="onPick"
         @update:search="onSearch"
         @keydown.enter="onEnter"
-        @focus="onFocus"
-    ></v-autocomplete>
+        @focus="loadDefaultFoods"
+        @click="loadDefaultFoods"
+    >
+        <!-- Vuetify writes a picked item's title into the search box, unless a selection slot is present -->
+        <template #selection></template>
+    </v-autocomplete>
 </template>
 
 <script setup lang="ts">
 
 
-import {nextTick, onBeforeUnmount, PropType, ref} from "vue";
+import {onBeforeUnmount, PropType, ref} from "vue";
+import {SEARCH_DEBOUNCE_MS} from "@/utils/utils";
 import {ApiApi, Food, FoodSimple,  ShoppingListEntry, ShoppingListRecipe, Unit} from "@/openapi";
 import {useShoppingStore} from "@/stores/ShoppingStore";
 import {ErrorMessageType, useMessageStore} from "@/stores/MessageStore";
@@ -98,38 +103,40 @@ function parseIngredient() {
 
 // ----------- AUTOCOMPLETE INPUT -------------
 
-let picked = false
 let searchTimer: ReturnType<typeof setTimeout> | undefined
 
 function onPick(food: Food | null) {
     if (!food) return
-    picked = true
-    setTimeout(() => picked = false)
     clearTimeout(searchTimer)
     searchText.value = ''
     addIngredient(1, null, food)
 }
 
-/** Enter on typed text sends it to the parser, unless that same Enter just picked a highlighted food. */
+/** Enter in the field always means "parse what is typed": the field never picks a suggestion on Enter itself. */
 function onEnter() {
     const text = searchText.value.trim()
-    nextTick(() => {
-        if (picked || text === '') return
-        searchText.value = ''
-        ingredientInput.value = text
-        parseIngredient()
-    })
+    if (text === '') return
+    clearTimeout(searchTimer)
+    latestSearch++
+    searchText.value = ''
+    foodOptions.value = []
+    ingredientInput.value = text
+    parseIngredient()
 }
 
 function onSearch(query: string | null) {
-    if (picked) return // Vuetify echoes the picked name into the search box right after a selection
+    if ((query ?? '') === searchText.value) return
     searchText.value = query ?? ''
     clearTimeout(searchTimer)
-    searchTimer = setTimeout(() => searchFoods(searchText.value), 300)
+    searchTimer = setTimeout(() => searchFoods(searchText.value), SEARCH_DEBOUNCE_MS)
 }
 
-function onFocus() {
-    if (foodOptions.value.length === 0) searchFoods('')
+let defaultFoodsLoad: Promise<void> | null = null
+
+/** An empty field opens with the unfiltered list; a click covers a field that is already focused and so fires no focus. */
+function loadDefaultFoods() {
+    if (foodOptions.value.length !== 0 || defaultFoodsLoad) return
+    defaultFoodsLoad = searchFoods('').finally(() => defaultFoodsLoad = null)
 }
 
 onBeforeUnmount(() => clearTimeout(searchTimer))
