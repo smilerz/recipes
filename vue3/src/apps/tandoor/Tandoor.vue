@@ -109,6 +109,9 @@
                 <v-bottom-sheet activator="parent" close-on-content-click>
                     <v-list nav>
                         <component :is="item.component" v-bind="{prependIcon: item.prependIcon, title: item.title, to: item.to, href: item.href, onClick: item.onClick}" :key="item.title" v-for="item in useNavigation().getBottomNavigation()"></component>
+                        <div @click.stop>
+                            <navigation-drawer-context-menu actions-only></navigation-drawer-context-menu>
+                        </div>
                     </v-list>
                 </v-bottom-sheet>
             </v-btn>
