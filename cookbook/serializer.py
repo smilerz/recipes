@@ -2083,7 +2083,8 @@ class InventoryEntrySerializer(SpacedModelSerializer, WritableNestedModelSeriali
     label = serializers.SerializerMethodField('get_label')
 
     def get_label(self, obj):
-        text = f'#{obj.code} - {round(obj.amount, 2)}'
+        text = f'#{obj.code} - ' if obj.code else ''
+        text += f'{round(obj.amount, 2)}'
         if obj.unit:
             text += f' ({obj.unit})'
         text += f' {obj.food.name}'
