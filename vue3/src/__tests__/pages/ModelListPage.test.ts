@@ -96,6 +96,27 @@ describe('ModelListPage', () => {
         expect(wrapper.text()).toContain('Back')
     })
 
+    // The route string is whatever the URL says (/list/food as well as /list/Food); the model it resolves to is what decides
+    // which batch dialog is rendered. A lowercase URL used to leave Batch Edit silently doing nothing.
+    it.each(['Food', 'food', 'FOOD'])('renders the Batch Edit Food dialog for the route /list/%s', async (route) => {
+        const wrapper = mountPage(ModelListPage, { props: { model: route } })
+        await flushPromises()
+        expect(wrapper.find('.stub-batch-edit-food-dialog').exists()).toBe(true)
+        expect(wrapper.find('.stub-batch-edit-user-space-dialog').exists()).toBe(false)
+    })
+
+    it.each(['UserSpace', 'userspace'])('renders the Batch Edit User Space dialog for the route /list/%s', async (route) => {
+        mockTreeModel.model.name = 'UserSpace'
+        try {
+            const wrapper = mountPage(ModelListPage, { props: { model: route } })
+            await flushPromises()
+            expect(wrapper.find('.stub-batch-edit-user-space-dialog').exists()).toBe(true)
+            expect(wrapper.find('.stub-batch-edit-food-dialog').exists()).toBe(false)
+        } finally {
+            mockTreeModel.model.name = 'Food'
+        }
+    })
+
     it('FOOD-01: page=2 URL param is not reset to page=1 by treeActive init on a tree model', async () => {
         // Simulate navigating to ?page=2 when the user has tree view enabled.
         // Bug: treeActive transitions false→true in onBeforeMount (model not yet set → model set),
