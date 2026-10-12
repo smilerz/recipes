@@ -29,8 +29,7 @@
 
                         <recipe-image-editor v-if="isUpdate()" :recipe-id="editingObj.id!" :source-url="editingObj.sourceUrl" v-model:images="editingObj.images" />
 
-                        <v-label>{{ $t('Keywords') }}</v-label>
-                        <model-select mode="tags" v-model="editingObj.keywords" model="Keyword" allow-create></model-select>
+                        <model-select :label="$t('Keywords')" mode="tags" v-model="editingObj.keywords" model="Keyword" allow-create></model-select>
                         <v-row density="compact">
                             <v-col cols="12" md="6">
                                 <v-number-input :label="$t('WaitingTime')" v-model="editingObj.waitingTime" :step="5"></v-number-input>
