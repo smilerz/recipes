@@ -1421,6 +1421,7 @@ class RecipeImageSerializer(serializers.ModelSerializer):
         model = RecipeImage
         fields = ('id', 'recipe', 'file', 'crop_data', 'order', 'is_primary', 'created_by', 'created_at')
         read_only_fields = ('id', 'created_by', 'created_at')
+        validators = []
 
 
 class RecipeSerializer(PrimaryRecipeImageMixin, RecipeBaseSerializer):
