@@ -270,3 +270,40 @@ describe('RecipeImportPage ingredient sorter dialog', () => {
         expect(wrapper.findComponent(StepIngredientSorterDialog).exists()).toBe(true)
     })
 })
+
+// Vuetify draws a step's circle from the item's `value` unless it is given an icon, and the page's values are the string ids of its
+// window items ('image_chooser', 'keywords_chooser', ...), so the circles showed those words, clipped ('e_ch', 'ds_c', 'onfir').
+describe('RecipeImportPage stepper header', () => {
+    beforeEach(() => {
+        setActivePinia(createPinia())
+    })
+
+    async function steps(setup: (vm: any) => void = () => {}) {
+        const wrapper = mountPageFull()
+        setup(wrapper.vm as any)
+        await flushPromises()
+        const items = wrapper.findAll('.v-stepper-item')
+        const result = items.map(item => ({circle: item.find('.v-stepper-item__avatar').text(), title: item.find('.v-stepper-item__title').text()}))
+        wrapper.unmount()
+        return result
+    }
+
+    it('numbers the steps of a URL import by their position', async () => {
+        expect(await steps()).toEqual([
+            {circle: '1', title: 'Type'}, {circle: '2', title: 'Import'}, {circle: '3', title: 'Image'},
+            {circle: '4', title: 'Keywords'}, {circle: '5', title: 'Steps'}, {circle: '6', title: 'Save'},
+        ])
+    })
+
+    it('numbers on past the Duplicate step when the import found duplicates', async () => {
+        const result = await steps(vm => { vm.importResponse = {duplicates: [{id: 1, name: 'Soup'}], recipe: {}} })
+        expect(result.map(r => r.circle)).toEqual(['1', '2', '3', '4', '5', '6', '7'])
+        expect(result[2].title).toBe('Duplicate')
+    })
+
+    it('numbers the steps of the other import types too', async () => {
+        expect((await steps(vm => { vm.importType = 'app' })).map(r => `${r.circle} ${r.title}`)).toEqual(['1 Type', '2 App', '3 File', '4 Import'])
+        expect((await steps(vm => { vm.importType = 'bookmarklet' })).map(r => `${r.circle} ${r.title}`)).toEqual(['1 Type', '2 Bookmarklet'])
+        expect((await steps(vm => { vm.importType = 'url-list' })).map(r => `${r.circle} ${r.title}`)).toEqual(['1 Type', '2 UrlList', '3 Import'])
+    })
+})
