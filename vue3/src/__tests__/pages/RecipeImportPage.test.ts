@@ -49,6 +49,7 @@ vi.mock('@/openapi', async (imp) => ({
 }))
 
 import RecipeImportPage from '@/pages/RecipeImportPage.vue'
+import StepIngredientSorterDialog from '@/components/dialogs/StepIngredientSorterDialog.vue'
 
 function mountPage() {
     const i18n = createI18n({legacy: false, locale: 'en', messages: {en: {}}, missingWarn: false, fallbackWarn: false})
@@ -241,5 +242,31 @@ describe('RecipeImportPage AI import guards against no selected provider', () =>
         expect(() => (wrapper.vm as any).loadRecipeFromAiImport()).not.toThrow()
         expect(doAiImportMock).not.toHaveBeenCalled()
         expect(addErrorMock).toHaveBeenCalled()
+    })
+})
+
+// The page rendered the ingredient sorter unconditionally with `importResponse.recipe!`, which is undefined until an import has
+// been loaded, so Vue warned "Invalid prop: type check failed for prop 'recipe'" on every load of /recipe/import.
+describe('RecipeImportPage ingredient sorter dialog', () => {
+    beforeEach(() => {
+        setActivePinia(createPinia())
+    })
+
+    it('is not rendered before an import has been loaded, and Vue logs no invalid-prop warning', async () => {
+        const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+        const {wrapper} = mountPage()
+        await flushPromises()
+
+        expect(wrapper.findComponent(StepIngredientSorterDialog).exists()).toBe(false)
+        expect(warn.mock.calls.filter(c => String(c[0]).includes('Invalid prop'))).toEqual([])
+        warn.mockRestore()
+    })
+
+    it('is rendered once an import has been loaded', async () => {
+        const {wrapper} = mountPage()
+        ;(wrapper.vm as any).importResponse = {recipe: {keywords: [], steps: []}}
+        await flushPromises()
+
+        expect(wrapper.findComponent(StepIngredientSorterDialog).exists()).toBe(true)
     })
 })
