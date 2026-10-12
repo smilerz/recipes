@@ -153,6 +153,16 @@ describe('ShoppingListEntryInput autocomplete mode', () => {
         expect(createObjectMock).not.toHaveBeenCalled()
     })
 
+    // The parser can answer without an ingredient (the mock's default); the field's spinner used to stay on after that.
+    it('stops the loading spinner when the parser finds no ingredient in the typed text', async () => {
+        const wrapper = mountInput(true)
+        const input = await type(wrapper, 'hmm')
+        await input.trigger('keydown', {key: 'Enter'})
+        await flushPromises()
+        expect(apiIngredientParserPostCreateMock).toHaveBeenCalledTimes(1)
+        expect(field(wrapper).props('loading')).toBe(false)
+    })
+
     it('Enter on an empty field does nothing', async () => {
         const wrapper = mountInput(true)
         await wrapper.find('input').trigger('keydown', {key: 'Enter'})
