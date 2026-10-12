@@ -45,6 +45,7 @@ vi.mock('@vueuse/core', async (importOriginal) => {
 
 import RecipeEditor from '@/components/model_editors/RecipeEditor.vue'
 import ModelEditorBase from '@/components/model_editors/ModelEditorBase.vue'
+import ModelSelect from '@/components/inputs/ModelSelect.vue'
 
 function mountEditor(item: any) {
     const pinia = createPinia()
@@ -181,6 +182,25 @@ describe('RecipeEditor - listeners on ModelEditorBase', () => {
 
         expect(passed.length).toBeGreaterThan(0)
         expect(passed.filter(l => !declared.includes(l))).toEqual([])
+
+        w.unmount()
+    })
+})
+
+// Every other tags picker in the model editors labels itself inside the field; the Keywords picker had a separate heading
+// above it and kept the model's default singular "Keyword" as its own label, so the field was labelled twice, differently.
+describe('RecipeEditor - Keywords picker label', () => {
+    beforeEach(() => {
+        resetApiMock()
+    })
+
+    it('labels the Keywords picker inside the field, with no separate heading', () => {
+        const w = mountEditor(makeRecipe({id: 5, name: 'Sourdough Bread'}))
+        const picker = w.findAllComponents(ModelSelect).find(c => c.vm.$attrs.model === 'Keyword')
+
+        expect(picker).toBeTruthy()
+        expect(picker!.vm.$attrs.label).toBe('Keywords')
+        expect(w.findAll('label.v-label').filter(l => l.text() === 'Keywords')).toHaveLength(0)
 
         w.unmount()
     })
