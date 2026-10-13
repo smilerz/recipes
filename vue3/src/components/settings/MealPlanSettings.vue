@@ -11,7 +11,7 @@
 
         <p class="text-h6 mt-2">{{ $t('DeviceSettings') }}</p>
         <v-divider></v-divider>
-        <p class="text-subtitle-2 mb-2">{{ $t('DeviceSettingsHelp') }}</p>
+        <closable-help-alert class="mt-2 mb-2" :title="$t('Help')" :text="$t('DeviceSettingsHelp')"></closable-help-alert>
 
         <meal-plan-device-settings></meal-plan-device-settings>
 

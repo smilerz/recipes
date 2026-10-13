@@ -2,13 +2,8 @@
     <v-container>
         <v-row>
             <v-col>
-                <v-card prepend-icon="fa-solid fa-folder-tree" :title="$t('Database')">
-                    <template #subtitle>
-                        <div class="text-wrap">
-                            {{ $t('DatabaseHelp') }}
-                        </div>
-                    </template>
-                </v-card>
+                <v-card prepend-icon="fa-solid fa-folder-tree" :title="$t('Database')"></v-card>
+                <closable-help-alert class="mt-2" :title="$t('Help')" :text="$t('DatabaseHelp')"></closable-help-alert>
             </v-col>
         </v-row>
 
@@ -126,6 +121,7 @@
 
 <script setup lang="ts">
 
+import ClosableHelpAlert from "@/components/display/ClosableHelpAlert.vue";
 import DatabaseModelCol from "@/components/display/DatabaseModelCol.vue";
 import DatabaseLinkCol from "@/components/display/DatabaseLinkCol.vue";
 import {TANDOOR_PLUGINS} from "@/plugin_registry.ts";

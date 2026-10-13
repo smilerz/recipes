@@ -22,7 +22,7 @@
             <v-tabs-window v-model="tab">
 
                 <v-tabs-window-item value="book">
-                    <v-alert icon="$help">{{ $t('BookHelp') }}</v-alert>
+                    <closable-help-alert :title="$t('Book')" :text="$t('BookHelp')"></closable-help-alert>
                     <v-form :disabled="loading" class="mt-5">
                         <v-text-field :label="$t('Name')" v-model="editingObj.name"></v-text-field>
                         <v-textarea :label="$t('Description')" v-model="editingObj.description" rows="3"></v-textarea>
@@ -68,6 +68,7 @@ import {useModelEditorFunctions} from "@/composables/useModelEditorFunctions";
 import ModelEditorBase from "@/components/model_editors/ModelEditorBase.vue";
 import ModelSelect from "@/components/inputs/ModelSelect.vue";
 import UserFileField from "@/components/inputs/UserFileField.vue";
+import ClosableHelpAlert from "@/components/display/ClosableHelpAlert.vue";
 import {ErrorMessageType, MessageType, useMessageStore} from "@/stores/MessageStore";
 import {useUserPreferenceStore} from "@/stores/UserPreferenceStore";
 import {useI18n} from "vue-i18n";

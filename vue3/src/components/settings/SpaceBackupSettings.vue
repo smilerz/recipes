@@ -1,7 +1,7 @@
 <template>
     <p class="text-h6">{{ $t('Backup') }}</p>
     <v-divider></v-divider>
-    <p class="text-body-2 mt-2">{{ $t('SpaceBackupHelp') }}</p>
+    <closable-help-alert class="mt-2" :title="$t('Help')" :text="$t('SpaceBackupHelp')"></closable-help-alert>
 
     <v-btn class="mt-2 mb-4" color="save" @click="createBackup()" :loading="creating" data-test="create-backup-btn">
         {{ $t('CreateBackup') }}
@@ -86,6 +86,7 @@
 
 <script setup lang="ts">
 
+import ClosableHelpAlert from "@/components/display/ClosableHelpAlert.vue";
 import {onMounted, onUnmounted, ref} from "vue"
 import {ApiApi, SpaceBackup} from "@/openapi"
 import {ErrorMessageType, useMessageStore} from "@/stores/MessageStore.ts"

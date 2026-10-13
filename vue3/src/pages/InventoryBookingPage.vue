@@ -3,16 +3,12 @@
         <v-row density="compact">
             <v-col>
                 <v-card prepend-icon="fa-solid fa-boxes-stacked" :title="$t('InventoryBooking')">
-                    <template #subtitle>
-                        <div class="text-wrap">
-                            {{ $t('InventoryBookingHelp') }}
-                        </div>
-                    </template>
                     <template #append>
                         <v-btn class="float-right" icon="$pantry" color="create" :to="{name: 'PantryPage'}">
                         </v-btn>
                     </template>
                 </v-card>
+                <closable-help-alert class="mt-2" :title="$t('Help')" :text="$t('InventoryBookingHelp')"></closable-help-alert>
             </v-col>
         </v-row>
         <v-row>
@@ -138,6 +134,7 @@
 
 <script setup lang="ts">
 
+import ClosableHelpAlert from "@/components/display/ClosableHelpAlert.vue";
 import {onMounted, ref, watch} from "vue";
 import {ApiApi, ApiInventoryEntryListRequest, Ingredient, InventoryEntry} from "@/openapi";
 import {ErrorMessageType, useMessageStore} from "@/stores/MessageStore.ts";

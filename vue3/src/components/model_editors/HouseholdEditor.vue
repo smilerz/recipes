@@ -17,9 +17,7 @@
 
                 <v-checkbox v-model="joinAfterSave" v-if="!isUpdate() || editingObj.id != useUserPreferenceStore().activeUserSpace?.household?.id" :label="$t('Join')"></v-checkbox>
 
-                <p>
-                    {{ $t('AssignHouseholdHelp') }}
-                </p>
+                <closable-help-alert class="mb-2" :title="$t('Household')" :text="$t('AssignHouseholdHelp')"></closable-help-alert>
                 <database-model-col model="UserSpace"></database-model-col>
             </v-form>
         </v-card-text>
@@ -34,6 +32,7 @@ import {ApiApi, Household} from "@/openapi";
 import ModelEditorBase from "@/components/model_editors/ModelEditorBase.vue";
 import {useModelEditorFunctions} from "@/composables/useModelEditorFunctions";
 import DatabaseModelCol from "@/components/display/DatabaseModelCol.vue";
+import ClosableHelpAlert from "@/components/display/ClosableHelpAlert.vue";
 import {useUserPreferenceStore} from "@/stores/UserPreferenceStore.ts";
 import {ErrorMessageType, useMessageStore} from "@/stores/MessageStore.ts";
 import {tr} from "vuetify/locale";
