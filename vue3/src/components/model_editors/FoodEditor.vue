@@ -85,7 +85,7 @@
                                                        @select="(days:number) => setShelfLife('opened', days)"></expiry-preset-dialog>
                             </v-col>
                         </v-row>
-                        <div class="text-caption text-medium-emphasis mb-4">{{ $t('ShelfLifeHelp') }}</div>
+                        <closable-help-alert class="mb-4" :title="$t('ShelfLife')" :text="$t('ShelfLifeHelp')"></closable-help-alert>
 
                         <v-row density="compact" align="center" class="mb-2">
                             <v-col cols="7">
@@ -105,7 +105,7 @@
                 </v-tabs-window-item>
 
                 <v-tabs-window-item value="properties">
-                    <v-alert icon="$help">{{ $t('PropertiesFoodHelp') }}</v-alert>
+                    <closable-help-alert :title="$t('Properties')" :text="$t('PropertiesFoodHelp')"></closable-help-alert>
                     <v-form :disabled="loading" class="mt-5">
                         <v-number-input :label="$t('FDC_ID')" v-model="editingObj.fdcId" :precision="0" control-variant="hidden" clearable>
                             <template #append-inner>
@@ -131,7 +131,7 @@
                 </v-tabs-window-item>
 
                 <v-tabs-window-item value="conversions">
-                    <v-alert icon="$help">{{ $t('ConversionsHelp') }}</v-alert>
+                    <closable-help-alert :title="$t('Conversion')" :text="$t('ConversionsHelp')"></closable-help-alert>
                     <v-form :disabled="loading" class="mt-5">
 
                         <v-btn color="create" @click="unitConversions.push({food: editingObj} as UnitConversion)" prepend-icon="$create">{{ $t('Add') }}</v-btn>
@@ -247,6 +247,7 @@ import HierarchyEditor from "@/components/inputs/HierarchyEditor.vue";
 import {useRoute} from 'vue-router'
 import {EXPIRY_PRESET_DAYS, formatShelfLifeDuration, shelfLifeFromDays, shelfLifeToDays, type ShelfLifePeriod} from "@/utils/pantry_utils.ts";
 import ExpiryPresetDialog from "@/components/dialogs/ExpiryPresetDialog.vue";
+import ClosableHelpAlert from "@/components/display/ClosableHelpAlert.vue";
 import {useI18n} from "vue-i18n";
 
 const {t} = useI18n()
