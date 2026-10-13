@@ -137,14 +137,16 @@
                         <v-btn color="create" @click="unitConversions.push({food: editingObj} as UnitConversion)" prepend-icon="$create">{{ $t('Add') }}</v-btn>
 
                         <v-card class="mt-2" border v-for="uc in unitConversions">
-                            <v-card-title>
-                                <span v-if="uc.baseUnit">{{ uc.baseAmount }} {{ uc.baseUnit.name }}</span>
-                                <v-icon size="x-small" icon="fa-solid fa-arrows-left-right" class="me-2 ms-2"></v-icon>
-                                <span v-if="uc.convertedUnit">{{ uc.convertedAmount }} {{ uc.convertedUnit.name }}</span>
-                                <v-btn color="delete" class="float-right d-none d-md-block" @click="deleteUnitConversion(uc, true)">
+                            <v-card-title class="d-flex align-center">
+                                <div class="d-flex flex-column flex-md-row align-md-center text-wrap flex-grow-1">
+                                    <span v-if="uc.baseUnit">{{ uc.baseAmount }} {{ uc.baseUnit.name }}</span>
+                                    <v-icon size="x-small" icon="fa-solid fa-arrows-left-right" class="my-1 mx-md-2"></v-icon>
+                                    <span v-if="uc.convertedUnit">{{ uc.convertedAmount }} {{ uc.convertedUnit.name }}</span>
+                                </div>
+                                <v-btn color="delete" class="d-none d-md-block" @click="deleteUnitConversion(uc, true)">
                                     <v-icon icon="$delete"></v-icon>
                                 </v-btn>
-                                <v-btn color="edit" class="float-right d-md-none">
+                                <v-btn color="edit" class="d-md-none">
                                     <v-icon icon="$edit"></v-icon>
                                     <model-edit-dialog model="UnitConversion" :item="uc" @delete="deleteUnitConversion(uc, false)" :disabled-fields="['food']"></model-edit-dialog>
                                 </v-btn>
