@@ -12,7 +12,7 @@ import {createI18n} from 'vue-i18n'
 import {createVuetify} from 'vuetify'
 import * as components from 'vuetify/components'
 import * as directives from 'vuetify/directives'
-import {createRouter, createMemoryHistory} from 'vue-router'
+import {createRouter, createMemoryHistory, type Router} from 'vue-router'
 import {h} from 'vue'
 import {apiMock, resetApiMock} from '@/__tests__/api-mock'
 import {makeUserPreference} from '@/__tests__/factories'
@@ -66,6 +66,10 @@ const HEAVY_STUBS: Record<string, any> = {
     ModelListFilterChips: {props: ['filterDefs', 'getFilter', 'setFilter', 'clearFilter', 'clearAllFilters', 'activeFilterCount'], render() { return h('div', {class: 'stub-filter-chips'}) }},
 }
 
+// Every navigation of every test router, from the first. The seed tests read the URL after a debounce and a queued
+// router.replace; one of them failed once in CI and could not be reproduced, so a failed assertion now says what led there.
+const navigations = new WeakMap<object, string[]>()
+
 function makeRouter(initialQuery: Record<string, any> = {}) {
     const router = createRouter({
         history: createMemoryHistory(),
@@ -74,6 +78,12 @@ function makeRouter(initialQuery: Record<string, any> = {}) {
             {path: '/advanced-search', name: 'SearchPage', component: {template: '<div/>'}},
             {path: '/recipe/view/:id', name: 'RecipeViewPage', component: {template: '<div/>'}},
         ],
+    })
+    const log: string[] = []
+    navigations.set(router, log)
+    const t0 = Date.now()
+    router.beforeEach((to, from) => {
+        log.push(`+${Date.now() - t0}ms ${JSON.stringify(from.query)} -> ${JSON.stringify(to.query)}`)
     })
     return {router, initialQuery}
 }
@@ -568,6 +578,14 @@ describe('SearchPage (Phase 3 rewrite)', () => {
             await flushPromises()
         }
         const SEED_SHAPE = /^[0-9a-z]+-[0-9a-z]+$/
+        /** What led to the current URL: the navigations (fake-clock ms), the latest recipe-list calls and the timers still pending. */
+        const why = (router: Router) => [
+            'navigations:',
+            ...(navigations.get(router) ?? []).map(n => `  ${n}`),
+            `latest recipe list calls: ${(apiMock.apiRecipeList as any).mock.calls.slice(-5).map((c: any[]) => JSON.stringify({sortOrder: c[0].sortOrder, seed: c[0].seed, page: c[0].page})).join(' ')}`,
+            `pending fake timers: ${vi.getTimerCount()}`,
+            `route now: ${JSON.stringify(router.currentRoute.value.query)}`,
+        ].join('\n')
 
         beforeEach(() => vi.useFakeTimers({shouldAdvanceTime: true}))
 
@@ -575,7 +593,7 @@ describe('SearchPage (Phase 3 rewrite)', () => {
             const {wrapper, router} = await mountSearchPage({ordering: 'random'})
             await settle()
             expect(lastParams().seed).toMatch(SEED_SHAPE)
-            expect(router.currentRoute.value.query.seed).toBe(lastParams().seed)
+            expect(router.currentRoute.value.query.seed, why(router)).toBe(lastParams().seed)
             wrapper.unmount()
         })
 
@@ -584,7 +602,7 @@ describe('SearchPage (Phase 3 rewrite)', () => {
             const {wrapper, router} = await mountSearchPage({ordering: 'random', seed})
             await settle()
             expect(lastParams().seed).toBe(seed)
-            expect(router.currentRoute.value.query.seed).toBe(seed)
+            expect(router.currentRoute.value.query.seed, why(router)).toBe(seed)
             wrapper.unmount()
         })
 
@@ -594,7 +612,7 @@ describe('SearchPage (Phase 3 rewrite)', () => {
             await settle()
             expect(lastParams().seed).toMatch(SEED_SHAPE)
             expect(lastParams().seed).not.toBe(stale)
-            expect(router.currentRoute.value.query.seed).toBe(lastParams().seed)
+            expect(router.currentRoute.value.query.seed, why(router)).toBe(lastParams().seed)
             wrapper.unmount()
         })
 
@@ -658,9 +676,9 @@ describe('SearchPage (Phase 3 rewrite)', () => {
             await settle()
             await router.push({path: '/advanced-search', query: {ordering: 'name', seed}})
             await settle()
-            expect(lastParams().sortOrder).toBe('name')
-            expect(lastParams().seed).toBeUndefined()
-            expect(router.currentRoute.value.query.seed).toBeUndefined()
+            expect(lastParams().sortOrder, why(router)).toBe('name')
+            expect(lastParams().seed, why(router)).toBeUndefined()
+            expect(router.currentRoute.value.query.seed, why(router)).toBeUndefined()
             wrapper.unmount()
         })
 
