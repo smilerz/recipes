@@ -66,7 +66,10 @@ const HEAVY_STUBS: Record<string, any> = {
     ModelListFilterChips: {props: ['filterDefs', 'getFilter', 'setFilter', 'clearFilter', 'clearAllFilters', 'activeFilterCount'], render() { return h('div', {class: 'stub-filter-chips'}) }},
 }
 
-function makeRouter(initialQuery: Record<string, any> = {}) {
+// The fake clock replaces setImmediate once a test installs it, so keep the real one to model a router that is slow to finish.
+const realSetImmediate = globalThis.setImmediate
+
+function makeRouter(initialQuery: Record<string, any> = {}, delayTurns = 0) {
     const router = createRouter({
         history: createMemoryHistory(),
         routes: [
@@ -75,10 +78,15 @@ function makeRouter(initialQuery: Record<string, any> = {}) {
             {path: '/recipe/view/:id', name: 'RecipeViewPage', component: {template: '<div/>'}},
         ],
     })
+    if (delayTurns > 0) {
+        router.beforeEach(async () => {
+            for (let turn = 0; turn < delayTurns; turn++) await new Promise<void>(resolve => realSetImmediate(resolve))
+        })
+    }
     return {router, initialQuery}
 }
 
-async function mountSearchPage(initialQuery: Record<string, any> = {}, viewMode: 'table' | 'grid' = 'grid', deviceOverrides: Record<string, any> = {}) {
+async function mountSearchPage(initialQuery: Record<string, any> = {}, viewMode: 'table' | 'grid' = 'grid', deviceOverrides: Record<string, any> = {}, routerDelayTurns = 0) {
     const prePopulatePlugin: PiniaPlugin = ({store}) => {
         if (store.$id === 'user_preference_store') {
             store.userSettings = makeUserPreference() as any
@@ -96,7 +104,7 @@ async function mountSearchPage(initialQuery: Record<string, any> = {}, viewMode:
 
     const i18n = createI18n({legacy: false, locale: 'en', messages: {en: {}}, missingWarn: false, fallbackWarn: false})
     const vuetify = createVuetify({components, directives})
-    const {router} = makeRouter()
+    const {router} = makeRouter({}, routerDelayTurns)
 
     await router.push({path: '/advanced-search', query: initialQuery})
     await router.isReady()
@@ -569,13 +577,16 @@ describe('SearchPage (Phase 3 rewrite)', () => {
         }
         const SEED_SHAPE = /^[0-9a-z]+-[0-9a-z]+$/
 
+        // A navigation finishes some event-loop turns after it starts; a loaded CI runner makes that longer than settle() waits.
+        const ROUTER_DELAY_TURNS = [0, 8]
+
         beforeEach(() => vi.useFakeTimers({shouldAdvanceTime: true}))
 
-        it('mints a seed for a random deep link without one, sends it, and puts it in the URL', async () => {
-            const {wrapper, router} = await mountSearchPage({ordering: 'random'})
+        it.each(ROUTER_DELAY_TURNS)('mints a seed for a random deep link without one, sends it, and puts it in the URL (router takes %i turns)', async (delayTurns) => {
+            const {wrapper, router} = await mountSearchPage({ordering: 'random'}, 'grid', {}, delayTurns)
             await settle()
             expect(lastParams().seed).toMatch(SEED_SHAPE)
-            expect(router.currentRoute.value.query.seed).toBe(lastParams().seed)
+            await vi.waitFor(() => expect(router.currentRoute.value.query.seed).toBe(lastParams().seed))
             wrapper.unmount()
         })
 
@@ -588,13 +599,13 @@ describe('SearchPage (Phase 3 rewrite)', () => {
             wrapper.unmount()
         })
 
-        it('replaces a seed older than the TTL on entry', async () => {
+        it.each(ROUTER_DELAY_TURNS)('replaces a seed older than the TTL on entry (router takes %i turns)', async (delayTurns) => {
             const stale = mintSeed(Date.now() - (SEED_TTL_MS + 60_000))
-            const {wrapper, router} = await mountSearchPage({ordering: 'random', seed: stale})
+            const {wrapper, router} = await mountSearchPage({ordering: 'random', seed: stale}, 'grid', {}, delayTurns)
             await settle()
             expect(lastParams().seed).toMatch(SEED_SHAPE)
             expect(lastParams().seed).not.toBe(stale)
-            expect(router.currentRoute.value.query.seed).toBe(lastParams().seed)
+            await vi.waitFor(() => expect(router.currentRoute.value.query.seed).toBe(lastParams().seed))
             wrapper.unmount()
         })
 
@@ -652,15 +663,15 @@ describe('SearchPage (Phase 3 rewrite)', () => {
             wrapper.unmount()
         })
 
-        it('switching to another sort stops sending the seed and drops it from the URL', async () => {
+        it.each(ROUTER_DELAY_TURNS)('switching to another sort stops sending the seed and drops it from the URL (router takes %i turns)', async (delayTurns) => {
             const seed = mintSeed()
-            const {wrapper, router} = await mountSearchPage({ordering: 'random', seed})
+            const {wrapper, router} = await mountSearchPage({ordering: 'random', seed}, 'grid', {}, delayTurns)
             await settle()
             await router.push({path: '/advanced-search', query: {ordering: 'name', seed}})
             await settle()
             expect(lastParams().sortOrder).toBe('name')
             expect(lastParams().seed).toBeUndefined()
-            expect(router.currentRoute.value.query.seed).toBeUndefined()
+            await vi.waitFor(() => expect(router.currentRoute.value.query.seed).toBeUndefined())
             wrapper.unmount()
         })
 
