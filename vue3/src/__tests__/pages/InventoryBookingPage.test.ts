@@ -50,7 +50,7 @@ function mountPage() {
                 'inventory-entry-log-dialog': {template: '<div/>'},
                 'model-edit-dialog': {template: '<div/>'},
                 'inventory-entry-log-table': {template: '<div/>'},
-                'closable-help-alert': {template: '<div class="stub-help-alert"/>'},
+                'closable-help-alert': {props: ['text'], template: '<div class="stub-help-alert">{{ text }}</div>'},
             },
         },
     })
@@ -412,11 +412,14 @@ describe('InventoryBookingPage', () => {
         w.unmount()
     })
 
+    // The page has its own help box and the form fields add the CodeHelp one in Add mode, so look at the text, not just the box.
+    const helpTexts = (w: ReturnType<typeof mountPage>) => w.findAll('.stub-help-alert').map(box => box.text())
+
     it('shows the CodeHelp alert in Add mode', async () => {
         const w = mountPage()
         await flushPromises()
 
-        expect(w.find('.stub-help-alert').exists()).toBe(true)
+        expect(helpTexts(w)).toContain('CodeHelp')
 
         w.unmount()
     })
@@ -428,7 +431,19 @@ describe('InventoryBookingPage', () => {
         ;(w.vm as any).bookingMode = 'edit'
         await flushPromises()
 
-        expect(w.find('.stub-help-alert').exists()).toBe(false)
+        expect(helpTexts(w)).not.toContain('CodeHelp')
+
+        w.unmount()
+    })
+
+    it('explains the page in a dismissable help box in both modes', async () => {
+        const w = mountPage()
+        await flushPromises()
+        expect(helpTexts(w)).toContain('InventoryBookingHelp')
+
+        ;(w.vm as any).bookingMode = 'edit'
+        await flushPromises()
+        expect(helpTexts(w)).toContain('InventoryBookingHelp')
 
         w.unmount()
     })

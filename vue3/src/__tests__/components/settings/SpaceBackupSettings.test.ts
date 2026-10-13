@@ -18,7 +18,10 @@ function mountSettings() {
         messages: { en: { RestoreComplete: 'Restored into new space "{name}"' } },
     })
     return mount(SpaceBackupSettings, {
-        global: { plugins: [pinia, i18n] },
+        global: {
+            plugins: [pinia, i18n],
+            stubs: { ClosableHelpAlert: { props: ['text'], template: '<div class="stub-help-alert">{{ text }}</div>' } },
+        },
     })
 }
 
@@ -37,6 +40,13 @@ describe('SpaceBackupSettings', () => {
     beforeEach(() => {
         resetApiMock()
         vi.useFakeTimers()
+    })
+
+    it('explains the backup in a dismissable help box', async () => {
+        apiMock.apiSpaceBackupList.mockResolvedValue({ results: [], count: 0 })
+        const wrapper = mountSettings()
+        await flushPromises()
+        expect(wrapper.find('.stub-help-alert').text()).toBe('SpaceBackupHelp')
     })
 
     it('loads and displays past backups on mount', async () => {

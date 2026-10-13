@@ -34,7 +34,7 @@
         <br/>
 
         <p class="text-h6 mt-3">{{ $t('DeviceSettings') }}</p>
-        <p class="text-disabled">{{ $t('DeviceSettingsHelp') }}</p>
+        <closable-help-alert class="mt-2 mb-2" :title="$t('Help')" :text="$t('DeviceSettingsHelp')"></closable-help-alert>
 
         <v-btn @click="useUserPreferenceStore().resetDeviceSettings()" color="warning">{{ $t('Reset') }}</v-btn>  <br/>
         <v-btn @click="useUserPreferenceStore().deviceSettings.general_closedHelpAlerts = []" color="warning" class="mt-1">{{ $t('ResetHelp') }}</v-btn> <br/>
@@ -49,6 +49,7 @@
 
 <script setup lang="ts">
 
+import ClosableHelpAlert from "@/components/display/ClosableHelpAlert.vue";
 import {onMounted, ref, watch} from "vue";
 import {ApiApi, User} from "@/openapi";
 import {ErrorMessageType, PreparedMessage, useMessageStore} from "@/stores/MessageStore";
