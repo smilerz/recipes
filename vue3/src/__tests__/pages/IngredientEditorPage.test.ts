@@ -23,6 +23,10 @@ vi.mock('@vueuse/core', async () => {
 
 import IngredientEditorPage from '@/pages/IngredientEditorPage.vue'
 
+// None of these tests touches a picker. Each real one is an autocomplete with its field, menu and overlay (about 19 component
+// instances), and the six on this page are about half of everything it renders, enough for the first test to time out on a busy machine.
+const PICKER_STUBS = { ModelSelect: { template: '<div class="stub-model-select"/>' } }
+
 describe('IngredientEditorPage', () => {
     beforeEach(() => {
         resetApiMock()
@@ -37,7 +41,7 @@ describe('IngredientEditorPage', () => {
     // with nothing to save - no request, no toast, no validation message - despite
     // appearing fully enabled. Disable it instead until a row is actually edited.
     it('disables the save-all button until a row is changed', async () => {
-        const wrapper = mountPage(IngredientEditorPage)
+        const wrapper = mountPage(IngredientEditorPage, { global: { stubs: PICKER_STUBS } })
         await flushPromises()
 
         const saveAllButton = wrapper.find('[data-test="save-all-button"]')
@@ -60,7 +64,7 @@ describe('IngredientEditorPage on a phone', () => {
         const vuetify = createVuetify({components, directives, display: { mobileBreakpoint: 9999 }})
         // the helper's stub of the delete confirmation is inert; this one says "confirmed" when clicked
         const DeleteConfirmDialog = { emits: ['delete'], template: '<span class="stub-confirm-delete" @click="$emit(\'delete\')"/>' }
-        return mountPage(IngredientEditorPage, { global: { plugins: [vuetify], stubs: { DeleteConfirmDialog } }, attachTo: document.body })
+        return mountPage(IngredientEditorPage, { global: { plugins: [vuetify], stubs: { DeleteConfirmDialog, ...PICKER_STUBS } }, attachTo: document.body })
     }
 
     async function loaded(mount: () => ReturnType<typeof mountMobile>) {
@@ -166,7 +170,7 @@ describe('IngredientEditorPage on a desktop', () => {
     })
 
     it('keeps the Save/Delete buttons in the last column and has no phone save bar or row menu', async () => {
-        const wrapper = mountPage(IngredientEditorPage)
+        const wrapper = mountPage(IngredientEditorPage, { global: { stubs: PICKER_STUBS } })
         await flushPromises()
         expect(wrapper.findAll('.v-btn-group')).toHaveLength(2)
         expect(wrapper.find('[data-test="save-bar"]').exists()).toBe(false)
