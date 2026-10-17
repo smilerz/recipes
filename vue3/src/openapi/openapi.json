@@ -1361,7 +1361,7 @@ paths:
           type: string
           format: date-time
         description: Returns only entries created at or after the given timestamp
-          in ISO 8601 format.
+          in ISO 8601 format. A value without an offset is read as UTC.
       - in: query
         name: ordering
         schema:

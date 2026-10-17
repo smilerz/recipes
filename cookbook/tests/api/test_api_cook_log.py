@@ -1,4 +1,6 @@
+import datetime
 import json
+import warnings
 from datetime import timedelta
 
 import pytest
@@ -216,3 +218,66 @@ def test_created_after_includes_an_entry_made_exactly_then(u1_s1, space_1, recip
 @pytest.mark.parametrize('bad', ['yesterday', '12345', '2026-13-45T00:00:00Z'])
 def test_created_after_rejects_an_invalid_timestamp(u1_s1, bad):
     assert u1_s1.get(reverse(LIST_URL), {'created_after': bad}).status_code == 400
+
+
+def test_created_after_without_an_offset_is_read_as_utc(u1_s1, space_1, recipe_1_s1):
+    user = auth.get_user(u1_s1)
+    moment = timezone.now() - timedelta(days=2)
+    inside = CookLog.objects.create(recipe=recipe_1_s1, created_by=user, space=space_1, created_at=moment)
+    CookLog.objects.create(recipe=recipe_1_s1, created_by=user, space=space_1, created_at=moment - timedelta(minutes=1))
+    naive = moment.astimezone(datetime.timezone.utc).replace(tzinfo=None).isoformat()
+
+    with warnings.catch_warnings():
+        warnings.simplefilter('error', RuntimeWarning)  # Django warns about a naive datetime compared with an aware column
+        r = u1_s1.get(reverse(LIST_URL), {'created_after': naive})
+
+    assert r.status_code == 200
+    assert [entry['id'] for entry in json.loads(r.content)['results']] == [inside.id]
+
+
+@pytest.mark.parametrize('hours', [0, 2, -5])
+def test_created_after_reads_the_offset_it_is_given(u1_s1, space_1, recipe_1_s1, hours):
+    user = auth.get_user(u1_s1)
+    moment = timezone.now() - timedelta(days=2)
+    inside = CookLog.objects.create(recipe=recipe_1_s1, created_by=user, space=space_1, created_at=moment)
+    CookLog.objects.create(recipe=recipe_1_s1, created_by=user, space=space_1, created_at=moment - timedelta(minutes=1))
+    written = moment.astimezone(datetime.timezone(timedelta(hours=hours))).isoformat()
+
+    r = json.loads(u1_s1.get(reverse(LIST_URL), {'created_after': written}).content)
+
+    assert [entry['id'] for entry in r['results']] == [inside.id]
+
+
+def test_created_after_accepts_a_z_suffix(u1_s1, space_1, recipe_1_s1):
+    user = auth.get_user(u1_s1)
+    moment = timezone.now() - timedelta(days=2)
+    inside = CookLog.objects.create(recipe=recipe_1_s1, created_by=user, space=space_1, created_at=moment)
+    CookLog.objects.create(recipe=recipe_1_s1, created_by=user, space=space_1, created_at=moment - timedelta(minutes=1))
+
+    r = json.loads(u1_s1.get(reverse(LIST_URL), {'created_after': moment.isoformat().replace('+00:00', 'Z')}).content)
+
+    assert [entry['id'] for entry in r['results']] == [inside.id]
+
+
+def test_created_after_combines_with_the_recipe_filter(u1_s1, space_1, recipe_1_s1):
+    user = auth.get_user(u1_s1)
+    other = Recipe.objects.create(name='other recipe', created_by=user, space=space_1)
+    recent = _cooked(space_1, user, recipe_1_s1, timedelta(days=1))
+    _cooked(space_1, user, recipe_1_s1, timedelta(days=10))
+    _cooked(space_1, user, other, timedelta(days=1))
+
+    cutoff = (timezone.now() - timedelta(days=5)).isoformat()
+    r = json.loads(u1_s1.get(reverse(LIST_URL), {'created_after': cutoff, 'recipe': recipe_1_s1.id}).content)
+
+    assert [entry['id'] for entry in r['results']] == [recent.id]
+
+
+def test_created_after_does_not_reveal_another_spaces_entries(u1_s1, u1_s2, space_2):
+    theirs = auth.get_user(u1_s2)
+    recipe = Recipe.objects.create(name='their recipe', created_by=theirs, space=space_2)
+    CookLog.objects.create(recipe=recipe, created_by=theirs, space=space_2)
+
+    cutoff = (timezone.now() - timedelta(days=5)).isoformat()
+
+    assert json.loads(u1_s1.get(reverse(LIST_URL), {'created_after': cutoff}).content)['count'] == 0
+    assert json.loads(u1_s2.get(reverse(LIST_URL), {'created_after': cutoff}).content)['count'] == 1
