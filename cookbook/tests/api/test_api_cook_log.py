@@ -1,8 +1,10 @@
 import json
+from datetime import timedelta
 
 import pytest
 from django.contrib import auth
 from django.urls import reverse
+from django.utils import timezone
 from django_scopes import scopes_disabled
 
 from cookbook.models import CookLog, Recipe
@@ -181,3 +183,36 @@ def test_list_includes_recipe_name(u1_s1, space_1):
     CookLog.objects.create(recipe=recipe, created_by=user, space=space_1)
     r = json.loads(u1_s1.get(reverse(LIST_URL)).content)
     assert r['results'][0]['recipe_name'] == 'Pasta Bake'
+
+
+def _cooked(space, user, recipe, ago):
+    return CookLog.objects.create(recipe=recipe, created_by=user, space=space, created_at=timezone.now() - ago)
+
+
+def test_created_after_returns_only_newer_entries(u1_s1, space_1, recipe_1_s1):
+    user = auth.get_user(u1_s1)
+    _cooked(space_1, user, recipe_1_s1, timedelta(days=10))
+    recent = _cooked(space_1, user, recipe_1_s1, timedelta(days=3))
+    newest = _cooked(space_1, user, recipe_1_s1, timedelta(hours=1))
+
+    cutoff = (timezone.now() - timedelta(days=5)).isoformat()
+    r = json.loads(u1_s1.get(reverse(LIST_URL), {'created_after': cutoff}).content)
+
+    assert r['count'] == 2
+    assert {entry['id'] for entry in r['results']} == {recent.id, newest.id}
+
+
+def test_created_after_includes_an_entry_made_exactly_then(u1_s1, space_1, recipe_1_s1):
+    user = auth.get_user(u1_s1)
+    moment = timezone.now() - timedelta(days=2)
+    _cooked(space_1, user, recipe_1_s1, timedelta(days=9))
+    entry = CookLog.objects.create(recipe=recipe_1_s1, created_by=user, space=space_1, created_at=moment)
+
+    r = json.loads(u1_s1.get(reverse(LIST_URL), {'created_after': moment.isoformat()}).content)
+
+    assert [e['id'] for e in r['results']] == [entry.id]
+
+
+@pytest.mark.parametrize('bad', ['yesterday', '12345', '2026-13-45T00:00:00Z'])
+def test_created_after_rejects_an_invalid_timestamp(u1_s1, bad):
+    assert u1_s1.get(reverse(LIST_URL), {'created_after': bad}).status_code == 400

@@ -735,6 +735,7 @@ export interface ApiCookLogDestroyRequest {
 }
 
 export interface ApiCookLogListRequest {
+    createdAfter?: Date;
     ordering?: string;
     page?: number;
     pageSize?: number;
@@ -4500,6 +4501,10 @@ export class ApiApi extends runtime.BaseAPI {
      */
     async apiCookLogListRaw(requestParameters: ApiCookLogListRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PaginatedCookLogList>> {
         const queryParameters: any = {};
+
+        if (requestParameters['createdAfter'] != null) {
+            queryParameters['created_after'] = (requestParameters['createdAfter'] as any).toISOString();
+        }
 
         if (requestParameters['ordering'] != null) {
             queryParameters['ordering'] = requestParameters['ordering'];
