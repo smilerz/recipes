@@ -1,25 +1,21 @@
 import { vi, afterEach } from 'vitest'
 import { config, enableAutoUnmount } from '@vue/test-utils'
 import { createVuetify } from 'vuetify'
-import * as vuetifyComponents from 'vuetify/components'
-import * as vuetifyDirectives from 'vuetify/directives'
 import { vuetifyOptions } from '@/vuetify'
 import type { App } from 'vue'
 
-// Register a Vuetify instance with production options PLUS all components and
-// directives for every test. Production uses vite-plugin-vuetify's autoImport
-// to register components on demand from templates — vitest's bundle doesn't
-// run that plugin, so we register everything explicitly here. Tests get the
-// same theme, icon aliases, locale, and defaults as production, with full
-// component coverage.
+// Register a Vuetify instance with the production options (theme, icon aliases,
+// locale, defaults) for every test. Components and directives are NOT registered
+// here: vitest.config.ts runs vite-plugin-vuetify's autoImport like the
+// production build, so each file imports only what its templates use. A test
+// that compiles a template at runtime (a string `template:`) must import the
+// Vuetify components it uses itself.
 //
 // Browser-API polyfills below cover jsdom gaps Vuetify relies on at runtime
 // (matchMedia, ResizeObserver, IntersectionObserver). Without them Vuetify
 // mounts but throws on first reactive layout call.
 const testVuetify = createVuetify({
     ...vuetifyOptions,
-    components: vuetifyComponents,
-    directives: vuetifyDirectives,
 })
 
 // Capture Vue runtime errors per test. `expect(w.exists()).toBe(true)` is true
