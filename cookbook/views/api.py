@@ -3045,7 +3045,7 @@ class ViewLogViewSet(OrderingMixin, LoggingMixin, viewsets.ModelViewSet):
 @extend_schema_view(list=extend_schema(parameters=[
     OpenApiParameter(name='recipe', description='Filter for entries with the given recipe', type=int),
     OpenApiParameter(name='query', description='lookup if query string is contained within the recipe name, case insensitive', type=str),
-    OpenApiParameter(name='created_after', description=_('Returns only entries created at or after the given timestamp in ISO 8601 format.'), type=datetime.datetime),
+    OpenApiParameter(name='created_after', description=_('Returns only entries created at or after the given timestamp in ISO 8601 format. A value without an offset is read as UTC.'), type=datetime.datetime),
     OpenApiParameter(
         name='ordering',
         type=str,
@@ -3079,6 +3079,8 @@ class CookLogViewSet(OrderingMixin, LoggingMixin, viewsets.ModelViewSet):
                 moment = None
             if moment is None:
                 raise ParseError(_('Parameter created_after incorrectly formatted'))
+            if timezone.is_naive(moment):
+                moment = timezone.make_aware(moment, datetime.timezone.utc)
             self.queryset = self.queryset.filter(created_at__gte=moment)
         return self._apply_ordering(self.queryset.filter(space=self.request.space))
 
