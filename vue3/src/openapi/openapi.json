@@ -1356,6 +1356,13 @@ paths:
         consuming viewset's OpenAPI doc already documents this contract).
       parameters:
       - in: query
+        name: created_after
+        schema:
+          type: string
+          format: date-time
+        description: Returns only entries created at or after the given timestamp
+          in ISO 8601 format.
+      - in: query
         name: ordering
         schema:
           type: string
@@ -19402,3 +19409,4 @@ components:
       type: apiKey
       in: header
       name: Authorization
+
