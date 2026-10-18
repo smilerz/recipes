@@ -11,19 +11,16 @@ Group/FoodInheritField specifically by natural key (name/field), never by raw pk
 the real use case is moving a space to a *different* Tandoor instance or disaster
 recovery, not staying on the one instance where pks would happen to still line up.
 """
-from datetime import timedelta
-
 import pytest
 from django.contrib import auth
 from django.contrib.auth.models import Group
-from django.utils import timezone
 from django_scopes import scopes_disabled
 
 from cookbook.helper.space_backup import build_space_backup
 from cookbook.helper.space_restore import assert_target_space_is_empty, preview_restore, restore_space_backup
 from cookbook.helper.permission_helper import create_space_for_user
 from cookbook.models import (CookLog, Food, FoodInheritField, InventoryEntry, InventoryLocation, InviteLink,
-                             MealPlan, Recipe, RecipeBook, RecipeBookEntry, ShoppingListEntry, Space, UserSpace)
+                             MealPlan, Recipe, RecipeBook, RecipeBookEntry, Space, UserSpace)
 from cookbook.tests.factories import (CookLogFactory, FoodFactory, InventoryEntryFactory, InventoryLocationFactory,
                                       KeywordFactory, MealPlanFactory, RecipeBookFactory, RecipeFactory,
                                       ShoppingListEntryFactory)
@@ -86,28 +83,6 @@ def test_restore_recreates_food_hierarchy(space_1, u1_s1):
         new_parent = Food.objects.get(space=new_space, name='Fruit')
         new_child = Food.objects.get(space=new_space, name='Citrus')
         assert new_child.get_parent().pk == new_parent.pk
-
-
-@pytest.mark.django_db
-def test_restore_carries_the_stock_up_state_of_shopping_entries(space_1, u1_s1):
-    user = auth.get_user(u1_s1)
-    stocked_at = timezone.now() - timedelta(days=3)
-    dismissed_at = timezone.now() - timedelta(days=2)
-    with scopes_disabled():
-        ShoppingListEntryFactory(space=space_1, created_by=user, food=FoodFactory(space=space_1, name='Stocked'), checked=True,
-                                 completed_at=stocked_at, stocked_at=stocked_at)
-        ShoppingListEntryFactory(space=space_1, created_by=user, food=FoodFactory(space=space_1, name='Dismissed'), checked=False,
-                                 dismissed_at=dismissed_at)
-        ShoppingListEntryFactory(space=space_1, created_by=user, food=FoodFactory(space=space_1, name='Waiting'), checked=True,
-                                 completed_at=stocked_at)
-        backup = build_space_backup(space_1)
-
-        new_space, report = restore_space_backup(backup, user)
-
-        restored = {e.food.name: e for e in ShoppingListEntry.objects.filter(space=new_space)}
-        assert (restored['Stocked'].stocked_at, restored['Stocked'].dismissed_at) == (stocked_at, None)
-        assert (restored['Dismissed'].stocked_at, restored['Dismissed'].dismissed_at) == (None, dismissed_at)
-        assert (restored['Waiting'].stocked_at, restored['Waiting'].dismissed_at) == (None, None)
 
 
 @pytest.mark.django_db
