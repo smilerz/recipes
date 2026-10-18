@@ -1426,11 +1426,6 @@ class ShoppingListEntry(ExportModelOperationsMixin('shopping_list_entry'), model
     completed_at = models.DateTimeField(null=True, blank=True)
     delay_until = models.DateTimeField(null=True, blank=True)
 
-    # What Stock up did with this checked-off entry: added to the pantry, or dismissed (not offered again). Both empty
-    # = bought, not yet handled. At most one is set, and both are cleared whenever the entry is checked or unchecked.
-    stocked_at = models.DateTimeField(null=True, blank=True)
-    dismissed_at = models.DateTimeField(null=True, blank=True)
-
     space = models.ForeignKey(Space, on_delete=models.CASCADE)
     objects = ScopedManager(space='space')
 
@@ -1445,12 +1440,6 @@ class ShoppingListEntry(ExportModelOperationsMixin('shopping_list_entry'), model
 
     class Meta:
         ordering = ('pk',)
-        constraints = [
-            models.CheckConstraint(
-                condition=models.Q(stocked_at__isnull=True) | models.Q(dismissed_at__isnull=True),
-                name='shopping_entry_not_both_stocked_and_dismissed',
-            ),
-        ]
 
 
 class InventoryLocation(models.Model, PermissionModelMixin):
