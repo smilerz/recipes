@@ -1811,6 +1811,7 @@ export interface ApiShoppingListEntryListRequest {
     checked?: boolean;
     food?: number;
     mealplan?: number;
+    ordering?: string;
     page?: number;
     pageSize?: number;
     updatedAfter?: Date;
@@ -14161,6 +14162,10 @@ export class ApiApi extends runtime.BaseAPI {
 
         if (requestParameters['mealplan'] != null) {
             queryParameters['mealplan'] = requestParameters['mealplan'];
+        }
+
+        if (requestParameters['ordering'] != null) {
+            queryParameters['ordering'] = requestParameters['ordering'];
         }
 
         if (requestParameters['page'] != null) {

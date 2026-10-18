@@ -8171,6 +8171,12 @@ paths:
         schema:
           type: integer
         description: Returns only entries associated with the given mealplan id
+      - in: query
+        name: ordering
+        schema:
+          type: string
+        description: 'Order results by field. Allowed: completed_at, -completed_at
+          (entries without a completion time come last). Default: oldest entry first.'
       - name: page
         required: false
         in: query
@@ -19409,4 +19415,3 @@ components:
       type: apiKey
       in: header
       name: Authorization
-

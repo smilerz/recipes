@@ -292,6 +292,67 @@ def test_filter_by_checked(u1_s1, space_1):
     assert r['results'][0]['checked'] is True
 
 
+def _checked_entries_completed_at(space, user, *days_ago):
+    """One checked entry per value, completed that many days ago (None = no completion time); returns {food name: entry}."""
+    now = timezone.now()
+    entries = {}
+    for i, days in enumerate(days_ago):
+        food = FoodFactory(space=space, name=f'food-{i}')
+        entries[food.name] = ShoppingListEntryFactory(food=food, space=space, created_by=user, checked=True,
+                                                      completed_at=None if days is None else now - timedelta(days=days))
+    return entries
+
+
+def _listed_food_names(client, query):
+    r = json.loads(client.get(f'{reverse(LIST_URL)}?checked=true&{query}').content)
+    return [e['food']['name'] for e in r['results']]
+
+
+def test_ordering_newest_completed_first(u1_s1, space_1):
+    user = auth.get_user(u1_s1)
+    with scopes_disabled():
+        _checked_entries_completed_at(space_1, user, 5, 1, 3)  # food-0 5 days ago, food-1 1 day ago, food-2 3 days ago
+
+    assert _listed_food_names(u1_s1, 'ordering=-completed_at') == ['food-1', 'food-2', 'food-0']
+
+
+def test_ordering_oldest_completed_first(u1_s1, space_1):
+    user = auth.get_user(u1_s1)
+    with scopes_disabled():
+        _checked_entries_completed_at(space_1, user, 5, 1, 3)
+
+    assert _listed_food_names(u1_s1, 'ordering=completed_at') == ['food-0', 'food-2', 'food-1']
+
+
+@pytest.mark.parametrize('ordering', ['completed_at', '-completed_at'])
+def test_ordering_puts_entries_without_a_completion_time_last(u1_s1, space_1, ordering):
+    user = auth.get_user(u1_s1)
+    with scopes_disabled():
+        _checked_entries_completed_at(space_1, user, None, 5, 1)  # food-0 has no completion time
+
+    assert _listed_food_names(u1_s1, f'ordering={ordering}')[-1] == 'food-0'
+
+
+def test_ordering_with_an_unknown_value_keeps_the_default_order(u1_s1, space_1):
+    user = auth.get_user(u1_s1)
+    with scopes_disabled():
+        _checked_entries_completed_at(space_1, user, 5, 1, 3)
+
+    assert _listed_food_names(u1_s1, 'ordering=food__name') == ['food-0', 'food-1', 'food-2']
+
+
+def test_a_page_of_the_newest_completed_entries_holds_the_newest(u1_s1, space_1):
+    """The cap case: with more entries than one page, ordering decides which ones are shown."""
+    user = auth.get_user(u1_s1)
+    with scopes_disabled():
+        _checked_entries_completed_at(space_1, user, 9, 8, 7, 1, 2)  # food-3 and food-4 are the newest
+
+    r = json.loads(u1_s1.get(f'{reverse(LIST_URL)}?checked=true&ordering=-completed_at&page_size=2').content)
+
+    assert r['count'] == 5
+    assert [e['food']['name'] for e in r['results']] == ['food-3', 'food-4']
+
+
 def test_entry_food_carries_household_inventory(u1_s1, space_1):
     """Shopping-entry nested food carries in_inventory + household earliest_expiry so the row can
     render the read-only pantry jar (FR-H2). Another household's earlier lot is ignored (FR-B4)."""
