@@ -4,6 +4,8 @@
             <v-closable-card-title :title="title" icon="$pantry" v-model="showDialog"></v-closable-card-title>
 
             <v-card-text>
+                <!-- a recipe-scoped open has no "recently cooked" section, so no period to choose -->
+                <lookback-period-select v-if="!scoped" class="mb-3" :model-value="days" :options="options" @update:model-value="onPeriodChange"></lookback-period-select>
                 <div v-if="loading" class="text-center pa-6">
                     <v-progress-circular indeterminate color="primary"></v-progress-circular>
                 </div>
@@ -66,6 +68,7 @@
                 </v-btn>
             </v-card-actions>
         </v-card>
+        <action-confirm-dialog ref="confirmDialog"></action-confirm-dialog>
     </v-dialog>
 </template>
 
@@ -75,7 +78,9 @@ import {computed, ref} from "vue";
 import {useDisplay} from "vuetify";
 import {useI18n} from "vue-i18n";
 import {ApiApi, Food, Unit} from "@/openapi";
+import ActionConfirmDialog from "@/components/dialogs/ActionConfirmDialog.vue";
 import VClosableCardTitle from "@/components/dialogs/VClosableCardTitle.vue";
+import LookbackPeriodSelect from "@/components/inputs/LookbackPeriodSelect.vue";
 import ModelSelect from "@/components/inputs/ModelSelect.vue";
 import ClosableHelpAlert from "@/components/display/ClosableHelpAlert.vue";
 import {
@@ -87,6 +92,7 @@ import {
     SubstituteSlotInfo,
     useUpItemsFromRows,
 } from "@/utils/pantry_utils.ts";
+import {useLookbackPeriod} from "@/composables/useLookbackPeriod.ts";
 import {useShoppingActions} from "@/composables/useShoppingActions.ts";
 import {ErrorMessageType, MessageType, useMessageStore} from "@/stores/MessageStore.ts";
 
@@ -110,7 +116,9 @@ interface Row {
 }
 
 /** How many recent recipes to seed the "Recently cooked" section from (DEC-7). */
-const RECENT_RECIPE_LIMIT = 5
+const RECENT_RECIPE_LIMIT = 10
+/** Cook-log entries to read per open: enough that repeats of one recipe cannot crowd out ten distinct ones. */
+const COOK_LOG_PAGE_SIZE = 100
 
 const {t} = useI18n()
 const {mobile} = useDisplay()
@@ -124,6 +132,8 @@ const rows = ref<Row[]>([])
 const title = ref('')
 const showAll = ref(false)
 const scoped = ref(false)  // recipe-scoped open — changes the empty-state message
+const {days, options, since} = useLookbackPeriod('useUp')
+const confirmDialog = ref<InstanceType<typeof ActionConfirmDialog> | null>(null)
 
 function rowChanged(row: Row): boolean {
     return row.amount !== row.original || row.newUnit != null
@@ -191,16 +201,39 @@ async function open(opts?: {foodIds?: number[], title?: string}) {
             return
         }
 
-        const inventory = await api.apiInventoryEntryList({pageSize: 500})
-        let grouped = groupInventoryByFoodUnit<Food, Unit>(inventory.results ?? [])
+        await loadPantry(api)
+    } catch (err) {
+        useMessageStore().addError(ErrorMessageType.FETCH_ERROR, err)
+    } finally {
+        loading.value = false
+    }
+}
 
-        const orderedRecipes = await recentRecipes(api)
-        const {groups, other} = groupUseUpRowsByRecipe(grouped, orderedRecipes)
-        recipeOrder.value = groups.map(g => g.recipe)
-        rows.value = [
-            ...groups.flatMap(g => g.rows.map(gr => ({...gr, newUnit: null, recipe: g.recipe}))),
-            ...other.map(gr => ({...gr, newUnit: null, recipe: undefined})),
-        ]
+async function loadPantry(api: ApiApi) {
+    const inventory = await api.apiInventoryEntryList({pageSize: 500})
+    let grouped = groupInventoryByFoodUnit<Food, Unit>(inventory.results ?? [])
+
+    const orderedRecipes = await recentRecipes(api)
+    const {groups, other} = groupUseUpRowsByRecipe(grouped, orderedRecipes)
+    recipeOrder.value = groups.map(g => g.recipe)
+    rows.value = [
+        ...groups.flatMap(g => g.rows.map(gr => ({...gr, newUnit: null, recipe: g.recipe}))),
+        ...other.map(gr => ({...gr, newUnit: null, recipe: undefined})),
+    ]
+}
+
+async function onPeriodChange(newDays: number) {
+    if (newDays === days.value) return
+    if (!loading.value && changedCount.value > 0) {
+        const discard = await confirmDialog.value!.open({title: t('LookBackChangeTitle'), message: t('LookBackChangeMessage'), confirmLabel: t('LookBackChangeConfirm')})
+        if (!discard) return
+    }
+    days.value = newDays
+    loading.value = true
+    rows.value = []
+    showAll.value = false
+    try {
+        await loadPantry(new ApiApi())
     } catch (err) {
         useMessageStore().addError(ErrorMessageType.FETCH_ERROR, err)
     } finally {
@@ -243,7 +276,7 @@ function selectSubstitute(row: Row, foodId: number | null) {
 /** Recently-cooked recipes (most-recent first) with their food ids, from the CookLog (best-effort). */
 async function recentRecipes(api: ApiApi): Promise<Array<{name: string, foodIds: number[]}>> {
     try {
-        const cooks = await api.apiCookLogList({ordering: '-created_at', pageSize: 25})
+        const cooks = await api.apiCookLogList({ordering: '-created_at', pageSize: COOK_LOG_PAGE_SIZE, createdAfter: since()})
         const recipes = distinctRecentRecipes(cooks.results ?? [], RECENT_RECIPE_LIMIT)
         return await Promise.all(recipes.map(async r => {
             try {

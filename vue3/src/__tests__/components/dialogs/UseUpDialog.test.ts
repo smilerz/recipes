@@ -8,17 +8,22 @@
  */
 import {describe, it, expect, vi, beforeEach} from 'vitest'
 import {mount, flushPromises} from '@vue/test-utils'
-import {createPinia, setActivePinia} from 'pinia'
+import {createPinia, setActivePinia, type PiniaPlugin} from 'pinia'
 import {createI18n} from 'vue-i18n'
 import {createVuetify} from 'vuetify'
 import * as vuetifyComponents from 'vuetify/components'
 import * as vuetifyDirectives from 'vuetify/directives'
 
 import {apiMock, resetApiMock} from '@/__tests__/api-mock'
+import {makeUserPreference} from '@/__tests__/factories'
+import {useUserPreferenceStore} from '@/stores/UserPreferenceStore'
 
 vi.mock('@/openapi', async (imp) => ({...(await imp<any>()), ApiApi: class { constructor() { return apiMock } }}))
+vi.mock('@vueuse/core', async (imp) => ({...(await imp<any>()), useStorage: (_key: string, defaultValue: any) => ({value: defaultValue})}))
+vi.mock('@vueuse/router', () => ({useRouteQuery: () => ({value: false})}))
 
-const {addMessageMock, addErrorMock, addToShoppingMock} = vi.hoisted(() => ({
+const {addMessageMock, addErrorMock, addToShoppingMock, confirmMock} = vi.hoisted(() => ({
+    confirmMock: vi.fn(),
     addMessageMock: vi.fn(),
     addErrorMock: vi.fn(),
     addToShoppingMock: vi.fn().mockResolvedValue(undefined),
@@ -34,17 +39,26 @@ const MILK = {id: 1, name: 'Milk'}
 const BUTTER = {id: 2, name: 'Butter'}
 
 function mountDialog() {
+    // the period composable reads the user's settings, so the store starts with a full set
+    const prePopulate: PiniaPlugin = ({store}) => {
+        if (store.$id === 'user_preference_store') store.userSettings = makeUserPreference({}) as any
+    }
+    const pinia = createPinia()
+    pinia.use(prePopulate)
+    setActivePinia(pinia)
     const i18n = createI18n({legacy: false, locale: 'en', messages: {en: {}}, missingWarn: false, fallbackWarn: false})
     const vuetify = createVuetify({components: vuetifyComponents, directives: vuetifyDirectives})
     return mount(UseUpDialog, {
         attachTo: document.body,
         global: {
-            plugins: [createPinia(), i18n, vuetify],
+            plugins: [pinia, i18n, vuetify],
             stubs: {
                 ModelSelect: {template: '<div class="model-select-stub" />'},
                 VClosableCardTitle: {template: '<div class="title-stub" />'},
                 // pulls in UserPreferenceStore/useStorage (no jsdom backing); not under test
                 ClosableHelpAlert: {template: '<div class="help-alert-stub" />'},
+                // the discard-edits question: each test decides the answer
+                ActionConfirmDialog: {template: '<div class="confirm-stub" />', setup: () => ({open: confirmMock})},
             },
         },
     })
@@ -72,6 +86,7 @@ describe('UseUpDialog (food,unit) rows + consumed + DEC-8', () => {
         addMessageMock.mockClear()
         addErrorMock.mockClear()
         addToShoppingMock.mockClear()
+        confirmMock.mockReset()
         document.body.innerHTML = ''
     })
 
@@ -327,5 +342,122 @@ describe('UseUpDialog (food,unit) rows + consumed + DEC-8', () => {
         sections = (wrapper.vm as any).sections
         expect(sections[1].expandable).toBe(0)
         expect(sections[1].rows.map((r: any) => r.food.id)).toEqual([2])
+    })
+})
+
+describe('UseUpDialog lookback period', () => {
+    const LOT = {food: MILK, unit: GAL, amount: 1}
+
+    function daysAgo(call: any) {
+        return (Date.now() - call.createdAfter.getTime()) / (1000 * 60 * 60 * 24)
+    }
+
+    async function openPantry() {
+        apiMock.apiInventoryEntryList.mockResolvedValue({results: [LOT]})
+        apiMock.apiCookLogList.mockResolvedValue({results: []})
+        const wrapper = mountDialog()
+        void (wrapper.vm as any).open()
+        await flushPromises()
+        return wrapper
+    }
+
+    async function choosePeriod(wrapper: any, days: number) {
+        wrapper.findComponent({name: 'LookbackPeriodSelect'}).vm.$emit('update:modelValue', days)
+        await flushPromises()
+    }
+
+    beforeEach(() => {
+        setActivePinia(createPinia())
+        resetApiMock()
+        confirmMock.mockReset()
+        document.body.innerHTML = ''
+    })
+
+    it('UP-01: asks the cook log for the last 7 days, newest first, by default', async () => {
+        await openPantry()
+
+        const call = apiMock.apiCookLogList.mock.calls[0][0]
+        expect(call.ordering).toBe('-created_at')
+        expect(daysAgo(call)).toBeGreaterThan(6)
+        expect(daysAgo(call)).toBeLessThan(8)
+    })
+
+    it('UP-02: asks for a page of 100 so ten distinct recipes can be found', async () => {
+        await openPantry()
+
+        expect(apiMock.apiCookLogList.mock.calls[0][0].pageSize).toBe(100)
+    })
+
+    it('UP-03: looks back over the period chosen on this device', async () => {
+        apiMock.apiInventoryEntryList.mockResolvedValue({results: [LOT]})
+        apiMock.apiCookLogList.mockResolvedValue({results: []})
+        const wrapper = mountDialog()
+        useUserPreferenceStore().deviceSettings.pantry_useUpLookbackDays = 90
+        void (wrapper.vm as any).open()
+        await flushPromises()
+
+        expect(daysAgo(apiMock.apiCookLogList.mock.calls[0][0])).toBeGreaterThan(89)
+    })
+
+    it('UP-04: seeds "Recently cooked" from up to 10 distinct recipes', async () => {
+        apiMock.apiInventoryEntryList.mockResolvedValue({results: [LOT]})
+        apiMock.apiCookLogList.mockResolvedValue({results: Array.from({length: 12}, (_, i) => ({recipe: i + 1, recipeName: `Recipe ${i + 1}`}))})
+        apiMock.apiRecipeRetrieve.mockImplementation(async ({id}: any) => ({id, name: `Recipe ${id}`, steps: [{ingredients: [{food: {id: 1}}]}]}))
+        const wrapper = mountDialog()
+        void (wrapper.vm as any).open()
+        await flushPromises()
+
+        expect(apiMock.apiRecipeRetrieve).toHaveBeenCalledTimes(10)
+        expect((wrapper.vm as any).recipeOrder).toHaveLength(1) // the one on-hand food sits under the newest recipe that used it
+    })
+
+    it('UP-05: offers the period selector on the pantry view but not on a recipe-scoped open', async () => {
+        const pantry = await openPantry()
+        expect(pantry.findComponent({name: 'LookbackPeriodSelect'}).exists()).toBe(true)
+
+        document.body.innerHTML = ''
+        apiMock.apiInventoryEntryList.mockResolvedValue({results: [LOT]})
+        const scoped = mountDialog()
+        void (scoped.vm as any).open({foodIds: [1], title: 'Pancakes'})
+        await flushPromises()
+        expect(scoped.findComponent({name: 'LookbackPeriodSelect'}).exists()).toBe(false)
+    })
+
+    it('UP-06: picking another period reloads the recently cooked recipes over it and remembers it', async () => {
+        const wrapper = await openPantry()
+
+        await choosePeriod(wrapper, 30)
+
+        expect(apiMock.apiCookLogList).toHaveBeenCalledTimes(2)
+        const days = daysAgo(apiMock.apiCookLogList.mock.calls[1][0])
+        expect(days).toBeGreaterThan(29)
+        expect(days).toBeLessThan(31)
+        expect(useUserPreferenceStore().deviceSettings.pantry_useUpLookbackDays).toBe(30)
+        expect(confirmMock).not.toHaveBeenCalled() // nothing was edited, so nothing to ask
+    })
+
+    it('UP-07: asks before changing the period once a row was edited, and keeps everything when declined', async () => {
+        const wrapper = await openPantry()
+        ;(wrapper.vm as any).rows[0].amount = 0
+        confirmMock.mockResolvedValue(false)
+
+        await choosePeriod(wrapper, 30)
+
+        expect(confirmMock).toHaveBeenCalledTimes(1)
+        expect(apiMock.apiCookLogList).toHaveBeenCalledTimes(1)
+        expect(useUserPreferenceStore().deviceSettings.pantry_useUpLookbackDays).not.toBe(30)
+        expect((wrapper.vm as any).rows[0].amount).toBe(0)
+    })
+
+    it('UP-08: reloads over the new period and discards the edits when the question is confirmed', async () => {
+        const wrapper = await openPantry()
+        ;(wrapper.vm as any).rows[0].amount = 0
+        confirmMock.mockResolvedValue(true)
+
+        await choosePeriod(wrapper, 30)
+
+        expect(apiMock.apiCookLogList).toHaveBeenCalledTimes(2)
+        expect(useUserPreferenceStore().deviceSettings.pantry_useUpLookbackDays).toBe(30)
+        expect((wrapper.vm as any).rows[0].amount).toBe(1)
     })
 })
