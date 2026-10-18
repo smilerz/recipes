@@ -59,6 +59,11 @@ export type DeviceSettings = {
     general_closedHelpAlerts: String[]
     general_showModelListDescription: boolean
 
+    // Lookback window of the Stock up / Use up dialogs, in days. Stock up is null until a period is chosen, so it follows
+    // the shopping list's recent-days setting.
+    pantry_stockUpLookbackDays: number | null
+    pantry_useUpLookbackDays: number
+
     card_showRating: boolean
     card_showAuthor: boolean
     card_showLastCooked: boolean
