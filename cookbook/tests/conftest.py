@@ -44,6 +44,9 @@ def django_db_setup(django_db_setup, django_db_blocker):
     so stopping the worker there is too late to prevent it from racing the DROP.
     Stop it HERE instead, before terminating any other stray backends, so its
     connection is deterministically closed before DROP DATABASE ever runs.
+
+    Only client connections are terminated: a role without pg_signal_autovacuum_worker is not allowed to terminate an
+    autovacuum worker that happens to be attached to the test database, and the whole teardown errors if it tries.
     """
     yield
     with django_db_blocker.unblock():
@@ -58,7 +61,7 @@ def django_db_setup(django_db_setup, django_db_blocker):
                     cursor.execute(
                         "SELECT pg_terminate_backend(pid) "
                         "FROM pg_stat_activity "
-                        "WHERE datname = %s AND pid <> pg_backend_pid()",
+                        "WHERE datname = %s AND pid <> pg_backend_pid() AND backend_type = 'client backend'",
                         [conn.settings_dict['NAME']]
                     )
 
