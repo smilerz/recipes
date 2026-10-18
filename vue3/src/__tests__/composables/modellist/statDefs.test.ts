@@ -1,3 +1,4 @@
+// @vitest-environment node
 /**
  * Resurrection-guard: the stat-def keys for Unit/Keyword/Automation lists must
  * resolve against the keys the generated *Stats client models emit (FromJSON

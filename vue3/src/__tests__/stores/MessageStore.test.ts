@@ -1,3 +1,4 @@
+// @vitest-environment node
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { setActivePinia, createPinia } from 'pinia'
 import { createI18n } from 'vue-i18n'

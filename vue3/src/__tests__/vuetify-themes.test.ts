@@ -1,3 +1,4 @@
+// @vitest-environment node
 /**
  * Guards the Bootswatch-derived themes: every theme the CosmeticSettings selector
  * exposes must define ALL colour tokens the base "light" theme has — otherwise the

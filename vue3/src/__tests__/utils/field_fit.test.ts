@@ -1,3 +1,4 @@
+// @vitest-environment node
 import {describe, expect, it} from 'vitest'
 import {FIELD_ICONS_WIDTH, INLINE_FIELD_ICONS_WIDTH, textFitsBesideIcons} from '@/utils/field_fit'
 

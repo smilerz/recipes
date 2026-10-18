@@ -1,3 +1,4 @@
+// @vitest-environment node
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { computed, ref } from 'vue'
 import { createPinia, setActivePinia } from 'pinia'

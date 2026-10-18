@@ -1,3 +1,4 @@
+// @vitest-environment node
 import {describe, it, expect, beforeEach, afterEach} from 'vitest'
 import {DateTime, Settings} from 'luxon'
 import {expiryStatus, expiryColor, expiryDateLabel, pantryGroup, EXPIRING_SOON_DAYS, shelfLifeToDays, shelfLifeFromDays, isoDateToApiDate, stockUpRowFromFood, stockUpRowsFromEntries, stockUpItemsFromRows, useUpItemsFromRows, groupInventoryByFoodUnit, groupUseUpBySubstituteSlot, distinctRecentRecipes, foodRecipeUsageMap, recipeFoodIds, recipePantryRows, partitionUseUpRows, groupUseUpRowsByRecipe, pantryJarState, EXPIRY_PRESET_DAYS, formatShelfLifeDuration, daysFromNow, suggestedExpiryForNewLot} from '@/utils/pantry_utils'
