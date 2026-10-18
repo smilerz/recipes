@@ -1,10 +1,13 @@
 import { fileURLToPath } from 'node:url'
 import { defineConfig } from 'vitest/config'
 import vue from '@vitejs/plugin-vue'
+import vuetify from 'vite-plugin-vuetify'
 
 export default defineConfig({
     plugins: [
         vue(),
+        // Same auto-import as the production build: each file imports only the Vuetify components its templates use.
+        vuetify({ autoImport: true }),
     ],
     resolve: {
         alias: {
