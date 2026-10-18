@@ -17,12 +17,13 @@ import * as vuetifyDirectives from 'vuetify/directives'
 
 import {apiMock, resetApiMock} from '@/__tests__/api-mock'
 import {makeUserPreference} from '@/__tests__/factories'
+import {useUserPreferenceStore} from '@/stores/UserPreferenceStore'
 
 vi.mock('@/openapi', async (imp) => ({...(await imp<any>()), ApiApi: class { constructor() { return apiMock } }}))
 vi.mock('@vueuse/core', async (imp) => ({...(await imp<any>()), useStorage: (_key: string, defaultValue: any) => ({value: defaultValue})}))
 vi.mock('@vueuse/router', () => ({useRouteQuery: () => ({value: false})}))
 
-const {addMessageMock, addErrorMock} = vi.hoisted(() => ({addMessageMock: vi.fn(), addErrorMock: vi.fn()}))
+const {addMessageMock, addErrorMock, confirmMock} = vi.hoisted(() => ({addMessageMock: vi.fn(), addErrorMock: vi.fn(), confirmMock: vi.fn()}))
 vi.mock('@/stores/MessageStore', async (imp) => ({...(await imp<any>()), useMessageStore: () => ({addMessage: addMessageMock, addError: addErrorMock})}))
 
 import StockUpDialog from '@/components/dialogs/StockUpDialog.vue'
@@ -40,7 +41,7 @@ function mountDialog(userPreferenceOverrides: Record<string, any> = {}) {
     pinia.use(prePopulate)
     setActivePinia(pinia)
 
-    const i18n = createI18n({legacy: false, locale: 'en', messages: {en: {}}, missingWarn: false, fallbackWarn: false})
+    const i18n = createI18n({legacy: false, locale: 'en', messages: {en: {StockUpOlderNotShown: '{count} older not shown'}}, missingWarn: false, fallbackWarn: false})
     const vuetify = createVuetify({components: vuetifyComponents, directives: vuetifyDirectives})
     return mount(StockUpDialog, {
         attachTo: document.body,
@@ -58,6 +59,8 @@ function mountDialog(userPreferenceOverrides: Record<string, any> = {}) {
                 VClosableCardTitle: {template: '<div class="title-stub" />'},
                 // pulls in UserPreferenceStore/useStorage (no jsdom backing); not under test
                 ClosableHelpAlert: {template: '<div class="help-alert-stub" />'},
+                // the discard-edits question: each test decides the answer
+                ActionConfirmDialog: {template: '<div class="confirm-stub" />', setup: () => ({open: confirmMock}), },
             },
         },
     })
@@ -76,6 +79,7 @@ describe('StockUpDialog seeding (D3)', () => {
         apiMock.apiInventoryLocationList.mockResolvedValue({results: []})
         addMessageMock.mockClear()
         addErrorMock.mockClear()
+        confirmMock.mockReset()
         document.body.innerHTML = ''
     })
 
@@ -188,5 +192,110 @@ describe('StockUpDialog seeding (D3)', () => {
         locationSelect.vm.$emit('update:modelValue', {id: 3, name: 'Pantry', isFreezer: false})
         await flushPromises()
         expect(row.expires).toBe(seeded)               // switching back restores it
+    })
+})
+
+describe('StockUpDialog lookback period', () => {
+    const MILK = {food: {id: 1, name: 'Milk'}, amount: 2, unit: L, checked: true}
+
+    function daysAgo(call: any) {
+        return (Date.now() - call.updatedAfter.getTime()) / (1000 * 60 * 60 * 24)
+    }
+
+    async function openDialog(entries: any[] = [MILK], count?: number, overrides: Record<string, any> = {}) {
+        apiMock.apiShoppingListEntryList.mockResolvedValue({count: count ?? entries.length, results: entries})
+        const wrapper = mountDialog(overrides)
+        void (wrapper.vm as any).open()
+        await flushPromises()
+        return wrapper
+    }
+
+    async function choosePeriod(wrapper: any, days: number) {
+        wrapper.findComponent({name: 'LookbackPeriodSelect'}).vm.$emit('update:modelValue', days)
+        await flushPromises()
+    }
+
+    beforeEach(() => {
+        setActivePinia(createPinia())
+        resetApiMock()
+        apiMock.apiInventoryLocationList.mockResolvedValue({results: []})
+        confirmMock.mockReset()
+        document.body.innerHTML = ''
+    })
+
+    it('SU-06: asks for the newest 50 completed entries first', async () => {
+        await openDialog()
+
+        const call = apiMock.apiShoppingListEntryList.mock.calls[0][0]
+        expect(call.ordering).toBe('-completed_at')
+        expect(call.pageSize).toBe(50)
+    })
+
+    it('SU-07: looks back over the period chosen on this device', async () => {
+        const wrapper = mountDialog({shoppingRecentDays: 7})
+        useUserPreferenceStore().deviceSettings.pantry_stockUpLookbackDays = 90
+        apiMock.apiShoppingListEntryList.mockResolvedValue({count: 0, results: []})
+        void (wrapper.vm as any).open()
+        await flushPromises()
+
+        const days = daysAgo(apiMock.apiShoppingListEntryList.mock.calls[0][0])
+        expect(days).toBeGreaterThan(89)
+        expect(days).toBeLessThan(91)
+    })
+
+    it('SU-08: picking another period reloads the list over that period and remembers it', async () => {
+        const wrapper = await openDialog()
+
+        await choosePeriod(wrapper, 30)
+
+        expect(apiMock.apiShoppingListEntryList).toHaveBeenCalledTimes(2)
+        const days = daysAgo(apiMock.apiShoppingListEntryList.mock.calls[1][0])
+        expect(days).toBeGreaterThan(29)
+        expect(days).toBeLessThan(31)
+        expect(useUserPreferenceStore().deviceSettings.pantry_stockUpLookbackDays).toBe(30)
+        expect(confirmMock).not.toHaveBeenCalled() // nothing was edited, so nothing to ask
+    })
+
+    it('SU-09: offers the period selector when nothing was bought in the period', async () => {
+        const wrapper = await openDialog([])
+
+        expect(wrapper.findComponent({name: 'LookbackPeriodSelect'}).exists()).toBe(true)
+    })
+
+    it('SU-10: says how many older entries are not shown when the period holds more than one page', async () => {
+        const wrapper = await openDialog([MILK], 121)
+
+        expect(document.body.querySelector('[data-test="stock-up-older-not-shown"]')?.textContent).toContain('120 older not shown')
+    })
+
+    it('SU-11: says nothing about older entries when everything fits on the page', async () => {
+        await openDialog([MILK], 1)
+
+        expect(document.body.querySelector('[data-test="stock-up-older-not-shown"]')).toBeNull()
+    })
+
+    it('SU-12: asks before changing the period once a row was edited, and keeps everything when declined', async () => {
+        const wrapper = await openDialog()
+        ;(wrapper.vm as any).rows[0].checked = false
+        confirmMock.mockResolvedValue(false)
+
+        await choosePeriod(wrapper, 30)
+
+        expect(confirmMock).toHaveBeenCalledTimes(1)
+        expect(apiMock.apiShoppingListEntryList).toHaveBeenCalledTimes(1)
+        expect(useUserPreferenceStore().deviceSettings.pantry_stockUpLookbackDays).not.toBe(30)
+        expect((wrapper.vm as any).rows[0].checked).toBe(false)
+    })
+
+    it('SU-13: reloads over the new period and discards the edits when the question is confirmed', async () => {
+        const wrapper = await openDialog()
+        ;(wrapper.vm as any).rows[0].checked = false
+        confirmMock.mockResolvedValue(true)
+
+        await choosePeriod(wrapper, 30)
+
+        expect(apiMock.apiShoppingListEntryList).toHaveBeenCalledTimes(2)
+        expect(useUserPreferenceStore().deviceSettings.pantry_stockUpLookbackDays).toBe(30)
+        expect((wrapper.vm as any).rows[0].checked).toBe(true)
     })
 })
