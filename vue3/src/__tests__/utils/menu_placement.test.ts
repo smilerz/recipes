@@ -1,3 +1,4 @@
+// @vitest-environment node
 import {describe, expect, it} from 'vitest'
 import {MENU_COMFORT_HEIGHT, MENU_EDGE_GAP, MENU_MAX_HEIGHT, MENU_MIN_HEIGHT, menuPlacement} from '@/utils/menu_placement'
 

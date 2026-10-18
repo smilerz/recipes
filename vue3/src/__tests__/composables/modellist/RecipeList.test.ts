@@ -1,3 +1,4 @@
+// @vitest-environment node
 import {describe, it, expect} from 'vitest'
 import {RECIPE_FILTER_DEFS, RECIPE_SORT_DEFS} from '@/composables/modellist/RecipeList'
 import type {FilterDef} from '@/composables/modellist/types'
