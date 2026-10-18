@@ -28,7 +28,7 @@ from django.core.exceptions import FieldError, ValidationError
 from django.core.files import File
 from django.core.files.base import ContentFile
 from django.db import DEFAULT_DB_ALIAS, transaction
-from django.db.models import Case, Count, Exists, OuterRef, ProtectedError, Q, Subquery, Value, When, QuerySet
+from django.db.models import Case, Count, Exists, F, OuterRef, ProtectedError, Q, Subquery, Value, When, QuerySet
 from django.db.models import Prefetch
 from django.db.models.fields import BooleanField
 from django.db.models.fields.related import ForeignObjectRel
@@ -2881,10 +2881,11 @@ class ShoppingListViewSet(LoggingMixin, FuzzyFilterMixin, DeleteRelationMixing):
             OpenApiParameter(name='mealplan', description=_('Returns only entries associated with the given mealplan id'), type=int),
             OpenApiParameter(name='food', description=_('Returns only entries for the given food id'), type=int),
             OpenApiParameter(name='checked', description=_('Filter by checked state. When omitted, returns unchecked entries plus recently-completed ones within the shopping_recent_days window.'), type=bool),
+            OpenApiParameter(name='ordering', type=str, description='Order results by field. Allowed: completed_at, -completed_at (entries without a completion time come last). Default: oldest entry first.'),
         ]
     )
 )
-class ShoppingListEntryViewSet(LoggingMixin, viewsets.ModelViewSet):
+class ShoppingListEntryViewSet(OrderingMixin, LoggingMixin, viewsets.ModelViewSet):
     """
     individual entries of a shopping list
     automatically filtered to only contain unchecked items that are not older than the shopping recent days setting to not bloat endpoint
@@ -2893,6 +2894,11 @@ class ShoppingListEntryViewSet(LoggingMixin, viewsets.ModelViewSet):
     serializer_class = ShoppingListEntrySerializer
     permission_classes = [(CustomIsOwner | CustomIsHousehold) & CustomTokenHasReadWriteScope]
     pagination_class = DefaultPagination
+
+    ordering_lower_fields = {  # OrderBy expressions (not only Lower): entries without a completion time sort last either way
+        'completed_at': F('completed_at').asc(nulls_last=True),
+        '-completed_at': F('completed_at').desc(nulls_last=True),
+    }
 
     def get_queryset(self):
         self.queryset = self.queryset.filter(space=self.request.space)
@@ -2954,7 +2960,7 @@ class ShoppingListEntryViewSet(LoggingMixin, viewsets.ModelViewSet):
         if self.detail:
             return self.queryset
         else:
-            return self.queryset[:1000]
+            return self._apply_ordering(self.queryset)[:1000]
 
     @decorators.action(detail=False, methods=['POST'], serializer_class=ShoppingListEntryBulkSerializer,
                        permission_classes=[CustomIsUser])
