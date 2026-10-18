@@ -4,6 +4,7 @@
             <v-closable-card-title :title="$t('StockUp')" icon="$pantry" v-model="showDialog"></v-closable-card-title>
 
             <v-card-text>
+                <lookback-period-select class="mb-3" :model-value="days" :options="options" @update:model-value="onPeriodChange"></lookback-period-select>
                 <div v-if="loading" class="text-center pa-6">
                     <v-progress-circular indeterminate color="primary"></v-progress-circular>
                 </div>
@@ -56,6 +57,9 @@
                         </v-card-text>
                         </v-card>
                     </template>
+                    <div v-if="olderCount > 0" class="text-caption text-medium-emphasis text-center mt-2" data-test="stock-up-older-not-shown">
+                        {{ $t('StockUpOlderNotShown', {count: olderCount}) }}
+                    </div>
                     <expiry-preset-dialog v-model="freezerDialog" v-model:date="freezerDate"></expiry-preset-dialog>
                 </template>
             </v-card-text>
@@ -68,6 +72,7 @@
                 </v-btn>
             </v-card-actions>
         </v-card>
+        <action-confirm-dialog ref="confirmDialog"></action-confirm-dialog>
     </v-dialog>
 </template>
 
@@ -81,12 +86,14 @@ import {ApiApi, FoodShopping, InventoryLocation, Unit} from "@/openapi";
 import {parseBooleanAnnotation} from "@/utils/model_utils";
 import ModelSelect from "@/components/inputs/ModelSelect.vue";
 import VClosableCardTitle from "@/components/dialogs/VClosableCardTitle.vue";
+import ActionConfirmDialog from "@/components/dialogs/ActionConfirmDialog.vue";
 import ExpiryPresetDialog from "@/components/dialogs/ExpiryPresetDialog.vue";
+import LookbackPeriodSelect from "@/components/inputs/LookbackPeriodSelect.vue";
 import ClosableHelpAlert from "@/components/display/ClosableHelpAlert.vue";
 import PantryJarIndicator from "@/components/display/PantryJarIndicator.vue";
 import {stockUpItemsFromRows, stockUpRowsFromEntries} from "@/utils/pantry_utils.ts";
 import {ErrorMessageType, MessageType, useMessageStore} from "@/stores/MessageStore.ts";
-import {useUserPreferenceStore} from "@/stores/UserPreferenceStore.ts";
+import {useLookbackPeriod} from "@/composables/useLookbackPeriod.ts";
 
 interface Row {
     food: FoodShopping
@@ -108,6 +115,14 @@ const loading = ref(false)
 const saving = ref(false)
 const rows = ref<Row[]>([])
 const locations = ref<InventoryLocation[]>([])
+const {days, options, since} = useLookbackPeriod('stockUp')
+const PAGE_SIZE = 50
+const olderCount = ref(0) // completed entries inside the period that did not fit on the page
+const confirmDialog = ref<InstanceType<typeof ActionConfirmDialog> | null>(null)
+
+// what the user can change on a row; compared with the state the rows loaded in to know whether a reload would lose edits
+const editsSnapshot = () => JSON.stringify(rows.value.map(r => [r.checked, r.amount, r.unit?.id ?? null, r.location?.id ?? null, r.expires]))
+let loadedSnapshot = ''
 
 const checkedCount = computed(() => rows.value.filter(r => r.checked).length)
 
@@ -168,19 +183,32 @@ function onRowLocationChange(row: Row) {
  */
 async function open() {
     showDialog.value = true
-    loading.value = true
-    rows.value = []
     // a snowflake picker left open when the dialog last closed must not pop for a dead row
     freezerDialog.value = false
     freezerRow.value = null
+    await load()
+}
+
+async function onPeriodChange(newDays: number) {
+    if (newDays === days.value) return
+    if (!loading.value && editsSnapshot() !== loadedSnapshot) {
+        const discard = await confirmDialog.value!.open({title: t('LookBackChangeTitle'), message: t('LookBackChangeMessage'), confirmLabel: t('LookBackChangeConfirm')})
+        if (!discard) return
+    }
+    days.value = newDays
+    await load()
+}
+
+async function load() {
+    loading.value = true
+    rows.value = []
+    olderCount.value = 0
     const api = new ApiApi()
     try {
-        // unbounded checked=true history reads years-old purchases (FR-F1 regression); bound it to
-        // the same recency window the user already set for the shopping list itself.
-        const recentDays = useUserPreferenceStore().userSettings.shoppingRecentDays
-        const updatedAfter = recentDays ? DateTime.now().minus({days: recentDays}).toJSDate() : undefined
+        // unbounded checked=true history reads years-old purchases (FR-F1 regression); bound it to the chosen
+        // period, newest first so the page holds the latest purchases when the period has more than fit.
         const [checked, locationList] = await Promise.all([
-            api.apiShoppingListEntryList({checked: true, pageSize: 50, updatedAfter}),
+            api.apiShoppingListEntryList({checked: true, pageSize: PAGE_SIZE, updatedAfter: since(), ordering: '-completed_at'}),
             // locations are optional (null -> backend default); their failure must not kill seeding
             api.apiInventoryLocationList({pageSize: 100}).catch(() => ({results: []})),
         ])
@@ -206,6 +234,8 @@ async function open() {
             onRowLocationChange(row) // a freezer default location mutes the suggestion immediately
             return row
         })
+        olderCount.value = Math.max(0, (checked.count ?? 0) - (checked.results ?? []).length)
+        loadedSnapshot = editsSnapshot()
     } catch (err) {
         useMessageStore().addError(ErrorMessageType.FETCH_ERROR, err)
     } finally {
