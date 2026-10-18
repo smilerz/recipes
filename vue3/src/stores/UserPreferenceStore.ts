@@ -308,6 +308,9 @@ export const useUserPreferenceStore = defineStore('user_preference_store', () =>
             general_closedHelpAlerts: [],
             general_showModelListDescription: true,
 
+            pantry_stockUpLookbackDays: null,
+            pantry_useUpLookbackDays: 7,
+
             food_hiddenColumns: null,
             food_columnDisplayModes: {},
             food_quickActions: ['shopping', 'recipe', 'pantry'],
