@@ -1041,7 +1041,6 @@ registerModel(TInventoryLocation)
 
 export const TInventoryEntry = {
     name: 'InventoryEntry',
-    listIgnoresQuery: true,
     localizationKey: 'InventoryEntry',
     localizationKeyDescription: 'InventoryEntryHelp',
     icon: 'fa-solid fa-jar-wheat',

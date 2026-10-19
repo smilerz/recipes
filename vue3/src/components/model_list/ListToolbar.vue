@@ -85,7 +85,7 @@
             </v-btn>
 
             <v-btn
-                v-if="hasFilters"
+                v-if="hasFilters && hasSettings"
                 icon
                 variant="text"
                 size="small"
@@ -195,7 +195,7 @@
             </v-btn>
 
             <v-btn
-                v-if="hasFilters"
+                v-if="hasFilters && hasSettings"
                 variant="text"
                 size="large"
                 prepend-icon="fa-solid fa-sliders"
@@ -244,6 +244,7 @@ const props = withDefaults(defineProps<{
     ordering?: string
     sortOptions?: SortDef[]
     hasFilters?: boolean
+    hasSettings?: boolean
     activeFilterCount?: number
     hasMultiSelect?: boolean
     selectMode?: boolean
@@ -254,6 +255,7 @@ const props = withDefaults(defineProps<{
     ordering: '',
     sortOptions: () => [],
     hasFilters: false,
+    hasSettings: true,
     activeFilterCount: 0,
     hasMultiSelect: false,
     selectMode: false,

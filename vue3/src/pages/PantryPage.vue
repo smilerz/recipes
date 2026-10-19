@@ -32,7 +32,9 @@
                     </v-col>
                 </v-row>
 
-                <inventory-entry-table ref="entryTable" :food="food" :inventory-location="inventoryLocation"></inventory-entry-table>
+                <pantry-filter-bar @update="onFilterUpdate"></pantry-filter-bar>
+
+                <inventory-entry-table ref="entryTable" :food="food" :inventory-location="inventoryLocation" :query="query" :filters="filters"></inventory-entry-table>
             </v-card-text>
         </v-card>
 
@@ -45,6 +47,7 @@
 <script setup lang="ts">
 
 import InventoryEntryTable from "@/components/display/InventoryEntryTable.vue";
+import PantryFilterBar from "@/components/display/PantryFilterBar.vue";
 import StockUpDialog from "@/components/dialogs/StockUpDialog.vue";
 import UseUpDialog from "@/components/dialogs/UseUpDialog.vue";
 import InventoryQuickAddDialog from "@/components/dialogs/InventoryQuickAddDialog.vue";
@@ -52,7 +55,7 @@ import ModelSelect from "@/components/inputs/ModelSelect.vue";
 import {onMounted, ref} from "vue";
 import {useDisplay} from "vuetify";
 import {useI18n} from "vue-i18n";
-import {ApiApi, Food, InventoryLocation} from "@/openapi";
+import {ApiApi, ApiInventoryEntryListRequest, Food, InventoryLocation} from "@/openapi";
 import {useRoute, type RouteLocationRaw} from "vue-router";
 import {ErrorMessageType, useMessageStore} from "@/stores/MessageStore";
 import {useInventoryActions} from "@/composables/useInventoryActions";
@@ -62,10 +65,17 @@ const {mobile} = useDisplay()
 const {t} = useI18n()
 const food = ref<Food | undefined>(undefined)
 const inventoryLocation = ref<InventoryLocation | undefined>(undefined)
+const query = ref('')
+const filters = ref<Partial<ApiInventoryEntryListRequest>>({})
 const entryTable = ref<InstanceType<typeof InventoryEntryTable> | null>(null)
 const stockUpDialog = ref<InstanceType<typeof StockUpDialog> | null>(null)
 const useUpDialog = ref<InstanceType<typeof UseUpDialog> | null>(null)
 const quickAddDialog = ref<InstanceType<typeof InventoryQuickAddDialog> | null>(null)
+
+function onFilterUpdate(value: {query: string, filters: Partial<ApiInventoryEntryListRequest>}) {
+    query.value = value.query
+    filters.value = value.filters
+}
 
 // #4: quick-add a lot for the food currently selected in the filter above, without leaving the page.
 async function quickAdd() {

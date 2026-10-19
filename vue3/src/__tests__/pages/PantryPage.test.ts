@@ -38,7 +38,8 @@ function mountPage() {
             plugins: [pinia, i18n, vuetify],
             stubs: {
                 'model-select': {template: '<div/>'},
-                'inventory-entry-table': {template: '<div/>', methods: {load: vi.fn()}},
+                'inventory-entry-table': {name: 'InventoryEntryTable', props: ['food', 'inventoryLocation', 'query', 'filters'], template: '<div/>', methods: {load: vi.fn()}},
+                'pantry-filter-bar': {name: 'PantryFilterBar', template: '<div/>'},
                 'stock-up-dialog': {template: '<div/>', methods: {open: vi.fn()}},
                 'use-up-dialog': {template: '<div/>', methods: {open: vi.fn()}},
                 'inventory-quick-add-dialog': {template: '<div/>'},
@@ -83,6 +84,19 @@ describe('PantryPage', () => {
         expect(typeof t).toBe('function')
         expect(loadSpy).toHaveBeenCalledTimes(1)
 
+        w.unmount()
+    })
+
+    it('passes the filter bar\'s search and filters on to the entry table', async () => {
+        const w = mountPage()
+        await flushPromises()
+
+        w.findComponent({name: 'PantryFilterBar'}).vm.$emit('update', {query: 'dairy', filters: {expired: true}})
+        await flushPromises()
+
+        const table = w.findComponent({name: 'InventoryEntryTable'})
+        expect(table.props('query')).toBe('dairy')
+        expect(table.props('filters')).toEqual({expired: true})
         w.unmount()
     })
 })

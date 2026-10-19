@@ -1,7 +1,7 @@
 // @vitest-environment node
 import {describe, it, expect, beforeEach, afterEach} from 'vitest'
 import {DateTime, Settings} from 'luxon'
-import {expiryStatus, expiryColor, expiryDateLabel, pantryGroup, EXPIRING_SOON_DAYS, shelfLifeToDays, shelfLifeFromDays, isoDateToApiDate, stockUpRowFromFood, stockUpRowsFromEntries, stockUpItemsFromRows, useUpItemsFromRows, groupInventoryByFoodUnit, groupUseUpBySubstituteSlot, distinctRecentRecipes, foodRecipeUsageMap, recipeFoodIds, recipePantryRows, partitionUseUpRows, groupUseUpRowsByRecipe, pantryJarState, EXPIRY_PRESET_DAYS, formatShelfLifeDuration, daysFromNow, suggestedExpiryForNewLot} from '@/utils/pantry_utils'
+import {expiryStatus, expiryColor, expiryDateLabel, pantryGroup, EXPIRING_SOON_DAYS, shelfLifeToDays, shelfLifeFromDays, isoDateToApiDate, stockUpRowFromFood, stockUpRowsFromEntries, stockUpItemsFromRows, useUpItemsFromRows, groupInventoryByFoodUnit, groupUseUpBySubstituteSlot, distinctRecentRecipes, foodRecipeUsageMap, recipeFoodIds, recipePantryRows, partitionUseUpRows, groupUseUpRowsByRecipe, pantryJarState, EXPIRY_PRESET_DAYS, formatShelfLifeDuration, daysFromNow, suggestedExpiryForNewLot, inventoryListParams} from '@/utils/pantry_utils'
 
 const NOW = new Date('2026-07-15T12:00:00')
 const day = (iso: string) => new Date(iso)
@@ -621,5 +621,32 @@ describe('groupUseUpRowsByRecipe', () => {
     it('skips nameless recipes', () => {
         const {groups} = groupUseUpRowsByRecipe([row(1)], [{name: '', foodIds: [1]}])
         expect(groups).toHaveLength(0)
+    })
+})
+
+describe('inventoryListParams', () => {
+    it('always asks for the whole pantry in one page', () => {
+        expect(inventoryListParams({})).toEqual({pageSize: 500})
+    })
+
+    it('a picked food filters by that food and includes its children', () => {
+        expect(inventoryListParams({food: {id: 7}})).toEqual({pageSize: 500, foodId: 7, includeChildren: true})
+    })
+
+    it('a search query filters by name and includes children of the matches', () => {
+        expect(inventoryListParams({query: 'dairy'})).toEqual({pageSize: 500, query: 'dairy', includeChildren: true})
+    })
+
+    it('a blank query is not sent', () => {
+        expect(inventoryListParams({query: '   '})).toEqual({pageSize: 500})
+    })
+
+    it('a picked location filters by that location', () => {
+        expect(inventoryListParams({inventoryLocation: {id: 3}})).toEqual({pageSize: 500, inventoryLocationId: 3})
+    })
+
+    it('passes discovery filters through and drops undefined ones', () => {
+        expect(inventoryListParams({filters: {expired: true, inShoppingList: false, hasRecipe: undefined, expiringSoon: 3}}))
+            .toEqual({pageSize: 500, expired: true, inShoppingList: false, expiringSoon: 3})
     })
 })

@@ -212,7 +212,7 @@ describe('list-ignores-query — endpoints that cannot filter are flagged so pic
     }
 
     it('found the endpoints without a query parameter (guards the scan itself)', () => {
-        expect(withoutQuery).toEqual(expect.arrayContaining(['MealType', 'Household', 'AiProvider', 'InventoryEntry', 'Storage']))
+        expect(withoutQuery).toEqual(expect.arrayContaining(['MealType', 'Household', 'AiProvider', 'Storage']))
     })
 
     it.each(withoutQuery)('%s is flagged listIgnoresQuery', (name) => {

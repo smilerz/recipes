@@ -113,7 +113,7 @@ import {useDisplay} from "vuetify";
 import {useI18n} from "vue-i18n";
 import InventoryEntryLogDialog from "@/components/dialogs/InventoryEntryLogDialog.vue";
 import PantryBookingDialog from "@/components/dialogs/PantryBookingDialog.vue";
-import {expiryColor, expiryDateLabel, expiryStatus, pantryGroup} from "@/utils/pantry_utils.ts";
+import {expiryColor, expiryDateLabel, expiryStatus, inventoryListParams, pantryGroup} from "@/utils/pantry_utils.ts";
 import {ErrorMessageType, MessageType, StructuredMessage, useMessageStore} from "@/stores/MessageStore.ts";
 
 const {t} = useI18n()
@@ -122,6 +122,8 @@ const {mobile} = useDisplay()
 const props = defineProps({
     food: {type: Object as PropType<Food | null>, required: false},
     inventoryLocation: {type: Object as PropType<InventoryLocation | null>, required: false},
+    query: {type: String, required: false},
+    filters: {type: Object as PropType<Partial<ApiInventoryEntryListRequest>>, required: false},
 })
 
 const now = new Date()
@@ -292,13 +294,7 @@ function openBooking(item: InventoryEntry) {
 
 function load() {
     loading.value = true
-    const parameters: ApiInventoryEntryListRequest = {pageSize: 500}
-    if (props.food) {
-        parameters.foodId = props.food.id!
-    }
-    if (props.inventoryLocation) {
-        parameters.inventoryLocationId = props.inventoryLocation.id!
-    }
+    const parameters = inventoryListParams({food: props.food, inventoryLocation: props.inventoryLocation, query: props.query, filters: props.filters})
     new ApiApi().apiInventoryEntryList(parameters).then((r) => {
         items.value = r.results ?? []
     }).catch((err) => {

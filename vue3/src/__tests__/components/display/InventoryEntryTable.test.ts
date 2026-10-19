@@ -374,3 +374,42 @@ describe('InventoryEntryTable — sort control (#12)', () => {
         expect(foodNames(wrapper)).toEqual(['Zucchini', 'Apple'])
     })
 })
+
+
+describe('InventoryEntryTable — pantry discovery filters', () => {
+    beforeEach(() => {
+        resetApiMock()
+    })
+
+    function tableCall() {
+        return apiMock.apiInventoryEntryList.mock.calls.map(c => c[0]).find(p => p.pageSize === 500)
+    }
+
+    it('sends the search query and filters to the list call, including children for a query', async () => {
+        apiMock.apiInventoryEntryList.mockResolvedValue({ results: [], count: 0 })
+        mountPage(InventoryEntryTable, { props: { query: 'dairy', filters: { expired: true, expiringSoon: 3 } } })
+        await flushPromises()
+
+        expect(tableCall()).toMatchObject({ query: 'dairy', includeChildren: true, expired: true, expiringSoon: 3 })
+    })
+
+    it('includes children when a food is picked', async () => {
+        apiMock.apiInventoryEntryList.mockResolvedValue({ results: [], count: 0 })
+        mountPage(InventoryEntryTable, { props: { food: { id: 7, name: 'Dairy' } } })
+        await flushPromises()
+
+        expect(tableCall()).toMatchObject({ foodId: 7, includeChildren: true })
+    })
+
+    it('reloads when the query changes', async () => {
+        apiMock.apiInventoryEntryList.mockResolvedValue({ results: [], count: 0 })
+        const wrapper = mountPage(InventoryEntryTable, { props: { query: 'milk' } })
+        await flushPromises()
+        apiMock.apiInventoryEntryList.mockClear()
+
+        await wrapper.setProps({ query: 'flour' })
+        await flushPromises()
+
+        expect(tableCall()).toMatchObject({ query: 'flour' })
+    })
+})
