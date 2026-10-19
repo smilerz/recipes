@@ -3674,6 +3674,17 @@ paths:
         description: If true also return empty entries, if false (default) only return
           entries with amount > 0.
       - in: query
+        name: expired
+        schema:
+          type: boolean
+        description: Filter entries that are (true) / are not (false) past their expiry
+          date.
+      - in: query
+        name: expiring_soon
+        schema:
+          type: integer
+        description: Filter entries expiring from today up to this many days ahead.
+      - in: query
         name: food_id
         schema:
           type: integer
@@ -3686,6 +3697,24 @@ paths:
             type: integer
         description: Returns all entries whose food id is in the given list. For multiple
           repeat the parameter.
+      - in: query
+        name: has_recipe
+        schema:
+          type: boolean
+        description: Filter entries whose food is (true) / is not (false) linked to
+          a recipe.
+      - in: query
+        name: in_shopping_list
+        schema:
+          type: boolean
+        description: Filter entries whose food is (true) / is not (false) on the shopping
+          list.
+      - in: query
+        name: include_children
+        schema:
+          type: boolean
+        description: Also include entries of all child foods of the foods selected
+          by food_id, food_ids or query. [<b>true</b>/false]
       - in: query
         name: inventory_location_id
         schema:
@@ -3703,6 +3732,16 @@ paths:
         description: Number of results to return per page.
         schema:
           type: integer
+      - in: query
+        name: query
+        schema:
+          type: string
+        description: Returns entries whose food name contains this string (case insensitive).
+      - in: query
+        name: supermarket_category
+        schema:
+          type: integer
+        description: Filter entries by the food's supermarket category id.
       tags:
       - api
       security:

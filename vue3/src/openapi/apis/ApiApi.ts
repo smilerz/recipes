@@ -1080,11 +1080,18 @@ export interface ApiInventoryEntryDrawDownCreateRequest {
 export interface ApiInventoryEntryListRequest {
     code?: string;
     empty?: boolean;
+    expired?: boolean;
+    expiringSoon?: number;
     foodId?: number;
     foodIds?: Array<number>;
+    hasRecipe?: boolean;
+    inShoppingList?: boolean;
+    includeChildren?: boolean;
     inventoryLocationId?: number;
     page?: number;
     pageSize?: number;
+    query?: string;
+    supermarketCategory?: number;
 }
 
 export interface ApiInventoryEntryNullingListRequest {
@@ -7759,12 +7766,32 @@ export class ApiApi extends runtime.BaseAPI {
             queryParameters['empty'] = requestParameters['empty'];
         }
 
+        if (requestParameters['expired'] != null) {
+            queryParameters['expired'] = requestParameters['expired'];
+        }
+
+        if (requestParameters['expiringSoon'] != null) {
+            queryParameters['expiring_soon'] = requestParameters['expiringSoon'];
+        }
+
         if (requestParameters['foodId'] != null) {
             queryParameters['food_id'] = requestParameters['foodId'];
         }
 
         if (requestParameters['foodIds'] != null) {
             queryParameters['food_ids'] = requestParameters['foodIds'];
+        }
+
+        if (requestParameters['hasRecipe'] != null) {
+            queryParameters['has_recipe'] = requestParameters['hasRecipe'];
+        }
+
+        if (requestParameters['inShoppingList'] != null) {
+            queryParameters['in_shopping_list'] = requestParameters['inShoppingList'];
+        }
+
+        if (requestParameters['includeChildren'] != null) {
+            queryParameters['include_children'] = requestParameters['includeChildren'];
         }
 
         if (requestParameters['inventoryLocationId'] != null) {
@@ -7777,6 +7804,14 @@ export class ApiApi extends runtime.BaseAPI {
 
         if (requestParameters['pageSize'] != null) {
             queryParameters['page_size'] = requestParameters['pageSize'];
+        }
+
+        if (requestParameters['query'] != null) {
+            queryParameters['query'] = requestParameters['query'];
+        }
+
+        if (requestParameters['supermarketCategory'] != null) {
+            queryParameters['supermarket_category'] = requestParameters['supermarketCategory'];
         }
 
         const headerParameters: runtime.HTTPHeaders = {};
