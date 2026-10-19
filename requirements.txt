@@ -44,7 +44,7 @@ requests-oauthlib==2.0.0
 pyjwt==2.15.1
 python3-saml==1.16.0
 django-vite==3.2.0
-litellm==1.104.3
+litellm==1.105.0
 rapidfuzz==3.14.6
 stripe==15.6.1
 regex==2026.9.29
