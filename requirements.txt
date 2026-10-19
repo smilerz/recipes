@@ -11,7 +11,7 @@ django-debug-toolbar==8.0.0
 nh3==0.3.7
 gunicorn==26.2.0
 lxml==6.1.3
-Markdown==3.11
+Markdown==3.11.1
 Pillow==12.3.0
 psycopg2-binary==2.9.13
 python-dotenv==1.2.4
@@ -30,7 +30,7 @@ django-scopes==2.1.0
 django-treebeard==7.0.2
 django-cors-headers==4.9.0
 django-storages==1.14.6
-boto3==1.43.112
+boto3==1.43.114
 # Pinned to a master commit: the released 2.5.0 caps Django <6.1 but master supports 6.1 (django-commons/django-prometheus#537).
 # Switch back to a PyPI release once one allows Django 6.1+.
 django-prometheus @ git+https://github.com/django-commons/django-prometheus.git@c04929aac027bde8410bde20af6ca864a1e6929d
