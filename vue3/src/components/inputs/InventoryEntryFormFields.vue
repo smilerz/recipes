@@ -10,6 +10,7 @@
     <v-tabs v-if="bookingMode === 'edit'" v-model="form.editTab.value" class="mb-4" density="compact">
         <v-tab value="amount">{{ $t('Amount') }}</v-tab>
         <v-tab value="location">{{ $t('InventoryLocation') }}</v-tab>
+        <v-tab value="expires">{{ $t('Expires') }}</v-tab>
     </v-tabs>
 
     <model-select model="InventoryLocation" :label="$t('InventoryLocation')" v-model="form.inventoryLocation.value"
@@ -42,7 +43,8 @@
                :pinned-items="form.commonUnits.value"
                v-if="bookingMode === 'add' || (bookingMode === 'edit' && form.editTab.value === 'amount')"></model-select>
 
-    <v-date-input :label="$t('Expires')" v-model="form.expires.value" v-if="bookingMode === 'add'">
+    <v-date-input :label="$t('Expires')" v-model="form.expires.value" clearable
+                  v-if="bookingMode === 'add' || (bookingMode === 'edit' && form.editTab.value === 'expires')">
         <template #append-inner v-if="form.inventoryLocation.value?.isFreezer">
             <v-btn variant="text" data-test="freezer-expiry-btn" @click.stop="freezerExpiryDialog = true">
                 <v-icon icon="fa-solid fa-snowflake"></v-icon>

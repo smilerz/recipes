@@ -577,3 +577,27 @@ export function inventoryListParams(
     if (inventoryLocation?.id) params.inventoryLocationId = inventoryLocation.id
     return params
 }
+
+
+/**
+ * A date-only value from the API (delivered as UTC midnight) as the same calendar day at local
+ * noon, which is what the date picker shows without shifting the day for a viewer behind UTC.
+ */
+export function apiDateToLocalNoon(date: Date | null | undefined): Date | undefined {
+    if (!date) return undefined
+    return new Date(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate(), 12)
+}
+
+/**
+ * The `expires` to PATCH after editing a lot: undefined when the picked day is still the original
+ * day (never resend it — that would defeat the backend's freeze/thaw recompute), null when a date
+ * was cleared, otherwise the picked day at local noon.
+ */
+export function expiryPatchValue(picked: Date | undefined, original: Date | null | undefined): Date | null | undefined {
+    if (!picked) return original ? null : undefined
+    const sameDay = !!original
+        && picked.getFullYear() === original.getUTCFullYear()
+        && picked.getMonth() === original.getUTCMonth()
+        && picked.getDate() === original.getUTCDate()
+    return sameDay ? undefined : new Date(picked.getFullYear(), picked.getMonth(), picked.getDate(), 12)
+}

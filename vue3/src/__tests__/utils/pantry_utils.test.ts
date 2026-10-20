@@ -1,7 +1,7 @@
 // @vitest-environment node
 import {describe, it, expect, beforeEach, afterEach} from 'vitest'
 import {DateTime, Settings} from 'luxon'
-import {expiryStatus, expiryColor, expiryDateLabel, pantryGroup, EXPIRING_SOON_DAYS, shelfLifeToDays, shelfLifeFromDays, isoDateToApiDate, stockUpRowFromFood, stockUpRowsFromEntries, stockUpItemsFromRows, useUpItemsFromRows, groupInventoryByFoodUnit, groupUseUpBySubstituteSlot, distinctRecentRecipes, foodRecipeUsageMap, recipeFoodIds, recipePantryRows, partitionUseUpRows, groupUseUpRowsByRecipe, pantryJarState, EXPIRY_PRESET_DAYS, formatShelfLifeDuration, daysFromNow, suggestedExpiryForNewLot, inventoryListParams} from '@/utils/pantry_utils'
+import {expiryStatus, expiryColor, expiryDateLabel, pantryGroup, EXPIRING_SOON_DAYS, shelfLifeToDays, shelfLifeFromDays, isoDateToApiDate, stockUpRowFromFood, stockUpRowsFromEntries, stockUpItemsFromRows, useUpItemsFromRows, groupInventoryByFoodUnit, groupUseUpBySubstituteSlot, distinctRecentRecipes, foodRecipeUsageMap, recipeFoodIds, recipePantryRows, partitionUseUpRows, groupUseUpRowsByRecipe, pantryJarState, EXPIRY_PRESET_DAYS, formatShelfLifeDuration, daysFromNow, suggestedExpiryForNewLot, inventoryListParams, apiDateToLocalNoon, expiryPatchValue} from '@/utils/pantry_utils'
 
 const NOW = new Date('2026-07-15T12:00:00')
 const day = (iso: string) => new Date(iso)
@@ -648,5 +648,43 @@ describe('inventoryListParams', () => {
     it('passes discovery filters through and drops undefined ones', () => {
         expect(inventoryListParams({filters: {expired: true, inShoppingList: false, hasRecipe: undefined, expiringSoon: 3}}))
             .toEqual({pageSize: 500, expired: true, inShoppingList: false, expiringSoon: 3})
+    })
+})
+
+describe('editing an expiry date', () => {
+    // date-only values arrive from the API as UTC midnight (see DEFECT-01) — read by calendar day
+    const apiDate = new Date('2027-03-05')
+    const localDay = (y: number, m: number, d: number) => new Date(y, m - 1, d, 12)
+
+    it('shows an API date as the same calendar day at local noon', () => {
+        const d = apiDateToLocalNoon(apiDate)!
+        expect([d.getFullYear(), d.getMonth(), d.getDate(), d.getHours()]).toEqual([2027, 2, 5, 12])
+    })
+
+    it('shows nothing for a missing date', () => {
+        expect(apiDateToLocalNoon(null)).toBeUndefined()
+        expect(apiDateToLocalNoon(undefined)).toBeUndefined()
+    })
+
+    it('does not patch when the picked day is the original day', () => {
+        expect(expiryPatchValue(localDay(2027, 3, 5), apiDate)).toBeUndefined()
+    })
+
+    it('patches a different picked day at local noon', () => {
+        const v = expiryPatchValue(localDay(2027, 3, 9), apiDate) as Date
+        expect([v.getFullYear(), v.getMonth(), v.getDate(), v.getHours()]).toEqual([2027, 2, 9, 12])
+    })
+
+    it('patches null when a date was cleared', () => {
+        expect(expiryPatchValue(undefined, apiDate)).toBeNull()
+    })
+
+    it('does not patch when there was no date and none was picked', () => {
+        expect(expiryPatchValue(undefined, null)).toBeUndefined()
+    })
+
+    it('patches a newly picked date when there was none', () => {
+        const v = expiryPatchValue(localDay(2027, 3, 9), null) as Date
+        expect(v.getDate()).toBe(9)
     })
 })

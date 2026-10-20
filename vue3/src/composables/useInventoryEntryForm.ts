@@ -5,6 +5,7 @@ import type {TranslateFunc} from '@/composables/modellist/types'
 import {useInventoryActions} from '@/composables/useInventoryActions'
 import {ErrorMessageType, MessageType, PreparedMessage, type StructuredMessage, useMessageStore} from '@/stores/MessageStore'
 import {useUserPreferenceStore} from '@/stores/UserPreferenceStore'
+import {apiDateToLocalNoon, expiryPatchValue} from '@/utils/pantry_utils'
 
 export interface UseInventoryEntryFormOptions {
     onAdded?: (entry: InventoryEntry) => void
@@ -27,7 +28,7 @@ export function useInventoryEntryForm(t: TranslateFunc, options: UseInventoryEnt
     const inventoryActions = useInventoryActions()
 
     const formLoading = ref(false)
-    const editTab = ref<'amount' | 'location'>('amount')
+    const editTab = ref<'amount' | 'location' | 'expires'>('amount')
     const food = ref<Food | null>(null)
     const inventoryEntry = ref<InventoryEntry | null>(null)
     // Pre-fill from the sticky device default (shared with quick-add) so a fresh Add doesn't force
@@ -38,6 +39,9 @@ export function useInventoryEntryForm(t: TranslateFunc, options: UseInventoryEnt
     const amount = ref<number | undefined>(1)
     const unit = ref<Unit | undefined | null>(useUserPreferenceStore().defaultUnitObj)
     const expires = ref<Date | undefined>(undefined)
+    // Expiry is only ever patched once the form has loaded the entry's own date — an unloaded (empty)
+    // field must never read as "cleared" and wipe a lot's date.
+    const expiresLoaded = ref(false)
 
     // tracked so the Amount tab can show an "In Stock: X → Y" before/after caption (#2), matching
     // UseUpDialog's absolute-value editing pattern
@@ -148,6 +152,11 @@ export function useInventoryEntryForm(t: TranslateFunc, options: UseInventoryEnt
             patch.subLocation = subLocation.value
         }
 
+        const expiresPatch = expiresLoaded.value ? expiryPatchValue(expires.value, inventoryEntry.value.expires) : undefined
+        if (expiresPatch !== undefined) {
+            patch.expires = expiresPatch
+        }
+
         if (Object.keys(patch).length === 0) {
             options.onNoChange?.()
             return Promise.resolve()
@@ -156,7 +165,7 @@ export function useInventoryEntryForm(t: TranslateFunc, options: UseInventoryEnt
         formLoading.value = true
         return api.apiInventoryEntryPartialUpdate({id: inventoryEntry.value.id!, patchedInventoryEntry: patch}).then(r => {
             useMessageStore().addPreparedMessage(PreparedMessage.UPDATE_SUCCESS)
-            if (r.expires && (r.expires?.getTime() ?? null) !== (expiresBeforeEdit?.getTime() ?? null)) {
+            if (patch.expires === undefined && r.expires && (r.expires?.getTime() ?? null) !== (expiresBeforeEdit?.getTime() ?? null)) {
                 useMessageStore().addMessage(MessageType.INFO,
                     {title: t('Expires'), text: t('OpenedExpiryUpdated', {date: DateTime.fromJSDate(r.expires).toLocaleString(DateTime.DATE_MED)})} as StructuredMessage,
                     4000)
@@ -185,6 +194,8 @@ export function useInventoryEntryForm(t: TranslateFunc, options: UseInventoryEnt
             amount.value = inventoryEntry.value.amount
             entryOriginalAmount.value = inventoryEntry.value.amount
             entryOriginalUnit.value = inventoryEntry.value.unit
+            expires.value = apiDateToLocalNoon(inventoryEntry.value.expires)
+            expiresLoaded.value = true
             editTab.value = 'amount'
         }
     }
@@ -204,6 +215,7 @@ export function useInventoryEntryForm(t: TranslateFunc, options: UseInventoryEnt
         amount.value = 1
         unit.value = useUserPreferenceStore().defaultUnitObj
         expires.value = undefined
+        expiresLoaded.value = false
         code.value = ''
         editTab.value = 'amount'
         entryOriginalAmount.value = undefined

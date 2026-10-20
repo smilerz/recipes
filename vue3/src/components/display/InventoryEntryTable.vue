@@ -58,6 +58,7 @@
                             </td>
                             <td class="text-end">
                                 <v-btn-group divided border density="comfortable">
+                                    <v-btn icon="$shopping" :title="t('AddToShopping')" :data-test="`shop-lot-${item.id}`" @click="addToShopping(item)"></v-btn>
                                     <v-btn icon="fa-solid fa-clock-rotate-left" :title="t('History')" @click="openLog(item)"></v-btn>
                                     <v-btn icon="fa-solid fa-lock-open" :title="openTitle(item)" :data-test="`open-lot-${item.id}`" @click="openLot(item)"
                                            :class="{'open-lot-btn--inactive': !canOpen(item)}"></v-btn>
@@ -87,6 +88,7 @@
                                 <v-icon icon="$menu"></v-icon>
                                 <v-menu activator="parent">
                                     <v-list density="compact">
+                                        <v-list-item :title="t('AddToShopping')" prepend-icon="$shopping" :data-test="`shop-lot-${item.id}`" @click="addToShopping(item)"></v-list-item>
                                         <v-list-item :title="t('History')" prepend-icon="fa-solid fa-clock-rotate-left" @click="openLog(item)"></v-list-item>
                                         <v-list-item :title="openTitle(item)" prepend-icon="fa-solid fa-lock-open" :data-test="`open-lot-${item.id}`"
                                                      :class="{'open-lot-btn--inactive': !canOpen(item)}" @click="openLot(item)"></v-list-item>
@@ -115,6 +117,7 @@ import InventoryEntryLogDialog from "@/components/dialogs/InventoryEntryLogDialo
 import PantryBookingDialog from "@/components/dialogs/PantryBookingDialog.vue";
 import {expiryColor, expiryDateLabel, expiryStatus, inventoryListParams, pantryGroup} from "@/utils/pantry_utils.ts";
 import {ErrorMessageType, MessageType, StructuredMessage, useMessageStore} from "@/stores/MessageStore.ts";
+import {useShoppingActions} from "@/composables/useShoppingActions";
 
 const {t} = useI18n()
 const {mobile} = useDisplay()
@@ -239,6 +242,16 @@ function openTitle(item: InventoryEntry): string {
     return t('Open')
 }
 
+
+/** One-click add of a lot's food to the shopping list — never a duplicate if it is already there. */
+function addToShopping(item: InventoryEntry) {
+    useShoppingActions().addToShoppingIfNotListed({id: item.food.id!, name: item.food.name}).then(added => {
+        useMessageStore().addMessage(added ? MessageType.SUCCESS : MessageType.INFO,
+            t(added ? 'Added_To_Shopping_List' : 'AlreadyOnShoppingList', {name: item.food.name}), 4000)
+    }).catch(err => {
+        useMessageStore().addError(ErrorMessageType.UPDATE_ERROR, err)
+    })
+}
 
 function openLog(item: InventoryEntry) {
     entryLogEntry.value = item

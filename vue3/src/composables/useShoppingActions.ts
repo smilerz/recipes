@@ -88,5 +88,14 @@ export function useShoppingActions() {
         }
     }
 
-    return {addToShopping, removeFromShopping, checkShoppingStatus}
+    /**
+     * Add a food to the shopping list unless it is already on it (creating an entry never dedupes
+     * server-side). Returns true when added, false when it was already listed.
+     */
+    async function addToShoppingIfNotListed(food: FoodRef, amount: number = 1, unit?: Unit | null): Promise<boolean> {
+        if (await checkShoppingStatus(food.id)) return false
+        return addToShopping(food, amount, unit)
+    }
+
+    return {addToShopping, addToShoppingIfNotListed, removeFromShopping, checkShoppingStatus}
 }

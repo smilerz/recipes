@@ -23,6 +23,7 @@
   "AddMoreSameLocation": "Add more (same location)",
   "AddToInventory": "Add {name} to Inventory",
   "AddToShopping": "Add to shopping list",
+  "AlreadyOnShoppingList": "{name} is already on your shopping list",
   "Add_Servings_to_Shopping": "Add {servings} Servings to Shopping",
   "Add_Step": "Add Step",
   "Add_nutrition_recipe": "Add nutrition to recipe",

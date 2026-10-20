@@ -413,3 +413,42 @@ describe('InventoryEntryTable — pantry discovery filters', () => {
         expect(tableCall()).toMatchObject({ query: 'flour' })
     })
 })
+
+
+describe('InventoryEntryTable — add to shopping row action', () => {
+    beforeEach(() => {
+        resetApiMock()
+        addMessageMock.mockClear()
+    })
+
+    async function mountWithLot() {
+        apiMock.apiInventoryEntryList.mockResolvedValue({ results: [entry({ id: 5, food: { id: 10, name: 'Flour' } })], count: 1 })
+        const wrapper = mountPage(InventoryEntryTable)
+        await flushPromises()
+        return wrapper
+    }
+
+    it('one click adds the lot\'s food to the shopping list and says so', async () => {
+        apiMock.apiShoppingListEntryList.mockResolvedValue({ count: 0, results: [] })
+        apiMock.apiShoppingListEntryCreate.mockResolvedValue({})
+        const wrapper = await mountWithLot()
+
+        await wrapper.find('[data-test="shop-lot-5"]').trigger('click')
+        await flushPromises()
+
+        expect(apiMock.apiShoppingListEntryCreate).toHaveBeenCalledTimes(1)
+        expect(apiMock.apiShoppingListEntryCreate.mock.calls[0][0].shoppingListEntry.food.id).toBe(10)
+        expect(addMessageMock).toHaveBeenCalled()
+    })
+
+    it('does not add a duplicate when the food is already on the shopping list', async () => {
+        apiMock.apiShoppingListEntryList.mockResolvedValue({ count: 1, results: [{}] })
+        const wrapper = await mountWithLot()
+
+        await wrapper.find('[data-test="shop-lot-5"]').trigger('click')
+        await flushPromises()
+
+        expect(apiMock.apiShoppingListEntryCreate).not.toHaveBeenCalled()
+        expect(addMessageMock).toHaveBeenCalled()
+    })
+})

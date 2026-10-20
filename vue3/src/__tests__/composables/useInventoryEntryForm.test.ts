@@ -151,6 +151,70 @@ describe('useInventoryEntryForm', () => {
         expect(onEdited).toHaveBeenCalled()
     })
 
+    describe('editing the expiry date', () => {
+        const entry = () => ({
+            id: 7, food: {id: 1, name: 'Flour'}, unit: {id: 1, name: 'g'}, amount: 2,
+            inventoryLocation: {id: 1, name: 'Pantry', isFreezer: false}, expires: new Date('2027-01-01'), subLocation: '',
+        })
+
+        it('loads the entry\'s own expiry as the same calendar day', () => {
+            const form = useInventoryEntryForm(t, {})
+            form.inventoryEntry.value = entry() as any
+            form.inventoryEntrySelected()
+
+            const d = form.expires.value!
+            expect([d.getFullYear(), d.getMonth(), d.getDate()]).toEqual([2027, 0, 1])
+        })
+
+        it('sends only the new expires when only the date was changed', async () => {
+            const form = useInventoryEntryForm(t, {})
+            form.inventoryEntry.value = entry() as any
+            form.inventoryEntrySelected()
+
+            form.expires.value = new Date(2027, 5, 15)
+            apiMock.apiInventoryEntryPartialUpdate.mockResolvedValue({...entry(), expires: new Date('2027-06-15')})
+            await form.editInventory()
+
+            const patch = apiMock.apiInventoryEntryPartialUpdate.mock.calls[0][0].patchedInventoryEntry
+            expect(Object.keys(patch)).toEqual(['expires'])
+            expect([patch.expires.getFullYear(), patch.expires.getMonth(), patch.expires.getDate()]).toEqual([2027, 5, 15])
+        })
+
+        it('never wipes a lot\'s expiry when the form has not loaded that entry', async () => {
+            const form = useInventoryEntryForm(t, {})
+            form.inventoryEntry.value = entry() as any
+            form.amount.value = 9
+            apiMock.apiInventoryEntryPartialUpdate.mockResolvedValue({...entry(), amount: 9})
+            await form.editInventory()
+
+            expect(apiMock.apiInventoryEntryPartialUpdate.mock.calls[0][0].patchedInventoryEntry).not.toHaveProperty('expires')
+        })
+
+        it('sends null when the date was cleared', async () => {
+            const form = useInventoryEntryForm(t, {})
+            form.inventoryEntry.value = entry() as any
+            form.inventoryEntrySelected()
+
+            form.expires.value = undefined
+            apiMock.apiInventoryEntryPartialUpdate.mockResolvedValue({...entry(), expires: null})
+            await form.editInventory()
+
+            expect(apiMock.apiInventoryEntryPartialUpdate.mock.calls[0][0].patchedInventoryEntry).toEqual({expires: null})
+        })
+
+        it('does not announce an "expiry updated" notice for a date the user set themselves', async () => {
+            const form = useInventoryEntryForm(t, {})
+            form.inventoryEntry.value = entry() as any
+            form.inventoryEntrySelected()
+
+            form.expires.value = new Date(2027, 5, 15)
+            apiMock.apiInventoryEntryPartialUpdate.mockResolvedValue({...entry(), expires: new Date('2027-06-15')})
+            await form.editInventory()
+
+            expect(addMessageMock).not.toHaveBeenCalled()
+        })
+    })
+
     it('editInventory() calls onNoChange and makes no API call when nothing changed', async () => {
         const entry = {
             id: 7, food: {id: 1, name: 'Flour'}, unit: {id: 1, name: 'g'}, amount: 2,
