@@ -29,7 +29,9 @@ const {addMessageMock, addErrorMock, addToShoppingMock, confirmMock} = vi.hoiste
     addToShoppingMock: vi.fn().mockResolvedValue(undefined),
 }))
 vi.mock('@/stores/MessageStore', async (imp) => ({...(await imp<any>()), useMessageStore: () => ({addMessage: addMessageMock, addError: addErrorMock})}))
-vi.mock('@/composables/useShoppingActions', () => ({useShoppingActions: () => ({addToShopping: addToShoppingMock})}))
+// the dialog adds back through addToShoppingIfNotListed (no duplicate for a food already on the list);
+// both names are the one spy, so the add-back contract below is asserted unchanged
+vi.mock('@/composables/useShoppingActions', () => ({useShoppingActions: () => ({addToShopping: addToShoppingMock, addToShoppingIfNotListed: addToShoppingMock})}))
 
 import UseUpDialog from '@/components/dialogs/UseUpDialog.vue'
 
@@ -459,5 +461,102 @@ describe('UseUpDialog lookback period', () => {
         expect(apiMock.apiCookLogList).toHaveBeenCalledTimes(2)
         expect(useUserPreferenceStore().deviceSettings.pantry_useUpLookbackDays).toBe(30)
         expect((wrapper.vm as any).rows[0].amount).toBe(1)
+    })
+})
+
+
+describe('UseUpDialog — visible, overridable add-to-shopping', () => {
+    beforeEach(() => {
+        setActivePinia(createPinia())
+        resetApiMock()
+        addMessageMock.mockClear()
+        addErrorMock.mockClear()
+        addToShoppingMock.mockReset().mockResolvedValue(undefined)
+        confirmMock.mockReset()
+        document.body.innerHTML = ''
+    })
+
+    const chip = () => document.querySelector('[data-test="useup-shopping-chip"]') as HTMLElement | null
+    const cart = () => document.querySelector('[data-test="useup-add-shopping"]') as HTMLElement | null
+
+    it('UA-01: a row zeroed so its food goes back on the list says so, in a chip', async () => {
+        const wrapper = await openWith([{food: MILK, unit: GAL, amount: 2}])
+        ;(wrapper.vm as any).rows[0].amount = 0
+        await flushPromises()
+
+        expect(chip()).not.toBeNull()
+        expect(chip()!.textContent).toContain('AddsToShoppingList')
+    })
+
+    it('UA-02: no chip while the row is untouched or the food still has stock in another unit', async () => {
+        const wrapper = await openWith([
+            {food: MILK, unit: GAL, amount: 1},
+            {food: MILK, unit: CUP, amount: 2},
+        ])
+        expect(chip()).toBeNull()
+
+        ;(wrapper.vm as any).rows[0].amount = 0  // gallon gone, cups remain: not re-listed (DEC-8)
+        await flushPromises()
+
+        expect(chip()).toBeNull()
+    })
+
+    it('UA-03: clicking the chip turns the add-back off, and saving then does not list the food', async () => {
+        apiMock.apiInventoryEntryDrawDownCreate.mockResolvedValue({ok: true})
+        const wrapper = await openWith([{food: MILK, unit: GAL, amount: 2}])
+        ;(wrapper.vm as any).rows[0].amount = 0
+        await flushPromises()
+
+        chip()!.click()
+        await flushPromises()
+        expect(chip()!.textContent).toContain('NotAddedToList')
+
+        clickSave()
+        await flushPromises()
+
+        expect(apiMock.apiInventoryEntryDrawDownCreate).toHaveBeenCalledTimes(1)
+        expect(addToShoppingMock).not.toHaveBeenCalled()
+    })
+
+    it('UA-04: clicking the chip again turns the add-back back on', async () => {
+        apiMock.apiInventoryEntryDrawDownCreate.mockResolvedValue({ok: true})
+        const wrapper = await openWith([{food: MILK, unit: GAL, amount: 2}])
+        ;(wrapper.vm as any).rows[0].amount = 0
+        await flushPromises()
+
+        chip()!.click()
+        await flushPromises()
+        chip()!.click()
+        await flushPromises()
+        expect(chip()!.textContent).toContain('AddsToShoppingList')
+
+        clickSave()
+        await flushPromises()
+
+        expect(addToShoppingMock).toHaveBeenCalledTimes(1)
+    })
+
+    it('UA-05: a row\'s cart button adds that food right away, without zeroing or saving', async () => {
+        addToShoppingMock.mockResolvedValueOnce(true)
+        const wrapper = await openWith([{food: MILK, unit: GAL, amount: 2}])
+
+        cart()!.click()
+        await flushPromises()
+
+        expect(addToShoppingMock).toHaveBeenCalledTimes(1)
+        expect(addToShoppingMock.mock.calls[0][0]).toMatchObject({id: 1})
+        expect((wrapper.vm as any).rows[0].amount).toBe(2)
+        expect(apiMock.apiInventoryEntryDrawDownCreate).not.toHaveBeenCalled()
+        expect(addMessageMock.mock.calls[0][0]).toBe('success')
+    })
+
+    it('UA-06: the cart button says so instead of adding a duplicate when the food is already listed', async () => {
+        addToShoppingMock.mockResolvedValueOnce(false)
+        await openWith([{food: MILK, unit: GAL, amount: 2}])
+
+        cart()!.click()
+        await flushPromises()
+
+        expect(addMessageMock.mock.calls[0][0]).toBe('info')
     })
 })
