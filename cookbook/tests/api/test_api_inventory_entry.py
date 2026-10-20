@@ -7,8 +7,8 @@ from django.contrib import auth
 from django.urls import reverse
 from django_scopes import scopes_disabled
 
-from cookbook.models import Household, InventoryEntry, InventoryLog, UserSpace
-from cookbook.tests.factories import FoodFactory, InventoryEntryFactory, InventoryLocationFactory, UnitFactory
+from cookbook.models import Food, Household, InventoryEntry, InventoryLog, UserSpace
+from cookbook.tests.factories import FoodFactory, InventoryEntryFactory, InventoryLocationFactory, ShoppingListEntryFactory, UnitFactory
 
 LIST_URL = 'api:inventoryentry-list'
 STOCK_UP_URL = 'api:inventoryentry-stock-up'
@@ -757,3 +757,101 @@ def test_label_keeps_the_code_prefix_when_the_lot_has_a_code(u1_s1, space_1):
     label = {e['id']: e['label'] for e in json.loads(u1_s1.get(reverse(LIST_URL)).content)['results']}[entry.id]
     assert label.startswith('#ABC - ')
     assert label.endswith('(cup) Yogurt')
+
+
+# ---------------------- discovery filters (pantry search) -----------------------
+
+def _lot(space, loc, food, **kw):
+    return InventoryEntryFactory(space=space, food=food, inventory_location=loc, amount=1, **kw)
+
+
+@pytest.mark.django_db
+def test_list_query_matches_food_name_case_insensitively(u1_s1, space_1):
+    _, loc = _household_with_location(u1_s1, space_1)
+    with scopes_disabled():
+        milk = _lot(space_1, loc, FoodFactory(space=space_1, name='Whole Milk'))
+        _lot(space_1, loc, FoodFactory(space=space_1, name='Flour'))
+
+    assert get_result_ids(u1_s1.get(reverse(LIST_URL), {'query': 'milk'})) == [milk.id]
+
+
+@pytest.mark.django_db
+def test_list_include_children_adds_descendants_of_food_id(u1_s1, space_1):
+    _, loc = _household_with_location(u1_s1, space_1)
+    with scopes_disabled():
+        dairy = Food.add_root(name='Dairy', space=space_1)
+        milk = dairy.add_child(name='Milk', space=space_1)
+        other = FoodFactory(space=space_1)
+        dairy_lot, milk_lot = _lot(space_1, loc, dairy), _lot(space_1, loc, milk)
+        _lot(space_1, loc, other)
+
+    exact = get_result_ids(u1_s1.get(reverse(LIST_URL), {'food_id': dairy.id}))
+    tree = get_result_ids(u1_s1.get(reverse(LIST_URL), {'food_id': dairy.id, 'include_children': 'true'}))
+    assert exact == [dairy_lot.id]
+    assert sorted(tree) == sorted([dairy_lot.id, milk_lot.id])
+
+
+@pytest.mark.django_db
+def test_list_include_children_with_query_finds_children_of_matching_parent(u1_s1, space_1):
+    """Typing a category ('dairy') finds the foods under it, not only foods named 'dairy'."""
+    _, loc = _household_with_location(u1_s1, space_1)
+    with scopes_disabled():
+        dairy = Food.add_root(name='Dairy', space=space_1)
+        milk = dairy.add_child(name='Milk', space=space_1)
+        milk_lot = _lot(space_1, loc, milk)
+        _lot(space_1, loc, FoodFactory(space=space_1, name='Flour'))
+
+    assert get_result_ids(u1_s1.get(reverse(LIST_URL), {'query': 'dairy'})) == []
+    assert get_result_ids(u1_s1.get(reverse(LIST_URL), {'query': 'dairy', 'include_children': 'true'})) == [milk_lot.id]
+
+
+@pytest.mark.django_db
+def test_list_expired_filter(u1_s1, space_1):
+    _, loc = _household_with_location(u1_s1, space_1)
+    today = date.today()
+    with scopes_disabled():
+        old = _lot(space_1, loc, FoodFactory(space=space_1), expires=today - timedelta(days=1))
+        fresh = _lot(space_1, loc, FoodFactory(space=space_1), expires=today + timedelta(days=5))
+        undated = _lot(space_1, loc, FoodFactory(space=space_1))
+
+    assert get_result_ids(u1_s1.get(reverse(LIST_URL), {'expired': 'true'})) == [old.id]
+    assert sorted(get_result_ids(u1_s1.get(reverse(LIST_URL), {'expired': 'false'}))) == sorted([fresh.id, undated.id])
+
+
+@pytest.mark.django_db
+def test_list_expiring_soon_filter_is_inclusive_window_from_today(u1_s1, space_1):
+    _, loc = _household_with_location(u1_s1, space_1)
+    today = date.today()
+    with scopes_disabled():
+        _lot(space_1, loc, FoodFactory(space=space_1), expires=today - timedelta(days=1))
+        soon = _lot(space_1, loc, FoodFactory(space=space_1), expires=today + timedelta(days=3))
+        _lot(space_1, loc, FoodFactory(space=space_1), expires=today + timedelta(days=4))
+        _lot(space_1, loc, FoodFactory(space=space_1))
+
+    assert get_result_ids(u1_s1.get(reverse(LIST_URL), {'expiring_soon': 3})) == [soon.id]
+
+
+@pytest.mark.django_db
+def test_list_in_shopping_list_filter(u1_s1, space_1):
+    _, loc = _household_with_location(u1_s1, space_1)
+    user = auth.get_user(u1_s1)
+    with scopes_disabled():
+        listed_food, plain_food = FoodFactory(space=space_1), FoodFactory(space=space_1)
+        listed, plain = _lot(space_1, loc, listed_food), _lot(space_1, loc, plain_food)
+        ShoppingListEntryFactory(space=space_1, food=listed_food, created_by=user, checked=False)
+
+    assert get_result_ids(u1_s1.get(reverse(LIST_URL), {'in_shopping_list': 'true'})) == [listed.id]
+    assert get_result_ids(u1_s1.get(reverse(LIST_URL), {'in_shopping_list': 'false'})) == [plain.id]
+
+
+@pytest.mark.django_db
+def test_list_has_recipe_and_supermarket_category_filters(u1_s1, space_1):
+    _, loc = _household_with_location(u1_s1, space_1)
+    with scopes_disabled():
+        with_recipe_food = FoodFactory(space=space_1, has_recipe=True, has_category=False)
+        categorised_food = FoodFactory(space=space_1, has_recipe=False, has_category=True)
+        with_recipe = _lot(space_1, loc, with_recipe_food)
+        categorised = _lot(space_1, loc, categorised_food)
+
+    assert get_result_ids(u1_s1.get(reverse(LIST_URL), {'has_recipe': 'true'})) == [with_recipe.id]
+    assert get_result_ids(u1_s1.get(reverse(LIST_URL), {'supermarket_category': categorised_food.supermarket_category_id})) == [categorised.id]

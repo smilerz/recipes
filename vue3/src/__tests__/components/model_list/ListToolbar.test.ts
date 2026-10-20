@@ -28,3 +28,16 @@ describe('ListToolbar — disableSearch hides only the search field', () => {
         expect(w.find('[aria-label="Select"]').exists()).toBe(true)
     })
 })
+
+describe('ListToolbar — hasSettings hides only the settings button', () => {
+    it('shows the settings button alongside the filters by default', () => {
+        const w = mountToolbar({hasFilters: true})
+        expect(w.find('[aria-label="Settings"]').exists()).toBe(true)
+    })
+
+    it('hides the settings button, keeping filters, when hasSettings is false', () => {
+        const w = mountToolbar({hasFilters: true, hasSettings: false})
+        expect(w.find('[aria-label="Settings"]').exists()).toBe(false)
+        expect(w.find('[aria-label="Filters"]').exists()).toBe(true)
+    })
+})

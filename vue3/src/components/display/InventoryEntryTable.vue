@@ -30,6 +30,7 @@
                 <v-table v-if="!mobile" density="comfortable">
                     <thead>
                         <tr>
+                            <th v-if="selectMode"></th>
                             <th>{{ t('Food') }}</th>
                             <th>{{ t('Amount') }}</th>
                             <th>{{ t('InventoryLocation') }}</th>
@@ -39,6 +40,10 @@
                     </thead>
                     <tbody>
                         <tr v-for="item in group.items" :key="item.id">
+                            <td v-if="selectMode">
+                                <v-checkbox-btn :data-test="`select-lot-${item.id}`" :aria-label="item.food.name" :model-value="isSelected(item)"
+                                                @update:model-value="toggleSelected(item, $event)"></v-checkbox-btn>
+                            </td>
                             <td>{{ item.food.name }}</td>
                             <td>{{ qtyLabel(item) }}</td>
                             <td>
@@ -58,6 +63,7 @@
                             </td>
                             <td class="text-end">
                                 <v-btn-group divided border density="comfortable">
+                                    <v-btn icon="$shopping" :title="t('AddToShopping')" :data-test="`shop-lot-${item.id}`" @click="addToShopping(item)"></v-btn>
                                     <v-btn icon="fa-solid fa-clock-rotate-left" :title="t('History')" @click="openLog(item)"></v-btn>
                                     <v-btn icon="fa-solid fa-lock-open" :title="openTitle(item)" :data-test="`open-lot-${item.id}`" @click="openLot(item)"
                                            :class="{'open-lot-btn--inactive': !canOpen(item)}"></v-btn>
@@ -71,6 +77,10 @@
                 <!-- mobile -->
                 <v-list v-else density="comfortable">
                     <v-list-item v-for="item in group.items" :key="item.id">
+                        <template #prepend v-if="selectMode">
+                            <v-checkbox-btn :data-test="`select-lot-${item.id}`" :aria-label="item.food.name" :model-value="isSelected(item)"
+                                            @update:model-value="toggleSelected(item, $event)"></v-checkbox-btn>
+                        </template>
                         <v-list-item-title>{{ item.food.name }}</v-list-item-title>
                         <v-list-item-subtitle>
                             {{ qtyLabel(item) }} · {{ item.inventoryLocation.name }}
@@ -87,6 +97,7 @@
                                 <v-icon icon="$menu"></v-icon>
                                 <v-menu activator="parent">
                                     <v-list density="compact">
+                                        <v-list-item :title="t('AddToShopping')" prepend-icon="$shopping" :data-test="`shop-lot-${item.id}`" @click="addToShopping(item)"></v-list-item>
                                         <v-list-item :title="t('History')" prepend-icon="fa-solid fa-clock-rotate-left" @click="openLog(item)"></v-list-item>
                                         <v-list-item :title="openTitle(item)" prepend-icon="fa-solid fa-lock-open" :data-test="`open-lot-${item.id}`"
                                                      :class="{'open-lot-btn--inactive': !canOpen(item)}" @click="openLot(item)"></v-list-item>
@@ -113,8 +124,9 @@ import {useDisplay} from "vuetify";
 import {useI18n} from "vue-i18n";
 import InventoryEntryLogDialog from "@/components/dialogs/InventoryEntryLogDialog.vue";
 import PantryBookingDialog from "@/components/dialogs/PantryBookingDialog.vue";
-import {expiryColor, expiryDateLabel, expiryStatus, pantryGroup} from "@/utils/pantry_utils.ts";
+import {expiryColor, expiryDateLabel, expiryStatus, inventoryListParams, pantryGroup} from "@/utils/pantry_utils.ts";
 import {ErrorMessageType, MessageType, StructuredMessage, useMessageStore} from "@/stores/MessageStore.ts";
+import {useShoppingActions} from "@/composables/useShoppingActions";
 
 const {t} = useI18n()
 const {mobile} = useDisplay()
@@ -122,7 +134,26 @@ const {mobile} = useDisplay()
 const props = defineProps({
     food: {type: Object as PropType<Food | null>, required: false},
     inventoryLocation: {type: Object as PropType<InventoryLocation | null>, required: false},
+    query: {type: String, required: false},
+    filters: {type: Object as PropType<Partial<ApiInventoryEntryListRequest>>, required: false},
+    selectMode: {type: Boolean, default: false},
+    selected: {type: Array as PropType<InventoryEntry[]>, default: () => []},
 })
+
+const emit = defineEmits<{
+    'update:selected': [lots: InventoryEntry[]]
+}>()
+
+const isSelected = (item: InventoryEntry) => props.selected.some(s => s.id === item.id)
+
+function toggleSelected(item: InventoryEntry, checked: boolean | null) {
+    const others = props.selected.filter(s => s.id !== item.id)
+    emit('update:selected', checked ? [...others, item] : others)
+}
+
+function selectAll() {
+    emit('update:selected', [...items.value])
+}
 
 const now = new Date()
 const items = ref<InventoryEntry[]>([])
@@ -238,6 +269,16 @@ function openTitle(item: InventoryEntry): string {
 }
 
 
+/** One-click add of a lot's food to the shopping list — never a duplicate if it is already there. */
+function addToShopping(item: InventoryEntry) {
+    useShoppingActions().addToShoppingIfNotListed({id: item.food.id!, name: item.food.name}).then(added => {
+        useMessageStore().addMessage(added ? MessageType.SUCCESS : MessageType.INFO,
+            t(added ? 'Added_To_Shopping_List' : 'AlreadyOnShoppingList', {name: item.food.name}), 4000)
+    }).catch(err => {
+        useMessageStore().addError(ErrorMessageType.UPDATE_ERROR, err)
+    })
+}
+
 function openLog(item: InventoryEntry) {
     entryLogEntry.value = item
     entryLogDialog.value = true
@@ -292,13 +333,7 @@ function openBooking(item: InventoryEntry) {
 
 function load() {
     loading.value = true
-    const parameters: ApiInventoryEntryListRequest = {pageSize: 500}
-    if (props.food) {
-        parameters.foodId = props.food.id!
-    }
-    if (props.inventoryLocation) {
-        parameters.inventoryLocationId = props.inventoryLocation.id!
-    }
+    const parameters = inventoryListParams({food: props.food, inventoryLocation: props.inventoryLocation, query: props.query, filters: props.filters})
     new ApiApi().apiInventoryEntryList(parameters).then((r) => {
         items.value = r.results ?? []
     }).catch((err) => {
@@ -310,7 +345,7 @@ function load() {
 
 watch(props, () => load(), {immediate: true})
 
-defineExpose({load})
+defineExpose({load, selectAll})
 </script>
 
 <style scoped>

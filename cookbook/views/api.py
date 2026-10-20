@@ -10,7 +10,8 @@ import traceback
 import uuid
 from collections import OrderedDict
 from decimal import Decimal, InvalidOperation
-from functools import wraps
+import operator
+from functools import reduce, wraps
 from json import JSONDecodeError
 from urllib.parse import unquote, quote
 from zipfile import ZipFile
@@ -959,6 +960,13 @@ class InventoryLocationViewSet(LoggingMixin, FuzzyFilterMixin, DeleteRelationMix
     OpenApiParameter(name='food_id', description=_('Returns all entries with the given food id'), type=int),
     OpenApiParameter(name='food_ids', description=_('Returns all entries whose food id is in the given list. For multiple repeat the parameter.'), type=int, many=True),
     OpenApiParameter(name='inventory_location_id', description=_('Returns all entries with the given inventory location id'), type=int),
+    OpenApiParameter(name='query', description=_('Returns entries whose food name contains this string (case insensitive).'), type=str),
+    OpenApiParameter(name='include_children', description=_('Also include entries of all child foods of the foods selected by food_id, food_ids or query. [<b>true</b>/false]'), type=bool),
+    OpenApiParameter(name='in_shopping_list', description=_('Filter entries whose food is (true) / is not (false) on the shopping list.'), type=bool),
+    OpenApiParameter(name='has_recipe', description=_('Filter entries whose food is (true) / is not (false) linked to a recipe.'), type=bool),
+    OpenApiParameter(name='supermarket_category', description=_('Filter entries by the food\'s supermarket category id.'), type=int),
+    OpenApiParameter(name='expired', description=_('Filter entries that are (true) / are not (false) past their expiry date.'), type=bool),
+    OpenApiParameter(name='expiring_soon', description=_('Filter entries expiring from today up to this many days ahead.'), type=int),
 ]))
 class InventoryEntryViewSet(LoggingMixin, viewsets.ModelViewSet, DeleteRelationMixing):
     queryset = InventoryEntry.objects
@@ -991,15 +999,79 @@ class InventoryEntryViewSet(LoggingMixin, viewsets.ModelViewSet, DeleteRelationM
                     queryset = queryset.filter(food=entry.food)
                 else:
                     queryset = queryset.none()
-            elif food_id := self.request.query_params.get('food_id'):
-                queryset = queryset.filter(food_id=food_id)
-            elif food_ids := self.request.query_params.getlist('food_ids'):
-                queryset = queryset.filter(food_id__in=food_ids)
+            else:
+                queryset = self._filter_by_food(queryset)
 
             if inventory_location_id := self.request.query_params.get('inventory_location_id'):
                 queryset = queryset.filter(inventory_location_id=inventory_location_id)
 
+            queryset = self._apply_discovery_filters(queryset)
+
         queryset = queryset.order_by('expires')
+        return queryset
+
+    def _filter_by_food(self, queryset):
+        """food_id / food_ids / query narrow the lots to those foods; include_children widens that
+        selection to every descendant food (like the recipe search's include_children)."""
+        params = self.request.query_params
+        food_id, food_ids, query = params.get('food_id'), params.getlist('food_ids'), params.get('query')
+
+        if str2bool(params.get('include_children')) and (food_id or food_ids or query):
+            roots = Food.objects.filter(space=self.request.space)
+            if food_id:
+                roots = roots.filter(id=food_id)
+            elif food_ids:
+                roots = roots.filter(id__in=food_ids)
+            if query:
+                roots = roots.filter(name__icontains=query)
+            paths = sorted(set(roots.values_list('path', flat=True)))
+            outermost = [p for i, p in enumerate(paths) if not any(p.startswith(q) for q in paths[:i])]
+            if not outermost:
+                return queryset.none()
+            return queryset.filter(reduce(operator.or_, (Q(food__path__startswith=p) for p in outermost)))
+
+        if food_id:
+            queryset = queryset.filter(food_id=food_id)
+        elif food_ids:
+            queryset = queryset.filter(food_id__in=food_ids)
+        if query:
+            queryset = queryset.filter(food__name__icontains=query)
+        return queryset
+
+    def _apply_discovery_filters(self, queryset):
+        """Food- and expiry-level filters mirroring the Food list, so the pantry can be searched with the
+        same vocabulary (in_shopping_list, has_recipe, supermarket_category, expired, expiring_soon)."""
+        params = self.request.query_params
+        today = timezone.localdate()
+
+        if (in_list := params.get('in_shopping_list')) is not None:
+            try:
+                shared_users = get_household_user_ids(self.request.user_space)
+            except AttributeError:
+                shared_users = []
+            on_list = Exists(ShoppingListEntry.objects.filter(
+                space=self.request.space, food=OuterRef('food_id'), checked=False, created_by__in=shared_users))
+            queryset = queryset.filter(on_list) if str2bool(in_list) else queryset.exclude(on_list)
+
+        if (has_recipe := params.get('has_recipe')) is not None:
+            queryset = queryset.filter(food__recipe__isnull=not str2bool(has_recipe))
+
+        if (category := params.get('supermarket_category')) is not None:
+            try:
+                queryset = queryset.filter(food__supermarket_category_id=int(category))
+            except ValueError:
+                queryset = queryset.none()
+
+        if (expired := params.get('expired')) is not None:
+            is_expired = Q(expires__lt=today)
+            queryset = queryset.filter(is_expired) if str2bool(expired) else queryset.exclude(is_expired)
+
+        if (days := params.get('expiring_soon')) is not None:
+            try:
+                queryset = queryset.filter(expires__gte=today, expires__lte=today + datetime.timedelta(days=int(days)))
+            except ValueError:
+                pass
+
         return queryset
 
     def list(self, request, *args, **kwargs):

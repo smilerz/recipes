@@ -1,5 +1,5 @@
 import {DateTime} from "luxon"
-import type {Unit} from "@/openapi"
+import type {ApiInventoryEntryListRequest, Unit} from "@/openapi"
 import {parseBooleanAnnotation} from "@/utils/model_utils"
 
 /**
@@ -542,4 +542,62 @@ export function pantryJarState(inInventory: boolean, earliestExpiry: Date | null
     if (status === 'expired') return {state: 'expired', color: expiryColor(status), present: true}
     if (status === 'soon') return {state: 'expiring', color: expiryColor(status), present: true}
     return {state: 'in-stock', color: 'success', present: true}
+}
+
+
+/** Every pantry lot in one call — the grouped view does its own sectioning, no server pagination. */
+const PANTRY_PAGE_SIZE = 500
+
+/**
+ * List-request params for the pantry table. A picked food or a search query also pulls in child
+ * foods (picking/typing a category finds what is under it, like the recipe search); filters come
+ * from the shared FilterDefs and are passed through, minus any that are unset.
+ */
+export function inventoryListParams(
+    {food, inventoryLocation, query, filters}: {
+        food?: {id?: number | null} | null,
+        inventoryLocation?: {id?: number | null} | null,
+        query?: string,
+        filters?: Partial<ApiInventoryEntryListRequest>,
+    },
+): ApiInventoryEntryListRequest {
+    const params: ApiInventoryEntryListRequest = {pageSize: PANTRY_PAGE_SIZE}
+    for (const [key, value] of Object.entries(filters ?? {})) {
+        if (value !== undefined) (params as Record<string, unknown>)[key] = value
+    }
+    if (food?.id) {
+        params.foodId = food.id
+        params.includeChildren = true
+    }
+    const trimmed = query?.trim()
+    if (trimmed) {
+        params.query = trimmed
+        params.includeChildren = true
+    }
+    if (inventoryLocation?.id) params.inventoryLocationId = inventoryLocation.id
+    return params
+}
+
+
+/**
+ * A date-only value from the API (delivered as UTC midnight) as the same calendar day at local
+ * noon, which is what the date picker shows without shifting the day for a viewer behind UTC.
+ */
+export function apiDateToLocalNoon(date: Date | null | undefined): Date | undefined {
+    if (!date) return undefined
+    return new Date(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate(), 12)
+}
+
+/**
+ * The `expires` to PATCH after editing a lot: undefined when the picked day is still the original
+ * day (never resend it — that would defeat the backend's freeze/thaw recompute), null when a date
+ * was cleared, otherwise the picked day at local noon.
+ */
+export function expiryPatchValue(picked: Date | undefined, original: Date | null | undefined): Date | null | undefined {
+    if (!picked) return original ? null : undefined
+    const sameDay = !!original
+        && picked.getFullYear() === original.getUTCFullYear()
+        && picked.getMonth() === original.getUTCMonth()
+        && picked.getDate() === original.getUTCDate()
+    return sameDay ? undefined : new Date(picked.getFullYear(), picked.getMonth(), picked.getDate(), 12)
 }

@@ -374,3 +374,142 @@ describe('InventoryEntryTable — sort control (#12)', () => {
         expect(foodNames(wrapper)).toEqual(['Zucchini', 'Apple'])
     })
 })
+
+
+describe('InventoryEntryTable — pantry discovery filters', () => {
+    beforeEach(() => {
+        resetApiMock()
+    })
+
+    function tableCall() {
+        return apiMock.apiInventoryEntryList.mock.calls.map(c => c[0]).find(p => p.pageSize === 500)
+    }
+
+    it('sends the search query and filters to the list call, including children for a query', async () => {
+        apiMock.apiInventoryEntryList.mockResolvedValue({ results: [], count: 0 })
+        mountPage(InventoryEntryTable, { props: { query: 'dairy', filters: { expired: true, expiringSoon: 3 } } })
+        await flushPromises()
+
+        expect(tableCall()).toMatchObject({ query: 'dairy', includeChildren: true, expired: true, expiringSoon: 3 })
+    })
+
+    it('includes children when a food is picked', async () => {
+        apiMock.apiInventoryEntryList.mockResolvedValue({ results: [], count: 0 })
+        mountPage(InventoryEntryTable, { props: { food: { id: 7, name: 'Dairy' } } })
+        await flushPromises()
+
+        expect(tableCall()).toMatchObject({ foodId: 7, includeChildren: true })
+    })
+
+    it('reloads when the query changes', async () => {
+        apiMock.apiInventoryEntryList.mockResolvedValue({ results: [], count: 0 })
+        const wrapper = mountPage(InventoryEntryTable, { props: { query: 'milk' } })
+        await flushPromises()
+        apiMock.apiInventoryEntryList.mockClear()
+
+        await wrapper.setProps({ query: 'flour' })
+        await flushPromises()
+
+        expect(tableCall()).toMatchObject({ query: 'flour' })
+    })
+})
+
+
+describe('InventoryEntryTable — add to shopping row action', () => {
+    beforeEach(() => {
+        resetApiMock()
+        addMessageMock.mockClear()
+    })
+
+    async function mountWithLot() {
+        apiMock.apiInventoryEntryList.mockResolvedValue({ results: [entry({ id: 5, food: { id: 10, name: 'Flour' } })], count: 1 })
+        const wrapper = mountPage(InventoryEntryTable)
+        await flushPromises()
+        return wrapper
+    }
+
+    it('one click adds the lot\'s food to the shopping list and says so', async () => {
+        apiMock.apiShoppingListEntryList.mockResolvedValue({ count: 0, results: [] })
+        apiMock.apiShoppingListEntryCreate.mockResolvedValue({})
+        const wrapper = await mountWithLot()
+
+        await wrapper.find('[data-test="shop-lot-5"]').trigger('click')
+        await flushPromises()
+
+        expect(apiMock.apiShoppingListEntryCreate).toHaveBeenCalledTimes(1)
+        expect(apiMock.apiShoppingListEntryCreate.mock.calls[0][0].shoppingListEntry.food.id).toBe(10)
+        expect(addMessageMock).toHaveBeenCalled()
+    })
+
+    it('does not add a duplicate when the food is already on the shopping list', async () => {
+        apiMock.apiShoppingListEntryList.mockResolvedValue({ count: 1, results: [{}] })
+        const wrapper = await mountWithLot()
+
+        await wrapper.find('[data-test="shop-lot-5"]').trigger('click')
+        await flushPromises()
+
+        expect(apiMock.apiShoppingListEntryCreate).not.toHaveBeenCalled()
+        expect(addMessageMock).toHaveBeenCalled()
+    })
+})
+
+describe('InventoryEntryTable — select mode', () => {
+    beforeEach(() => {
+        resetApiMock()
+    })
+
+    const lots = () => [entry({ id: 5, food: { id: 10, name: 'Flour' } }), entry({ id: 6, food: { id: 11, name: 'Salt' } })]
+
+    async function mountSelect(props: Record<string, any> = {}) {
+        apiMock.apiInventoryEntryList.mockResolvedValue({ results: lots(), count: 2 })
+        const wrapper = mountPage(InventoryEntryTable, { props })
+        await flushPromises()
+        return wrapper
+    }
+
+    it('shows no selection checkboxes by default', async () => {
+        const wrapper = await mountSelect()
+        expect(wrapper.find('[data-test^="select-lot-"]').exists()).toBe(false)
+    })
+
+    it('shows a checkbox for every lot in select mode', async () => {
+        const wrapper = await mountSelect({ selectMode: true })
+        expect(wrapper.findAll('[data-test^="select-lot-"]')).toHaveLength(2)
+    })
+
+    it('checking a lot emits the selection including that lot', async () => {
+        const wrapper = await mountSelect({ selectMode: true })
+
+        await wrapper.find('[data-test="select-lot-5"] input').setValue(true)
+
+        const emitted = wrapper.emitted('update:selected')!
+        expect((emitted[emitted.length - 1][0] as any[]).map(l => l.id)).toEqual([5])
+    })
+
+    it('unchecking removes the lot from the selection', async () => {
+        const wrapper = await mountSelect({ selectMode: true })
+        await wrapper.find('[data-test="select-lot-5"] input').setValue(true)
+        await wrapper.setProps({ selected: wrapper.emitted('update:selected')![0][0] as any })
+
+        await wrapper.find('[data-test="select-lot-5"] input').setValue(false)
+
+        const emitted = wrapper.emitted('update:selected')!
+        expect(emitted[emitted.length - 1][0]).toEqual([])
+    })
+
+    it('shows lots that are in the selected prop as checked', async () => {
+        const wrapper = await mountSelect({ selectMode: true, selected: [{ id: 6 }] })
+
+        expect((wrapper.find('[data-test="select-lot-6"] input').element as HTMLInputElement).checked).toBe(true)
+        expect((wrapper.find('[data-test="select-lot-5"] input').element as HTMLInputElement).checked).toBe(false)
+    })
+
+    it('selectAll selects every loaded lot', async () => {
+        const wrapper = await mountSelect({ selectMode: true })
+
+        ;(wrapper.vm as any).selectAll()
+
+        const emitted = wrapper.emitted('update:selected')!
+        expect((emitted[emitted.length - 1][0] as any[]).map(l => l.id)).toEqual([5, 6])
+    })
+})

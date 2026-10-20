@@ -1,5 +1,5 @@
 <template>
-    <v-dialog :fullscreen="mobile" v-model="showDialog" max-width="640px" scrollable>
+    <v-dialog :fullscreen="mobile" v-model="showDialog" max-width="700px" scrollable>
         <v-card>
             <v-closable-card-title :title="title" icon="$pantry" v-model="showDialog"></v-closable-card-title>
 
@@ -37,9 +37,15 @@
                                     <div class="text-caption text-medium-emphasis">
                                         {{ $t('InStock') }}: {{ row.original }} {{ row.unit?.name || '' }}
                                         <span v-if="rowChanged(row)" class="text-warning">
-                                            → {{ row.amount }} {{ (row.newUnit ?? row.unit)?.name || '' }}<template v-if="row.amount === 0"> · {{ $t('OutToList') }}</template>
+                                            → {{ row.amount }} {{ (row.newUnit ?? row.unit)?.name || '' }}
                                         </span>
                                     </div>
+                                    <!-- the automatic add-back made visible, and overridable per food -->
+                                    <v-chip v-if="row.amount === 0 && goesBackOnList(row.food.id!)" data-test="useup-shopping-chip" size="x-small" label class="mt-1"
+                                            prepend-icon="$shopping" :variant="skipShopping.has(row.food.id!) ? 'outlined' : 'tonal'"
+                                            :color="skipShopping.has(row.food.id!) ? undefined : 'success'" @click="toggleShopping(row.food.id!)">
+                                        {{ $t(skipShopping.has(row.food.id!) ? 'NotAddedToList' : 'AddsToShoppingList') }}
+                                    </v-chip>
                                     <div v-if="row.substituteFor" class="text-caption text-info text-truncate">
                                         {{ $t('UsedAsSubstituteFor', {food: row.substituteFor}) }}
                                     </div>
@@ -54,6 +60,9 @@
                                        :color="row.amount === 0 && row.original !== 0 ? 'warning' : undefined"
                                        :title="$t('Consumed')" :aria-label="$t('Consumed')"
                                        @click="toggleConsumed(row)"></v-btn>
+                                <v-btn icon="$shopping" variant="text" size="small" data-test="useup-add-shopping"
+                                       :title="$t('AddToShopping')" :aria-label="$t('AddToShopping')"
+                                       @click="addRowToShopping(row)"></v-btn>
                             </v-card-text>
                         </v-card>
                     </template>
@@ -122,7 +131,7 @@ const COOK_LOG_PAGE_SIZE = 100
 
 const {t} = useI18n()
 const {mobile} = useDisplay()
-const {addToShopping} = useShoppingActions()
+const {addToShoppingIfNotListed} = useShoppingActions()
 const emit = defineEmits(['used'])
 
 const showDialog = ref(false)
@@ -140,6 +149,34 @@ function rowChanged(row: Row): boolean {
 }
 
 const changedCount = computed(() => rows.value.filter(rowChanged).length)
+
+// foods the user switched the automatic "back on the shopping list" off for (this open only)
+const skipShopping = ref(new Set<number>())
+
+/**
+ * DEC-8: a food goes back on the list only when ALL its rows end at zero — zeroing the gallon row
+ * while cups remain must not re-list the food.
+ */
+function goesBackOnList(foodId: number): boolean {
+    const foodRows = rows.value.filter(r => r.food.id === foodId)
+    return foodRows.some(r => r.amount !== r.original) && foodRows.every(r => r.amount === 0)
+}
+
+function toggleShopping(foodId: number) {
+    if (skipShopping.value.has(foodId)) skipShopping.value.delete(foodId)
+    else skipShopping.value.add(foodId)
+}
+
+/** Add a row's food to the shopping list right now — for what is nearly gone but not yet zeroed. */
+async function addRowToShopping(row: Row) {
+    try {
+        const added = await addToShoppingIfNotListed({id: row.food.id!, name: row.food.name})
+        useMessageStore().addMessage(added ? MessageType.SUCCESS : MessageType.INFO,
+            t(added ? 'Added_To_Shopping_List' : 'AlreadyOnShoppingList', {name: row.food.name}), 3000)
+    } catch (err) {
+        useMessageStore().addError(ErrorMessageType.UPDATE_ERROR, err)
+    }
+}
 
 // recipe names (most-recent first) that seeded groups this open; drives the section order
 const recipeOrder = ref<string[]>([])
@@ -187,6 +224,7 @@ async function open(opts?: {foodIds?: number[], title?: string}) {
     loading.value = true
     rows.value = []
     showAll.value = false
+    skipShopping.value.clear()
     scoped.value = opts?.foodIds != null
     title.value = opts?.title ?? t('UseUp')
     const api = new ApiApi()
@@ -232,6 +270,7 @@ async function onPeriodChange(newDays: number) {
     loading.value = true
     rows.value = []
     showAll.value = false
+    skipShopping.value.clear()
     try {
         await loadPantry(new ApiApi())
     } catch (err) {
@@ -299,23 +338,17 @@ async function confirm() {
     const items = useUpItemsFromRows(rows.value)
     try {
         await new ApiApi().apiInventoryEntryDrawDownCreate({drawDown: {items}})
-        // DEC-8: a food goes back on the list only when ALL its rows ended at zero, once — zeroing
-        // the gallon row while cups remain must not re-list the food. Add-back failures must NOT
-        // look like a failed save: the draw-down is already committed, and a retry would
-        // double-decrement — so they get their own catch and a targeted warning instead.
-        const byFood = new Map<number, Row[]>()
-        for (const row of rows.value) {
-            const id = row.food.id!
-            if (!byFood.has(id)) byFood.set(id, [])
-            byFood.get(id)!.push(row)
-        }
+        // DEC-8 (see goesBackOnList), once per food, unless the user switched it off on the row's chip.
+        // Add-back failures must NOT look like a failed save: the draw-down is already committed, and
+        // a retry would double-decrement — so they get their own catch and a targeted warning instead.
+        const foods = new Map<number, string>(rows.value.map(r => [r.food.id!, r.food.name]))
         const addBackFailures: string[] = []
-        for (const [id, foodRows] of byFood) {
-            if (foodRows.some(r => r.amount !== r.original) && foodRows.every(r => r.amount === 0)) {
+        for (const [id, name] of foods) {
+            if (goesBackOnList(id) && !skipShopping.value.has(id)) {
                 try {
-                    await addToShopping({id, name: foodRows[0].food.name})
+                    await addToShoppingIfNotListed({id, name})
                 } catch {
-                    addBackFailures.push(foodRows[0].food.name)
+                    addBackFailures.push(name)
                 }
             }
         }
@@ -339,15 +372,15 @@ defineExpose({open})
 /* D4: fixed columns so steppers, unit pickers, and consumed buttons form clean vertical lines. */
 .useup-grid {
     display: grid;
-    grid-template-columns: 1fr 130px 190px 40px;
+    grid-template-columns: 1fr 130px 190px 40px 40px;
     gap: 12px;
     align-items: center;
 }
 
 @media (max-width: 600px) {
-    /* name gets the full first line; stepper | unit | consumed share the second */
+    /* name gets the full first line; stepper | unit | consumed | add-to-shopping share the second */
     .useup-grid {
-        grid-template-columns: 1fr 1fr 36px;
+        grid-template-columns: 1fr 1fr 36px 36px;
         gap: 8px;
     }
 

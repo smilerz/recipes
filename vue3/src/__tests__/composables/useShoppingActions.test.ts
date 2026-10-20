@@ -42,3 +42,28 @@ describe('checkShoppingStatus', () => {
         )
     })
 })
+
+
+describe('addToShoppingIfNotListed', () => {
+    beforeEach(() => {
+        setActivePinia(createPinia())
+        resetApiMock()
+    })
+
+    it('adds the food and reports true when it is not on the shopping list yet', async () => {
+        apiMock.apiShoppingListEntryList.mockResolvedValue({count: 0, results: []})
+        apiMock.apiShoppingListEntryCreate.mockResolvedValue({})
+        const {addToShoppingIfNotListed} = useShoppingActions()
+
+        expect(await addToShoppingIfNotListed({id: 5, name: 'Flour'})).toBe(true)
+        expect(apiMock.apiShoppingListEntryCreate).toHaveBeenCalledTimes(1)
+    })
+
+    it('does not add a duplicate and reports false when the food is already on the list', async () => {
+        apiMock.apiShoppingListEntryList.mockResolvedValue({count: 1, results: [{}]})
+        const {addToShoppingIfNotListed} = useShoppingActions()
+
+        expect(await addToShoppingIfNotListed({id: 5, name: 'Flour'})).toBe(false)
+        expect(apiMock.apiShoppingListEntryCreate).not.toHaveBeenCalled()
+    })
+})

@@ -3,7 +3,7 @@
  * useInventoryActions.quickAddToInventory existed and was already wired into the Food list page,
  * but never wired into PantryPage itself.
  */
-import {describe, it, expect, vi, beforeEach} from 'vitest'
+import {describe, it, expect, vi, beforeEach, afterEach} from 'vitest'
 import {mount, flushPromises} from '@vue/test-utils'
 import {createPinia, setActivePinia} from 'pinia'
 import {createI18n} from 'vue-i18n'
@@ -27,6 +27,17 @@ vi.mock('@/composables/useInventoryActions', () => ({
     useInventoryActions: () => ({quickAddToInventory}),
 }))
 
+const {addFoodsToShopping, moveLots, setLotsExpiry, addMessage, selectAll, tableLoad} = vi.hoisted(() => ({
+    addFoodsToShopping: vi.fn(), moveLots: vi.fn(), setLotsExpiry: vi.fn(), addMessage: vi.fn(), selectAll: vi.fn(), tableLoad: vi.fn(),
+}))
+vi.mock('@/composables/usePantryBatchActions', () => ({
+    usePantryBatchActions: () => ({addFoodsToShopping, moveLots, setLotsExpiry}),
+}))
+vi.mock('@/stores/MessageStore', async (imp) => ({
+    ...(await imp<any>()),
+    useMessageStore: () => ({addMessage, addError: vi.fn()}),
+}))
+
 import PantryPage from '@/pages/PantryPage.vue'
 
 function mountPage() {
@@ -38,7 +49,9 @@ function mountPage() {
             plugins: [pinia, i18n, vuetify],
             stubs: {
                 'model-select': {template: '<div/>'},
-                'inventory-entry-table': {template: '<div/>', methods: {load: vi.fn()}},
+                'inventory-entry-table': {name: 'InventoryEntryTable', props: ['food', 'inventoryLocation', 'query', 'filters', 'selectMode', 'selected'], template: '<div/>', methods: {load: tableLoad, selectAll}},
+                'pantry-filter-bar': {name: 'PantryFilterBar', props: ['selectMode'], template: '<div/>'},
+                'pantry-batch-dialog': {name: 'PantryBatchDialog', props: ['modelValue', 'mode', 'count'], template: '<div/>'},
                 'stock-up-dialog': {template: '<div/>', methods: {open: vi.fn()}},
                 'use-up-dialog': {template: '<div/>', methods: {open: vi.fn()}},
                 'inventory-quick-add-dialog': {template: '<div/>'},
@@ -83,6 +96,147 @@ describe('PantryPage', () => {
         expect(typeof t).toBe('function')
         expect(loadSpy).toHaveBeenCalledTimes(1)
 
+        w.unmount()
+    })
+
+    it('passes the filter bar\'s search and filters on to the entry table', async () => {
+        const w = mountPage()
+        await flushPromises()
+
+        w.findComponent({name: 'PantryFilterBar'}).vm.$emit('update', {query: 'dairy', filters: {expired: true}})
+        await flushPromises()
+
+        const table = w.findComponent({name: 'InventoryEntryTable'})
+        expect(table.props('query')).toBe('dairy')
+        expect(table.props('filters')).toEqual({expired: true})
+        w.unmount()
+    })
+})
+
+describe('PantryPage — select mode and batch actions', () => {
+    // Vuetify counts anything under 1280px as mobile, which moves the batch actions into a closed menu.
+    const originalWidth = window.innerWidth
+    beforeEach(() => {
+        window.innerWidth = 1400
+        setActivePinia(createPinia())
+        resetApiMock()
+        addFoodsToShopping.mockReset()
+        moveLots.mockReset()
+        setLotsExpiry.mockReset()
+        addMessage.mockReset()
+        selectAll.mockReset()
+        tableLoad.mockReset()
+    })
+
+    afterEach(() => {
+        window.innerWidth = originalWidth
+    })
+
+    const lots = [{id: 1, food: {id: 10, name: 'Flour'}}, {id: 2, food: {id: 11, name: 'Salt'}}]
+
+    async function mountInSelectMode(selected: any[] = lots) {
+        const w = mountPage()
+        await flushPromises()
+        w.findComponent({name: 'PantryFilterBar'}).vm.$emit('toggle-select')
+        await flushPromises()
+        w.findComponent({name: 'InventoryEntryTable'}).vm.$emit('update:selected', selected)
+        await flushPromises()
+        return w
+    }
+
+    it('shows the selection bar only while in select mode', async () => {
+        const w = mountPage()
+        await flushPromises()
+        expect(w.find('[data-test="batch-shopping"]').exists()).toBe(false)
+
+        w.findComponent({name: 'PantryFilterBar'}).vm.$emit('toggle-select')
+        await flushPromises()
+
+        expect(w.find('[data-test="batch-shopping"]').exists()).toBe(true)
+        expect(w.findComponent({name: 'InventoryEntryTable'}).props('selectMode')).toBe(true)
+        w.unmount()
+    })
+
+    it('adds the selected lots\' foods to the shopping list and reports the result', async () => {
+        addFoodsToShopping.mockResolvedValue({added: 2, alreadyListed: 0, failed: 0})
+        const w = await mountInSelectMode()
+
+        await w.find('[data-test="batch-shopping"]').trigger('click')
+        await flushPromises()
+
+        expect(addFoodsToShopping).toHaveBeenCalledWith(lots)
+        expect(addMessage).toHaveBeenCalled()
+        w.unmount()
+    })
+
+    it('leaves select mode and reloads after a batch action', async () => {
+        addFoodsToShopping.mockResolvedValue({added: 2, alreadyListed: 0, failed: 0})
+        const w = await mountInSelectMode()
+
+        await w.find('[data-test="batch-shopping"]').trigger('click')
+        await flushPromises()
+
+        expect(w.find('[data-test="batch-shopping"]').exists()).toBe(false)
+        expect(tableLoad).toHaveBeenCalled()
+        w.unmount()
+    })
+
+    it('does nothing with an empty selection', async () => {
+        const w = await mountInSelectMode([])
+
+        expect(w.find('[data-test="batch-shopping"]').attributes('disabled')).toBeDefined()
+        w.unmount()
+    })
+
+    it('moves the selected lots to the chosen location', async () => {
+        moveLots.mockResolvedValue({updated: 2, failed: 0})
+        const w = await mountInSelectMode()
+
+        await w.find('[data-test="batch-move"]').trigger('click')
+        const dialog = w.findComponent({name: 'PantryBatchDialog'})
+        expect(dialog.props('mode')).toBe('location')
+        expect(dialog.props('modelValue')).toBe(true)
+        dialog.vm.$emit('confirm', {id: 3, name: 'Fridge'})
+        await flushPromises()
+
+        expect(moveLots).toHaveBeenCalledWith(lots, {id: 3, name: 'Fridge'})
+        expect(tableLoad).toHaveBeenCalled()
+        w.unmount()
+    })
+
+    it('sets the expiry of the selected lots, and can clear it with null', async () => {
+        setLotsExpiry.mockResolvedValue({updated: 2, failed: 0})
+        const w = await mountInSelectMode()
+
+        await w.find('[data-test="batch-expiry"]').trigger('click')
+        const dialog = w.findComponent({name: 'PantryBatchDialog'})
+        expect(dialog.props('mode')).toBe('expires')
+        const date = new Date(2027, 5, 15)
+        dialog.vm.$emit('confirm', date)
+        await flushPromises()
+
+        expect(setLotsExpiry).toHaveBeenCalledWith(lots, date)
+        w.unmount()
+    })
+
+    it('warns instead of celebrating when some lots failed', async () => {
+        moveLots.mockResolvedValue({updated: 1, failed: 1})
+        const w = await mountInSelectMode()
+
+        await w.find('[data-test="batch-move"]').trigger('click')
+        w.findComponent({name: 'PantryBatchDialog'}).vm.$emit('confirm', {id: 3, name: 'Fridge'})
+        await flushPromises()
+
+        expect(addMessage.mock.calls[0][0]).toBe('warning')
+        w.unmount()
+    })
+
+    it('select-all asks the table to select everything it loaded', async () => {
+        const w = await mountInSelectMode([])
+
+        ;(w.vm as any).selectAll()
+
+        expect(selectAll).toHaveBeenCalled()
         w.unmount()
     })
 })
