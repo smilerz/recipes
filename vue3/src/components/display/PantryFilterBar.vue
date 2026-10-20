@@ -4,8 +4,11 @@
             v-model:query="query"
             has-filters
             :has-settings="false"
+            has-multi-select
+            :select-mode="selectMode"
             :active-filter-count="activeFilterCount"
             :show-reset="!!query || activeFilterCount > 0"
+            @toggle-select="emit('toggle-select')"
             @open-filters="drawerOpen = true"
             @reset="reset"
         />
@@ -48,8 +51,13 @@ import {useUrlFilters} from "@/composables/useUrlFilters";
 import {INVENTORY_ENTRY_FILTER_DEFS} from "@/composables/modellist/InventoryEntryList";
 import type {ApiInventoryEntryListRequest} from "@/openapi";
 
+defineProps<{
+    selectMode?: boolean
+}>()
+
 const emit = defineEmits<{
     update: [value: {query: string, filters: Partial<ApiInventoryEntryListRequest>}]
+    'toggle-select': []
 }>()
 
 const {t} = useI18n()

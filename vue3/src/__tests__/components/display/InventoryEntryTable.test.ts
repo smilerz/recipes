@@ -452,3 +452,64 @@ describe('InventoryEntryTable — add to shopping row action', () => {
         expect(addMessageMock).toHaveBeenCalled()
     })
 })
+
+describe('InventoryEntryTable — select mode', () => {
+    beforeEach(() => {
+        resetApiMock()
+    })
+
+    const lots = () => [entry({ id: 5, food: { id: 10, name: 'Flour' } }), entry({ id: 6, food: { id: 11, name: 'Salt' } })]
+
+    async function mountSelect(props: Record<string, any> = {}) {
+        apiMock.apiInventoryEntryList.mockResolvedValue({ results: lots(), count: 2 })
+        const wrapper = mountPage(InventoryEntryTable, { props })
+        await flushPromises()
+        return wrapper
+    }
+
+    it('shows no selection checkboxes by default', async () => {
+        const wrapper = await mountSelect()
+        expect(wrapper.find('[data-test^="select-lot-"]').exists()).toBe(false)
+    })
+
+    it('shows a checkbox for every lot in select mode', async () => {
+        const wrapper = await mountSelect({ selectMode: true })
+        expect(wrapper.findAll('[data-test^="select-lot-"]')).toHaveLength(2)
+    })
+
+    it('checking a lot emits the selection including that lot', async () => {
+        const wrapper = await mountSelect({ selectMode: true })
+
+        await wrapper.find('[data-test="select-lot-5"] input').setValue(true)
+
+        const emitted = wrapper.emitted('update:selected')!
+        expect((emitted[emitted.length - 1][0] as any[]).map(l => l.id)).toEqual([5])
+    })
+
+    it('unchecking removes the lot from the selection', async () => {
+        const wrapper = await mountSelect({ selectMode: true })
+        await wrapper.find('[data-test="select-lot-5"] input').setValue(true)
+        await wrapper.setProps({ selected: wrapper.emitted('update:selected')![0][0] as any })
+
+        await wrapper.find('[data-test="select-lot-5"] input').setValue(false)
+
+        const emitted = wrapper.emitted('update:selected')!
+        expect(emitted[emitted.length - 1][0]).toEqual([])
+    })
+
+    it('shows lots that are in the selected prop as checked', async () => {
+        const wrapper = await mountSelect({ selectMode: true, selected: [{ id: 6 }] })
+
+        expect((wrapper.find('[data-test="select-lot-6"] input').element as HTMLInputElement).checked).toBe(true)
+        expect((wrapper.find('[data-test="select-lot-5"] input').element as HTMLInputElement).checked).toBe(false)
+    })
+
+    it('selectAll selects every loaded lot', async () => {
+        const wrapper = await mountSelect({ selectMode: true })
+
+        ;(wrapper.vm as any).selectAll()
+
+        const emitted = wrapper.emitted('update:selected')!
+        expect((emitted[emitted.length - 1][0] as any[]).map(l => l.id)).toEqual([5, 6])
+    })
+})

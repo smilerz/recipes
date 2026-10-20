@@ -25,7 +25,7 @@ vi.mock('@/composables/useUrlFilters', async () => {
 import PantryFilterBar from '@/components/display/PantryFilterBar.vue'
 
 const STUBS = {
-    ListToolbar: {name: 'ListToolbar', template: '<div class="stub-list-toolbar"/>'},
+    ListToolbar: {name: 'ListToolbar', props: {hasMultiSelect: Boolean, selectMode: Boolean}, template: '<div class="stub-list-toolbar"/>'},
     TabbedDrawer: {name: 'TabbedDrawer', props: ['modelValue'], template: '<div class="stub-drawer"><slot name="filters"/></div>'},
     FilterPanel: {name: 'FilterPanel', template: '<div class="stub-filter-panel"/>'},
 }
@@ -58,6 +58,24 @@ describe('PantryFilterBar', () => {
         await flushPromises()
 
         expect(lastUpdate(wrapper)).toEqual({query: '', filters: {expired: true}})
+    })
+
+    it('offers select mode and reflects whether it is on', async () => {
+        const wrapper = mountPage(PantryFilterBar, {props: {selectMode: true}, global: {stubs: STUBS}})
+        await flushPromises()
+
+        const toolbar = wrapper.findComponent({name: 'ListToolbar'})
+        expect(toolbar.props('hasMultiSelect')).toBe(true)
+        expect(toolbar.props('selectMode')).toBe(true)
+    })
+
+    it('passes the toolbar\'s select toggle up to the page', async () => {
+        const wrapper = mountPage(PantryFilterBar, {global: {stubs: STUBS}})
+        await flushPromises()
+
+        wrapper.findComponent({name: 'ListToolbar'}).vm.$emit('toggle-select')
+
+        expect(wrapper.emitted('toggle-select')).toHaveLength(1)
     })
 
     it('opens the filter drawer from the toolbar', async () => {
