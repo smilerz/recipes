@@ -62,30 +62,14 @@
                 <v-tooltip activator="parent" :text="$t('Reset')" location="top" :open-delay="400" />
             </v-btn>
 
-            <v-btn
+            <sort-menu-button
                 v-if="sortOptions.length > 0"
-                variant="text"
-                class="text-none flex-shrink-0"
-                :append-icon="isDescending ? 'fa-solid fa-arrow-down-short-wide' : 'fa-solid fa-arrow-up-short-wide'"
-            >
-                {{ $t('sort_by') }} {{ currentLabel }}
-                <v-menu activator="parent" close-on-content-click>
-                    <v-list density="compact">
-                        <v-list-item
-                            v-for="opt in sortOptions"
-                            :key="opt.key"
-                            :active="currentField === opt.key"
-                            color="primary"
-                            @click="onSortSelect(opt.key)"
-                        >
-                            <template #append v-if="currentField === opt.key">
-                                <v-icon size="small" :icon="isDescending ? 'fa-solid fa-arrow-down-short-wide' : 'fa-solid fa-arrow-up-short-wide'" />
-                            </template>
-                            {{ $t(opt.labelKey) }}
-                        </v-list-item>
-                    </v-list>
-                </v-menu>
-            </v-btn>
+                :options="sortOptions"
+                :field="currentField"
+                :descending="isDescending"
+                :label="`${$t('sort_by')} ${currentLabel}`"
+                @select="onSortSelect"
+            />
 
             <v-btn
                 v-if="hasFilters && hasSettings"
@@ -171,31 +155,15 @@
                 {{ $t('Select') }}
             </v-btn>
 
-            <v-btn
+            <sort-menu-button
                 v-if="sortOptions.length > 0"
-                variant="text"
+                :options="sortOptions"
+                :field="currentField"
+                :descending="isDescending"
+                :label="currentLabel"
                 size="large"
-                class="text-none flex-shrink-0"
-                :append-icon="isDescending ? 'fa-solid fa-arrow-down-short-wide' : 'fa-solid fa-arrow-up-short-wide'"
-            >
-                {{ currentLabel }}
-                <v-menu activator="parent" close-on-content-click>
-                    <v-list density="compact">
-                        <v-list-item
-                            v-for="opt in sortOptions"
-                            :key="opt.key"
-                            :active="currentField === opt.key"
-                            color="primary"
-                            @click="onSortSelect(opt.key)"
-                        >
-                            <template #append v-if="currentField === opt.key">
-                                <v-icon size="small" :icon="isDescending ? 'fa-solid fa-arrow-down-short-wide' : 'fa-solid fa-arrow-up-short-wide'" />
-                            </template>
-                            {{ $t(opt.labelKey) }}
-                        </v-list-item>
-                    </v-list>
-                </v-menu>
-            </v-btn>
+                @select="onSortSelect"
+            />
 
             <v-btn
                 v-if="hasFilters && hasSettings"
@@ -221,6 +189,7 @@
 <script setup lang="ts">
 import {computed, onMounted, ref} from 'vue'
 import {useDisplay} from 'vuetify'
+import SortMenuButton from '@/components/common/SortMenuButton.vue'
 import {useI18n} from 'vue-i18n'
 import type {SortDef} from '@/composables/modellist/types'
 import {useDebounceFn, useResizeObserver} from '@vueuse/core'

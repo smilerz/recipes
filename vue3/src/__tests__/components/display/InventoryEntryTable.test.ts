@@ -570,3 +570,36 @@ describe('InventoryEntryTable — explaining an empty result', () => {
         expect(apiMock.apiFoodList).not.toHaveBeenCalled()
     })
 })
+
+describe('InventoryEntryTable — sort icon matches the rest of the app', () => {
+    beforeEach(() => {
+        resetApiMock()
+    })
+
+    async function mountWithLots() {
+        apiMock.apiInventoryEntryList.mockResolvedValue({ results: [entry({ id: 1, food: { id: 10, name: 'Zucchini' } }), entry({ id: 2, food: { id: 11, name: 'Apple' } })], count: 2 })
+        const wrapper = mountPage(InventoryEntryTable)
+        await flushPromises()
+        return wrapper
+    }
+
+    // found by its arrow, since the label changes once a field is sorted
+    const sortButton = (wrapper: any) => wrapper.findAll('button').find((b: any) => b.find('.fa-arrow-up-short-wide, .fa-arrow-down-short-wide').exists())
+
+    it('uses the list sort arrow, not the reorder icon, before anything is sorted', async () => {
+        const wrapper = await mountWithLots()
+
+        const button = sortButton(wrapper)!
+        expect(button.find('.fa-arrow-up-short-wide').exists()).toBe(true)
+        expect(button.find('.fa-sort').exists()).toBe(false)
+    })
+
+    it('points down once a field is sorted descending', async () => {
+        const wrapper = await mountWithLots()
+        ;(wrapper.vm as any).onSortSelect('amount')
+        ;(wrapper.vm as any).onSortSelect('amount')
+        await flushPromises()
+
+        expect(sortButton(wrapper)!.find('.fa-arrow-down-short-wide').exists()).toBe(true)
+    })
+})

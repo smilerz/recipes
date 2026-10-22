@@ -9,21 +9,8 @@
         </div>
 
         <div v-if="items.length" class="d-flex justify-end mb-2">
-            <v-btn variant="text" size="small" class="text-none"
-                   :append-icon="!sortField ? 'fa-solid fa-sort' : (sortDescending ? 'fa-solid fa-arrow-down-short-wide' : 'fa-solid fa-arrow-up-short-wide')">
-                {{ sortField ? `${t('sort_by')} ${t(sortLabelKey!)}` : t('Sort') }}
-                <v-menu activator="parent" close-on-content-click>
-                    <v-list density="compact">
-                        <v-list-item v-for="opt in SORT_OPTIONS" :key="opt.key" :active="sortField === opt.key" color="primary"
-                                     @click="onSortSelect(opt.key)">
-                            <template #append v-if="sortField === opt.key">
-                                <v-icon size="small" :icon="sortDescending ? 'fa-solid fa-arrow-down-short-wide' : 'fa-solid fa-arrow-up-short-wide'"></v-icon>
-                            </template>
-                            {{ t(opt.labelKey) }}
-                        </v-list-item>
-                    </v-list>
-                </v-menu>
-            </v-btn>
+            <sort-menu-button :options="SORT_OPTIONS" :field="sortField" :descending="sortDescending" size="small"
+                              :label="sortField ? `${t('sort_by')} ${t(sortLabelKey!)}` : t('Sort')" @select="onSortSelect($event as SortKey)"></sort-menu-button>
         </div>
 
         <template v-for="group in groups" :key="group.key">
@@ -127,6 +114,7 @@ import {computed, PropType, ref, watch} from "vue";
 import {useDisplay} from "vuetify";
 import {useI18n} from "vue-i18n";
 import InventoryEntryLogDialog from "@/components/dialogs/InventoryEntryLogDialog.vue";
+import SortMenuButton from "@/components/common/SortMenuButton.vue";
 import PantryBookingDialog from "@/components/dialogs/PantryBookingDialog.vue";
 import {expiryColor, expiryDateLabel, expiryStatus, inventoryListParams, pantryGroup} from "@/utils/pantry_utils.ts";
 import {ErrorMessageType, MessageType, StructuredMessage, useMessageStore} from "@/stores/MessageStore.ts";
