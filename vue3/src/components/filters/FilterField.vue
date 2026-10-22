@@ -34,6 +34,17 @@
             class="flex-grow-1"
         />
     </div>
+    <div v-else-if="def.type === 'text'" :class="[wrapClass, 'd-flex align-center']">
+        <v-icon v-if="def.icon" :icon="def.icon" size="small" class="me-3 text-medium-emphasis" />
+        <v-text-field
+            :label="$t(def.labelKey)"
+            v-model="textValue"
+            density="compact"
+            hide-details
+            clearable
+            class="flex-grow-1"
+        />
+    </div>
     <div v-else-if="def.type === 'number'" :class="[wrapClass, 'd-flex align-center']">
         <v-icon v-if="def.icon" :icon="def.icon" size="small" class="me-3 text-medium-emphasis" />
         <v-text-field
@@ -174,8 +185,9 @@
 </template>
 
 <script setup lang="ts">
-import {computed} from 'vue'
+import {computed, onBeforeUnmount, ref, watch} from 'vue'
 import type {FilterDef, FilterValue} from '@/composables/modellist/types'
+import {SEARCH_DEBOUNCE_MS} from '@/utils/utils'
 import {parseRangePart, buildRangeUpdate} from '@/utils/filterRange'
 import TriStateToggle from '@/components/common/TriStateToggle.vue'
 import ModelSelect from '@/components/inputs/ModelSelect.vue'
@@ -191,6 +203,25 @@ const props = withDefaults(defineProps<{
 })
 
 const wrapClass = computed(() => props.compact ? 'mt-1' : 'px-4 py-1')
+
+// ─── text: typed search, applied once typing pauses (not a request per keystroke) ───
+const textValue = ref<string | null>(props.getFilter(props.def.key) ?? '')
+let textTimer: ReturnType<typeof setTimeout> | undefined
+
+watch(textValue, value => {
+    clearTimeout(textTimer)
+    textTimer = setTimeout(() => props.setFilter(props.def.key, value ? value : undefined), SEARCH_DEBOUNCE_MS)
+})
+
+// follow the filter when it changes elsewhere (chip removed, Clear all)
+watch(() => props.getFilter(props.def.key), value => {
+    if ((value ?? '') !== (textValue.value ?? '')) {
+        clearTimeout(textTimer)
+        textValue.value = value ?? ''
+    }
+})
+
+onBeforeUnmount(() => clearTimeout(textTimer))
 
 // ─── rating-unrated: unified "0 / Unrated" + 1–5 star control ────────────
 const isUnrated = computed(() => !!(props.def.unratedKey && props.getFilter(props.def.unratedKey)))

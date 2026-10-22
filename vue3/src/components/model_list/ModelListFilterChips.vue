@@ -115,6 +115,9 @@ function chipLabel(def: FilterDef, value: string): string {
         const name = nameCache.get(`${def.modelName}:${value}`)
         return name ? `${t(def.labelKey)}: ${name}` : t(def.labelKey)
     }
+    if (def.type === 'text') {
+        return `${t(def.labelKey)}: ${value}`
+    }
     if (def.type === 'number') {
         const suffix = def.suffixKey ? ` ${t(def.suffixKey).toLowerCase()}` : ''
         return `${t(def.labelKey)}: ${value}${suffix}`

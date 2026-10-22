@@ -20,18 +20,6 @@
                         {{ $t(a.labelKey) }}
                     </v-btn>
                 </div>
-                <v-row>
-                    <v-col cols="12" md="6">
-                        <model-select model="Food" v-model="food" hide-details></model-select>
-                    </v-col>
-                    <v-col cols="12" md="5">
-                        <model-select model="InventoryLocation" v-model="inventoryLocation" hide-details></model-select>
-                    </v-col>
-                    <v-col cols="12" md="1" class="d-flex align-center">
-                        <v-btn icon="$pantry" color="create" variant="tonal" :disabled="!food" :title="$t('Add')" :aria-label="$t('Add')" @click="quickAdd"></v-btn>
-                    </v-col>
-                </v-row>
-
                 <selection-bar v-if="selectMode" class="mb-2" :selected-count="selected.length"
                                @close="exitSelectMode" @select-all="selectAll" @select-none="selected = []">
                     <template #actions>
@@ -46,12 +34,23 @@
 
                 <pantry-filter-bar :select-mode="selectMode" @update="onFilterUpdate" @toggle-select="toggleSelectMode"></pantry-filter-bar>
 
-                <inventory-entry-table ref="entryTable" :food="food" :inventory-location="inventoryLocation" :query="query" :filters="filters"
+                <!-- one line, never wrapped: the picker takes the room and Add stays beside it (Food moved into the filter drawer) -->
+                <v-row class="flex-nowrap" align="center" data-test="pantry-add-row">
+                    <v-col class="flex-grow-1" style="min-width: 0">
+                        <model-select model="InventoryLocation" v-model="inventoryLocation" hide-details></model-select>
+                    </v-col>
+                    <v-col cols="auto">
+                        <v-btn color="create" variant="tonal" prepend-icon="$pantry" data-test="pantry-add" @click="onAdd">{{ $t('Add') }}</v-btn>
+                    </v-col>
+                </v-row>
+
+                <inventory-entry-table ref="entryTable" :inventory-location="inventoryLocation" :query="query" :filters="filters"
                                        :select-mode="selectMode" v-model:selected="selected"></inventory-entry-table>
             </v-card-text>
         </v-card>
 
         <pantry-batch-dialog v-model="batchDialog" :mode="batchMode" :count="selected.length" @confirm="onBatchConfirm"></pantry-batch-dialog>
+        <pantry-booking-dialog v-model="addDialog" booking-mode="add" @update="entryTable?.load()"></pantry-booking-dialog>
 
         <stock-up-dialog ref="stockUpDialog" @stocked="entryTable?.load()"></stock-up-dialog>
         <use-up-dialog ref="useUpDialog" @used="entryTable?.load()"></use-up-dialog>
@@ -67,18 +66,18 @@ import StockUpDialog from "@/components/dialogs/StockUpDialog.vue";
 import UseUpDialog from "@/components/dialogs/UseUpDialog.vue";
 import InventoryQuickAddDialog from "@/components/dialogs/InventoryQuickAddDialog.vue";
 import PantryBatchDialog from "@/components/dialogs/PantryBatchDialog.vue";
+import PantryBookingDialog from "@/components/dialogs/PantryBookingDialog.vue";
 import SelectionBar from "@/components/common/SelectionBar.vue";
 import ModelSelect from "@/components/inputs/ModelSelect.vue";
-import {onMounted, ref} from "vue";
+import {ref, watch} from "vue";
 import {useDisplay} from "vuetify";
 import {useI18n} from "vue-i18n";
 import {ApiApi, ApiInventoryEntryListRequest, Food, InventoryEntry, InventoryLocation} from "@/openapi";
-import {useRoute, type RouteLocationRaw} from "vue-router";
+import type {RouteLocationRaw} from "vue-router";
 import {ErrorMessageType, MessageType, useMessageStore} from "@/stores/MessageStore";
 import {useInventoryActions} from "@/composables/useInventoryActions";
 import {usePantryBatchActions} from "@/composables/usePantryBatchActions";
 
-const route = useRoute()
 const {mobile} = useDisplay()
 const {t} = useI18n()
 const food = ref<Food | undefined>(undefined)
@@ -94,6 +93,19 @@ function onFilterUpdate(value: {query: string, filters: Partial<ApiInventoryEntr
     query.value = value.query
     filters.value = value.filters
 }
+
+// The Food chosen in the drawer is also what "Add" quick-adds, so keep the full Food (shelf lives and all).
+watch(() => filters.value.foodId, id => {
+    if (!id) {
+        food.value = undefined
+        return
+    }
+    new ApiApi().apiFoodRetrieve({id}).then(r => {
+        food.value = r
+    }).catch(err => {
+        useMessageStore().addError(ErrorMessageType.FETCH_ERROR, err)
+    })
+})
 
 // Select mode: a selection of lots acted on together (the same toolbar toggle -> selection bar pattern as the model lists).
 const selectMode = ref(false)
@@ -148,7 +160,15 @@ const batchActions = [
     {key: 'expiry', labelKey: 'Expires', icon: 'fa-solid fa-calendar-day', run: () => openBatchDialog('expires')},
 ]
 
-// #4: quick-add a lot for the food currently selected in the filter above, without leaving the page.
+const addDialog = ref(false)
+
+/** With a food filtered, Add is the quick add for it; otherwise the add dialog, which has its own food picker. */
+function onAdd() {
+    if (food.value) quickAdd()
+    else addDialog.value = true
+}
+
+// #4: quick-add a lot for the food currently chosen in the Food filter, without leaving the page.
 async function quickAdd() {
     if (!food.value || !quickAddDialog.value) return
     const {quickAddToInventory} = useInventoryActions()
@@ -165,19 +185,6 @@ const headerActions: Array<{key: string, labelKey: string, icon: string, color?:
     {key: 'use', labelKey: 'UseUp', icon: '$pantry', action: () => useUpDialog.value?.open()},
     {key: 'booking', labelKey: 'InventoryBooking', icon: 'fa-solid fa-boxes-stacked fa-fw', color: 'create', to: {name: 'InventoryBookingPage'}},
 ]
-
-onMounted(() => {
-    const api = new ApiApi()
-
-    const foodId = Number(route.query.food_id)
-    if (foodId && !Number.isNaN(foodId)) {
-        api.apiFoodRetrieve({id: foodId}).then(r => {
-            food.value = r
-        }).catch(err => {
-            useMessageStore().addError(ErrorMessageType.FETCH_ERROR, err)
-        })
-    }
-})
 
 </script>
 

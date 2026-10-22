@@ -567,8 +567,8 @@ export function inventoryListParams(
     }
     if (food?.id) {
         params.foodId = food.id
-        params.includeChildren = true
     }
+    if (params.foodId) params.includeChildren = true
     const trimmed = query?.trim()
     if (trimmed) {
         params.query = trimmed

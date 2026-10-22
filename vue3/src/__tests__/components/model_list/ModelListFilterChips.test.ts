@@ -70,6 +70,14 @@ describe('ModelListFilterChips', () => {
             expect(chip.text()).toMatch(/Rating.*3.*5/)
         })
 
+        it('renders a chip for a text filter as "Label: value"', () => {
+            const wrapper = mountChips(
+                [{key: 'query', labelKey: 'Search', type: 'text'}],
+                {query: 'amaro'},
+            )
+            expect(wrapper.find('.v-chip').text()).toMatch(/Search: amaro/)
+        })
+
         it('does not render a chip for empty tag-select', () => {
             const wrapper = mountChips(
                 [{key: 'keywords', labelKey: 'Keywords', type: 'tag-select', modelName: 'Keyword' as any}],

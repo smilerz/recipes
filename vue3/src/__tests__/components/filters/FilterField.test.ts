@@ -1,5 +1,7 @@
-import {describe, it, expect, vi} from 'vitest'
+import {describe, it, expect, vi, afterEach} from 'vitest'
 import {mount} from '@vue/test-utils'
+import {reactive} from 'vue'
+import {SEARCH_DEBOUNCE_MS} from '@/utils/utils'
 import {createVuetify} from 'vuetify'
 import * as components from 'vuetify/components'
 import * as directives from 'vuetify/directives'
@@ -120,5 +122,57 @@ describe('FilterField — rating-unrated (unified rating + unrated control)', ()
         expect(active).toContain('v-btn--variant-text')
         expect(active).not.toContain('v-btn--variant-flat')
         expect(inactive).toContain('v-btn--variant-text')
+    })
+})
+
+describe('FilterField — text (typed search)', () => {
+    const TEXT_DEF: FilterDef = {key: 'query', labelKey: 'Search', type: 'text', icon: 'fa-solid fa-magnifying-glass'}
+
+    afterEach(() => {
+        vi.useRealTimers()
+    })
+
+    it('shows the filter\'s current text', () => {
+        const {wrapper} = mountField(TEXT_DEF, {query: 'amaro'})
+        expect((wrapper.find('input').element as HTMLInputElement).value).toBe('amaro')
+    })
+
+    it('sets the filter once typing pauses, not on every keystroke', async () => {
+        vi.useFakeTimers()
+        const {wrapper, setFilter} = mountField(TEXT_DEF)
+
+        await wrapper.find('input').setValue('ama')
+        await wrapper.find('input').setValue('amaro')
+        expect(setFilter).not.toHaveBeenCalled()
+
+        vi.advanceTimersByTime(SEARCH_DEBOUNCE_MS)
+
+        expect(setFilter).toHaveBeenCalledTimes(1)
+        expect(setFilter).toHaveBeenCalledWith('query', 'amaro')
+    })
+
+    it('clears the filter when the text is emptied', async () => {
+        vi.useFakeTimers()
+        const {wrapper, setFilter} = mountField(TEXT_DEF, {query: 'amaro'})
+
+        await wrapper.find('input').setValue('')
+        vi.advanceTimersByTime(SEARCH_DEBOUNCE_MS)
+
+        expect(setFilter).toHaveBeenCalledWith('query', undefined)
+    })
+
+    it('follows the filter when it is changed elsewhere (chip removed, Clear all)', async () => {
+        const values = reactive<Record<string, string>>({query: 'amaro'})
+        const vuetify = createVuetify({components, directives})
+        const i18n = createI18n({legacy: false, locale: 'en', messages: {en: {}}, missingWarn: false, fallbackWarn: false})
+        const wrapper = mount(FilterField, {
+            props: {def: TEXT_DEF, getFilter: (key: string) => values[key], setFilter: vi.fn(), clearFilter: vi.fn()},
+            global: {plugins: [vuetify, i18n]},
+        })
+
+        delete values.query
+        await wrapper.vm.$nextTick()
+
+        expect((wrapper.find('input').element as HTMLInputElement).value).toBe('')
     })
 })
