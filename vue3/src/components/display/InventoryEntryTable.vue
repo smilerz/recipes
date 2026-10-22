@@ -1,7 +1,11 @@
 <template>
     <div>
-        <div v-if="!loading && items.length === 0" class="text-center text-medium-emphasis pa-6">
-            {{ t('NoPantryEntries') }}
+        <div v-if="!loading && items.length === 0" class="text-center text-medium-emphasis pa-6" data-test="pantry-empty">
+            <template v-if="isFiltered">
+                <div>{{ t('PantryNoMatches') }}</div>
+                <div v-if="unstockedMatches" class="mt-1">{{ t('PantryFoodsNotStocked', {count: unstockedMatches}) }}</div>
+            </template>
+            <template v-else>{{ t('NoPantryEntries') }}</template>
         </div>
 
         <div v-if="items.length" class="d-flex justify-end mb-2">
@@ -331,11 +335,27 @@ function openBooking(item: InventoryEntry) {
     bookingDialog.value = true
 }
 
+const unstockedMatches = ref(0)
+const isFiltered = computed(() => !!props.query?.trim() || Object.keys(props.filters ?? {}).length > 0 || !!props.food || !!props.inventoryLocation)
+
+/** After an empty search, count the foods that match the text but have no stock — so a correct "nothing here" doesn't read as a broken search. */
+async function countUnstockedMatches() {
+    const query = props.query?.trim()
+    unstockedMatches.value = 0
+    if (items.value.length || !query) return
+    try {
+        unstockedMatches.value = (await new ApiApi().apiFoodList({query, pageSize: 1})).count ?? 0
+    } catch {
+        // only a hint — the empty message stands without it
+    }
+}
+
 function load() {
     loading.value = true
     const parameters = inventoryListParams({food: props.food, inventoryLocation: props.inventoryLocation, query: props.query, filters: props.filters})
-    new ApiApi().apiInventoryEntryList(parameters).then((r) => {
+    new ApiApi().apiInventoryEntryList(parameters).then(async (r) => {
         items.value = r.results ?? []
+        await countUnstockedMatches()
     }).catch((err) => {
         useMessageStore().addError(ErrorMessageType.FETCH_ERROR, err)
     }).finally(() => {

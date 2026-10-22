@@ -48,10 +48,11 @@ function mountPage() {
         global: {
             plugins: [pinia, i18n, vuetify],
             stubs: {
-                'model-select': {template: '<div/>'},
+                'model-select': {name: 'ModelSelect', props: ['model'], template: '<div/>'},
                 'inventory-entry-table': {name: 'InventoryEntryTable', props: ['food', 'inventoryLocation', 'query', 'filters', 'selectMode', 'selected'], template: '<div/>', methods: {load: tableLoad, selectAll}},
                 'pantry-filter-bar': {name: 'PantryFilterBar', props: ['selectMode'], template: '<div/>'},
                 'pantry-batch-dialog': {name: 'PantryBatchDialog', props: ['modelValue', 'mode', 'count'], template: '<div/>'},
+                'pantry-booking-dialog': {name: 'PantryBookingDialog', props: ['modelValue', 'bookingMode'], template: '<div/>'},
                 'stock-up-dialog': {template: '<div/>', methods: {open: vi.fn()}},
                 'use-up-dialog': {template: '<div/>', methods: {open: vi.fn()}},
                 'inventory-quick-add-dialog': {template: '<div/>'},
@@ -237,6 +238,116 @@ describe('PantryPage — select mode and batch actions', () => {
         ;(w.vm as any).selectAll()
 
         expect(selectAll).toHaveBeenCalled()
+        w.unmount()
+    })
+})
+
+describe('PantryPage — layout order', () => {
+    beforeEach(() => {
+        setActivePinia(createPinia())
+        resetApiMock()
+    })
+
+    it('puts the search toolbar above the food and location pickers', async () => {
+        const w = mountPage()
+        await flushPromises()
+
+        const searchBar = w.findComponent({name: 'PantryFilterBar'}).element
+        const pickers = w.find('.v-row').element
+
+        expect(searchBar.compareDocumentPosition(pickers) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+        w.unmount()
+    })
+})
+
+describe('PantryPage — Food lives in the filter drawer', () => {
+    beforeEach(() => {
+        setActivePinia(createPinia())
+        resetApiMock()
+        quickAddToInventory.mockReset()
+    })
+
+    const filterBar = (w: any) => w.findComponent({name: 'PantryFilterBar'})
+
+    it('has no Food picker of its own, only the location picker', async () => {
+        const w = mountPage()
+        await flushPromises()
+
+        expect(w.findAllComponents({name: 'ModelSelect'}).map(c => c.props('model'))).toEqual(['InventoryLocation'])
+        w.unmount()
+    })
+
+    it('knows the food chosen in the drawer\'s Food filter', async () => {
+        apiMock.apiFoodRetrieve.mockResolvedValue({id: 5, name: 'Flour'})
+        const w = mountPage()
+        await flushPromises()
+
+        filterBar(w).vm.$emit('update', {query: '', filters: {foodId: 5}})
+        await flushPromises()
+
+        expect(apiMock.apiFoodRetrieve).toHaveBeenCalledWith({id: 5})
+        expect((w.vm as any).food).toMatchObject({id: 5, name: 'Flour'})
+        w.unmount()
+    })
+
+    it('forgets the food when the Food filter is cleared', async () => {
+        apiMock.apiFoodRetrieve.mockResolvedValue({id: 5, name: 'Flour'})
+        const w = mountPage()
+        await flushPromises()
+        filterBar(w).vm.$emit('update', {query: '', filters: {foodId: 5}})
+        await flushPromises()
+
+        filterBar(w).vm.$emit('update', {query: '', filters: {}})
+        await flushPromises()
+
+        expect((w.vm as any).food).toBeUndefined()
+        w.unmount()
+    })
+
+    it('Add quick-adds the filtered food when there is one', async () => {
+        quickAddToInventory.mockResolvedValue(true)
+        const w = mountPage()
+        await flushPromises()
+        ;(w.vm as any).food = {id: 5, name: 'Flour'}
+
+        await w.find('[data-test="pantry-add"]').trigger('click')
+        await flushPromises()
+
+        expect(quickAddToInventory).toHaveBeenCalledTimes(1)
+        w.unmount()
+    })
+
+    it('Add opens the add dialog (which has its own food picker) when no food is filtered', async () => {
+        const w = mountPage()
+        await flushPromises()
+
+        await w.find('[data-test="pantry-add"]').trigger('click')
+        await flushPromises()
+
+        const dialog = w.findComponent({name: 'PantryBookingDialog'})
+        expect(quickAddToInventory).not.toHaveBeenCalled()
+        expect(dialog.props('modelValue')).toBe(true)
+        expect(dialog.props('bookingMode')).toBe('add')
+        w.unmount()
+    })
+
+    it('reloads the list after the add dialog saves', async () => {
+        const w = mountPage()
+        await flushPromises()
+        await w.find('[data-test="pantry-add"]').trigger('click')
+
+        w.findComponent({name: 'PantryBookingDialog'}).vm.$emit('update')
+        await flushPromises()
+
+        expect(tableLoad).toHaveBeenCalled()
+        w.unmount()
+    })
+
+    it('keeps the location picker and Add on one line instead of wrapping Add onto its own row', async () => {
+        const w = mountPage()
+        await flushPromises()
+
+        expect(w.find('[data-test="pantry-add-row"]').classes()).toContain('flex-nowrap')
         w.unmount()
     })
 })

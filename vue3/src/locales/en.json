@@ -581,6 +581,8 @@
   "Owner": "Owner",
   "Page": "Page",
   "Pantry": "Pantry",
+  "PantryFoodsNotStocked": "{count} matching in your food list, but not in your pantry.",
+  "PantryNoMatches": "Nothing in your pantry matches.",
   "PantryBatchPartial": "{updated} updated, {failed} failed",
   "PantryBatchShopping": "{added} added to the shopping list, {listed} already on it",
   "PantryBatchUpdated": "{count} updated",

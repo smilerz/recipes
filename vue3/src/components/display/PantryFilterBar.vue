@@ -1,16 +1,17 @@
 <template>
     <div>
+        <!-- search is a filter in the drawer (so it shows as a chip, like the rest), not a box here -->
         <list-toolbar
-            v-model:query="query"
             has-filters
+            disable-search
             :has-settings="false"
             has-multi-select
             :select-mode="selectMode"
             :active-filter-count="activeFilterCount"
-            :show-reset="!!query || activeFilterCount > 0"
+            :show-reset="activeFilterCount > 0"
             @toggle-select="emit('toggle-select')"
             @open-filters="drawerOpen = true"
-            @reset="reset"
+            @reset="clearAllFilters"
         />
 
         <model-list-filter-chips
@@ -41,8 +42,9 @@
 
 <script setup lang="ts">
 
-import {computed, ref, watch} from "vue";
+import {computed, onMounted, ref, watch} from "vue";
 import {useI18n} from "vue-i18n";
+import {useRoute} from "vue-router";
 import ListToolbar from "@/components/model_list/ListToolbar.vue";
 import ModelListFilterChips from "@/components/model_list/ModelListFilterChips.vue";
 import FilterPanel from "@/components/model_list/FilterPanel.vue";
@@ -61,21 +63,24 @@ const emit = defineEmits<{
 }>()
 
 const {t} = useI18n()
+const route = useRoute()
 
-const query = ref('')
 const drawerOpen = ref(false)
 const TABS = [{key: 'filters', label: t('Filters'), icon: 'fa-solid fa-filter'}]
 
 const {filterDefs, groupedFilterDefs, filterParams, activeFilterCount, getFilter, setFilter, clearFilter, clearAllFilters}
     = useUrlFilters(computed(() => INVENTORY_ENTRY_FILTER_DEFS))
 
-function reset() {
-    query.value = ''
-    clearAllFilters()
-}
+// the recipe ingredient menu opens the pantry with ?food_id= — that is the Food filter now
+onMounted(() => {
+    const foodId = Number(route.query.food_id)
+    if (foodId && !Number.isNaN(foodId)) setFilter('foodId', String(foodId))
+})
 
-watch([query, filterParams], () => {
-    emit('update', {query: query.value, filters: filterParams.value as Partial<ApiInventoryEntryListRequest>})
+// the search text is just another filter in the drawer; the page and table take it separately
+watch(filterParams, () => {
+    const {query, ...filters} = filterParams.value as Partial<ApiInventoryEntryListRequest>
+    emit('update', {query: query ?? '', filters})
 }, {immediate: true})
 
 </script>

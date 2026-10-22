@@ -688,3 +688,13 @@ describe('editing an expiry date', () => {
         expect(v.getDate()).toBe(9)
     })
 })
+
+describe('inventoryListParams — Food chosen in the filter drawer', () => {
+    it('includes the food\'s children, so picking a parent shows what is under it', () => {
+        expect(inventoryListParams({filters: {foodId: 7}})).toEqual({pageSize: 500, foodId: 7, includeChildren: true})
+    })
+
+    it('does not ask for children when no food is chosen', () => {
+        expect(inventoryListParams({filters: {expired: true}})).not.toHaveProperty('includeChildren')
+    })
+})

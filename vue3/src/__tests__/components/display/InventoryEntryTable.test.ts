@@ -513,3 +513,60 @@ describe('InventoryEntryTable — select mode', () => {
         expect((emitted[emitted.length - 1][0] as any[]).map(l => l.id)).toEqual([5, 6])
     })
 })
+
+describe('InventoryEntryTable — explaining an empty result', () => {
+    beforeEach(() => {
+        resetApiMock()
+    })
+
+    const empty = () => apiMock.apiInventoryEntryList.mockResolvedValue({ results: [], count: 0 })
+    const emptyText = (wrapper: any) => wrapper.find('[data-test="pantry-empty"]').text()
+
+    it('says the pantry is empty when nothing is filtered', async () => {
+        empty()
+        const wrapper = mountPage(InventoryEntryTable)
+        await flushPromises()
+
+        expect(emptyText(wrapper)).toContain('NoPantryEntries')
+        expect(apiMock.apiFoodList).not.toHaveBeenCalled()
+    })
+
+    it('says nothing in the pantry matches when a search or filter is active', async () => {
+        empty()
+        const wrapper = mountPage(InventoryEntryTable, { props: { filters: { expired: true } } })
+        await flushPromises()
+
+        expect(emptyText(wrapper)).toContain('PantryNoMatches')
+        expect(emptyText(wrapper)).not.toContain('NoPantryEntries')
+    })
+
+    it('adds how many foods match the search but are not in the pantry', async () => {
+        empty()
+        apiMock.apiFoodList.mockResolvedValue({ count: 5, results: [] })
+        const wrapper = mountPage(InventoryEntryTable, { props: { query: 'amaro' } })
+        await flushPromises()
+
+        expect(apiMock.apiFoodList).toHaveBeenCalledWith(expect.objectContaining({ query: 'amaro', pageSize: 1 }))
+        expect(emptyText(wrapper)).toContain('PantryNoMatches')
+        expect(emptyText(wrapper)).toContain('PantryFoodsNotStocked')
+    })
+
+    it('leaves the foods hint out when no food matches the search either', async () => {
+        empty()
+        apiMock.apiFoodList.mockResolvedValue({ count: 0, results: [] })
+        const wrapper = mountPage(InventoryEntryTable, { props: { query: 'zzzz' } })
+        await flushPromises()
+
+        expect(emptyText(wrapper)).toContain('PantryNoMatches')
+        expect(emptyText(wrapper)).not.toContain('PantryFoodsNotStocked')
+    })
+
+    it('shows neither message when there are lots', async () => {
+        apiMock.apiInventoryEntryList.mockResolvedValue({ results: [entry({ id: 5 })], count: 1 })
+        const wrapper = mountPage(InventoryEntryTable, { props: { query: 'flour' } })
+        await flushPromises()
+
+        expect(wrapper.find('[data-test="pantry-empty"]').exists()).toBe(false)
+        expect(apiMock.apiFoodList).not.toHaveBeenCalled()
+    })
+})
