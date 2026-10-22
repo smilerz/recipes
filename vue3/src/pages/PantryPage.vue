@@ -1,23 +1,30 @@
 <template>
     <v-container>
         <v-card prepend-icon="$pantry" :title="$t('Pantry')" class="mb-4">
-            <template #subtitle>
+            <!-- the help line only pushes the list down on a phone -->
+            <template v-if="!mobile" #subtitle>
                 <div class="text-wrap">{{ $t('PantryHelp') }}</div>
             </template>
             <!-- Desktop: actions in the header append. On mobile the 3 full-size buttons overflow
-                 the row (collapsing the title), so they move to a wrapping row below (see v-card-text). -->
+                 the row (collapsing the title), so they move to one compact row below (see v-card-text):
+                 the least-used one is icon-only so all three fit on a single line. -->
             <template v-if="!mobile" #append>
-                <v-btn v-for="a in headerActions" :key="a.key" :prepend-icon="a.icon" :color="a.color"
+                <v-btn v-for="a in headerActions" :key="a.key" :prepend-icon="a.icon" :color="a.color" :data-test="`header-action-${a.key}`"
                        variant="tonal" class="me-2" v-bind="a.to ? {to: a.to} : {}" @click="a.action?.()">
                     {{ $t(a.labelKey) }}
                 </v-btn>
             </template>
 
             <v-card-text>
-                <div v-if="mobile" class="d-flex flex-wrap ga-2 mb-4">
-                    <v-btn v-for="a in headerActions" :key="a.key" :prepend-icon="a.icon" :color="a.color"
-                           variant="tonal" size="small" v-bind="a.to ? {to: a.to} : {}" @click="a.action?.()">
-                        {{ $t(a.labelKey) }}
+                <div v-if="mobile" class="d-flex flex-nowrap ga-2 mb-2" data-test="pantry-header-actions">
+                    <v-btn v-for="a in headerActions" :key="a.key" :color="a.color" variant="tonal" size="small"
+                           :icon="a.iconOnlyOnPhone" :prepend-icon="a.iconOnlyOnPhone ? undefined : a.icon"
+                           :height="a.iconOnlyOnPhone ? 28 : undefined" :width="a.iconOnlyOnPhone ? 28 : undefined"
+                           :aria-label="$t(a.labelKey)" :title="$t(a.labelKey)" :data-test="`header-action-${a.key}`"
+                           v-bind="a.to ? {to: a.to} : {}" @click="a.action?.()">
+                        <!-- a v-btn with any default slot ignores its icon prop, so the icon goes in the slot -->
+                        <v-icon v-if="a.iconOnlyOnPhone" :icon="a.icon" size="small"></v-icon>
+                        <template v-else>{{ $t(a.labelKey) }}</template>
                     </v-btn>
                 </div>
                 <selection-bar v-if="selectMode" class="mb-2" :selected-count="selected.length"
@@ -32,15 +39,11 @@
                     </template>
                 </selection-bar>
 
-                <pantry-filter-bar :select-mode="selectMode" @update="onFilterUpdate" @toggle-select="toggleSelectMode"></pantry-filter-bar>
+                <pantry-filter-bar :select-mode="selectMode" @update="onFilterUpdate" @toggle-select="toggleSelectMode" @add="onAdd"></pantry-filter-bar>
 
-                <!-- one line, never wrapped: the picker takes the room and Add stays beside it (Food moved into the filter drawer) -->
-                <v-row class="flex-nowrap" align="center" data-test="pantry-add-row">
-                    <v-col class="flex-grow-1" style="min-width: 0">
-                        <model-select model="InventoryLocation" v-model="inventoryLocation" hide-details></model-select>
-                    </v-col>
-                    <v-col cols="auto">
-                        <v-btn color="create" variant="tonal" prepend-icon="$pantry" data-test="pantry-add" @click="onAdd">{{ $t('Add') }}</v-btn>
+                <v-row>
+                    <v-col class="pt-2">
+                        <model-select model="InventoryLocation" v-model="inventoryLocation" density="compact" hide-details></model-select>
                     </v-col>
                 </v-row>
 
@@ -180,10 +183,10 @@ async function quickAdd() {
 }
 
 // Header actions, rendered in the card append on desktop and a wrapping row on mobile (DEFECT-02).
-const headerActions: Array<{key: string, labelKey: string, icon: string, color?: string, to?: RouteLocationRaw, action?: () => void}> = [
+const headerActions: Array<{key: string, labelKey: string, icon: string, color?: string, to?: RouteLocationRaw, action?: () => void, iconOnlyOnPhone?: boolean}> = [
     {key: 'stock', labelKey: 'StockUp', icon: '$pantry', action: () => stockUpDialog.value?.open()},
     {key: 'use', labelKey: 'UseUp', icon: '$pantry', action: () => useUpDialog.value?.open()},
-    {key: 'booking', labelKey: 'InventoryBooking', icon: 'fa-solid fa-boxes-stacked fa-fw', color: 'create', to: {name: 'InventoryBookingPage'}},
+    {key: 'booking', labelKey: 'InventoryBooking', icon: 'fa-solid fa-boxes-stacked fa-fw', color: 'create', to: {name: 'InventoryBookingPage'}, iconOnlyOnPhone: true},
 ]
 
 </script>

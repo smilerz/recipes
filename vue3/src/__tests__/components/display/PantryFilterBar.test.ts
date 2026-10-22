@@ -10,20 +10,22 @@ vi.mock('vue-router', async (importOriginal) => ({
 }))
 
 // useUrlFilters reads/writes the URL; the bar only cares about the params it exposes.
-const state = vi.hoisted(() => ({filterParams: null as any, setFilter: null as any}))
+const state = vi.hoisted(() => ({filterParams: null as any, setFilter: null as any, clearFilter: null as any, getFilter: null as any}))
 vi.mock('@/composables/useUrlFilters', async () => {
     const {ref, computed} = await import('vue')
     state.filterParams = ref({})
     state.setFilter = vi.fn()
+    state.clearFilter = vi.fn()
+    state.getFilter = vi.fn()
     return {
         useUrlFilters: () => ({
             filterDefs: computed(() => []),
             groupedFilterDefs: computed(() => new Map()),
             filterParams: state.filterParams,
             activeFilterCount: computed(() => Object.keys(state.filterParams.value).length),
-            getFilter: vi.fn(),
+            getFilter: state.getFilter,
             setFilter: state.setFilter,
-            clearFilter: vi.fn(),
+            clearFilter: state.clearFilter,
             clearAllFilters: vi.fn(),
         }),
     }
@@ -32,7 +34,8 @@ vi.mock('@/composables/useUrlFilters', async () => {
 import PantryFilterBar from '@/components/display/PantryFilterBar.vue'
 
 const STUBS = {
-    ListToolbar: {name: 'ListToolbar', props: {hasMultiSelect: Boolean, selectMode: Boolean, disableSearch: Boolean}, template: '<div class="stub-list-toolbar"/>'},
+    ListToolbar: {name: 'ListToolbar', props: {hasMultiSelect: Boolean, selectMode: Boolean, disableSearch: Boolean}, template: '<div class="stub-list-toolbar"><slot name="search"/></div>'},
+    ModelSelect: {name: 'ModelSelect', props: ['modelValue', 'model'], emits: ['update:modelValue'], template: '<div class="stub-model-select"/>'},
     TabbedDrawer: {name: 'TabbedDrawer', props: ['modelValue'], template: '<div class="stub-drawer"><slot name="filters"/></div>'},
     FilterPanel: {name: 'FilterPanel', template: '<div class="stub-filter-panel"/>'},
 }
@@ -46,6 +49,8 @@ describe('PantryFilterBar', () => {
     beforeEach(() => {
         state.filterParams.value = {}
         state.setFilter.mockClear()
+        state.clearFilter.mockClear()
+        state.getFilter.mockReset()
         routeState.query = {}
     })
 
@@ -119,5 +124,60 @@ describe('PantryFilterBar', () => {
         await flushPromises()
 
         expect(wrapper.findComponent({name: 'TabbedDrawer'}).props('modelValue')).toBe(true)
+    })
+
+    describe('Food selector and Add, inline with Filters and Select', () => {
+        const toolbar = (w: any) => w.findComponent({name: 'ListToolbar'})
+        const foodSelect = (w: any) => toolbar(w).findComponent({name: 'ModelSelect'})
+
+        it('puts a Food selector in the toolbar row', async () => {
+            const wrapper = mountPage(PantryFilterBar, {global: {stubs: STUBS}})
+            await flushPromises()
+
+            expect(foodSelect(wrapper).exists()).toBe(true)
+            expect(foodSelect(wrapper).props('model')).toBe('Food')
+        })
+
+        it('shows the Food filter\'s food in the selector (the same state as the drawer\'s Food filter)', async () => {
+            state.getFilter.mockImplementation((key: string) => key === 'foodId' ? '104' : undefined)
+            const wrapper = mountPage(PantryFilterBar, {global: {stubs: STUBS}})
+            await flushPromises()
+
+            expect(foodSelect(wrapper).props('modelValue')).toBe(104)
+        })
+
+        it('shows nothing selected when there is no Food filter', async () => {
+            const wrapper = mountPage(PantryFilterBar, {global: {stubs: STUBS}})
+            await flushPromises()
+
+            expect(foodSelect(wrapper).props('modelValue')).toBeNull()
+        })
+
+        it('picking a food sets the Food filter', async () => {
+            const wrapper = mountPage(PantryFilterBar, {global: {stubs: STUBS}})
+            await flushPromises()
+
+            foodSelect(wrapper).vm.$emit('update:modelValue', 7)
+
+            expect(state.setFilter).toHaveBeenCalledWith('foodId', '7')
+        })
+
+        it('clearing the selector clears the Food filter', async () => {
+            const wrapper = mountPage(PantryFilterBar, {global: {stubs: STUBS}})
+            await flushPromises()
+
+            foodSelect(wrapper).vm.$emit('update:modelValue', null)
+
+            expect(state.setFilter).toHaveBeenCalledWith('foodId', undefined)
+        })
+
+        it('has an Add button beside the selector that tells the page to add', async () => {
+            const wrapper = mountPage(PantryFilterBar, {global: {stubs: STUBS}})
+            await flushPromises()
+
+            await toolbar(wrapper).find('[data-test="pantry-add"]').trigger('click')
+
+            expect(wrapper.emitted('add')).toHaveLength(1)
+        })
     })
 })
