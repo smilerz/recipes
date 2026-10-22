@@ -269,7 +269,7 @@ describe('PantryPage — Food lives in the filter drawer', () => {
 
     const filterBar = (w: any) => w.findComponent({name: 'PantryFilterBar'})
 
-    it('has no Food picker of its own, only the location picker', async () => {
+    it('leaves the Food selector to the toolbar: the page itself only has the location picker', async () => {
         const w = mountPage()
         await flushPromises()
 
@@ -310,7 +310,7 @@ describe('PantryPage — Food lives in the filter drawer', () => {
         await flushPromises()
         ;(w.vm as any).food = {id: 5, name: 'Flour'}
 
-        await w.find('[data-test="pantry-add"]').trigger('click')
+        filterBar(w).vm.$emit('add')
         await flushPromises()
 
         expect(quickAddToInventory).toHaveBeenCalledTimes(1)
@@ -321,7 +321,7 @@ describe('PantryPage — Food lives in the filter drawer', () => {
         const w = mountPage()
         await flushPromises()
 
-        await w.find('[data-test="pantry-add"]').trigger('click')
+        filterBar(w).vm.$emit('add')
         await flushPromises()
 
         const dialog = w.findComponent({name: 'PantryBookingDialog'})
@@ -334,7 +334,7 @@ describe('PantryPage — Food lives in the filter drawer', () => {
     it('reloads the list after the add dialog saves', async () => {
         const w = mountPage()
         await flushPromises()
-        await w.find('[data-test="pantry-add"]').trigger('click')
+        filterBar(w).vm.$emit('add')
 
         w.findComponent({name: 'PantryBookingDialog'}).vm.$emit('update')
         await flushPromises()
@@ -342,12 +342,56 @@ describe('PantryPage — Food lives in the filter drawer', () => {
         expect(tableLoad).toHaveBeenCalled()
         w.unmount()
     })
+})
 
-    it('keeps the location picker and Add on one line instead of wrapping Add onto its own row', async () => {
+describe('PantryPage — compact header on a phone', () => {
+    // Vuetify counts anything under 1145px as mobile in these tests; 1400 is desktop
+    const originalWidth = window.innerWidth
+    beforeEach(() => {
+        setActivePinia(createPinia())
+        resetApiMock()
+    })
+    afterEach(() => {
+        window.innerWidth = originalWidth
+    })
+
+    it('drops the help subtitle on a phone, where it only pushes the list down', async () => {
+        window.innerWidth = 600
         const w = mountPage()
         await flushPromises()
 
-        expect(w.find('[data-test="pantry-add-row"]').classes()).toContain('flex-nowrap')
+        expect(w.text()).not.toContain('PantryHelp')
+        w.unmount()
+    })
+
+    it('keeps the help subtitle on desktop', async () => {
+        window.innerWidth = 1400
+        const w = mountPage()
+        await flushPromises()
+
+        expect(w.text()).toContain('PantryHelp')
+        w.unmount()
+    })
+
+    it('shows Inventory Booking as an icon on a phone, still labelled for screen readers', async () => {
+        window.innerWidth = 600
+        const w = mountPage()
+        await flushPromises()
+
+        const booking = w.find('[data-test="header-action-booking"]')
+        expect(booking.exists()).toBe(true)
+        expect(booking.attributes('aria-label')).toBe('InventoryBooking')
+        expect(booking.text()).toBe('')
+        w.unmount()
+    })
+
+    it('keeps Stock up, Use up and Booking on one row on a phone', async () => {
+        window.innerWidth = 600
+        const w = mountPage()
+        await flushPromises()
+
+        expect(w.find('[data-test="pantry-header-actions"]').classes()).toContain('flex-nowrap')
+        expect(w.find('[data-test="header-action-stock"]').text()).toContain('StockUp')
         w.unmount()
     })
 })

@@ -1,5 +1,5 @@
 <template>
-    <div v-if="!mobile" class="model-list-toolbar-desktop">
+    <div v-if="!mobile || $slots.search" class="model-list-toolbar-desktop">
         <div class="model-list-toolbar-left">
             <v-btn
                 v-if="hasFilters"
@@ -31,20 +31,23 @@
             </v-btn>
         </div>
 
-        <v-text-field
-            v-if="!disableSearch"
-            prepend-inner-icon="$search"
-            :label="$t('Search')"
-            :model-value="query"
-            @update:model-value="onSearchInput"
-            clearable
-            hide-details
-            density="compact"
-            class="model-list-toolbar-search"        >
-            <template v-if="$slots['search-append-inner']" #append>
-                <slot name="search-append-inner" />
-            </template>
-        </v-text-field>
+        <!-- a page can stand its own field in here (e.g. the pantry's Food selector) and keep Filters/Select inline with it -->
+        <slot name="search">
+            <v-text-field
+                v-if="!disableSearch"
+                prepend-inner-icon="$search"
+                :label="$t('Search')"
+                :model-value="query"
+                @update:model-value="onSearchInput"
+                clearable
+                hide-details
+                density="compact"
+                class="model-list-toolbar-search"        >
+                <template v-if="$slots['search-append-inner']" #append>
+                    <slot name="search-append-inner" />
+                </template>
+            </v-text-field>
+        </slot>
 
         <div class="model-list-toolbar-right">
             <v-btn
