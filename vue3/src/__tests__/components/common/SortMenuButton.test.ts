@@ -63,3 +63,28 @@ describe('SortMenuButton', () => {
         expect(w.emitted('select')).toEqual([['amount']])
     })
 })
+
+describe('SortMenuButton — icon only (the phone toolbar)', () => {
+    it('shows just the arrow, with the label kept for screen readers', () => {
+        const w = mountSort({iconOnly: true, label: 'Sort'})
+        const button = w.find('button')
+
+        expect(button.attributes('aria-label')).toBe('Sort')
+        // (the stubbed menu renders inline here, so check the label is not shown rather than that the button is empty)
+        expect(button.text()).not.toContain('Sort')
+        expect(button.find('.fa-arrow-up-short-wide').exists()).toBe(true)
+    })
+
+    it('still lists the fields and reports the one picked', async () => {
+        const w = mountSort({iconOnly: true, label: 'Sort'})
+
+        expect(w.findAll('.v-list-item')).toHaveLength(2)
+        await w.findAll('.v-list-item')[0].trigger('click')
+        expect(w.emitted('select')).toEqual([['name']])
+    })
+
+    it('points down when descending', () => {
+        const w = mountSort({iconOnly: true, label: 'Sort', descending: true})
+        expect(w.find('button .fa-arrow-down-short-wide').exists()).toBe(true)
+    })
+})

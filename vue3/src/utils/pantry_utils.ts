@@ -601,3 +601,13 @@ export function expiryPatchValue(picked: Date | undefined, original: Date | null
         && picked.getDate() === original.getUTCDate()
     return sameDay ? undefined : new Date(picked.getFullYear(), picked.getMonth(), picked.getDate(), 12)
 }
+
+
+/** The fields the pantry can be sorted by — its columns. Choosing one overrides every section's default order. */
+export const PANTRY_SORT_OPTIONS = [
+    {key: 'expires', labelKey: 'Expires'},
+    {key: 'name', labelKey: 'Food'},
+    {key: 'amount', labelKey: 'Amount'},
+    {key: 'location', labelKey: 'InventoryLocation'},
+] as const
+export type PantrySortKey = typeof PANTRY_SORT_OPTIONS[number]['key']

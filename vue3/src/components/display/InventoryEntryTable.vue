@@ -8,11 +8,6 @@
             <template v-else>{{ t('NoPantryEntries') }}</template>
         </div>
 
-        <div v-if="items.length" class="d-flex justify-end mb-2">
-            <sort-menu-button :options="SORT_OPTIONS" :field="sortField" :descending="sortDescending" size="small"
-                              :label="sortField ? `${t('sort_by')} ${t(sortLabelKey!)}` : t('Sort')" @select="onSortSelect($event as SortKey)"></sort-menu-button>
-        </div>
-
         <template v-for="group in groups" :key="group.key">
             <div v-if="group.items.length" class="mb-6">
                 <div class="text-overline text-medium-emphasis px-1 mb-1">{{ group.title }}</div>
@@ -22,10 +17,10 @@
                     <thead>
                         <tr>
                             <th v-if="selectMode"></th>
-                            <th>{{ t('Food') }}</th>
-                            <th>{{ t('Amount') }}</th>
-                            <th>{{ t('InventoryLocation') }}</th>
-                            <th>{{ t('Expires') }}</th>
+                            <sortable-header :label="t('Food')" :active="sortField === 'name'" :descending="sortDescending" @sort="onSortSelect('name')"></sortable-header>
+                            <sortable-header :label="t('Amount')" :active="sortField === 'amount'" :descending="sortDescending" @sort="onSortSelect('amount')"></sortable-header>
+                            <sortable-header :label="t('InventoryLocation')" :active="sortField === 'location'" :descending="sortDescending" @sort="onSortSelect('location')"></sortable-header>
+                            <sortable-header :label="t('Expires')" :active="sortField === 'expires'" :descending="sortDescending" @sort="onSortSelect('expires')"></sortable-header>
                             <th class="text-end">{{ t('Actions') }}</th>
                         </tr>
                     </thead>
@@ -114,9 +109,10 @@ import {computed, PropType, ref, watch} from "vue";
 import {useDisplay} from "vuetify";
 import {useI18n} from "vue-i18n";
 import InventoryEntryLogDialog from "@/components/dialogs/InventoryEntryLogDialog.vue";
-import SortMenuButton from "@/components/common/SortMenuButton.vue";
+import SortableHeader from "@/components/common/SortableHeader.vue";
+import {nextSort} from "@/utils/sort";
 import PantryBookingDialog from "@/components/dialogs/PantryBookingDialog.vue";
-import {expiryColor, expiryDateLabel, expiryStatus, inventoryListParams, pantryGroup} from "@/utils/pantry_utils.ts";
+import {expiryColor, expiryDateLabel, expiryStatus, inventoryListParams, pantryGroup, type PantrySortKey} from "@/utils/pantry_utils.ts";
 import {ErrorMessageType, MessageType, StructuredMessage, useMessageStore} from "@/stores/MessageStore.ts";
 import {useShoppingActions} from "@/composables/useShoppingActions";
 
@@ -164,22 +160,14 @@ const byAmount = (a: InventoryEntry, b: InventoryEntry) => (a.amount ?? 0) - (b.
 const byLocation = (a: InventoryEntry, b: InventoryEntry) => a.inventoryLocation.name.localeCompare(b.inventoryLocation.name)
 
 /** #12: the pantry table had no user-controllable sort — each group used a fixed comparator
- * (expires for Expired/Expiring, name for In Stock). Picking a field here overrides ALL groups
+ * (expires for Expired/Expiring, name for In Stock). Picking a field overrides ALL groups
  * uniformly; leaving nothing picked (the common case) keeps each group's original default sort
- * exactly as before, so the initial view is unchanged. */
-const SORT_OPTIONS = [
-    {key: 'expires', labelKey: 'Expires'},
-    {key: 'name', labelKey: 'Food'},
-    {key: 'amount', labelKey: 'Amount'},
-    {key: 'location', labelKey: 'InventoryLocation'},
-] as const
-type SortKey = typeof SORT_OPTIONS[number]['key']
+ * exactly as before, so the initial view is unchanged. The column titles pick the field; the sort
+ * is a model so the page can share it with the phone control in the toolbar (it works alone too). */
+const sortField = defineModel<PantrySortKey | null>('sortField', {default: null})
+const sortDescending = defineModel<boolean>('sortDescending', {default: false})
 
-const sortField = ref<SortKey | null>(null)
-const sortDescending = ref(false)
-const sortLabelKey = computed(() => SORT_OPTIONS.find(o => o.key === sortField.value)?.labelKey)
-
-function comparatorFor(key: SortKey): (a: InventoryEntry, b: InventoryEntry) => number {
+function comparatorFor(key: PantrySortKey): (a: InventoryEntry, b: InventoryEntry) => number {
     switch (key) {
         case 'name': return byName
         case 'amount': return byAmount
@@ -188,13 +176,10 @@ function comparatorFor(key: SortKey): (a: InventoryEntry, b: InventoryEntry) => 
     }
 }
 
-function onSortSelect(key: SortKey) {
-    if (sortField.value === key) {
-        sortDescending.value = !sortDescending.value
-    } else {
-        sortField.value = key
-        sortDescending.value = false
-    }
+function onSortSelect(key: PantrySortKey) {
+    const next = nextSort({field: sortField.value, descending: sortDescending.value}, key)
+    sortField.value = next.field as PantrySortKey | null
+    sortDescending.value = next.descending
 }
 
 function sortGroup(entries: InventoryEntry[], fallback: (a: InventoryEntry, b: InventoryEntry) => number): InventoryEntry[] {
