@@ -2196,7 +2196,11 @@ class AutoPlanViewSet(LoggingMixin, mixins.CreateModelMixin, viewsets.GenericVie
                 for i in range(len(shared)):
                     shared_pks.append(shared[i]['id'])
 
-            days = min((end_date - start_date).days + 1, 14)
+            # count days in UTC: both dates arrive in the local timezone, and subtracting two datetimes with the
+            # same tzinfo compares wall clocks, so a range spanning the autumn clock change came out an hour short
+            # and lost a day (2 days = 1 day 23 hours -> 2 plans instead of 3)
+            utc = datetime.timezone.utc
+            days = min((end_date.astimezone(utc) - start_date.astimezone(utc)).days + 1, 14)
 
             recipes = Recipe.objects.filter(space=request.space, internal=True)
 
