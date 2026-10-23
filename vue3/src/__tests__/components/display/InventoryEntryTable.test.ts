@@ -571,35 +571,83 @@ describe('InventoryEntryTable — explaining an empty result', () => {
     })
 })
 
-describe('InventoryEntryTable — sort icon matches the rest of the app', () => {
+
+describe('InventoryEntryTable — sortable column titles', () => {
     beforeEach(() => {
         resetApiMock()
     })
 
-    async function mountWithLots() {
-        apiMock.apiInventoryEntryList.mockResolvedValue({ results: [entry({ id: 1, food: { id: 10, name: 'Zucchini' } }), entry({ id: 2, food: { id: 11, name: 'Apple' } })], count: 2 })
-        const wrapper = mountPage(InventoryEntryTable)
+    const lots = () => [
+        entry({ id: 1, amount: 5, food: { id: 10, name: 'Zucchini' } }),
+        entry({ id: 2, amount: 1, food: { id: 11, name: 'Apple' } }),
+        entry({ id: 3, amount: 3, food: { id: 12, name: 'Mango' } }),
+    ]
+    async function mountLots(props: Record<string, any> = {}, results: any[] = lots()) {
+        apiMock.apiInventoryEntryList.mockResolvedValue({ results, count: results.length })
+        const wrapper = mountPage(InventoryEntryTable, { props })
         await flushPromises()
         return wrapper
     }
+    const names = (w: any) => w.findAll('tbody tr').map((r: any) => r.find('td').text())
+    const title = (w: any, label: string) => w.findAll('th button').find((b: any) => b.text().includes(label))
 
-    // found by its arrow, since the label changes once a field is sorted
-    const sortButton = (wrapper: any) => wrapper.findAll('button').find((b: any) => b.find('.fa-arrow-up-short-wide, .fa-arrow-down-short-wide').exists())
+    it('clicking a title sorts by that column, again flips it, a third time returns to the default order', async () => {
+        const wrapper = await mountLots()
 
-    it('uses the list sort arrow, not the reorder icon, before anything is sorted', async () => {
-        const wrapper = await mountWithLots()
+        await title(wrapper, 'Amount').trigger('click')
+        expect(names(wrapper)).toEqual(['Apple', 'Mango', 'Zucchini'])        // amount 1, 3, 5
 
-        const button = sortButton(wrapper)!
-        expect(button.find('.fa-arrow-up-short-wide').exists()).toBe(true)
-        expect(button.find('.fa-sort').exists()).toBe(false)
+        await title(wrapper, 'Amount').trigger('click')
+        expect(names(wrapper)).toEqual(['Zucchini', 'Mango', 'Apple'])        // descending
+
+        await title(wrapper, 'Amount').trigger('click')
+        expect(names(wrapper)).toEqual(['Apple', 'Mango', 'Zucchini'])        // default: In stock by name
     })
 
-    it('points down once a field is sorted descending', async () => {
-        const wrapper = await mountWithLots()
-        ;(wrapper.vm as any).onSortSelect('amount')
-        ;(wrapper.vm as any).onSortSelect('amount')
-        await flushPromises()
+    it('shows the arrow on the sorted column only', async () => {
+        const wrapper = await mountLots()
 
-        expect(sortButton(wrapper)!.find('.fa-arrow-down-short-wide').exists()).toBe(true)
+        await title(wrapper, 'Amount').trigger('click')
+
+        expect(wrapper.find('th[aria-sort="ascending"]').text()).toContain('Amount')
+        expect(wrapper.findAll('th[aria-sort="ascending"]')).toHaveLength(1)
+    })
+
+    it('shows the same sorted column in every section\'s header', async () => {
+        const past = new Date(Date.now() - 3 * 86400000)
+        const wrapper = await mountLots({}, [
+            entry({ id: 1, amount: 2, expires: past, food: { id: 10, name: 'Old' } }),
+            entry({ id: 2, amount: 4, food: { id: 11, name: 'Fresh' } }),
+        ])
+
+        await title(wrapper, 'Amount').trigger('click')
+
+        expect(wrapper.findAll('th[aria-sort="ascending"]')).toHaveLength(2)
+    })
+
+    it('does not make Actions a sortable column', async () => {
+        const wrapper = await mountLots()
+        expect(wrapper.findAll('th').find((h: any) => h.text().includes('Actions'))!.find('button').exists()).toBe(false)
+    })
+
+    it('follows a sort the page controls (the phone control lives in the toolbar)', async () => {
+        const wrapper = await mountLots({ sortField: 'amount', sortDescending: true })
+
+        expect(names(wrapper)).toEqual(['Zucchini', 'Mango', 'Apple'])
+        expect(wrapper.find('th[aria-sort="descending"]').text()).toContain('Amount')
+    })
+
+    it('tells the page when a title is clicked', async () => {
+        const wrapper = await mountLots()
+
+        await title(wrapper, 'Amount').trigger('click')
+
+        expect(wrapper.emitted('update:sortField')![0]).toEqual(['amount'])
+        expect(wrapper.emitted('update:sortDescending')).toBeUndefined()   // still ascending, unchanged
+    })
+
+    it('has no sort button of its own any more', async () => {
+        const wrapper = await mountLots()
+        expect(wrapper.find('button .fa-arrow-up-short-wide, button .fa-arrow-down-short-wide').exists()).toBe(false)
     })
 })

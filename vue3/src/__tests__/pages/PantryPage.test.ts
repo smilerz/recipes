@@ -49,8 +49,8 @@ function mountPage() {
             plugins: [pinia, i18n, vuetify],
             stubs: {
                 'model-select': {name: 'ModelSelect', props: ['model'], template: '<div/>'},
-                'inventory-entry-table': {name: 'InventoryEntryTable', props: ['food', 'inventoryLocation', 'query', 'filters', 'selectMode', 'selected'], template: '<div/>', methods: {load: tableLoad, selectAll}},
-                'pantry-filter-bar': {name: 'PantryFilterBar', props: ['selectMode'], template: '<div/>'},
+                'inventory-entry-table': {name: 'InventoryEntryTable', props: ['food', 'inventoryLocation', 'query', 'filters', 'selectMode', 'selected', 'sortField', 'sortDescending'], template: '<div/>', methods: {load: tableLoad, selectAll}},
+                'pantry-filter-bar': {name: 'PantryFilterBar', props: ['selectMode', 'inventoryLocation', 'sortField', 'sortDescending'], template: '<div/>'},
                 'pantry-batch-dialog': {name: 'PantryBatchDialog', props: ['modelValue', 'mode', 'count'], template: '<div/>'},
                 'pantry-booking-dialog': {name: 'PantryBookingDialog', props: ['modelValue', 'bookingMode'], template: '<div/>'},
                 'stock-up-dialog': {template: '<div/>', methods: {open: vi.fn()}},
@@ -248,14 +248,14 @@ describe('PantryPage — layout order', () => {
         resetApiMock()
     })
 
-    it('puts the search toolbar above the food and location pickers', async () => {
+    it('puts the toolbar (with the Food and Location pickers and Add) above the list', async () => {
         const w = mountPage()
         await flushPromises()
 
-        const searchBar = w.findComponent({name: 'PantryFilterBar'}).element
-        const pickers = w.find('.v-row').element
+        const toolbar = w.findComponent({name: 'PantryFilterBar'}).element
+        const table = w.findComponent({name: 'InventoryEntryTable'}).element
 
-        expect(searchBar.compareDocumentPosition(pickers) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+        expect(toolbar.compareDocumentPosition(table) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
         w.unmount()
     })
 })
@@ -269,11 +269,11 @@ describe('PantryPage — Food lives in the filter drawer', () => {
 
     const filterBar = (w: any) => w.findComponent({name: 'PantryFilterBar'})
 
-    it('leaves the Food selector to the toolbar: the page itself only has the location picker', async () => {
+    it('has no pickers of its own: Food, Location and Add all live in the toolbar', async () => {
         const w = mountPage()
         await flushPromises()
 
-        expect(w.findAllComponents({name: 'ModelSelect'}).map(c => c.props('model'))).toEqual(['InventoryLocation'])
+        expect(w.findAllComponents({name: 'ModelSelect'})).toHaveLength(0)
         w.unmount()
     })
 
@@ -392,6 +392,46 @@ describe('PantryPage — compact header on a phone', () => {
 
         expect(w.find('[data-test="pantry-header-actions"]').classes()).toContain('flex-nowrap')
         expect(w.find('[data-test="header-action-stock"]').text()).toContain('StockUp')
+        w.unmount()
+    })
+})
+
+describe('PantryPage — the toolbar and the table share location and sort', () => {
+    beforeEach(() => {
+        setActivePinia(createPinia())
+        resetApiMock()
+    })
+
+    const bar = (w: any) => w.findComponent({name: 'PantryFilterBar'})
+    const table = (w: any) => w.findComponent({name: 'InventoryEntryTable'})
+
+    it('filters the table by the location chosen in the toolbar', async () => {
+        const w = mountPage()
+        await flushPromises()
+
+        bar(w).vm.$emit('update:inventoryLocation', {id: 4, name: 'Fridge'})
+        await flushPromises()
+
+        expect(table(w).props('inventoryLocation')).toEqual({id: 4, name: 'Fridge'})
+        expect(bar(w).props('inventoryLocation')).toEqual({id: 4, name: 'Fridge'})
+        w.unmount()
+    })
+
+    it('keeps the phone sort icon and the column titles on one sort', async () => {
+        const w = mountPage()
+        await flushPromises()
+
+        bar(w).vm.$emit('update:sortField', 'amount')
+        bar(w).vm.$emit('update:sortDescending', true)
+        await flushPromises()
+
+        expect(table(w).props('sortField')).toBe('amount')
+        expect(table(w).props('sortDescending')).toBe(true)
+
+        // and the other way: a column title clicked in the table reaches the toolbar's icon
+        table(w).vm.$emit('update:sortField', 'name')
+        await flushPromises()
+        expect(bar(w).props('sortField')).toBe('name')
         w.unmount()
     })
 })

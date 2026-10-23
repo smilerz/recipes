@@ -39,16 +39,14 @@
                     </template>
                 </selection-bar>
 
-                <pantry-filter-bar :select-mode="selectMode" @update="onFilterUpdate" @toggle-select="toggleSelectMode" @add="onAdd"></pantry-filter-bar>
+                <!-- the toolbar owns Food, Location and Add; the page just shares the location and the sort with the table -->
+                <pantry-filter-bar :select-mode="selectMode" v-model:inventory-location="inventoryLocation" v-model:sort-field="sortField"
+                                   v-model:sort-descending="sortDescending" @update="onFilterUpdate" @toggle-select="toggleSelectMode"
+                                   @add="onAdd"></pantry-filter-bar>
 
-                <v-row>
-                    <v-col class="pt-2">
-                        <model-select model="InventoryLocation" v-model="inventoryLocation" density="compact" hide-details></model-select>
-                    </v-col>
-                </v-row>
-
-                <inventory-entry-table ref="entryTable" :inventory-location="inventoryLocation" :query="query" :filters="filters"
-                                       :select-mode="selectMode" v-model:selected="selected"></inventory-entry-table>
+                <inventory-entry-table ref="entryTable" class="mt-2" :inventory-location="inventoryLocation" :query="query" :filters="filters"
+                                       :select-mode="selectMode" v-model:selected="selected" v-model:sort-field="sortField"
+                                       v-model:sort-descending="sortDescending"></inventory-entry-table>
             </v-card-text>
         </v-card>
 
@@ -71,7 +69,6 @@ import InventoryQuickAddDialog from "@/components/dialogs/InventoryQuickAddDialo
 import PantryBatchDialog from "@/components/dialogs/PantryBatchDialog.vue";
 import PantryBookingDialog from "@/components/dialogs/PantryBookingDialog.vue";
 import SelectionBar from "@/components/common/SelectionBar.vue";
-import ModelSelect from "@/components/inputs/ModelSelect.vue";
 import {ref, watch} from "vue";
 import {useDisplay} from "vuetify";
 import {useI18n} from "vue-i18n";
@@ -80,11 +77,14 @@ import type {RouteLocationRaw} from "vue-router";
 import {ErrorMessageType, MessageType, useMessageStore} from "@/stores/MessageStore";
 import {useInventoryActions} from "@/composables/useInventoryActions";
 import {usePantryBatchActions} from "@/composables/usePantryBatchActions";
+import type {PantrySortKey} from "@/utils/pantry_utils";
 
 const {mobile} = useDisplay()
 const {t} = useI18n()
 const food = ref<Food | undefined>(undefined)
 const inventoryLocation = ref<InventoryLocation | undefined>(undefined)
+const sortField = ref<PantrySortKey | null>(null)
+const sortDescending = ref(false)
 const query = ref('')
 const filters = ref<Partial<ApiInventoryEntryListRequest>>({})
 const entryTable = ref<InstanceType<typeof InventoryEntryTable> | null>(null)
