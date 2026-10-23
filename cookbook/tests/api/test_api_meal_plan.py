@@ -516,6 +516,25 @@ def test_auto_plan_and_mode(u1_s1, meal_type, auto_plan_recipes, auto_plan_keywo
         assert recipe_ids == {r_ab.id}
 
 
+@pytest.mark.parametrize('start, end', [
+    ('2026-10-24T13:00:00Z', '2026-10-26T13:00:00Z'),  # spans the clocks going back (Europe/Berlin, 2026-10-25)
+    ('2026-03-28T13:00:00Z', '2026-03-30T13:00:00Z'),  # spans the clocks going forward (2026-03-29)
+], ids=['clocks-back', 'clocks-forward'])
+def test_auto_plan_day_count_ignores_clock_changes(u1_s1, meal_type, recipe_1_s1, settings, start, end):
+    """A range of exactly two days is three plans, also when it spans a daylight-saving change: the day
+    count must not read the wall clock (which is an hour short across the autumn change and made the
+    planner drop a day). Dates are explicit so the result never depends on today's date."""
+    settings.TIME_ZONE = 'Europe/Berlin'
+    r = u1_s1.post(
+        reverse(AUTO_PLAN_URL),
+        _auto_plan_payload(meal_type, start_date=start, end_date=end),
+        content_type='application/json',
+    )
+    assert r.status_code == 200
+    with scopes_disabled():
+        assert MealPlan.objects.count() == 3
+
+
 def test_auto_plan_invalid_keyword_mode(u1_s1, meal_type, recipe_1_s1, auto_plan_keywords):
     kw_a, kw_b = auto_plan_keywords
     r = u1_s1.post(
