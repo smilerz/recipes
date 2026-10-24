@@ -406,7 +406,7 @@
 import {computed, onMounted, ref, watch} from 'vue'
 import {useRouter, useRoute} from 'vue-router'
 import {useRouteQuery} from '@vueuse/router'
-import {isSeedExpired, mintSeed} from '@/utils/randomSeed'
+import {isRandomOrder, isSeedExpired, mintSeed} from '@/utils/randomSeed'
 import {useDebounceFn} from '@vueuse/core'
 import {useI18n} from 'vue-i18n'
 import {useDisplay} from 'vuetify'
@@ -472,11 +472,28 @@ const route = useRoute()
 const {mobile} = useDisplay()
 
 // ─── Filter / sort / paging state (6 useRouteQuery slots total) ─────────
-const urlFilters = useUrlFilters(computed(() => RECIPE_FILTER_DEFS))
+const urlFilters = useUrlFilters(computed(() => RECIPE_FILTER_DEFS), {
+    persistKeys: ['ordering', 'seed'],
+    restoreValue: (key, value, urlQuery) => {
+        // A saved search is opened by its link and brings its own criteria, not the sort used last
+        if (urlQuery.filter || urlQuery.editFilter) return undefined
+        if (key !== 'seed') return value
+        // A seed only belongs to a random sort. An expired one is replaced here, so every writer of the URL agrees on the new one
+        if (urlQuery.ordering && !isRandomOrder(String(urlQuery.ordering))) return undefined
+        return isSeedExpired(value) ? mintSeed() : value
+    },
+    onRestore: extras => {
+        if (extras.ordering) ordering.value = extras.ordering
+        if (extras.seed) seed.value = extras.seed
+    },
+})
 const {filterDefs, groupedFilterDefs, filterParams, activeFilterCount, getFilter, setFilter, clearFilter, clearAllFilters} = urlFilters
 const query = useRouteQuery<string>('query', '')
 const ordering = useRouteQuery<string>('ordering', '')
 const seed = useRouteQuery<string>('seed', '')
+// The sort and its random seed come back with the filters; apply them now so the first fetch already uses them
+if (urlFilters.restoredExtras.ordering) ordering.value = urlFilters.restoredExtras.ordering
+if (urlFilters.restoredExtras.seed) seed.value = urlFilters.restoredExtras.seed
 const page = useRouteQuery('page', 1, {transform: Number})
 const pageSize = useRouteQuery('pageSize', useUserPreferenceStore().deviceSettings.search_itemsPerPage, {transform: Number})
 
@@ -621,12 +638,14 @@ function openSettingsPanel(tab: 'settings' | 'filters') {
 // Exposed for component tests — script setup doesn't auto-expose bindings.
 defineExpose({openSettingsPanel, settingsActiveTab, settingsPanelOpen, onTableUpdate, filterParams, pageSize, applyStatFilter, inlineGroups, drawerFilterDefs, editMode, selectedCustomFilter, saveCustomFilter, cancelEdit, deleteCustomFilter, confirmDialogRef, unknownStash, loadSelectedCustomFilter, resetAll, createCustomFilter, filtersToJson})
 
-function resetAll() {
-    query.value = ''
-    ordering.value = ''
-    clearAllFilters()
+async function resetAll() {
+    urlFilters.forgetExtras()
     selectedCustomFilter.value = null
     filterSnapshot.value = ''
+    // clearing the filters rewrites the whole query, so the text and the sort are cleared once that is done
+    await clearAllFilters()
+    query.value = ''
+    ordering.value = ''
 }
 
 /* ─── Search ────────────────────────────────────────────────────────── */
@@ -645,7 +664,7 @@ function buildSearchParams(): ApiRecipeListRequest {
 
 // A random listing carries a seed in the URL so paging, Back and "View more" all see one order.
 // -random is the sort toggle's flipped state; the backend treats both as random.
-const isRandomOrdering = computed(() => ordering.value === 'random' || ordering.value === '-random')
+const isRandomOrdering = computed(() => isRandomOrder(ordering.value))
 
 /** New seed when the sort is random, none otherwise. Page changes deliberately do not call this. */
 function rerollSeed() {

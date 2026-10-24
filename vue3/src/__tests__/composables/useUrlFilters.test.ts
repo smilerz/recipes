@@ -1,5 +1,5 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { computed, reactive, ref, nextTick, watch } from 'vue'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+import { computed, effectScope, reactive, ref, nextTick, watch, type EffectScope } from 'vue'
 import type { FilterDef } from '@/composables/modellist/types'
 
 const mockQuery = ref<Record<string, string | string[]>>({})
@@ -534,5 +534,187 @@ describe('useUrlFilters (multi-param)', () => {
             expect(getFilter('b')).toBe('2')
             expect(activeFilterCount.value).toBe(1)
         })
+    })
+})
+
+describe('useUrlFilters persistKeys (sort order survives with the filters)', () => {
+    const KEY = 'url_filters:/search'
+    const defs = () => computed(() => makeDefs([{ key: 'onHand', type: 'tristate' }]))
+    // the hydrate flush goes through isReady().then(...) and then nextTick, one nextTick is not enough
+    const settle = () => new Promise(resolve => setTimeout(resolve, 0))
+    const stored = () => JSON.parse(window.sessionStorage.getItem(KEY) as string)
+
+    let scope: EffectScope
+    // stopped after each test so the watchers of one test cannot write to storage in the next
+    const use = (options?: Parameters<typeof useUrlFilters>[1]) => scope.run(() => useUrlFilters(defs(), options))!
+
+    beforeEach(() => {
+        window.sessionStorage.clear()
+        mockQuery.value = {}
+        replacedQueries.length = 0
+        ;(mockRoute as any).path = '/search'
+        scope = effectScope()
+    })
+
+    afterEach(() => scope.stop())
+
+    it('stores the listed keys next to the filters', async () => {
+        mockQuery.value = { ordering: '-rating' }
+        const { setFilter } = use({ persistKeys: ['ordering'] })
+        setFilter('onHand', '1')
+        await settle()
+        expect(stored().filters).toEqual({ onHand: '1' })
+        expect(stored().extras).toEqual({ ordering: '-rating' })
+    })
+
+    it('saves a sort change on its own, without any filter', async () => {
+        use({ persistKeys: ['ordering'] })
+        mockQuery.value = { ordering: 'name' }
+        await settle()
+        expect(stored().extras).toEqual({ ordering: 'name' })
+    })
+
+    it('restores the stored sort into the URL when the URL has no filter', async () => {
+        window.sessionStorage.setItem(KEY, JSON.stringify({ filters: { onHand: '1' }, extras: { ordering: '-rating' }, ts: Date.now() }))
+        use({ persistKeys: ['ordering'] })
+        await settle()
+        expect(replacedQueries[replacedQueries.length - 1]).toEqual({ onHand: '1', ordering: '-rating' })
+    })
+
+    it('restores a stored sort when no filters were stored', async () => {
+        window.sessionStorage.setItem(KEY, JSON.stringify({ filters: {}, extras: { ordering: '-rating' }, ts: Date.now() }))
+        use({ persistKeys: ['ordering'] })
+        await settle()
+        expect(replacedQueries[replacedQueries.length - 1]).toEqual({ ordering: '-rating' })
+    })
+
+    it('does not override a sort that is already in the URL', async () => {
+        window.sessionStorage.setItem(KEY, JSON.stringify({ filters: { onHand: '1' }, extras: { ordering: '-rating' }, ts: Date.now() }))
+        mockQuery.value = { ordering: 'name' }
+        use({ persistKeys: ['ordering'] })
+        await settle()
+        expect(replacedQueries[replacedQueries.length - 1]).toEqual({ onHand: '1', ordering: 'name' })
+    })
+
+    it('lets a URL that carries a filter win over the stored sort', async () => {
+        window.sessionStorage.setItem(KEY, JSON.stringify({ filters: { onHand: '1' }, extras: { ordering: '-rating' }, ts: Date.now() }))
+        mockQuery.value = { onHand: '0' }
+        use({ persistKeys: ['ordering'] })
+        await settle()
+        expect(replacedQueries.some(q => q.ordering === '-rating')).toBe(false)
+    })
+
+    it('restores again when the same page is opened bare a second time (side menu link while on the page)', async () => {
+        window.sessionStorage.setItem(KEY, JSON.stringify({ filters: {}, extras: { ordering: 'name' }, ts: Date.now() }))
+        use({ persistKeys: ['ordering'] })
+        await settle()
+        replacedQueries.length = 0
+
+        mockQuery.value = {}
+        await settle()
+
+        expect(replacedQueries[replacedQueries.length - 1]).toEqual({ ordering: 'name' })
+    })
+
+    it('a navigation that drops the keys does not erase what is remembered', async () => {
+        mockQuery.value = { ordering: 'name' }
+        use({ persistKeys: ['ordering'], restoreValue: () => undefined })
+        mockQuery.value = { ordering: '-rating' }
+        await settle()
+        expect(stored().extras).toEqual({ ordering: '-rating' })
+
+        mockQuery.value = {}
+        await settle()
+
+        expect(stored().extras).toEqual({ ordering: '-rating' })
+    })
+
+    it('forgetExtras forgets the remembered keys, keeps the filters, and nothing comes back on a bare URL', async () => {
+        window.sessionStorage.setItem(KEY, JSON.stringify({ filters: { onHand: '1' }, extras: { ordering: 'name' }, ts: Date.now() }))
+        const { forgetExtras } = use({ persistKeys: ['ordering'] })
+        await settle()
+
+        forgetExtras()
+        expect(stored().filters).toEqual({ onHand: '1' })
+        expect(stored().extras).toBeUndefined()
+        replacedQueries.length = 0
+        mockQuery.value = {}
+        await settle()
+
+        expect(replacedQueries.some(q => 'ordering' in q)).toBe(false)
+    })
+
+    it('stores and restores several keys together, so a random sort keeps its seed', async () => {
+        mockQuery.value = { ordering: 'random', seed: 'abc-123' }
+        use({ persistKeys: ['ordering', 'seed'] })
+        mockQuery.value = { ordering: 'random', seed: 'abc-124' }
+        await settle()
+        expect(stored().extras).toEqual({ ordering: 'random', seed: 'abc-124' })
+        scope.stop()
+        scope = effectScope()
+        mockQuery.value = {}
+        const { restoredExtras } = use({ persistKeys: ['ordering', 'seed'] })
+        await settle()
+        expect(restoredExtras).toEqual({ ordering: 'random', seed: 'abc-124' })
+        expect(replacedQueries[replacedQueries.length - 1]).toEqual({ ordering: 'random', seed: 'abc-124' })
+    })
+
+    it('hands back the restored sort right away, before the URL has been updated', () => {
+        window.sessionStorage.setItem(KEY, JSON.stringify({ filters: {}, extras: { ordering: '-rating' }, ts: Date.now() }))
+        const { restoredExtras } = use({ persistKeys: ['ordering'] })
+        expect(restoredExtras).toEqual({ ordering: '-rating' })
+    })
+
+    it('hands back nothing for a key the URL already has, or when the URL carries a filter', () => {
+        window.sessionStorage.setItem(KEY, JSON.stringify({ filters: { onHand: '1' }, extras: { ordering: '-rating' }, ts: Date.now() }))
+        mockQuery.value = { ordering: 'name' }
+        expect(use({ persistKeys: ['ordering'] }).restoredExtras).toEqual({})
+        scope.stop()
+        scope = effectScope()
+        mockQuery.value = { onHand: '0' }
+        expect(use({ persistKeys: ['ordering'] }).restoredExtras).toEqual({})
+    })
+
+    it('does not bring back a key the user removed after the first load', async () => {
+        window.sessionStorage.setItem(KEY, JSON.stringify({ filters: {}, extras: { ordering: '-rating', seed: 'abc-123' }, ts: Date.now() }))
+        use({ persistKeys: ['ordering', 'seed'] })
+        await settle()
+        expect(replacedQueries[replacedQueries.length - 1]).toEqual({ ordering: '-rating', seed: 'abc-123' })
+        replacedQueries.length = 0
+
+        mockQuery.value = { ordering: 'name' }
+        await settle()
+
+        expect(replacedQueries.some(q => 'seed' in q)).toBe(false)
+        expect(stored().extras).toEqual({ ordering: 'name' })
+    })
+
+    it('lets restoreValue leave a remembered value out, or swap it, and tells it the key, the stored value and the URL query', async () => {
+        window.sessionStorage.setItem(KEY, JSON.stringify({ filters: {}, extras: { ordering: 'random', seed: 'abc-123', other: 'x' }, ts: Date.now() }))
+        mockQuery.value = { query: 'pasta' }
+        const restoreValue = vi.fn((key: string, value: string) => key === 'seed' ? 'fresh-456' : key === 'other' ? undefined : value)
+        const { restoredExtras } = use({ persistKeys: ['ordering', 'seed', 'other'], restoreValue })
+        await settle()
+        expect(restoredExtras).toEqual({ ordering: 'random', seed: 'fresh-456' })
+        expect(replacedQueries[replacedQueries.length - 1]).toEqual({ query: 'pasta', ordering: 'random', seed: 'fresh-456' })
+        expect(restoreValue).toHaveBeenCalledWith('seed', 'abc-123', { query: 'pasta' })
+    })
+
+    it('stores nothing extra when no keys are asked for', async () => {
+        mockQuery.value = { ordering: '-rating' }
+        const { setFilter } = use()
+        setFilter('onHand', '1')
+        await settle()
+        expect(stored().extras).toBeUndefined()
+    })
+
+    it('does not write the sort of another page under this page\'s key', async () => {
+        mockQuery.value = { ordering: 'name' }
+        use({ persistKeys: ['ordering'] })
+        ;(mockRoute as any).path = '/books'
+        mockQuery.value = { ordering: '-created_at' }
+        await settle()
+        expect(window.sessionStorage.getItem('url_filters:/books')).toBeNull()
+        expect(stored().extras).toEqual({ ordering: 'name' })
     })
 })

@@ -1,5 +1,5 @@
 import {describe, it, expect} from 'vitest'
-import {mintSeed, isSeedExpired, getOrMintStoredSeed, SEED_TTL_MS} from '@/utils/randomSeed'
+import {mintSeed, isSeedExpired, isRandomOrder, getOrMintStoredSeed, SEED_TTL_MS} from '@/utils/randomSeed'
 
 function fakeStorage(initial: Record<string, string> = {}) {
     const data = new Map(Object.entries(initial))
@@ -105,5 +105,15 @@ describe('randomSeed', () => {
             expect(getOrMintStoredSeed('home:3', now, broken)).toMatch(/^[0-9a-z]+-[0-9a-z]+$/)
             expect(getOrMintStoredSeed('home:3', now, null)).toMatch(/^[0-9a-z]+-[0-9a-z]+$/)
         })
+    })
+})
+
+describe('isRandomOrder', () => {
+    it('is true for the random sort and its flipped state, false for any other sort or none', () => {
+        expect(isRandomOrder('random')).toBe(true)
+        expect(isRandomOrder('-random')).toBe(true)
+        expect(isRandomOrder('name')).toBe(false)
+        expect(isRandomOrder('-rating')).toBe(false)
+        expect(isRandomOrder('')).toBe(false)
     })
 })

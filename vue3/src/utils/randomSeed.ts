@@ -44,6 +44,11 @@ export function getOrMintStoredSeed(scope: string, now: number = Date.now(), sto
     return seed
 }
 
+/** The random sort or its flipped state (the sort toggle's other direction), the backend shuffles for both. */
+export function isRandomOrder(ordering: string): boolean {
+    return ordering === 'random' || ordering === '-random'
+}
+
 /** True when the seed is older than the TTL, or isn't one this app minted (so it should be replaced). */
 export function isSeedExpired(seed: string, now: number = Date.now(), ttlMs: number = SEED_TTL_MS): boolean {
     const match = SEED_SHAPE.exec(seed)

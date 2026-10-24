@@ -4,11 +4,25 @@ import type {FilterDef, FilterValue, RangeValue} from './modellist/types'
 
 export function useUrlFilters(
     filterDefs: ComputedRef<FilterDef[]>,
+    options: {
+        persistKeys?: string[]
+        // Decides what a remembered persistKeys value becomes in the URL: the value to use (e.g. a fresh
+        // seed for an expired one) or undefined to leave it out. The same value goes to restoredExtras.
+        restoreValue?: (key: string, value: string, query: Record<string, unknown>) => string | undefined
+        // Tells the owner of those params the remembered values when the page is opened bare again after the first
+        // load, so its own state agrees with the URL. The values go into the URL with the filters either way.
+        onRestore?: (extras: Record<string, string>) => void
+    } = {},
 ) {
     const route = useRoute()
     const router = useRouter()
+    // Query params that are not filters (e.g. the sort order) but are remembered and restored together with them
+    const persistKeys = options.persistKeys ?? []
 
     const state = reactive(new Map<string, string>())
+    // Remembered persistKeys values to put back into the URL on the next flush
+    const pendingExtras = new Map<string, string>()
+    let firstLoadDone = false
     let flushScheduled = false
 
     function storageKey(): string | null {
@@ -21,7 +35,7 @@ export function useUrlFilters(
     // pre-TTL bare-object format — is silently discarded on read.
     const TTL_MS = 2 * 60 * 60 * 1000
 
-    function loadFromStorage(): Record<string, string> | null {
+    function loadFromStorage(): { filters: Record<string, string>, extras: Record<string, string> } | null {
         const key = storageKey()
         if (!key || typeof window === 'undefined') return null
         try {
@@ -37,20 +51,31 @@ export function useUrlFilters(
                 window.sessionStorage.removeItem(key)
                 return null
             }
-            return parsed.filters as Record<string, string>
+            const extras = parsed.extras && typeof parsed.extras === 'object' ? parsed.extras : {}
+            return {filters: parsed.filters as Record<string, string>, extras: extras as Record<string, string>}
         } catch { return null }
     }
 
-    function saveToStorage(): void {
+    // extrasFrom 'url': remember the persistKeys the URL has now. 'stored': leave what is remembered as it is,
+    // the filter flush runs while the page may still be changing those params, so it is not the one to judge them.
+    function saveToStorage(extrasFrom: 'url' | 'stored' = 'url'): void {
         const key = storageKey()
         if (!key || typeof window === 'undefined') return
         try {
-            if (state.size === 0) {
+            const extras: Record<string, string> = extrasFrom === 'stored' ? {...loadFromStorage()?.extras} : {}
+            if (extrasFrom === 'url') {
+                for (const k of persistKeys) {
+                    const v = route.query[k]
+                    if (v != null && v !== '') extras[k] = String(v)
+                }
+            }
+            const hasExtras = Object.keys(extras).length > 0
+            if (state.size === 0 && !hasExtras) {
                 window.sessionStorage.removeItem(key)
             } else {
                 const filters: Record<string, string> = {}
                 for (const [k, v] of state) filters[k] = v
-                window.sessionStorage.setItem(key, JSON.stringify({filters, ts: Date.now()}))
+                window.sessionStorage.setItem(key, JSON.stringify({filters, ...(hasExtras ? {extras} : {}), ts: Date.now()}))
             }
         } catch { /* storage unavailable */ }
     }
@@ -58,6 +83,7 @@ export function useUrlFilters(
     function initFromRoute() {
         const next = new Map<string, string>()
         let matchedAny = false
+        const urlHasExtras = persistKeys.some(k => route.query[k] != null && route.query[k] !== '')
         for (const def of filterDefs.value) {
             const val = route.query[def.key]
             if (val != null && val !== '') {
@@ -88,14 +114,22 @@ export function useUrlFilters(
             const persisted = loadFromStorage()
             if (persisted) {
                 for (const def of filterDefs.value) {
-                    const v = persisted[def.key]
+                    const v = persisted.filters[def.key]
                     if (v != null && v !== '') next.set(def.key, String(v))
                 }
+                // Like the filters: a URL that carries any of the keys is explicit state and wins as a whole
+                for (const k of urlHasExtras ? [] : persistKeys) {
+                    const v = persisted.extras[k]
+                    if (v == null || v === '') continue
+                    const restored = options.restoreValue ? options.restoreValue(k, String(v), route.query) : String(v)
+                    if (restored) pendingExtras.set(k, restored)
+                }
+                if (firstLoadDone && options.onRestore && pendingExtras.size > 0) options.onRestore(Object.fromEntries(pendingExtras))
                 // Defer the URL flush until vue-router has committed the initial
                 // navigation; otherwise the router.replace fires mid-transition
                 // during setup and the URL update is silently dropped, leaving
                 // state hydrated but the address bar empty.
-                if (next.size > 0) router.isReady().then(scheduleFlush)
+                if (next.size > 0 || pendingExtras.size > 0) router.isReady().then(scheduleFlush)
             }
         }
         // route.query also changes for non-filter params (page, ordering), and consumers watch
@@ -107,6 +141,11 @@ export function useUrlFilters(
     }
 
     initFromRoute()
+    firstLoadDone = true
+    // The URL only catches up after the router is ready, consumers that read persistKeys at setup need these now
+    const restoredExtras: Record<string, string> = Object.fromEntries(pendingExtras)
+    // Keys the URL arrives with are the state to remember, there is no change for the watcher to notice
+    if (persistKeys.some(k => route.query[k] != null && route.query[k] !== '')) saveToStorage('url')
 
     watch(() => route.query, () => {
         if (!flushScheduled) initFromRoute()
@@ -183,10 +222,13 @@ export function useUrlFilters(
         return params
     })
 
-    function scheduleFlush() {
-        if (flushScheduled) return
+    let flushDone: Promise<void> = Promise.resolve()
+
+    /** Resolves once the URL write is done. Anything else that writes the query should wait for it, the flush rebuilds the whole query. */
+    function scheduleFlush(): Promise<void> {
+        if (flushScheduled) return flushDone
         flushScheduled = true
-        nextTick(() => {
+        flushDone = new Promise<void>(resolve => nextTick(() => {
             // Legacy {key}_gte/{key}_lte params (see initFromRoute's back-compat read) must be
             // stripped on every flush, not just carried through — otherwise a cleared range
             // filter that arrived via a legacy-format link resurrects itself on the next load,
@@ -208,13 +250,42 @@ export function useUrlFilters(
             for (const [k, v] of state) {
                 query[k] = v
             }
+            for (const [k, v] of pendingExtras) {
+                if (!(k in query)) query[k] = v
+            }
+            pendingExtras.clear()
             // Keep the guard set across the router update so the route.query
             // watcher skips the re-entry we just caused; clear it only once
             // navigation settles (finally so a cancelled nav still clears it).
             router.replace({query}).finally(() => {
                 flushScheduled = false
+                resolve()
             })
-            saveToStorage()
+            saveToStorage('stored')
+        }))
+        return flushDone
+    }
+
+    /** Forget the remembered persistKeys (the page was reset), the remembered filters stay */
+    function forgetExtras(): void {
+        pendingExtras.clear()
+        const key = storageKey()
+        if (!key || typeof window === 'undefined') return
+        try {
+            const filters: Record<string, string> = {}
+            for (const [k, v] of state) filters[k] = v
+            if (state.size === 0) window.sessionStorage.removeItem(key)
+            else window.sessionStorage.setItem(key, JSON.stringify({filters, ts: Date.now()}))
+        } catch { /* storage unavailable */ }
+    }
+
+    if (persistKeys.length > 0) {
+        // A sort change alone does not go through scheduleFlush, so remember it here. Ignored once the
+        // route has moved to another page, otherwise that page's sort would be stored under this key.
+        const pathAtSetup = route.path
+        // A navigation that merely drops the keys (e.g. the page opened bare again) must not erase them.
+        watch(() => persistKeys.map(k => String(route.query[k] ?? '')).join('\u0000'), () => {
+            if (route.path === pathAtSetup && persistKeys.some(k => route.query[k] != null && route.query[k] !== '')) saveToStorage()
         })
     }
 
@@ -252,9 +323,9 @@ export function useUrlFilters(
         setFilter(key, undefined)
     }
 
-    function clearAllFilters(): void {
+    function clearAllFilters(): Promise<void> {
         state.clear()
-        scheduleFlush()
+        return scheduleFlush()
     }
 
     return {
@@ -266,5 +337,7 @@ export function useUrlFilters(
         setFilter,
         clearFilter,
         clearAllFilters,
+        restoredExtras,
+        forgetExtras,
     }
 }
