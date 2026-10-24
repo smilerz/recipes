@@ -87,7 +87,7 @@ from cookbook.helper.permission_helper import (CustomIsAdmin, CustomIsOwner, Cus
                                                above_space_limit,
                                                group_required, has_group_permission, is_space_owner,
                                                switch_user_active_space, CustomAiProviderPermission, IsCreateDRF, CustomIsOwnerDestroyOnly, CustomIsHousehold,
-                                               get_household_user_ids)
+                                               get_household_user_ids, visible_recipes_q)
 from cookbook.helper.recipe_search import RecipeSearch
 from cookbook.helper.recipe_url_import import clean_dict, get_from_youtube_scraper, get_images_from_soup
 from cookbook.helper.shopping_helper import RecipeShoppingEditor
@@ -2212,7 +2212,7 @@ class AutoPlanViewSet(LoggingMixin, mixins.CreateModelMixin, viewsets.GenericVie
             utc = datetime.timezone.utc
             days = min((end_date.astimezone(utc) - start_date.astimezone(utc)).days + 1, 14)
 
-            recipes = Recipe.objects.filter(space=request.space, internal=True)
+            recipes = Recipe.objects.filter(space=request.space, internal=True).filter(visible_recipes_q(request.user)).distinct()
 
             keywords = serializer.validated_data.get('keywords', [])
             keyword_mode = serializer.validated_data.get('keyword_mode', 'and')
