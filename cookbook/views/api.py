@@ -87,7 +87,7 @@ from cookbook.helper.permission_helper import (CustomIsAdmin, CustomIsOwner, Cus
                                                above_space_limit,
                                                group_required, has_group_permission, is_space_owner,
                                                switch_user_active_space, CustomAiProviderPermission, IsCreateDRF, CustomIsOwnerDestroyOnly, CustomIsHousehold,
-                                               get_household_user_ids, visible_recipes_q)
+                                               get_household_user_ids, visible_recipes_q, can_view_meal_plan)
 from cookbook.helper.recipe_search import RecipeSearch
 from cookbook.helper.recipe_url_import import clean_dict, get_from_youtube_scraper, get_images_from_soup
 from cookbook.helper.shopping_helper import RecipeShoppingEditor
@@ -2093,9 +2093,11 @@ class RecipeBookEntryViewSet(LoggingMixin, viewsets.ModelViewSet):
     pagination_class = DefaultPagination
 
     def get_queryset(self):
+        # entries of a shared book only show the recipes the user may see, a private recipe stays private
         queryset = self.queryset.filter(
             Q(book__created_by=self.request.user) | Q(book__shared=self.request.user)).filter(
-            book__space=self.request.space).distinct()
+            book__space=self.request.space).filter(
+            recipe__in=Recipe.objects.filter(visible_recipes_q(self.request.user))).distinct()
 
         # Annotate the serialized recipe with the per-user rating / last-cooked so book cards
         # honour card_showRating / card_showLastCooked (D08). Annotations survive the prefetch,
@@ -2587,6 +2589,9 @@ class RecipeViewSet(LoggingMixin, viewsets.ModelViewSet, DeleteRelationMixing):
         servings = request.data.get('servings', None)
         list_recipe = request.data.get('list_recipe', None)
         mealplan = request.data.get('mealplan', None)
+        mealplan_id = mealplan.get('id') if isinstance(mealplan, dict) else mealplan
+        if str(mealplan_id).isdigit() and (plan := MealPlan.objects.filter(pk=mealplan_id).first()) and not can_view_meal_plan(request, plan):
+            return invalid_id_response('mealplan', mealplan_id)
         SLR = RecipeShoppingEditor(request.user, request.space, id=list_recipe, recipe=obj, mealplan=mealplan,
                                    servings=servings)
 

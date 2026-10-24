@@ -191,3 +191,26 @@ def test_update_refuses_a_private_recipe_of_another_user(obj_1, u1_s1, u2_s1, sp
     with scopes_disabled():
         obj_1.refresh_from_db()
         assert obj_1.recipe_id != secret.id
+
+
+def test_list_hides_entries_whose_recipe_the_user_cannot_see(u1_s1, u2_s1, space_1):
+    from cookbook.tests.factories import RecipeBookEntryFactory, RecipeBookFactory, RecipeFactory
+    user1, user2 = auth.get_user(u1_s1), auth.get_user(u2_s1)
+    with scopes_disabled():
+        book = RecipeBookFactory(space=space_1, created_by=user2)
+        book.shared.add(user1)
+        public = RecipeFactory(space=space_1, created_by=user2, private=False)
+        secret = RecipeFactory(space=space_1, created_by=user2, private=True, name='U2-PRIVATE-SECRET-RECIPE')
+        shared_with_user1 = RecipeFactory(space=space_1, created_by=user2, private=True)
+        shared_with_user1.shared.add(user1)
+        own_private = RecipeFactory(space=space_1, created_by=user1, private=True)
+        for recipe in (public, secret, shared_with_user1, own_private):
+            RecipeBookEntryFactory(book=book, recipe=recipe)
+
+    r = u1_s1.get(reverse(LIST_URL))
+    listed = {e['recipe'] for e in json.loads(r.content)['results']}
+
+    assert listed == {public.id, shared_with_user1.id, own_private.id}
+    assert 'U2-PRIVATE-SECRET-RECIPE' not in r.content.decode()
+    # the owner of the book sees their own private recipes, but not a private recipe of the user who added it
+    assert {e['recipe'] for e in json.loads(u2_s1.get(reverse(LIST_URL)).content)['results']} == {public.id, secret.id, shared_with_user1.id}

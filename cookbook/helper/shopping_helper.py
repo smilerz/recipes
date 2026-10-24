@@ -42,7 +42,7 @@ class RecipeShoppingEditor():
 
         self.mealplan = self._kwargs.get('mealplan', None)
         if type(self.mealplan) in [int, float]:
-            self.mealplan = MealPlan.objects.filter(id=self.mealplan, space=self.space)
+            self.mealplan = MealPlan.objects.filter(id=self.mealplan, space=self.space).first()
         if isinstance(self.mealplan, dict):
             self.mealplan = MealPlan.objects.filter(id=self.mealplan['id'], space=self.space).first()
         self.id = self._kwargs.get('id', None)
