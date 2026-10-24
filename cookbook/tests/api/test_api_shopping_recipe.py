@@ -206,3 +206,34 @@ def test_shopping_with_header_ingredient(u1_s1, recipe):
     u1_s1.put(reverse(SHOPPING_RECIPE_URL, args={recipe.id}))
     assert json.loads(u1_s1.get(reverse(SHOPPING_LIST_URL)).content)['count'] == 10
     assert json.loads(u1_s1.get(reverse('api:ingredient-list')).content)['count'] == 11
+
+
+def test_recipe_shopping_links_an_own_meal_plan_given_by_id(u1_s1, space_1):
+    from cookbook.models import ShoppingListRecipe
+    from cookbook.tests.factories import MealPlanFactory
+    with scopes_disabled():
+        recipe = RecipeFactory(space=space_1, created_by=auth.get_user(u1_s1))
+        plan = MealPlanFactory(space=space_1, created_by=auth.get_user(u1_s1), recipe=recipe)
+
+    r = u1_s1.put(reverse(SHOPPING_RECIPE_URL, args=[recipe.id]), {'mealplan': plan.id, 'servings': 1}, content_type='application/json')
+
+    assert r.status_code == 200
+    with scopes_disabled():
+        assert ShoppingListRecipe.objects.filter(recipe=recipe, mealplan=plan).exists()
+
+
+@pytest.mark.parametrize('shape', ['id', 'dict'])
+def test_recipe_shopping_refuses_a_meal_plan_of_another_user(u1_s1, u2_s1, space_1, shape):
+    from cookbook.models import ShoppingListRecipe
+    from cookbook.tests.factories import MealPlanFactory
+    with scopes_disabled():
+        recipe = RecipeFactory(space=space_1, created_by=auth.get_user(u1_s1))
+        other = MealPlanFactory(space=space_1, created_by=auth.get_user(u2_s1), note='U2-PRIVATE-NOTE')
+
+    r = u1_s1.put(reverse(SHOPPING_RECIPE_URL, args=[recipe.id]), {'mealplan': other.id if shape == 'id' else {'id': other.id}, 'servings': 1},
+                  content_type='application/json')
+
+    assert r.status_code == 400
+    with scopes_disabled():
+        assert not ShoppingListRecipe.objects.filter(mealplan=other).exists()
+    assert 'U2-PRIVATE-NOTE' not in json.loads(u1_s1.get(reverse('api:shoppinglistrecipe-list')).content).__str__()
