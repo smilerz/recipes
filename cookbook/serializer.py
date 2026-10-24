@@ -1968,6 +1968,7 @@ class ShareLinkSerializer(SpacedModelSerializer):
 class CookLogSerializer(serializers.ModelSerializer):
     created_by = UserSerializer(read_only=True)
     recipe_name = serializers.CharField(source='recipe.name', read_only=True)
+    servings = CustomDecimalField(required=False, allow_null=True)
 
     def validate_rating(self, value):
         # Vuetify's clearable v-rating emits 0 on clear; normalize to NULL so the DB

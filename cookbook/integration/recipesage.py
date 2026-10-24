@@ -1,3 +1,4 @@
+import base64
 import json
 import html
 from io import BytesIO
@@ -72,8 +73,16 @@ class RecipeSage(Integration):
         if len(file['image']) > 0:
             try:
                 url = file['image'][0]
-                response = safe_request('GET', url)
-                self.import_recipe_image(recipe, BytesIO(response.content))
+                if url.startswith('data:image/') and ';base64,' in url:
+                    # an embedded image is in the file already, there is nothing to fetch
+                    metadata, encoded = url.split(';base64,', 1)
+                    filetype = '.' + metadata.removeprefix('data:image/')
+                    if filetype not in ('.jpeg', '.jpg', '.png', '.gif', '.webp'):
+                        raise ValueError('Unsupported embedded image format')
+                    self.import_recipe_image(recipe, BytesIO(base64.b64decode(encoded, validate=True)), filetype=filetype)
+                else:
+                    response = safe_request('GET', url)
+                    self.import_recipe_image(recipe, BytesIO(response.content))
             except Exception as e:
                 print('failed to import image ', str(e))
 
