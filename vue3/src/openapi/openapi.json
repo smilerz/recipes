@@ -12746,9 +12746,8 @@ components:
           type: string
           readOnly: true
         servings:
-          type: integer
-          maximum: 2147483647
-          minimum: -2147483648
+          type: number
+          format: double
           nullable: true
         rating:
           type: integer
@@ -15580,9 +15579,8 @@ components:
           type: string
           readOnly: true
         servings:
-          type: integer
-          maximum: 2147483647
-          minimum: -2147483648
+          type: number
+          format: double
           nullable: true
         rating:
           type: integer

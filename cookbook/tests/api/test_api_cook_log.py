@@ -281,3 +281,12 @@ def test_created_after_does_not_reveal_another_spaces_entries(u1_s1, u1_s2, spac
 
     assert json.loads(u1_s1.get(reverse(LIST_URL), {'created_after': cutoff}).content)['count'] == 0
     assert json.loads(u1_s2.get(reverse(LIST_URL), {'created_after': cutoff}).content)['count'] == 1
+
+
+def test_create_keeps_decimal_servings(u1_s1, recipe_1_s1):
+    r = u1_s1.post(reverse(LIST_URL), {'recipe': recipe_1_s1.id, 'servings': 2.5}, content_type='application/json')
+
+    assert r.status_code == 201
+    assert float(json.loads(r.content)['servings']) == 2.5
+    with scopes_disabled():
+        assert float(CookLog.objects.get(recipe=recipe_1_s1).servings) == 2.5
