@@ -2269,3 +2269,31 @@ def test_substitute_inventory_retrieve_is_household_scoped(u1_s1, u2_s1, space_1
     # caller is in household A → their household has no such inventory
     response = u1_s1.get(reverse(DETAIL_URL, args=[food.id]))
     assert json.loads(response.content)['substitute_inventory'] is False
+
+
+def test_reset_inheritance_leaves_other_spaces_untouched(space_1, space_2):
+    with scopes_disabled():
+        inheritable = list(Food.inheritable_fields.values_list('id', flat=True))
+        space_1.food_inherit.add(*inheritable)
+        other_space_food = FoodFactory(space=space_2)
+        other_space_food.inherit_fields.set(inheritable)
+
+    with scope(space=space_1):
+        Food.reset_inheritance(space=space_1)
+
+    with scopes_disabled():
+        assert set(other_space_food.inherit_fields.values_list('id', flat=True)) == set(inheritable)
+
+
+def test_reset_inheritance_for_one_food_leaves_unrelated_foods_untouched(space_1):
+    with scopes_disabled():
+        inheritable = list(Food.inheritable_fields.values_list('id', flat=True))
+        parent = FoodFactory(space=space_1)
+        unrelated = FoodFactory(space=space_1)
+        unrelated.inherit_fields.set(inheritable)
+
+    with scope(space=space_1):
+        Food.reset_inheritance(space=space_1, food=Food.objects.get(id=parent.id))
+
+    with scopes_disabled():
+        assert set(unrelated.inherit_fields.values_list('id', flat=True)) == set(inheritable)
