@@ -121,6 +121,7 @@ async function mountSearchPage(initialQuery: Record<string, any> = {}, viewMode:
 
 describe('SearchPage (Phase 3 rewrite)', () => {
     beforeEach(() => {
+        window.sessionStorage.clear()
         vi.useRealTimers()
         resetApiMock()
         apiMock.apiRecipeList = vi.fn().mockResolvedValue({results: [], count: 0, next: null, previous: null})
@@ -910,5 +911,104 @@ describe('SearchPage (Phase 3 rewrite)', () => {
             expect(chips.isVisible()).toBe(true)   // and NOT hidden by the collapsed v-show
             wrapper.unmount()
         })
+    })
+})
+
+describe('SearchPage remembers the sort with the filters', () => {
+    const KEY = 'url_filters:/advanced-search'
+    const SEED_SHAPE = /^[0-9a-z]+-[0-9a-z]+$/
+    // A navigation finishes some event-loop turns after it starts, see the seeded random ordering tests
+    const ROUTER_DELAY_TURNS = [0, 8]
+
+    const remember = (extras: Record<string, string>) =>
+        window.sessionStorage.setItem(KEY, JSON.stringify({filters: {}, extras, ts: Date.now()}))
+    const allCalls = () => (apiMock.apiRecipeList as any).mock.calls.map((c: any[]) => c[0])
+    const lastParams = () => allCalls()[allCalls().length - 1]
+    const settle = async () => {
+        await flushPromises()
+        vi.advanceTimersByTime(350)
+        await flushPromises()
+        await flushPromises()
+    }
+
+    beforeEach(() => {
+        window.sessionStorage.clear()
+        vi.useFakeTimers({shouldAdvanceTime: true})
+        resetApiMock()
+        apiMock.apiRecipeList = vi.fn().mockResolvedValue({results: [], count: 0, next: null, previous: null})
+        apiMock.apiCustomFilterList = vi.fn().mockResolvedValue({results: [], count: 0, next: null, previous: null})
+        apiMock.apiRecipeStatsRetrieve = vi.fn().mockResolvedValue({total: 0, makenow_ready: 0, new: 0, unrated: 0, never_cooked: 0, private: 0})
+    })
+
+    it.each(ROUTER_DELAY_TURNS)('the first fetch already uses the remembered sort and the URL gets it (router takes %i turns)', async (delayTurns) => {
+        remember({ordering: 'name'})
+        const {wrapper, router} = await mountSearchPage({}, 'grid', {}, delayTurns)
+        await settle()
+        expect(allCalls()[0].sortOrder).toBe('name')
+        await vi.waitFor(() => expect(router.currentRoute.value.query.ordering).toBe('name'))
+        wrapper.unmount()
+    })
+
+    it.each(ROUTER_DELAY_TURNS)('a remembered random sort comes back with the same seed, in the request and the URL (router takes %i turns)', async (delayTurns) => {
+        const seed = mintSeed()
+        remember({ordering: 'random', seed})
+        const {wrapper, router} = await mountSearchPage({}, 'grid', {}, delayTurns)
+        await settle()
+        expect(lastParams().seed).toBe(seed)
+        await vi.waitFor(() => expect(router.currentRoute.value.query.seed).toBe(seed))
+        wrapper.unmount()
+    })
+
+    it.each(ROUTER_DELAY_TURNS)('an expired remembered seed is not brought back, the URL ends with the fresh one (router takes %i turns)', async (delayTurns) => {
+        const stale = mintSeed(Date.now() - (SEED_TTL_MS + 60_000))
+        remember({ordering: 'random', seed: stale})
+        const {wrapper, router} = await mountSearchPage({}, 'grid', {}, delayTurns)
+        await settle()
+        expect(lastParams().seed).toMatch(SEED_SHAPE)
+        expect(lastParams().seed).not.toBe(stale)
+        await vi.waitFor(() => expect(router.currentRoute.value.query.seed).toBe(lastParams().seed))
+        wrapper.unmount()
+    })
+
+    it.each(['filter', 'editFilter'])('a saved search opened with ?%s=<id> is not given the remembered sort', async (param) => {
+        remember({ordering: '-rating'})
+        apiMock.apiCustomFilterRetrieve = vi.fn().mockResolvedValue({id: 44, name: 'Quick Dinners', search: {keywords: [9]}})
+        const {wrapper, router} = await mountSearchPage({[param]: '44'})
+        await settle()
+        expect(allCalls().some((p: any) => p.sortOrder === '-rating')).toBe(false)
+        expect(router.currentRoute.value.query.ordering).toBeUndefined()
+        wrapper.unmount()
+    })
+
+    it.each(ROUTER_DELAY_TURNS)('opening the page bare again while on it (side menu link) brings the remembered sort back (router takes %i turns)', async (delayTurns) => {
+        remember({ordering: 'name'})
+        const {wrapper, router} = await mountSearchPage({}, 'grid', {}, delayTurns)
+        await settle()
+        // the restore on entry has to have landed, a push now would cancel it
+        await vi.waitFor(() => expect(router.currentRoute.value.query.ordering).toBe('name'))
+        await router.push({path: '/advanced-search', query: {}})
+        await settle()
+        await vi.waitFor(() => expect(router.currentRoute.value.query.ordering).toBe('name'))
+        expect(lastParams().sortOrder).toBe('name')
+        wrapper.unmount()
+    })
+
+    it('Reset forgets the remembered sort, so it does not come back on the next visit', async () => {
+        remember({ordering: 'name'})
+        const {wrapper} = await mountSearchPage()
+        await settle()
+        ;(wrapper.vm as any).resetAll()
+        await settle()
+        expect(JSON.parse(window.sessionStorage.getItem(KEY) ?? '{}').extras).toBeUndefined()
+        wrapper.unmount()
+    })
+
+    it('a sort that is already in the URL does not get a remembered seed next to it', async () => {
+        remember({ordering: 'random', seed: mintSeed()})
+        const {wrapper, router} = await mountSearchPage({ordering: 'name'})
+        await settle()
+        expect(lastParams().sortOrder).toBe('name')
+        await vi.waitFor(() => expect(router.currentRoute.value.query.seed).toBeUndefined())
+        wrapper.unmount()
     })
 })
