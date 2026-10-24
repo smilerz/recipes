@@ -239,6 +239,11 @@ describe('SearchPage (Phase 3 rewrite)', () => {
             expect(arg.includeChildren).toBe(false)
         })
 
+        it('does not persist a deep link\'s includeChildren=false to the device setting', async () => {
+            await mountSearchPage({foods: '5', includeChildren: 'false'})
+            expect(useUserPreferenceStore().deviceSettings.search_includeChildren).not.toBe(false)
+        })
+
         it('still defaults to includeChildren=true without the query param', async () => {
             await mountSearchPage({foods: '5'})
             const arg = (apiMock.apiRecipeList as any).mock.calls[0][0]

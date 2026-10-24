@@ -298,7 +298,7 @@
             <template #settings>
                 <div class="px-4 py-1">
                     <v-switch
-                        v-model="settings.includeChildren.value"
+                        v-model="includeChildren"
                         :label="$t('IncludeChildren')"
                         color="primary"
                         hide-details
@@ -499,6 +499,15 @@ const pageSize = useRouteQuery('pageSize', useUserPreferenceStore().deviceSettin
 
 // ─── Settings (device-persisted) ──────────────────────────────────────
 const settings = useModelListSettings(computed(() => 'search'))
+// A database-page deep link narrows this visit only; the device setting stays what the user chose
+const includeChildrenOverride = ref<boolean | null>(null)
+const includeChildren = computed({
+    get: () => includeChildrenOverride.value ?? settings.includeChildren.value,
+    set: (value: boolean) => {
+        includeChildrenOverride.value = null
+        settings.includeChildren.value = value
+    },
+})
 const {isInlineSelected, toggleInline, isDrawerSelected, toggleDrawer, configurableFiltersByGroup: makeConfigurable} = useFilterPlacement()
 const configurableFiltersByGroup = makeConfigurable(groupedFilterDefs)
 
@@ -658,7 +667,7 @@ function buildSearchParams(): ApiRecipeListRequest {
         ...(query.value ? {query: query.value} : {}),
         ...(ordering.value ? {sortOrder: ordering.value} : {}),
         ...(isRandomOrdering.value && seed.value ? {seed: seed.value} : {}),
-        includeChildren: useUserPreferenceStore().deviceSettings.search_includeChildren ?? true,
+        includeChildren: includeChildren.value,
     }
 }
 
@@ -725,7 +734,7 @@ const debouncedSearch = useDebounceFn(() => {
 let stopReQueryWatcher: (() => void) | null = null
 function startReQueryWatcher() {
     if (stopReQueryWatcher) return
-    stopReQueryWatcher = watch([filterParams, ordering, query, pageSize, settings.includeChildren], () => {
+    stopReQueryWatcher = watch([filterParams, ordering, query, pageSize, includeChildren], () => {
         debouncedSearch()
     })
 }
@@ -912,7 +921,7 @@ onMounted(async () => {
     // Deep-link from a Food/Keyword/Unit database-page "Recipes" count link (#11): that link
     // means recipes tagged with exactly that hierarchy node, not its descendants too.
     if (route.query.includeChildren !== undefined) {
-        settings.includeChildren.value = route.query.includeChildren === 'true'
+        includeChildrenOverride.value = route.query.includeChildren === 'true'
     }
     searchRecipes({page: page.value})
     startReQueryWatcher()
