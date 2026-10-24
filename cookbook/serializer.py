@@ -25,7 +25,7 @@ from cookbook.helper.ai_helper import get_monthly_token_usage
 from cookbook.helper.drf_writable_nested import UniqueFieldsMixin
 from cookbook.helper.drf_writable_nested import WritableNestedModelSerializer as WNMS
 from cookbook.helper.image_processing import get_primary_recipe_image, is_file_type_allowed
-from cookbook.helper.permission_helper import above_space_limit, create_space_for_user, get_household_user_ids
+from cookbook.helper.permission_helper import above_space_limit, can_view_meal_plan, can_view_recipe, create_space_for_user, get_household_user_ids
 from cookbook.helper.property_helper import FoodPropertyHelper
 from cookbook.helper.shopping_helper import RecipeShoppingEditor
 from cookbook.helper.unit_conversion_helper import UnitConversionHelper
@@ -1616,13 +1616,25 @@ class RecipeBookEntrySerializer(serializers.ModelSerializer):
     def get_recipe_content(self, obj):
         return RecipeOverviewSerializer(context={'request': self.context['request']}).to_representation(obj.recipe)
 
+    def _check_access(self, book, recipe, check_recipe=True):
+        user = self.context['request'].user
+        if not book.get_owner() == user and user not in book.get_shared():
+            raise NotFound(detail=None, code=None)
+        if check_recipe and not can_view_recipe(user, recipe):
+            raise NotFound(detail=None, code=None)
+
     def create(self, validated_data):
         book = validated_data['book']
         recipe = validated_data['recipe']
-        if not book.get_owner() == self.context['request'].user and not self.context['request'].user in book.get_shared():
-            raise NotFound(detail=None, code=None)
+        self._check_access(book, recipe)
         obj, created = RecipeBookEntry.objects.get_or_create(book=book, recipe=recipe)
         return obj
+
+    def update(self, instance, validated_data):
+        recipe = validated_data.get('recipe', instance.recipe)
+        # a recipe that stays as it is was accepted when it was added
+        self._check_access(validated_data.get('book', instance.book), recipe, check_recipe=recipe.pk != instance.recipe_id)
+        return super().update(instance, validated_data)
 
     class Meta:
         model = RecipeBookEntry
@@ -1663,6 +1675,17 @@ class MealPlanSerializer(SpacedModelSerializer, WritableNestedModelSerializer):
         if meal_type_obj and meal_type_obj.time:
             return local_dt.replace(hour=meal_type_obj.time.hour, minute=meal_type_obj.time.minute, second=0)
         return local_dt.replace(hour=12, minute=0, second=0)
+
+    def update_or_create_direct_relations(self, attrs, relations):
+        if 'recipe' in relations:
+            # looked up the way the nested writer finds the recipe, so a pk sent next to an id cannot get past the check
+            pk = self._get_related_pk(self.get_initial()['recipe'], Recipe)
+            # unchanged on an update is fine, it was accepted when it was set
+            if pk and not (self.instance and str(self.instance.recipe_id) == pk):
+                recipe = Recipe.objects.filter(pk=pk).first()
+                if recipe and not can_view_recipe(self.context['request'].user, recipe):
+                    raise ValidationError({'recipe': [_('Invalid pk "{pk}" - object does not exist.').format(pk=pk)]})
+        super().update_or_create_direct_relations(attrs, relations)
 
     def create(self, validated_data):
         validated_data['created_by'] = self.context['request'].user
@@ -1728,6 +1751,17 @@ class ShoppingListRecipeSerializer(serializers.ModelSerializer):
     meal_plan_data = MealPlanSerializer(source='mealplan', read_only=True, required=False)
     servings = CustomDecimalField()
     created_by = UserSerializer(read_only=True)
+
+    def validate_recipe(self, recipe):
+        # unchanged on an update is fine, it was accepted when it was set. An invisible recipe looks the same as a missing one.
+        if recipe is not None and not (self.instance and self.instance.recipe_id == recipe.pk) and not can_view_recipe(self.context['request'].user, recipe):
+            raise ValidationError(_('Invalid pk "{pk}" - object does not exist.').format(pk=recipe.pk))
+        return recipe
+
+    def validate_mealplan(self, mealplan):
+        if mealplan is not None and not (self.instance and self.instance.mealplan_id == mealplan.pk) and not can_view_meal_plan(self.context['request'], mealplan):
+            raise ValidationError(_('Invalid pk "{pk}" - object does not exist.').format(pk=mealplan.pk))
+        return mealplan
 
     def create(self, validated_data):
         validated_data['space'] = self.context['request'].space
@@ -1820,6 +1854,14 @@ class ShoppingListEntrySerializer(WritableNestedModelSerializer):
     completed_at = serializers.DateTimeField(allow_null=True, required=False)
     mealplan_id = serializers.IntegerField(required=False, write_only=True,
                                            help_text='If a mealplan id is given try to find existing or create new ShoppingListRecipe with that meal plan and link entry to it')
+
+    def validate_mealplan_id(self, mealplan_id):
+        # a meal plan that is not in the space looks the same as before (nothing is linked), only plans of other users are refused
+        meal_plan = MealPlan.objects.filter(pk=mealplan_id).first()
+        unchanged = self.instance is not None and getattr(self.instance.list_recipe, 'mealplan_id', None) == mealplan_id
+        if meal_plan is not None and not unchanged and not can_view_meal_plan(self.context['request'], meal_plan):
+            raise ValidationError(_('Invalid pk "{pk}" - object does not exist.').format(pk=mealplan_id))
+        return mealplan_id
 
     def get_fields(self, *args, **kwargs):
         fields = super().get_fields(*args, **kwargs)

@@ -6,6 +6,7 @@ from django.contrib.auth.decorators import user_passes_test
 from django.contrib.auth.models import Group
 from django.core.cache import cache
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
+from django.db.models import Q
 from django.http import Http404, HttpResponseRedirect
 from django.urls import reverse, reverse_lazy
 from django.utils.translation import gettext as _
@@ -399,6 +400,29 @@ class CustomIsShare(permissions.BasePermission):
         if share:
             return share_link_valid(obj, share)
         return False
+
+
+def can_view_recipe(user, recipe):
+    """
+    A private recipe is only visible to the user who created it and the users it is shared with.
+    The recipe is expected to come from a scoped lookup, so it is already in the user's space.
+    """
+    return not recipe.private or recipe.created_by_id == user.id or recipe.shared.filter(pk=user.pk).exists()
+
+
+def visible_recipes_q(user):
+    """
+    The recipes a user may see, as a filter for Recipe querysets (same rule as can_view_recipe).
+    The shared join can repeat a recipe, so combine it with .distinct().
+    """
+    return Q(private=False) | Q(created_by=user) | Q(shared=user)
+
+
+def can_view_meal_plan(request, meal_plan):
+    """
+    A meal plan is visible to the user who created it and to the members of the user's household (see MealPlanViewSet).
+    """
+    return meal_plan.created_by_id == request.user.id or meal_plan.created_by_id in get_household_user_ids(request.user_space)
 
 
 class CustomRecipePermission(permissions.BasePermission):

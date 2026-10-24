@@ -139,3 +139,55 @@ def test_delete(u1_s1, u1_s2, obj_1):
     assert r.status_code == 204
     with scopes_disabled():
         assert RecipeBookEntry.objects.count() == 0
+
+
+def _private_recipe_of_another_user(space_1, u2_s1):
+    from cookbook.tests.factories import RecipeFactory
+    with scopes_disabled():
+        return RecipeFactory(space=space_1, created_by=auth.get_user(u2_s1), private=True)
+
+
+def test_update_cannot_move_an_entry_into_a_book_the_user_does_not_own(obj_1, u1_s1, u2_s1, space_1):
+    with scopes_disabled():
+        other_book = RecipeBook.objects.create(name='not_shared', created_by=auth.get_user(u2_s1), space=space_1)
+
+    r = u1_s1.patch(reverse(DETAIL_URL, args=[obj_1.id]), {'book': other_book.id, 'recipe': obj_1.recipe_id}, content_type='application/json')
+
+    assert r.status_code == 404
+    with scopes_disabled():
+        obj_1.refresh_from_db()
+        assert obj_1.book_id != other_book.id
+
+
+def test_update_can_move_an_entry_into_another_book_of_the_user(obj_1, u1_s1, space_1):
+    with scopes_disabled():
+        target = RecipeBook.objects.create(name='target', created_by=auth.get_user(u1_s1), space=space_1)
+
+    r = u1_s1.patch(reverse(DETAIL_URL, args=[obj_1.id]), {'book': target.id, 'recipe': obj_1.recipe_id}, content_type='application/json')
+
+    assert r.status_code == 200
+    with scopes_disabled():
+        obj_1.refresh_from_db()
+        assert obj_1.book_id == target.id
+
+
+def test_create_refuses_a_private_recipe_of_another_user(obj_1, u1_s1, u2_s1, space_1):
+    secret = _private_recipe_of_another_user(space_1, u2_s1)
+
+    r = u1_s1.post(reverse(LIST_URL), {'book': obj_1.book_id, 'recipe': secret.id}, content_type='application/json')
+
+    assert r.status_code == 404
+    assert secret.name not in r.content.decode()
+    with scopes_disabled():
+        assert not RecipeBookEntry.objects.filter(recipe=secret).exists()
+
+
+def test_update_refuses_a_private_recipe_of_another_user(obj_1, u1_s1, u2_s1, space_1):
+    secret = _private_recipe_of_another_user(space_1, u2_s1)
+
+    r = u1_s1.patch(reverse(DETAIL_URL, args=[obj_1.id]), {'book': obj_1.book_id, 'recipe': secret.id}, content_type='application/json')
+
+    assert r.status_code == 404
+    with scopes_disabled():
+        obj_1.refresh_from_db()
+        assert obj_1.recipe_id != secret.id

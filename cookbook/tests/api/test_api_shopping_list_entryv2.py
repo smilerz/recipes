@@ -9,7 +9,7 @@ from django_scopes import scopes_disabled
 
 from cookbook.helper.permission_helper import invalidate_household_cache
 from cookbook.models import InventoryEntry, ShoppingListEntry, Household, UserSpace, UserFile
-from cookbook.tests.factories import FoodFactory, ShoppingListEntryFactory
+from cookbook.tests.factories import FoodFactory, MealPlanFactory, ShoppingListEntryFactory
 
 LIST_URL = 'api:shoppinglistentry-list'
 DETAIL_URL = 'api:shoppinglistentry-detail'
@@ -429,3 +429,17 @@ def test_entry_food_carries_pack_and_shelf_life(u1_s1, space_1):
 
 
 # TODO test auto onhand
+
+
+def test_create_refuses_a_meal_plan_of_another_user(u1_s1, u2_s1, space_1):
+    with scopes_disabled():
+        own = MealPlanFactory(space=space_1, created_by=auth.get_user(u1_s1), has_recipe=False)
+        other = MealPlanFactory(space=space_1, created_by=auth.get_user(u2_s1), note='U2-PRIVATE-NOTE')
+
+    assert u1_s1.post(reverse(LIST_URL), {'food': {'name': 'probe food'}, 'amount': 1, 'mealplan_id': own.id}, content_type='application/json').status_code == 201
+    r = u1_s1.post(reverse(LIST_URL), {'food': {'name': 'probe food'}, 'amount': 1, 'mealplan_id': other.id}, content_type='application/json')
+
+    assert r.status_code == 400
+    assert 'U2-PRIVATE-NOTE' not in r.content.decode()
+    with scopes_disabled():
+        assert not ShoppingListEntry.objects.filter(list_recipe__mealplan=other).exists()

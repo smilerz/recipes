@@ -106,3 +106,38 @@ def test_bulk_create_entries_response_only_lists_created_entries(u1_s1, obj_1, s
     assert [e['food_id'] for e in json.loads(r.content)['entries']] == [own_food.id]
     with scopes_disabled():
         assert ShoppingListEntry.objects.filter(food_id=own_food.id).count() == 1
+
+
+def _recipe_for(kind, user, other, space):
+    from django_scopes import scopes_disabled
+    from cookbook.tests.factories import RecipeFactory
+    with scopes_disabled():
+        recipe = RecipeFactory(space=space, created_by=user if kind == 'own_private' else other, private=kind != 'public')
+        if kind == 'shared_private':
+            recipe.shared.add(user)
+    return recipe
+
+
+@pytest.mark.parametrize('kind, expected', [('public', 201), ('own_private', 201), ('shared_private', 201), ('private_of_another_user', 400)])
+def test_create_only_accepts_a_recipe_the_user_can_see(u1_s1, u2_s1, space_1, kind, expected):
+    recipe = _recipe_for(kind, auth.get_user(u1_s1), auth.get_user(u2_s1), space_1)
+
+    r = u1_s1.post(reverse(LIST_URL), {'recipe': recipe.id, 'servings': 1}, content_type='application/json')
+
+    assert r.status_code == expected
+    if expected == 400:
+        assert recipe.name not in r.content.decode()
+
+
+def test_create_refuses_a_meal_plan_of_another_user(u1_s1, u2_s1, space_1):
+    from django_scopes import scopes_disabled
+    from cookbook.tests.factories import MealPlanFactory
+    with scopes_disabled():
+        own = MealPlanFactory(space=space_1, created_by=auth.get_user(u1_s1), has_recipe=False)
+        other = MealPlanFactory(space=space_1, created_by=auth.get_user(u2_s1), has_recipe=False, note='U2-PRIVATE-NOTE')
+
+    assert u1_s1.post(reverse(LIST_URL), {'mealplan': own.id, 'servings': 1}, content_type='application/json').status_code == 201
+    r = u1_s1.post(reverse(LIST_URL), {'mealplan': other.id, 'servings': 1}, content_type='application/json')
+
+    assert r.status_code == 400
+    assert 'U2-PRIVATE-NOTE' not in r.content.decode()

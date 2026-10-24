@@ -616,3 +616,88 @@ def test_auto_plan_ignores_shared_user_from_another_space(u1_s1, u2_s1, u1_s2, r
     with scopes_disabled():
         assert not MealPlan.shared.through.objects.filter(user_id=other.id).exists()
         assert MealPlan.shared.through.objects.filter(user_id=member.id).exists()
+
+
+# ==================== Private recipes ====================
+def _plan_payload(recipe, meal_type):
+    today = timezone.now().date().isoformat()
+    return {'recipe': {'id': recipe.id, 'name': recipe.name}, 'meal_type': {'id': meal_type.id, 'name': meal_type.name},
+            'from_date': today, 'to_date': today, 'servings': 1, 'title': ''}
+
+
+@pytest.mark.parametrize('kind, expected', [('public', 201), ('own_private', 201), ('shared_private', 201), ('private_of_another_user', 400)])
+def test_create_only_accepts_a_recipe_the_user_can_see(u1_s1, u2_s1, space_1, meal_type, kind, expected):
+    user1, user2 = auth.get_user(u1_s1), auth.get_user(u2_s1)
+    with scopes_disabled():
+        recipe = RecipeFactory(space=space_1, created_by=user1 if kind == 'own_private' else user2, private=kind != 'public')
+        if kind == 'shared_private':
+            recipe.shared.add(user1)
+
+    r = u1_s1.post(reverse(LIST_URL), _plan_payload(recipe, meal_type), content_type='application/json')
+
+    assert r.status_code == expected
+    if expected == 400:
+        assert recipe.name not in r.content.decode()
+        with scopes_disabled():
+            assert not MealPlan.objects.filter(recipe=recipe).exists()
+
+
+def test_update_still_works_when_the_recipe_is_no_longer_visible_but_unchanged(u1_s1, u2_s1, space_1, meal_type):
+    with scopes_disabled():
+        recipe = RecipeFactory(space=space_1, created_by=auth.get_user(u2_s1), private=False)
+        plan = MealPlan.objects.create(recipe=recipe, meal_type=meal_type, servings=1, space=space_1, created_by=auth.get_user(u1_s1),
+                                       from_date=timezone.now(), to_date=timezone.now())
+        recipe.private = True
+        recipe.save()
+
+    payload = _plan_payload(recipe, meal_type) | {'servings': 3}
+    r = u1_s1.patch(reverse(DETAIL_URL, args=[plan.id]), payload, content_type='application/json')
+
+    assert r.status_code == 200
+
+
+def test_create_cannot_smuggle_a_private_recipe_in_as_pk(u1_s1, u2_s1, space_1, meal_type):
+    with scopes_disabled():
+        public = RecipeFactory(space=space_1, created_by=auth.get_user(u2_s1), private=False)
+        secret = RecipeFactory(space=space_1, created_by=auth.get_user(u2_s1), private=True)
+    payload = _plan_payload(public, meal_type)
+    payload['recipe']['pk'] = secret.id
+
+    r = u1_s1.post(reverse(LIST_URL), payload, content_type='application/json')
+
+    assert r.status_code == 400
+    assert secret.name not in r.content.decode()
+    with scopes_disabled():
+        assert not MealPlan.objects.filter(recipe=secret).exists()
+
+
+def test_update_cannot_swap_in_a_private_recipe_with_pk(u1_s1, u2_s1, space_1, meal_type):
+    with scopes_disabled():
+        public = RecipeFactory(space=space_1, created_by=auth.get_user(u2_s1), private=False)
+        secret = RecipeFactory(space=space_1, created_by=auth.get_user(u2_s1), private=True)
+        plan = MealPlan.objects.create(recipe=public, meal_type=meal_type, servings=1, space=space_1, created_by=auth.get_user(u1_s1),
+                                       from_date=timezone.now(), to_date=timezone.now())
+    payload = _plan_payload(public, meal_type)
+    payload['recipe']['pk'] = secret.id
+
+    r = u1_s1.patch(reverse(DETAIL_URL, args=[plan.id]), payload, content_type='application/json')
+
+    assert r.status_code == 400
+    with scopes_disabled():
+        plan.refresh_from_db()
+        assert plan.recipe_id == public.id
+
+
+@pytest.mark.parametrize('kind, expected', [('public', 200), ('own_private', 200), ('shared_private', 200), ('private_of_another_user', 400)])
+def test_auto_plan_only_picks_recipes_the_user_can_see(u1_s1, u2_s1, space_1, meal_type, kind, expected):
+    user1, user2 = auth.get_user(u1_s1), auth.get_user(u2_s1)
+    with scopes_disabled():
+        recipe = RecipeFactory(space=space_1, created_by=user1 if kind == 'own_private' else user2, private=kind != 'public', internal=True)
+        if kind == 'shared_private':
+            recipe.shared.add(user1)
+
+    r = u1_s1.post(reverse(AUTO_PLAN_URL), _auto_plan_payload(meal_type), content_type='application/json')
+
+    assert r.status_code == expected
+    with scopes_disabled():
+        assert MealPlan.objects.filter(recipe=recipe).exists() == (expected == 200)
