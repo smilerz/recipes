@@ -592,3 +592,27 @@ def test_auto_plan_internal_only(u1_s1, meal_type, space_1, auto_plan_keywords):
         content_type='application/json',
     )
     assert resp.status_code == 400
+
+
+def test_auto_plan_ignores_meal_type_from_another_space(u1_s1, space_2, recipe_1_s1, meal_type):
+    from cookbook.tests.factories import MealTypeFactory
+    with scopes_disabled():
+        foreign_meal_type = MealTypeFactory(space=space_2)
+
+    r = u1_s1.post(reverse(AUTO_PLAN_URL), _auto_plan_payload(foreign_meal_type), content_type='application/json')
+
+    assert r.status_code == 400
+    with scopes_disabled():
+        assert not MealPlan.objects.filter(meal_type_id=foreign_meal_type.id).exists()
+
+
+def test_auto_plan_ignores_shared_user_from_another_space(u1_s1, u2_s1, u1_s2, recipe_1_s1, meal_type):
+    other = auth.get_user(u1_s2)
+    member = auth.get_user(u2_s1)
+
+    r = u1_s1.post(reverse(AUTO_PLAN_URL), _auto_plan_payload(meal_type, shared=[{'id': u.id, 'username': u.username} for u in (other, member)]), content_type='application/json')
+
+    assert r.status_code == 200
+    with scopes_disabled():
+        assert not MealPlan.shared.through.objects.filter(user_id=other.id).exists()
+        assert MealPlan.shared.through.objects.filter(user_id=member.id).exists()

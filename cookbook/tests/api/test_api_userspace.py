@@ -141,3 +141,37 @@ def test_delete_space_owner_blocked(a1_s1, space_1):
 
     r = a1_s1.delete(reverse(DETAIL_URL, args={owner_userspace.id}))
     assert r.status_code == 403
+
+
+def test_batch_update_ignores_household_from_another_space(u1_s1, space_1, space_2):
+    from cookbook.tests.factories import HouseholdFactory
+    user = auth.get_user(u1_s1)
+    space_1.created_by = user
+    space_1.save()
+    with scopes_disabled():
+        user_space = UserSpace.objects.get(user=user, space=space_1)
+        foreign_household = HouseholdFactory(space=space_2)
+
+    r = u1_s1.put(reverse('api:userspace-batch-update'), {'user_spaces': [user_space.id], 'household': foreign_household.id}, content_type='application/json')
+
+    assert r.status_code == 400
+    with scopes_disabled():
+        user_space.refresh_from_db()
+        assert user_space.household_id != foreign_household.id
+
+
+def test_batch_update_sets_household_from_the_same_space(u1_s1, space_1):
+    from cookbook.tests.factories import HouseholdFactory
+    user = auth.get_user(u1_s1)
+    space_1.created_by = user
+    space_1.save()
+    with scopes_disabled():
+        user_space = UserSpace.objects.get(user=user, space=space_1)
+        household = HouseholdFactory(space=space_1)
+
+    r = u1_s1.put(reverse('api:userspace-batch-update'), {'user_spaces': [user_space.id], 'household': household.id}, content_type='application/json')
+
+    assert r.status_code == 200
+    with scopes_disabled():
+        user_space.refresh_from_db()
+        assert user_space.household_id == household.id
