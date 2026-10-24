@@ -516,3 +516,45 @@ def test_batch_update_book_add_requires_book_permission(u1_s1, u2_s1, space_1):
     assert resp.status_code == 403
     with scopes_disabled():
         assert not RecipeBookEntry.objects.filter(book=book).exists()
+
+
+@pytest.mark.parametrize('field', ['keywords_add', 'keywords_set'])
+def test_batch_update_ignores_keyword_from_another_space(u1_s1, space_1, space_2, recipe_1_s1, field):
+    from cookbook.tests.factories import KeywordFactory
+    with scopes_disabled():
+        own_keyword = KeywordFactory(space=space_1)
+        foreign_keyword = KeywordFactory(space=space_2)
+
+    r = u1_s1.put(reverse('api:recipe-batch-update'), {'recipes': [recipe_1_s1.id], field: [foreign_keyword.id, own_keyword.id]}, content_type='application/json')
+
+    assert r.status_code == 200
+    with scopes_disabled():
+        assert not Recipe.keywords.through.objects.filter(recipe_id=recipe_1_s1.id, keyword_id=foreign_keyword.id).exists()
+        assert Recipe.keywords.through.objects.filter(recipe_id=recipe_1_s1.id, keyword_id=own_keyword.id).exists()
+
+
+@pytest.mark.parametrize('field', ['shared_add', 'shared_set'])
+def test_batch_update_ignores_shared_user_from_another_space(u1_s1, u2_s1, u1_s2, recipe_1_s1, field):
+    other = auth.get_user(u1_s2)
+    member = auth.get_user(u2_s1)
+
+    r = u1_s1.put(reverse('api:recipe-batch-update'), {'recipes': [recipe_1_s1.id], field: [other.id, member.id]}, content_type='application/json')
+
+    assert r.status_code == 200
+    with scopes_disabled():
+        assert not Recipe.shared.through.objects.filter(recipe_id=recipe_1_s1.id, user_id=other.id).exists()
+        assert Recipe.shared.through.objects.filter(recipe_id=recipe_1_s1.id, user_id=member.id).exists()
+
+
+def test_batch_update_keywords_set_with_only_foreign_ids_keeps_existing_keywords(u1_s1, space_1, space_2, recipe_1_s1):
+    from cookbook.tests.factories import KeywordFactory
+    with scopes_disabled():
+        own_keyword = KeywordFactory(space=space_1)
+        foreign_keyword = KeywordFactory(space=space_2)
+        recipe_1_s1.keywords.set([own_keyword])
+
+    r = u1_s1.put(reverse('api:recipe-batch-update'), {'recipes': [recipe_1_s1.id], 'keywords_set': [foreign_keyword.id]}, content_type='application/json')
+
+    assert r.status_code == 200
+    with scopes_disabled():
+        assert list(recipe_1_s1.keywords.values_list('id', flat=True)) == [own_keyword.id]

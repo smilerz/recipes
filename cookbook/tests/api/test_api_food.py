@@ -2271,6 +2271,81 @@ def test_substitute_inventory_retrieve_is_household_scoped(u1_s1, u2_s1, space_1
     assert json.loads(response.content)['substitute_inventory'] is False
 
 
+def _foreign_space_objects(space_2):
+    """A category, a food and a shopping list that live in another space."""
+    from cookbook.models import ShoppingList
+    foreign_cat = SupermarketCategoryFactory(space=space_2)
+    foreign_food = FoodFactory(space=space_2)
+    foreign_list = ShoppingList.objects.create(name='foreign', space=space_2)
+    return foreign_cat, foreign_food, foreign_list
+
+
+def test_batch_update_rejects_category_from_another_space(u1_s1, space_1, space_2):
+    with scopes_disabled():
+        food = FoodFactory(space=space_1)
+        foreign_cat, _, _ = _foreign_space_objects(space_2)
+
+    r = u1_s1.put(reverse('api:food-batch-update'), {'foods': [food.id], 'category': foreign_cat.id}, content_type='application/json')
+
+    assert r.status_code == 400
+    with scopes_disabled():
+        food.refresh_from_db()
+        assert food.supermarket_category_id != foreign_cat.id
+
+
+def test_batch_update_sets_category_from_the_same_space(u1_s1, space_1, cat_1):
+    with scopes_disabled():
+        food = FoodFactory(space=space_1, supermarket_category=None)
+
+    r = u1_s1.put(reverse('api:food-batch-update'), {'foods': [food.id], 'category': cat_1.id}, content_type='application/json')
+
+    assert r.status_code == 200
+    with scopes_disabled():
+        food.refresh_from_db()
+        assert food.supermarket_category_id == cat_1.id
+
+
+def test_batch_update_null_category_clears_it(u1_s1, space_1, cat_1):
+    with scopes_disabled():
+        food = FoodFactory(space=space_1, supermarket_category=cat_1)
+
+    r = u1_s1.put(reverse('api:food-batch-update'), {'foods': [food.id], 'category': None}, content_type='application/json')
+
+    assert r.status_code == 200
+    with scopes_disabled():
+        food.refresh_from_db()
+        assert food.supermarket_category_id is None
+
+
+@pytest.mark.parametrize('field', ['substitute_add', 'substitute_set'])
+def test_batch_update_ignores_substitute_from_another_space(u1_s1, space_1, space_2, field):
+    with scopes_disabled():
+        food = FoodFactory(space=space_1)
+        own_food = FoodFactory(space=space_1)
+        _, foreign_food, _ = _foreign_space_objects(space_2)
+
+    r = u1_s1.put(reverse('api:food-batch-update'), {'foods': [food.id], field: [foreign_food.id, own_food.id]}, content_type='application/json')
+
+    assert r.status_code == 200
+    with scopes_disabled():
+        assert set(food.substitute.values_list('id', flat=True)) == {own_food.id}
+
+
+@pytest.mark.parametrize('field', ['shopping_lists_add', 'shopping_lists_set'])
+def test_batch_update_ignores_shopping_list_from_another_space(u1_s1, space_1, space_2, field):
+    from cookbook.models import ShoppingList
+    with scopes_disabled():
+        food = FoodFactory(space=space_1)
+        own_list = ShoppingList.objects.create(name='own', space=space_1)
+        _, _, foreign_list = _foreign_space_objects(space_2)
+
+    r = u1_s1.put(reverse('api:food-batch-update'), {'foods': [food.id], field: [foreign_list.id, own_list.id]}, content_type='application/json')
+
+    assert r.status_code == 200
+    with scopes_disabled():
+        assert set(food.shopping_lists.values_list('id', flat=True)) == {own_list.id}
+
+
 def test_reset_inheritance_leaves_other_spaces_untouched(space_1, space_2):
     with scopes_disabled():
         inheritable = list(Food.inheritable_fields.values_list('id', flat=True))

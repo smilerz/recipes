@@ -52,3 +52,57 @@ def test_delete(u1_s1, u1_s2, obj_1):
     r = u1_s1.delete(reverse(DETAIL_URL, args={obj_1.id}))
 
     assert r.status_code == 204
+
+
+@pytest.mark.parametrize('foreign', ['food', 'unit', 'ingredient'])
+def test_bulk_create_entries_ignores_ids_from_another_space(u1_s1, obj_1, space_1, space_2, foreign):
+    from django_scopes import scopes_disabled
+    from cookbook.tests.factories import FoodFactory, IngredientFactory, UnitFactory
+    with scopes_disabled():
+        entry = {'amount': 1, 'unit_id': None, 'food_id': FoodFactory(space=space_1).id, 'ingredient_id': None}
+        if foreign == 'food':
+            entry['food_id'] = FoodFactory(space=space_2).id
+        elif foreign == 'unit':
+            entry['unit_id'] = UnitFactory(space=space_2).id
+        else:
+            entry['ingredient_id'] = IngredientFactory(space=space_2).id
+    foreign_id = entry[f'{foreign}_id']
+
+    r = u1_s1.post(reverse('api:shoppinglistrecipe-bulk-create-entries', args=[obj_1.id]), {'entries': [entry], 'shopping_lists_ids': []}, content_type='application/json')
+
+    assert r.status_code == 200
+    with scopes_disabled():
+        assert not ShoppingListEntry.objects.filter(**{f'{foreign}_id': foreign_id}).exists()
+
+
+def test_bulk_create_entries_ignores_shopping_list_from_another_space(u1_s1, obj_1, space_1, space_2):
+    from django_scopes import scopes_disabled
+    from cookbook.models import ShoppingList
+    from cookbook.tests.factories import FoodFactory
+    with scopes_disabled():
+        food = FoodFactory(space=space_1)
+        foreign_list = ShoppingList.objects.create(name='foreign', space=space_2)
+
+    r = u1_s1.post(reverse('api:shoppinglistrecipe-bulk-create-entries', args=[obj_1.id]),
+                   {'entries': [{'amount': 1, 'unit_id': None, 'food_id': food.id, 'ingredient_id': None}], 'shopping_lists_ids': [foreign_list.id]},
+                   content_type='application/json')
+
+    assert r.status_code == 200
+    with scopes_disabled():
+        assert not ShoppingListEntry.shopping_lists.through.objects.filter(shoppinglist_id=foreign_list.id).exists()
+
+
+def test_bulk_create_entries_response_only_lists_created_entries(u1_s1, obj_1, space_1, space_2):
+    from django_scopes import scopes_disabled
+    from cookbook.tests.factories import FoodFactory
+    with scopes_disabled():
+        own_food = FoodFactory(space=space_1)
+        foreign_food = FoodFactory(space=space_2)
+    entries = [{'amount': 1, 'unit_id': None, 'food_id': food.id, 'ingredient_id': None} for food in (own_food, foreign_food)]
+
+    r = u1_s1.post(reverse('api:shoppinglistrecipe-bulk-create-entries', args=[obj_1.id]), {'entries': entries, 'shopping_lists_ids': []}, content_type='application/json')
+
+    assert r.status_code == 200
+    assert [e['food_id'] for e in json.loads(r.content)['entries']] == [own_food.id]
+    with scopes_disabled():
+        assert ShoppingListEntry.objects.filter(food_id=own_food.id).count() == 1
