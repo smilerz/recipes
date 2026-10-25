@@ -1,5 +1,9 @@
 import json
-from datetime import time, timedelta
+from datetime import datetime, time, timedelta
+from datetime import timezone as dt_timezone
+from unittest.mock import patch
+from zoneinfo import ZoneInfo
+
 from django.utils import timezone
 
 import pytest
@@ -54,7 +58,9 @@ def obj_3(space_1, recipe_1_s1, meal_type, u1_s1):
                                    space=space_1,
                                    meal_type=meal_type,
                                    from_date=timezone.now() - timedelta(days=30),
-                                   to_date=timezone.now() - timedelta(days=1),
+                                   # Same wall-clock "yesterday" the tests' date arguments use; now() - 24h lands on
+                                   # today's local date for an hour around midnight on a DST-change day.
+                                   to_date=timezone.localtime(timezone.now()) - timedelta(days=1),
                                    created_by=auth.get_user(u1_s1))
 
 
@@ -231,6 +237,29 @@ def test_ical(arg, request, obj_1, obj_3, u1_s1):
     cal = Calendar.from_ical(r.getvalue().decode('UTF-8'))
     events = cal.walk('VEVENT')
     assert len(events) == arg[1]
+
+
+@pytest.fixture
+def dst_end_night():
+    """22:58 UTC on 2026-10-25 is 23:58 in Berlin, but 24 hours earlier was still summer time, so
+    "now - 24h" falls on the same local date as "now" instead of the previous one."""
+    with timezone.override(ZoneInfo('Europe/Berlin')), \
+            patch('django.utils.timezone.now', return_value=datetime(2026, 10, 25, 22, 58, 30, tzinfo=dt_timezone.utc)):
+        yield
+
+
+def test_ical_day_filters_on_dst_end_day(dst_end_night, obj_1, obj_3, u1_s1):
+    local_now = timezone.localtime(timezone.now())
+    today = local_now.strftime('%Y-%m-%d')
+    yesterday = (local_now - timedelta(days=1)).strftime('%Y-%m-%d')
+
+    def event_count(query):
+        r = u1_s1.get(f'{reverse(ICAL_URL)}{query}')
+        assert r.status_code == 200
+        return len(Calendar.from_ical(r.getvalue().decode('UTF-8')).walk('VEVENT'))
+
+    assert event_count(f'?from_date={today}') == 1
+    assert event_count(f'?to_date={yesterday}') == 1
 
 
 def test_ical_event(obj_1, u1_s1):
