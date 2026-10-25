@@ -27,6 +27,9 @@ jobs:
                       node-version: "24"
         steps:
             - uses: actions/checkout@v7
+              with:
+                  # Full history: the diff-coverage step diffs against the PR's base branch.
+                  fetch-depth: 0
             # cache-apt-pkgs-action >=1.6.3 no longer runs `apt update` on GitHub runners, so a
             # cache-cold install resolves against the runner image's stale lists and 404s.
             - name: Refresh apt package lists
@@ -95,6 +98,24 @@ jobs:
 
             - name: Django Testing project
               run: pytest --junitxml=junit/test-results-${{ matrix.python-version }}.xml
+
+            # Tests for the lines a PR changes are mandatory: fail when under 80% of the changed
+            # lines are executed by a test. Tests and migrations are excluded so their own
+            # (always-executed) changed lines can't dilute the ratio.
+            - name: Diff coverage (changed backend lines must be tested)
+              if: github.event_name == 'pull_request' && matrix.python-version == '3.13'
+              env:
+                  BASE_REF: ${{ github.base_ref }}
+              run: |
+                  pip install diff-cover==10.6.0
+                  status=0
+                  diff-cover docs/reports/coverage/coverage.xml \
+                      --compare-branch="origin/$BASE_REF" \
+                      --fail-under=80 \
+                      --exclude "**/tests/**" "**/migrations/**" \
+                      --format markdown:diff-coverage.md || status=$?
+                  cat diff-coverage.md >> "$GITHUB_STEP_SUMMARY"
+                  exit $status
 
             # One upload per push/PR is enough - coverage doesn't vary by matrix leg.
             - name: Upload backend coverage to Codecov
