@@ -83,6 +83,10 @@ const updatedItems = ref<EditorSupportedTypes[]>([])
 watch(dialog, (newValue, oldValue) => {
     if (!oldValue && newValue) {
         sourceItems.value = JSON.parse(JSON.stringify(props.source))
+        target.value = null
+        updatedItems.value = []
+        failedItems.value = []
+        automate.value = false
     }
 })
 
@@ -124,7 +128,7 @@ function mergeModel() {
                     }))
                 }
             }).catch((err: any) => {
-                updatedItems.value.push(sourceItem)
+                failedItems.value.push(sourceItem)
             }))
         })
 
