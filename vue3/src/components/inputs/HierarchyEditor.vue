@@ -112,8 +112,17 @@
                 />
             </v-toolbar>
             <v-divider />
+            <HierarchyMovePrompt
+                v-if="movePromptTarget"
+                :moving-item="movingItem"
+                :target-item="movePromptTarget"
+                :operating="tree.operating.value"
+                @move="onMoveHere"
+                @make-root="onMakeRoot"
+                @manage="manageSelected = true"
+            />
             <HierarchyControls
-                v-if="tree.selectedItem.value"
+                v-else-if="tree.selectedItem.value"
                 :selected-item="tree.selectedItem.value"
                 :editing-item="editingObj"
                 :current-parent="currentParent"
@@ -161,8 +170,17 @@
                 </v-card-title>
                 <v-divider />
                 <v-card-text style="max-height: 60vh; overflow-y: auto;" class="pa-0">
+                    <HierarchyMovePrompt
+                        v-if="movePromptTarget"
+                        :moving-item="movingItem"
+                        :target-item="movePromptTarget"
+                        :operating="tree.operating.value"
+                        @move="onMoveHere"
+                        @make-root="onMakeRoot"
+                        @manage="manageSelected = true"
+                    />
                     <HierarchyControls
-                        v-if="tree.selectedItem.value"
+                        v-else-if="tree.selectedItem.value"
                         :selected-item="tree.selectedItem.value"
                         :editing-item="editingObj"
                         :model="model"
@@ -204,6 +222,7 @@ import type {FlatTreeNode} from "@/composables/hierarchy/types"
 import HierarchyTree from "@/components/hierarchy/HierarchyTree.vue"
 import HierarchyDrillDown from "@/components/hierarchy/HierarchyDrillDown.vue"
 import HierarchyControls from "@/components/hierarchy/HierarchyControls.vue"
+import HierarchyMovePrompt from "@/components/hierarchy/HierarchyMovePrompt.vue"
 // Static import: HelpView is already loaded eagerly via Tandoor.vue → HelpDialog,
 // so defineAsyncComponent here adds no runtime savings — and produces a lazy chunk
 // that hits a Rollup tree-shake bug stripping makeDimensionProps from the main
@@ -236,6 +255,20 @@ const currentParent = computed(() => {
     const parentId = (sel as any)?.parent
     if (!parentId) return null
     return tree.findItemInCache(parentId)
+})
+
+// Clicking any row other than the item being edited means "put the edited item here"; the
+// manage controls act on the clicked row instead, so they sit behind an explicit opt-in.
+const manageSelected = ref(false)
+const movePromptTarget = computed(() => {
+    const sel = tree.selectedItem.value
+    if (!sel || manageSelected.value) return null
+    if (editingObj.value.id == null || sel.id === editingObj.value.id) return null
+    return sel
+})
+
+watch(() => tree.selectedItem.value?.id, () => {
+    manageSelected.value = false
 })
 
 // Sync panel with selection
@@ -321,6 +354,30 @@ function getParentName(item: EditorSupportedTypes): string {
 async function onAddChild(child: EditorSupportedTypes) {
     if (!tree.selectedItem.value) return
     await tree.moveItem(child, tree.selectedItem.value.id!)
+}
+
+// A move is saved by its own endpoint and `parent` is read-only on the editor's save, so the
+// edited object stays untouched (changing it would flag the form unsaved). Where the item sits
+// now is tracked here instead, so the next move starts from the right parent.
+const movedToParent = ref<number | null | undefined>(undefined)
+const movingItem = computed(() => (
+    movedToParent.value === undefined ? editingObj.value : {...editingObj.value, parent: movedToParent.value} as EditorSupportedTypes
+))
+
+async function moveEditingItem(parentId: number) {
+    if (await tree.moveItem(movingItem.value, parentId)) {
+        movedToParent.value = parentId === 0 ? null : parentId
+        panelOpen.value = false
+    }
+}
+
+async function onMoveHere() {
+    if (!movePromptTarget.value) return
+    await moveEditingItem(movePromptTarget.value.id!)
+}
+
+async function onMakeRoot() {
+    await moveEditingItem(0)
 }
 
 async function onSetParent(parent: EditorSupportedTypes) {

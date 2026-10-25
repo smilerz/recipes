@@ -263,6 +263,23 @@ describe('useHierarchyTree', () => {
             expect((tree.selectedItem.value as any)?.parent).toBe(10)
         })
 
+        it('reports success so callers can sync their own copy of the moved item', async () => {
+            mockMove.mockResolvedValue({})
+            mockList.mockResolvedValue({results: [], next: null})
+
+            const tree = createTree()
+
+            expect(await tree.moveItem(makeItem(5, 'Garlic', 3), 10)).toBe(true)
+        })
+
+        it('reports failure when the move request is rejected', async () => {
+            mockMove.mockRejectedValue(new Error('cannot move under a descendant'))
+
+            const tree = createTree()
+
+            expect(await tree.moveItem(makeItem(5, 'Garlic', 3), 10)).toBe(false)
+        })
+
         it('does not touch selectedItem when a DIFFERENT item is moved', async () => {
             mockMove.mockResolvedValue({})
             mockList.mockResolvedValue({results: [], next: null})
