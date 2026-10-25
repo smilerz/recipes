@@ -56,7 +56,7 @@ vi.mock('@vueuse/core', async (importOriginal) => {
 
 import FoodEditor from '@/components/model_editors/FoodEditor.vue'
 
-function mountEditor(item: any) {
+function mountEditor(item: any, extraStubs: Record<string, any> = {}) {
     const pinia = createPinia()
     setActivePinia(pinia)
 
@@ -75,6 +75,7 @@ function mountEditor(item: any) {
                 FdcSearchDialog: {template: '<div class="stub-fdc-dialog"/>'},
                 ModelEditDialog: {template: '<div class="stub-model-edit-dialog"/>'},
                 ModelEditorBase: {template: '<div><slot /></div>'},
+                ...extraStubs,
             },
         },
     })
@@ -229,6 +230,60 @@ describe('FoodEditor - Frozen/Opened opt-in toggles (#16/18)', () => {
         // Frozen untouched — the two toggles are independent (#16/18: a food can need both)
         expect((w.vm as any).frozenEnabled).toBe(true)
         expect((w.vm as any).editingObj.shelfLifeDaysFrozen).toBe(180)
+
+        w.unmount()
+    })
+})
+
+// Direct substitutes lived only on Miscellaneous, away from the two substitute flags on Hierarchy,
+// so people setting up substitutes there never found them. Both tabs now edit the same list.
+describe('FoodEditor - direct substitutes on both tabs', () => {
+    const SubstitutesStub = {
+        name: 'ModelSelect',
+        props: ['model', 'label', 'modelValue'],
+        emits: ['update:modelValue'],
+        template: '<div class="stub-model-select" :data-label="label"/>',
+    }
+
+    beforeEach(() => {
+        resetApiMock()
+    })
+
+    async function openTab(w: ReturnType<typeof mountEditor>, tab: string) {
+        ;(w.vm as any).tab = tab
+        await flushPromises()
+    }
+
+    function substituteFields(w: ReturnType<typeof mountEditor>) {
+        return w.findAllComponents({name: 'ModelSelect'}).filter(c => c.props('label') === 'Substitutes')
+    }
+
+    it.each(['hierarchy', 'misc'])('shows the Substitutes field on the %s tab', async (tab) => {
+        const w = mountEditor(makeFood({id: 5, name: 'Butter'}), {ModelSelect: SubstitutesStub})
+        await flushPromises()
+        await openTab(w, tab)
+
+        const fields = substituteFields(w)
+        expect(fields.length).toBeGreaterThan(0)
+        expect(fields.every(f => f.props('model') === 'Food')).toBe(true)
+
+        w.unmount()
+    })
+
+    it('writes a substitute picked on the Hierarchy tab to the same list the Miscellaneous tab shows', async () => {
+        const w = mountEditor(makeFood({id: 5, name: 'Butter'}), {ModelSelect: SubstitutesStub})
+        await flushPromises()
+        const margarine = makeFood({id: 9, name: 'Margarine'})
+
+        await openTab(w, 'hierarchy')
+        substituteFields(w)[0].vm.$emit('update:modelValue', [margarine])
+        await flushPromises()
+        expect((w.vm as any).editingObj.substitute).toEqual([margarine])
+
+        await openTab(w, 'misc')
+        const misc = substituteFields(w)
+        expect(misc.length).toBeGreaterThan(0)
+        expect(misc.every(f => f.props('modelValue').length === 1)).toBe(true)
 
         w.unmount()
     })

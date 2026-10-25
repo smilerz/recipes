@@ -720,6 +720,27 @@ def test_food_pantry_fields_roundtrip(obj_1, u1_s1, space_1):
     assert body['preferred_unit']['name'] == 'recipe-g'
 
 
+def test_food_substitute_roundtrip(obj_1, u1_s1, space_1):
+    """Direct substitutes can be set, replaced and cleared through the food serializer."""
+    with scopes_disabled():
+        sub_a = Food.objects.create(name='sub-a', space=space_1)
+        sub_b = Food.objects.create(name='sub-b', space=space_1)
+
+    def patch_substitutes(foods):
+        r = u1_s1.patch(
+            reverse(DETAIL_URL, args=[obj_1.id]),
+            {'substitute': [{'id': f.id, 'name': f.name} for f in foods]},
+            content_type='application/json',
+        )
+        assert r.status_code == 200
+        body = json.loads(u1_s1.get(reverse(DETAIL_URL, args=[obj_1.id])).content)
+        return {s['id'] for s in body['substitute']}
+
+    assert patch_substitutes([sub_a, sub_b]) == {sub_a.id, sub_b.id}
+    assert patch_substitutes([sub_a]) == {sub_a.id}
+    assert patch_substitutes([]) == set()
+
+
 def test_onhand(obj_1, u1_s1, u2_s1, space_1):
     """The food_onhand toggle writes household inventory, not onhand_users (P1.3-B)."""
     user1 = auth.get_user(u1_s1)
