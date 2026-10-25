@@ -1,0 +1,12 @@
+{
+  "$schema": "https://raw.githubusercontent.com/stryker-mutator/stryker-js/master/packages/core/schema/stryker-core.json",
+  "testRunner": "vitest",
+  "vitest": {"configFile": "vitest.config.ts"},
+  "coverageAnalysis": "perTest",
+  "reporters": ["clear-text", "json", "html"],
+  "jsonReporter": {"fileName": "reports/mutation/mutation.json"},
+  "htmlReporter": {"fileName": "reports/mutation/index.html"},
+  "tempDirName": ".stryker-tmp",
+  "ignorePatterns": ["reports", ".stryker-tmp", "coverage", "dist"],
+  "concurrency": 2
+}
