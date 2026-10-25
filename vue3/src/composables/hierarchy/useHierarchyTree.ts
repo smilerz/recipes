@@ -291,7 +291,7 @@ export function useHierarchyTree(options: UseHierarchyTreeOptions) {
 
     // --- Hierarchy Operations ---
 
-    async function moveItem(item: EditorSupportedTypes, parentId: number): Promise<void> {
+    async function moveItem(item: EditorSupportedTypes, parentId: number): Promise<boolean> {
         operating.value = true
         try {
             const gm = getModel()
@@ -322,8 +322,10 @@ export function useHierarchyTree(options: UseHierarchyTreeOptions) {
                 const newParentId = parentId === 0 ? null : parentId
                 selectedItem.value = {...selectedItem.value, parent: newParentId} as EditorSupportedTypes
             }
+            return true
         } catch (err: any) {
             messageStore.addError(ErrorMessageType.UPDATE_ERROR, err)
+            return false
         } finally {
             operating.value = false
         }
