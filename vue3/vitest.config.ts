@@ -37,6 +37,9 @@ export default defineConfig({
         },
         coverage: {
             reporter: ['text', 'lcov'],
+            // Report files no test imports too (at 0%); otherwise a new untested file is absent
+            // from lcov.info and the diff-coverage check on PRs would silently skip it.
+            include: ['src/**/*.{ts,vue}'],
             exclude: [
                 'src/openapi/**',
                 'src/__tests__/**',

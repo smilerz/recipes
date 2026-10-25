@@ -19,6 +19,9 @@ jobs:
         node-version: ["24"]
     steps:
       - uses: actions/checkout@v7
+        with:
+          # Full history: the diff-coverage step diffs against the PR's base branch.
+          fetch-depth: 0
 
       - name: Set up Node ${{ matrix.node-version }}
         uses: actions/setup-node@v7
@@ -34,6 +37,23 @@ jobs:
       - name: Run Vue tests
         working-directory: ./vue3
         run: yarn test:coverage
+
+      # Tests for the lines a PR changes are mandatory: fail when under 80% of the changed lines
+      # are executed by a test. lcov paths are relative to vue3/ while git's are relative to the
+      # repo root, so prefix them or diff-cover matches nothing and silently passes.
+      - name: Diff coverage (changed frontend lines must be tested)
+        if: github.event_name == 'pull_request' && matrix.node-version == '24'
+        env:
+          BASE_REF: ${{ github.base_ref }}
+        run: |
+          sed 's#^SF:#SF:vue3/#' vue3/coverage/lcov.info > lcov-repo-root.info
+          status=0
+          pipx run --spec diff-cover==10.6.0 diff-cover lcov-repo-root.info \
+            --compare-branch="origin/$BASE_REF" \
+            --fail-under=80 \
+            --format markdown:diff-coverage.md || status=$?
+          cat diff-coverage.md >> "$GITHUB_STEP_SUMMARY"
+          exit $status
 
       - name: Dev server health check
         working-directory: ./vue3
