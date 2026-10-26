@@ -244,10 +244,14 @@ def test_regex_replacement(find, replace, text, expected, use_cache, u1_s1, no_r
     ('.*example.com.*', SOURCE, True),
     ('https://www.example.com/.*', SOURCE, True),
     ('.*other.com.*', SOURCE, False),
-    # CURRENT BEHAVIOR, pinned so a change is deliberate: the pattern is matched from the start of the address, so a bare host name matches nothing
-    ('example.com', SOURCE, False),
-    # and it is case sensitive although host names are not
-    ('.*EXAMPLE.*', SOURCE, False),
+    # the pattern may match anywhere in the address, so a bare host name or a part of the path is enough
+    ('example.com', SOURCE, True),
+    ('/recipes/', SOURCE, True),
+    ('^https://www.example.com', SOURCE, True),  # and can still be anchored
+    ('^example.com', SOURCE, False),
+    # and it ignores case, like host names do
+    ('.*EXAMPLE.*', SOURCE, True),
+    ('EXAMPLE.COM', SOURCE, True),
     # only the first 512 characters of the address are looked at
     ('.*END$', 'https://www.example.com/' + 'a' * 600 + 'END', False),
     ('.*', None, True),  # no address: only a rule that matches anything applies
