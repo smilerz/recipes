@@ -1,14 +1,22 @@
 import json
 import os
+from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
 
 import pytest
 from bs4 import BeautifulSoup
+from django.contrib import auth
+from django.core.cache import caches
+from django.test import RequestFactory
 from django.urls import reverse
+from django_scopes import scope
 
-from cookbook.helper.recipe_url_import import (clean_dict, clean_instruction_string, get_images_from_soup, listify_keywords, normalize_string, parse_image,
-                                               parse_instructions, parse_servings, parse_servings_text, parse_time)
+from cookbook.helper.ingredient_parser import IngredientParser
+from cookbook.helper.recipe_url_import import (clean_dict, clean_instruction_string, get_from_scraper, get_images_from_soup, listify_keywords,
+                                               normalize_string, parse_image, parse_instructions, parse_servings, parse_servings_text, parse_time)
+from cookbook.models import Automation
 from cookbook.tests.conftest import validate_recipe
+from cookbook.tests.factories import KeywordFactory
 
 from ._recipes import (ALLRECIPES, AMERICAS_TEST_KITCHEN, CHEF_KOCH, CHEF_KOCH2, COOKPAD,
                        COOKS_COUNTRY, DELISH, FOOD_NETWORK, GIALLOZAFFERANO, JOURNAL_DES_FEMMES,
@@ -388,3 +396,276 @@ def test_get_images_from_soup(img, page_url, expected):
 def test_clean_dict_removes_the_key_at_every_depth():
     data = {'id': 1, 'name': 'a', 'steps': [{'id': 2, 'instruction': 'x', 'ingredients': [{'id': 3, 'food': {'id': 4, 'name': 'f'}}]}]}
     assert clean_dict(data, 'id') == {'name': 'a', 'steps': [{'instruction': 'x', 'ingredients': [{'food': {'name': 'f'}}]}]}
+
+
+# ---------------------------------------------------------------------------------------------------------------------
+# get_from_scraper: one test per branch. Nearly every scraper call falls back to the page's schema.org data and then to a default.
+# ---------------------------------------------------------------------------------------------------------------------
+
+class FakeScrape:
+    """
+    A scraper stand-in. A scraper method given as keyword argument returns its value, or raises it when that is an exception; every other
+    method raises, like a scraper that does not support it. `schema` is what the page's schema.org data holds and `url` is scrape.url.
+    """
+
+    def __init__(self, schema=None, nutrients=None, url=None, **methods):
+        self._methods = methods
+        self._url = url
+
+        def schema_nutrients():
+            if isinstance(nutrients, Exception):
+                raise nutrients
+            return nutrients or {}
+
+        self.schema = SimpleNamespace(data=schema or {}, nutrients=schema_nutrients)
+
+    @property
+    def url(self):
+        if self._url is None:
+            raise NotImplementedError('url')
+        return self._url
+
+    def __getattr__(self, name):
+        if name.startswith('_'):
+            raise AttributeError(name)
+        value = self._methods.get(name, NotImplementedError(name))
+
+        def method():
+            if isinstance(value, Exception):
+                raise value
+            return value
+        return method
+
+
+@pytest.fixture(autouse=True)
+def clear_automation_cache():
+    # automation lookups are cached for 30 seconds per space
+    caches['default'].clear()
+
+
+def _space(client):
+    return auth.get_user(client).userspace_set.first().space
+
+
+def scraped(client, scrape):
+    request = RequestFactory()
+    request.user = auth.get_user(client)
+    request.space = _space(client)
+    with scope(space=request.space):
+        return get_from_scraper(scrape, request)
+
+
+@pytest.mark.parametrize("scrape,expected", [
+    (FakeScrape(canonical_url='https://example.com/r/1'), 'https://example.com/r/1'),
+    (FakeScrape(canonical_url=Exception('no'), url='https://example.com/r/2'), 'https://example.com/r/2'),  # scrape.url is the second choice
+    (FakeScrape(canonical_url=Exception('no')), ''),
+    (FakeScrape(canonical_url='https://urlnotfound.none'), ''),  # the placeholder address is not an address
+    (FakeScrape(canonical_url=''), ''),
+    (FakeScrape(canonical_url=12345), ''),
+])
+def test_get_from_scraper_source_url(scrape, expected, u1_s1):
+    assert scraped(u1_s1, scrape)['source_url'] == expected
+
+
+def test_get_from_scraper_adds_the_host_of_the_source_url_as_keyword(u1_s1):
+    recipe = scraped(u1_s1, FakeScrape(canonical_url='https://www.example.com/r/1'))
+    assert [k['name'] for k in recipe['keywords']] == ['www.example.com']
+
+
+def test_get_from_scraper_adds_no_host_keyword_without_a_source_url(u1_s1):
+    assert scraped(u1_s1, FakeScrape())['keywords'] == []
+
+
+@pytest.mark.parametrize("methods,schema,expected", [
+    ({'title': 'Soup'}, {}, 'Soup'),
+    ({'title': '<b>Soup</b> &amp; Bread'}, {}, 'Soup & Bread'),
+    ({'title': 'x' * 200}, {}, 'x' * 128),
+    ({'title': Exception('no')}, {'name': 'Schema Soup'}, 'Schema Soup'),
+    ({'title': ''}, {'name': 'Schema Soup'}, 'Schema Soup'),
+    ({'title': Exception('no')}, {'name': ['First', 'Second']}, 'First'),
+    ({'title': Exception('no')}, {}, ''),
+])
+def test_get_from_scraper_name(methods, schema, expected, u1_s1):
+    assert scraped(u1_s1, FakeScrape(schema=schema, **methods))['name'] == expected
+
+
+@pytest.mark.parametrize("methods,schema,expected", [
+    ({'description': 'A <b>fine</b> soup'}, {}, 'A fine soup'),
+    ({'description': Exception('no')}, {'description': 'Schema text'}, 'Schema text'),
+    ({'description': ''}, {'description': 'Schema text'}, 'Schema text'),
+    ({'description': Exception('no')}, {}, ''),
+    ({'description': 'y' * 600}, {}, 'y' * 512),
+])
+def test_get_from_scraper_description(methods, schema, expected, u1_s1):
+    assert scraped(u1_s1, FakeScrape(schema=schema, **methods))['description'] == expected
+
+
+@pytest.mark.parametrize("recipe_yield,servings,servings_text", [
+    ('4 servings', 4, 'servings'),
+    (['6', '6 portions'], 6, 'portions'),
+    (None, None, ''),
+])
+def test_get_from_scraper_servings(recipe_yield, servings, servings_text, u1_s1):
+    recipe = scraped(u1_s1, FakeScrape(schema={'recipeYield': recipe_yield}))
+    assert (recipe['servings'], recipe['servings_text']) == (servings, servings_text)
+
+
+@pytest.mark.parametrize("methods,schema,working,waiting", [
+    ({'prep_time': 'PT10M', 'cook_time': 'PT20M'}, {}, 10, 20),
+    ({'prep_time': Exception('no'), 'cook_time': Exception('no')}, {'prepTime': 'PT15M', 'cookTime': 'PT25M'}, 15, 25),
+    ({'prep_time': Exception('no'), 'cook_time': Exception('no')}, {}, 0, 0),
+    # without prep and cook time the total time counts as working time
+    ({'prep_time': None, 'cook_time': None, 'total_time': 'PT45M'}, {}, 45, 0),
+    ({'prep_time': None, 'cook_time': None, 'total_time': Exception('no')}, {'totalTime': 'PT50M'}, 50, 0),
+    ({'prep_time': None, 'cook_time': None, 'total_time': Exception('no')}, {}, 0, 0),
+    # but not when either of the two is known
+    ({'prep_time': 'PT10M', 'cook_time': None, 'total_time': 'PT45M'}, {}, 10, 0),
+])
+def test_get_from_scraper_times(methods, schema, working, waiting, u1_s1):
+    recipe = scraped(u1_s1, FakeScrape(schema=schema, **methods))
+    assert (recipe['working_time'], recipe['waiting_time']) == (working, waiting)
+
+
+@pytest.mark.parametrize("methods,schema,expected", [
+    ({'image': 'https://img.example.com/a.jpg'}, {}, 'https://img.example.com/a.jpg'),
+    ({'image': ['/rel.jpg', 'https://img.example.com/b.jpg']}, {}, 'https://img.example.com/b.jpg'),
+    ({'image': Exception('no')}, {'image': {'url': 'https://img.example.com/c.jpg'}}, 'https://img.example.com/c.jpg'),
+    ({'image': None}, {'image': 'https://img.example.com/d.jpg'}, 'https://img.example.com/d.jpg'),
+    ({'image': '/relative.jpg'}, {}, ''),
+    ({'image': Exception('no')}, {}, ''),
+])
+def test_get_from_scraper_image(methods, schema, expected, u1_s1):
+    assert scraped(u1_s1, FakeScrape(schema=schema, **methods))['image_url'] == expected
+
+
+@pytest.mark.parametrize("methods,schema,expected", [
+    ({}, {'keywords': 'Soup, Easy'}, {'soup', 'easy'}),
+    ({}, {'keywords': ['Soup, Easy']}, {'soup', 'easy'}),
+    ({}, {'keywords': ['Soup', 'Easy', 'soup']}, {'soup', 'easy'}),
+    ({'category': 'Dinner'}, {}, {'dinner'}),
+    ({'category': 'Dinner, Soup'}, {}, {'dinner', 'soup'}),
+    ({'category': Exception('no')}, {'recipeCategory': 'Lunch'}, {'lunch'}),
+    ({'cuisine': 'Italian'}, {}, {'italian'}),
+    ({'cuisine': Exception('no')}, {'recipeCuisine': ['Thai']}, {'thai'}),
+    ({'author': 'Jo Cook'}, {}, {'jo cook'}),
+    ({'author': Exception('no')}, {}, set()),
+    ({'category': 'Dinner', 'cuisine': 'Italian', 'author': 'Jo'}, {'keywords': 'quick'}, {'dinner', 'italian', 'jo', 'quick'}),
+])
+def test_get_from_scraper_keywords(methods, schema, expected, u1_s1):
+    recipe = scraped(u1_s1, FakeScrape(schema=schema, **methods))
+    assert {k['name'] for k in recipe['keywords']} == expected
+
+
+def test_get_from_scraper_knows_which_keywords_exist_already(u1_s1):
+    space = _space(u1_s1)
+    with scope(space=space):
+        existing = KeywordFactory(name='soup', space=space)
+    recipe = scraped(u1_s1, FakeScrape(schema={'keywords': 'Soup, Brand New'}))
+    by_name = {k['name']: k for k in recipe['keywords']}
+    assert by_name['soup']['import_keyword'] is True and by_name['soup']['id'] == existing.id
+    assert by_name['brand new']['import_keyword'] is False and 'id' not in by_name['brand new']
+
+
+def test_get_from_scraper_applies_keyword_aliases(u1_s1):
+    space = _space(u1_s1)
+    with scope(space=space):
+        Automation.objects.create(name='alias', type=Automation.KEYWORD_ALIAS, param_1='easy', param_2='simple', created_by=auth.get_user(u1_s1), space=space)
+    recipe = scraped(u1_s1, FakeScrape(schema={'keywords': 'Easy, Soup'}))
+    assert {k['name'] for k in recipe['keywords']} == {'simple', 'soup'}
+
+
+def test_get_from_scraper_keeps_keywords_that_come_as_objects(u1_s1):
+    recipe = scraped(u1_s1, FakeScrape(schema={'keywords': [{'name': 'soup'}]}))
+    assert recipe['keywords'] == [{'name': 'soup'}]
+
+
+def test_get_from_scraper_makes_one_step_per_instruction(u1_s1):
+    recipe = scraped(u1_s1, FakeScrape(instructions_list=['Chop.', 'Boil.', '<strong>Serve</strong> hot']))
+    assert [s['instruction'] for s in recipe['steps']] == ['Chop.', 'Boil.', '**Serve** hot']
+    assert all(s['ingredients'] == [] for s in recipe['steps'])
+
+
+@pytest.mark.parametrize("instructions", [Exception('no'), [], ''])
+def test_get_from_scraper_always_has_a_step(instructions, u1_s1):
+    recipe = scraped(u1_s1, FakeScrape(instructions_list=instructions))
+    assert [s['instruction'] for s in recipe['steps']] == ['']
+
+
+def test_get_from_scraper_puts_a_long_description_in_front_of_the_first_step(u1_s1):
+    recipe = scraped(u1_s1, FakeScrape(description='word ' * 60, instructions_list=['Chop.', 'Boil.']))
+    assert recipe['steps'][0]['instruction'] == f"*{recipe['description']}*  \n\nChop."
+    assert recipe['steps'][1]['instruction'] == 'Boil.'
+
+
+def test_get_from_scraper_leaves_a_short_description_out_of_the_steps(u1_s1):
+    recipe = scraped(u1_s1, FakeScrape(description='short', instructions_list=['Chop.']))
+    assert recipe['steps'][0]['instruction'] == 'Chop.'
+
+
+def test_get_from_scraper_puts_all_ingredients_in_the_first_step(u1_s1):
+    recipe = scraped(u1_s1, FakeScrape(ingredients=['2 cups flour', '1 tsp salt'], instructions_list=['Mix.', 'Bake.']))
+    assert [i['original_text'] for i in recipe['steps'][0]['ingredients']] == ['2 cups flour', '1 tsp salt']
+    assert recipe['steps'][1]['ingredients'] == []
+    assert recipe['steps'][0]['ingredients'][0]['amount'] == 2
+    assert recipe['steps'][0]['ingredients'][0]['food']['name'] == 'flour'
+
+
+def test_get_from_scraper_skips_blank_ingredient_lines(u1_s1):
+    recipe = scraped(u1_s1, FakeScrape(ingredients=['', '   ', '1 cup flour']))
+    assert [i['original_text'] for i in recipe['steps'][0]['ingredients']] == ['1 cup flour']
+
+
+# an ingredient with an unusual name must never be dropped (the chefkoch2 page was added for exactly this)
+@pytest.mark.parametrize("line", ['2 Ei(er) , getrennt', '6 Tomate(n) , getrocknet', '½ cup flour', 'salt', '1/2 tsp, pepper', '-', '(optional)'])
+def test_get_from_scraper_keeps_every_ingredient_line(line, u1_s1):
+    recipe = scraped(u1_s1, FakeScrape(ingredients=[line]))
+    assert [i['original_text'] for i in recipe['steps'][0]['ingredients']] == [line]
+
+
+def test_get_from_scraper_keeps_an_ingredient_whose_food_name_is_empty(u1_s1):
+    with patch.object(IngredientParser, 'parse', return_value=(1, 'cup', '', '')):
+        recipe = scraped(u1_s1, FakeScrape(ingredients=['1 cup']))
+    assert recipe['steps'][0]['ingredients'] == [{'amount': 1, 'food': {'name': ''}, 'unit': {'name': 'cup'}, 'note': '', 'original_text': '1 cup'}]
+
+
+def test_get_from_scraper_leaves_the_unit_out_when_there_is_none(u1_s1):
+    with patch.object(IngredientParser, 'parse', return_value=(2, '', 'eggs', '')):
+        recipe = scraped(u1_s1, FakeScrape(ingredients=['2 eggs']))
+    assert recipe['steps'][0]['ingredients'][0]['unit'] is None
+
+
+def test_get_from_scraper_falls_back_to_the_raw_text_when_an_ingredient_cannot_be_parsed(u1_s1):
+    with patch.object(IngredientParser, 'parse', side_effect=Exception('boom')):
+        recipe = scraped(u1_s1, FakeScrape(ingredients=['some odd line']))
+    assert recipe['steps'][0]['ingredients'] == [{'amount': 0, 'unit': None, 'food': {'name': 'some odd line'}, 'note': '', 'original_text': 'some odd line'}]
+
+
+def test_get_from_scraper_survives_a_scraper_that_cannot_list_ingredients(u1_s1):
+    recipe = scraped(u1_s1, FakeScrape(ingredients=Exception('no'), instructions_list=['Mix.']))
+    assert recipe['steps'][0]['ingredients'] == []
+
+
+def test_get_from_scraper_returns_a_complete_recipe_when_every_scraper_call_fails(u1_s1):
+    recipe = scraped(u1_s1, FakeScrape())
+    assert recipe == {
+        'internal': True, 'source_url': '', 'name': '', 'description': '', 'servings': None, 'servings_text': '', 'working_time': 0, 'waiting_time': 0,
+        'image_url': '', 'keywords': [], 'steps': [{'instruction': '', 'ingredients': []}], 'properties': [],
+    }
+
+
+@pytest.mark.parametrize("source_pattern,canonical_url,applied", [
+    ('.*example.com.*', 'https://www.example.com/r/1', True),
+    ('.*other.com.*', 'https://www.example.com/r/1', False),
+    ('.*', 'https://www.example.com/r/1', True),
+    ('.*', Exception('no'), True),  # without a source address only rules that match everything apply
+    ('.*example.com.*', Exception('no'), False),
+])
+def test_get_from_scraper_applies_regex_replacements_to_matching_sources(source_pattern, canonical_url, applied, u1_s1):
+    space, user = _space(u1_s1), auth.get_user(u1_s1)
+    with scope(space=space):
+        for automation_type, pattern, replacement in [(Automation.NAME_REPLACE, 'soup', 'Stew'), (Automation.DESCRIPTION_REPLACE, 'tasty', 'great'),
+                                                      (Automation.INSTRUCTION_REPLACE, 'boil', 'simmer')]:
+            Automation.objects.create(name=automation_type, type=automation_type, param_1=source_pattern, param_2=pattern, param_3=replacement, created_by=user, space=space)
+    recipe = scraped(u1_s1, FakeScrape(canonical_url=canonical_url, title='Soup', description='A tasty dish', instructions_list=['Boil it']))
+    expected = ('Stew', 'A great dish', 'simmer it') if applied else ('Soup', 'A tasty dish', 'Boil it')
+    assert (recipe['name'], recipe['description'], recipe['steps'][0]['instruction']) == expected
