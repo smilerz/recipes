@@ -458,7 +458,7 @@ def parse_time(recipe_time):
     # an ISO duration has to be read as a whole: its first number is the hours in 'PT1H30M'
     if recipe_time[:1] in ('P', 'p'):
         try:
-            return round(iso_parse_duration(recipe_time).total_seconds() / 60)
+            return round(iso_parse_duration(recipe_time.upper()).total_seconds() / 60)
         except (ISO8601Error, AttributeError):
             pass
     try:
@@ -551,8 +551,8 @@ def normalize_string(string):
 
 
 def iso_duration_to_minutes(string):
-    match = re.match(r'P((?P<years>\d+)Y)?((?P<months>\d+)M)?((?P<weeks>\d+)W)?((?P<days>\d+)D)?T((?P<hours>\d+)H)?((?P<minutes>\d+)M)?((?P<seconds>\d+)S)?', string).groupdict()
-    return int(match['days'] or 0) * 24 * 60 + int(match['hours'] or 0) * 60 + int(match['minutes'] or 0)
+    """The prep and cook time reader of the importers that have an ISO duration, here so they share parse_time instead of a reader of their own."""
+    return parse_time(string)
 
 
 IMAGE_EXTENSION = re.compile(r'\.(?:jpe?g|gif|png|webp|avif)$', re.IGNORECASE)
