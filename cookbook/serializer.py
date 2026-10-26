@@ -1456,6 +1456,7 @@ class RecipeSerializer(PrimaryRecipeImageMixin, RecipeBaseSerializer):
             'last_cooked', 'private', 'shared'
         )
         read_only_fields = ['image', 'images', 'created_by', 'created_at', 'food_properties']
+        extra_kwargs = {'servings': {'min_value': 1}}
 
     def validate(self, data):
         above_limit, msg = above_space_limit(self.context['request'].space)
@@ -1480,7 +1481,7 @@ class RecipeBatchUpdateSerializer(serializers.Serializer):
 
     working_time = serializers.IntegerField(required=False, allow_null=True)
     waiting_time = serializers.IntegerField(required=False, allow_null=True)
-    servings = serializers.IntegerField(required=False, allow_null=True)
+    servings = serializers.IntegerField(required=False, allow_null=True, min_value=1)
     servings_text = serializers.CharField(required=False, allow_null=True, allow_blank=True)
 
     private = serializers.BooleanField(required=False, allow_null=True)
