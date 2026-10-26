@@ -1020,6 +1020,12 @@ def _amounts(space, nutrients):
     ({'servingSize': '100 g', 'calories': '300 kcal', 'proteinContent': '12 g'}, {'property-calories': 300, 'property-proteins': 12}),
     ({'servingSize': '250 ml', 'calories': '300 kcal'}, {'property-calories': 300}),
     ({'servingSize': '1 cup', 'calories': '300 kcal'}, {'property-calories': 300}),
+    # a number of servings that is zero or negative is no number of servings
+    ({'servingSize': -5, 'calories': '300 kcal'}, {'property-calories': 300}),
+    ({'servingSize': -2.5, 'calories': '300 kcal'}, {'property-calories': 300}),
+    ({'servingSize': 0, 'calories': '300 kcal'}, {'property-calories': 300}),
+    ({'servingSize': '0', 'calories': '300 kcal'}, {'property-calories': 300}),
+    ({'servingSize': '-5', 'calories': '300 kcal'}, {'property-calories': 300}),
     # decimals, with a point or a comma
     ({'calories': '302 kcal', 'proteinContent': '7,66g', 'fatContent': '11.5 g'}, {'property-calories': 302, 'property-proteins': 7.66, 'property-fats': 11.5}),
     ({'calories': '1,200 kcal'}, {'property-calories': 1200}),
