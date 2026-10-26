@@ -1,4 +1,5 @@
 import json
+import time
 from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
 
@@ -239,6 +240,19 @@ def test_normalize_string(text, expected):
 ])
 def test_normalize_string_html_stripping(text, expected):
     assert normalize_string(text) == expected
+
+
+@pytest.mark.parametrize("html,expected", [
+    ('<div>' * 6000 + 'deep' + '</div>' * 6000, 'deep'),
+    ('<div>' * 6000 + '<p>One</p><p>Two</p>', 'One\nTwo'),
+    ('<ul>' + '<li><ul>' * 3000 + '<li>last</li>', 'last'),
+    ('<p>a</p>' * 5000, '\n'.join(['a'] * 5000)),
+])
+def test_normalize_string_handles_a_page_that_is_deeply_nested_in_a_short_time(html, expected):
+    """A description is whatever a page contains, so the time it takes must not grow with the square of the nesting."""
+    started = time.monotonic()
+    assert normalize_string(html) == expected
+    assert time.monotonic() - started < 3
 
 
 @pytest.mark.parametrize("text,expected", [

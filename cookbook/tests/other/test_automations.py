@@ -194,9 +194,8 @@ SOURCE = 'https://www.example.com/recipes/soup'
 
 
 @pytest.fixture
-def no_regex_state(monkeypatch):
-    """The engine keeps its rules in a cache; start every test without it (and without a leftover store on the class)."""
-    monkeypatch.setattr(AutomationEngine, 'regex_replace', {t: None for t in REPLACE_TYPES}, raising=False)
+def empty_rule_cache():
+    """The engine keeps its rules in a cache; start every test without it."""
     caches['default'].clear()
     yield
     caches['default'].clear()
@@ -233,7 +232,7 @@ def _apply(client, text, engine, replace_type=Automation.NAME_REPLACE):
     (r' \(.*\)', '', 'Soup (vegan)', 'Soup'),  # no replacement deletes
     ('stew', 'x', 'Soup', 'Soup'),  # no match, no change
 ])
-def test_regex_replacement(find, replace, text, expected, use_cache, u1_s1, no_regex_state):
+def test_regex_replacement(find, replace, text, expected, use_cache, u1_s1, empty_rule_cache):
     _rule(u1_s1, find=find, replace=replace)
     assert _apply(u1_s1, text, _engine(u1_s1, use_cache=use_cache)) == expected
 
@@ -257,33 +256,33 @@ def test_regex_replacement(find, replace, text, expected, use_cache, u1_s1, no_r
     ('.*', None, True),  # no address: only a rule that matches anything applies
     ('.*example.*', None, False),
 ])
-def test_regex_replacement_only_for_matching_sources(source_pattern, source, applied, use_cache, u1_s1, no_regex_state):
+def test_regex_replacement_only_for_matching_sources(source_pattern, source, applied, use_cache, u1_s1, empty_rule_cache):
     _rule(u1_s1, source=source_pattern)
     assert (_apply(u1_s1, 'Soup', _engine(u1_s1, source, use_cache)) == 'Stew') is applied
 
 
 @pytest.mark.parametrize("use_cache", [False, True])
-def test_regex_replacement_applies_rules_in_their_order(use_cache, u1_s1, no_regex_state):
+def test_regex_replacement_applies_rules_in_their_order(use_cache, u1_s1, empty_rule_cache):
     _rule(u1_s1, find='soup', replace='Stew', order=1)
     _rule(u1_s1, find='stew', replace='Ragout', order=2)
     assert _apply(u1_s1, 'Soup', _engine(u1_s1, use_cache=use_cache)) == 'Ragout'
 
 
 @pytest.mark.parametrize("use_cache", [False, True])
-def test_regex_replacement_applies_the_rule_listed_first_first(use_cache, u1_s1, no_regex_state):
+def test_regex_replacement_applies_the_rule_listed_first_first(use_cache, u1_s1, empty_rule_cache):
     _rule(u1_s1, find='stew', replace='Ragout', order=1)
     _rule(u1_s1, find='soup', replace='Stew', order=2)
     assert _apply(u1_s1, 'Soup', _engine(u1_s1, use_cache=use_cache)) == 'Stew'
 
 
 @pytest.mark.parametrize("use_cache", [False, True])
-def test_regex_replacement_ignores_disabled_rules(use_cache, u1_s1, no_regex_state):
+def test_regex_replacement_ignores_disabled_rules(use_cache, u1_s1, empty_rule_cache):
     _rule(u1_s1, disabled=True)
     assert _apply(u1_s1, 'Soup', _engine(u1_s1, use_cache=use_cache)) == 'Soup'
 
 
 @pytest.mark.parametrize("use_cache", [False, True])
-def test_regex_replacement_only_applies_rules_of_the_asked_type(use_cache, u1_s1, no_regex_state):
+def test_regex_replacement_only_applies_rules_of_the_asked_type(use_cache, u1_s1, empty_rule_cache):
     _rule(u1_s1, replace_type=Automation.DESCRIPTION_REPLACE)
     engine = _engine(u1_s1, use_cache=use_cache)
     assert _apply(u1_s1, 'Soup', engine, Automation.NAME_REPLACE) == 'Soup'
@@ -291,15 +290,15 @@ def test_regex_replacement_only_applies_rules_of_the_asked_type(use_cache, u1_s1
 
 
 @pytest.mark.parametrize("use_cache", [False, True])
-def test_regex_replacement_ignores_the_rules_of_other_spaces(use_cache, u1_s1, u1_s2, no_regex_state):
+def test_regex_replacement_ignores_the_rules_of_other_spaces(use_cache, u1_s1, u1_s2, empty_rule_cache):
     _rule(u1_s2)
     assert _apply(u1_s1, 'Soup', _engine(u1_s1, use_cache=use_cache)) == 'Soup'
     assert _apply(u1_s2, 'Soup', _engine(u1_s2, use_cache=use_cache)) == 'Stew'
 
 
-def test_regex_replacement_with_a_cache_does_not_hand_one_spaces_rules_to_another(u1_s1, u1_s2, monkeypatch, no_regex_state):
+def test_regex_replacement_with_a_cache_does_not_hand_one_spaces_rules_to_another(u1_s1, u1_s2, empty_rule_cache):
     """
-    The rules a space uses are cached for 30 seconds. A second process starts with nothing in memory but shares that cache, so what is in
+    The rules a space uses are cached for 30 seconds. Another process starts with nothing in memory but shares that cache, so what is in
     the cache for one space must hold that space's rules for that type and nothing else.
     """
     _rule(u1_s1, replace_type=Automation.NAME_REPLACE, find='secret', replace='LEAKED')
@@ -307,7 +306,6 @@ def test_regex_replacement_with_a_cache_does_not_hand_one_spaces_rules_to_anothe
     _apply(u1_s1, 'secret', _engine(u1_s1, use_cache=True), Automation.NAME_REPLACE)
     _apply(u1_s2, 'x', _engine(u1_s2, use_cache=True), Automation.DESCRIPTION_REPLACE)
 
-    monkeypatch.setattr(AutomationEngine, 'regex_replace', {t: None for t in REPLACE_TYPES}, raising=False)  # a new process
     assert _apply(u1_s2, 'secret', _engine(u1_s2, use_cache=True), Automation.NAME_REPLACE) == 'secret'
 
 
@@ -316,7 +314,7 @@ def test_regex_replacement_with_a_cache_does_not_hand_one_spaces_rules_to_anothe
     {'find': '('},  # not a valid pattern
     {'source': '('},  # a source pattern that is not valid
 ], ids=['invalid pattern', 'invalid source pattern'])
-def test_regex_replacement_skips_a_rule_that_cannot_be_applied(rule, use_cache, u1_s1, no_regex_state):
+def test_regex_replacement_skips_a_rule_that_cannot_be_applied(rule, use_cache, u1_s1, empty_rule_cache):
     _rule(u1_s1, **rule, order=1)
     _rule(u1_s1, find='soup', replace='Stew', order=2)
     # a broken rule is skipped, and the rules after it still apply
@@ -324,7 +322,7 @@ def test_regex_replacement_skips_a_rule_that_cannot_be_applied(rule, use_cache, 
 
 
 @pytest.mark.parametrize("use_cache", [False, True])
-def test_regex_replacement_skips_a_rule_that_takes_too_long(use_cache, u1_s1, no_regex_state):
+def test_regex_replacement_skips_a_rule_that_takes_too_long(use_cache, u1_s1, empty_rule_cache):
     real_sub = regex.sub
 
     def sub(pattern, *args, **kwargs):
@@ -336,3 +334,40 @@ def test_regex_replacement_skips_a_rule_that_takes_too_long(use_cache, u1_s1, no
     _rule(u1_s1, find='soup', replace='Stew', order=2)
     with patch.object(regex, 'sub', side_effect=sub):
         assert _apply(u1_s1, 'Soup', _engine(u1_s1, use_cache=use_cache)) == 'Stew'
+
+
+@pytest.mark.parametrize("use_cache", [False, True])
+@pytest.mark.parametrize("rule", [
+    {'find': 'soup', 'replace': r'\g<nothing>'},  # a replacement that refers to a group the pattern does not have
+    {'source': None},  # a rule that was saved without its source pattern
+    {'find': None},  # or without its pattern
+], ids=['unknown group', 'no source pattern', 'no pattern'])
+def test_regex_replacement_skips_a_rule_that_is_incomplete(rule, use_cache, u1_s1, empty_rule_cache):
+    _rule(u1_s1, **rule, order=1)
+    _rule(u1_s1, find='soup', replace='Stew', order=2)
+    assert _apply(u1_s1, 'Soup', _engine(u1_s1, use_cache=use_cache)) == 'Stew'
+
+
+@pytest.mark.parametrize("use_cache", [False, True])
+def test_regex_replacement_without_a_replacement_deletes(use_cache, u1_s1, empty_rule_cache):
+    _rule(u1_s1, find='soup', replace=None)
+    assert _apply(u1_s1, 'Hot soup', _engine(u1_s1, use_cache=use_cache)) == 'Hot '
+
+
+@pytest.mark.parametrize("use_cache", [False, True])
+def test_regex_replacement_does_not_try_a_broken_rule_again_for_every_string(use_cache, u1_s1, empty_rule_cache):
+    """An import applies the rules to every ingredient, step and keyword; a rule that failed once must not cost its time again each time."""
+    real_sub = regex.sub
+    calls = []
+
+    def sub(pattern, *args, **kwargs):
+        calls.append(pattern)
+        return real_sub(pattern, *args, **kwargs)
+
+    _rule(u1_s1, find='(', order=1)  # not a valid pattern
+    _rule(u1_s1, find='soup', replace='Stew', order=2)
+    engine = _engine(u1_s1, use_cache=use_cache)
+    with patch.object(regex, 'sub', side_effect=sub):
+        results = [_apply(u1_s1, text, engine) for text in ('Soup', 'Hot soup', 'Soup soup')]
+    assert results == ['Stew', 'Hot Stew', 'Stew Stew']
+    assert calls.count('(') == 1
