@@ -132,3 +132,11 @@ def test_api_info(arg, request, ext_recipe_1_s1):
 def test_api_swagger(arg, request, ext_recipe_1_s1):
     c = request.getfixturevalue(arg[0])
     assert c.get(reverse('docs_api')).status_code == arg[1]
+
+
+@pytest.mark.parametrize("url_name", ['docs_api', 'docs_swagger'])
+def test_docs_send_a_visitor_to_the_login_page_and_back(url_name, a_u):
+    url = reverse(url_name)
+    response = a_u.get(url)
+    assert response.status_code == 302
+    assert response['Location'] == reverse('account_login') + '?next=' + url
