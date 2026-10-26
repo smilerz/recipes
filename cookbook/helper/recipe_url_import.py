@@ -226,7 +226,11 @@ def get_recipe_properties(space, property_data):
         "property-fats": "fatContent",
     }
 
-    serving_size = parse_servings(property_data.get('servingSize')) or 1
+    serving_size = property_data.get('servingSize')
+    # only a number of servings divides the values; an amount like '100 g' says what the values are for
+    if not isinstance(serving_size, (int, float)) and not re.fullmatch(r'\s*\d+\s*(servings?|portions?)?\s*', str(serving_size), flags=re.IGNORECASE):
+        serving_size = 1
+    serving_size = parse_servings(serving_size) or 1
 
     recipe_properties = []
     for pt in PropertyType.objects.filter(space=space, open_data_slug__in=list(properties.keys())).all():
