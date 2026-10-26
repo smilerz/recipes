@@ -558,3 +558,44 @@ def test_batch_update_keywords_set_with_only_foreign_ids_keeps_existing_keywords
     assert r.status_code == 200
     with scopes_disabled():
         assert list(recipe_1_s1.keywords.values_list('id', flat=True)) == [own_keyword.id]
+
+
+# A recipe is for a number of servings; zero or less cannot be scaled or cooked
+@pytest.mark.parametrize("servings", [0, -1, -4])
+def test_update_rejects_servings_below_one(servings, u1_s1, recipe_1_s1):
+    r = u1_s1.patch(reverse(DETAIL_URL, args={recipe_1_s1.id}), {'servings': servings}, content_type='application/json')
+    assert r.status_code == 400
+    assert 'servings' in json.loads(r.content)
+    recipe_1_s1.refresh_from_db()
+    assert recipe_1_s1.servings == 4
+
+
+@pytest.mark.parametrize("servings", [1, 2, 24])
+def test_update_accepts_servings_of_one_or_more(servings, u1_s1, recipe_1_s1):
+    r = u1_s1.patch(reverse(DETAIL_URL, args={recipe_1_s1.id}), {'servings': servings}, content_type='application/json')
+    assert r.status_code == 200
+    recipe_1_s1.refresh_from_db()
+    assert recipe_1_s1.servings == servings
+
+
+@pytest.mark.parametrize("servings", [0, -1])
+def test_add_rejects_servings_below_one(servings, u1_s1):
+    r = u1_s1.post(reverse(LIST_URL), {**get_random_json_recipe(), 'servings': servings}, content_type='application/json')
+    assert r.status_code == 400
+    assert 'servings' in json.loads(r.content)
+
+
+@pytest.mark.parametrize("servings", [0, -1])
+def test_batch_update_rejects_servings_below_one(servings, u1_s1, recipe_1_s1):
+    r = u1_s1.put(reverse(BATCH_URL), {'recipes': [recipe_1_s1.id], 'servings': servings}, content_type='application/json')
+    assert r.status_code == 400
+    assert 'servings' in json.loads(r.content)
+    recipe_1_s1.refresh_from_db()
+    assert recipe_1_s1.servings == 4
+
+
+def test_batch_update_sets_servings(u1_s1, recipe_1_s1):
+    r = u1_s1.put(reverse(BATCH_URL), {'recipes': [recipe_1_s1.id], 'servings': 6}, content_type='application/json')
+    assert r.status_code == 200
+    recipe_1_s1.refresh_from_db()
+    assert recipe_1_s1.servings == 6
