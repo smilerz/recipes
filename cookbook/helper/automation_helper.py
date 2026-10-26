@@ -17,17 +17,19 @@ class AutomationEngine:
     unit_aliases = None
     never_unit = None
     transpose_words = None
-    regex_replace = {
-        Automation.DESCRIPTION_REPLACE: None,
-        Automation.INSTRUCTION_REPLACE: None,
-        Automation.FOOD_REPLACE: None,
-        Automation.UNIT_REPLACE: None,
-        Automation.NAME_REPLACE: None,
-    }
 
     def __init__(self, request, use_cache=True, source=None):
         self.request = request
         self.use_cache = use_cache
+        # the regex rules by automation type, loaded when they are first needed; per instance, so no request can see the rules of another
+        self.regex_replace = {
+            Automation.DESCRIPTION_REPLACE: None,
+            Automation.INSTRUCTION_REPLACE: None,
+            Automation.FOOD_REPLACE: None,
+            Automation.UNIT_REPLACE: None,
+            Automation.NAME_REPLACE: None,
+        }
+        self.failed_regex_rules = set()
         if not source:
             self.source = "default_string_to_avoid_false_regex_match"
         else:
@@ -196,34 +198,41 @@ class AutomationEngine:
         Automation.NAME_REPLACE
 
         regex replacment utilized the following fields from the Automation model
-        :param 1: source that should apply the automation in regex format ('.*' for all)
+        :param 1: source that should apply the automation in regex format ('.*' for all), found anywhere in the address and not case sensitive
         :param 2: regex pattern to match ()
         :param 3: replacement string (leave blank to delete)
         return: new string
         """
-        if self.use_cache and self.regex_replace[automation_type] is None:
-            self.regex_replace[automation_type] = {}
-            REGEX_REPLACE_CACHE_KEY = f'automation_regex_replace_{self.request.space.pk}'
-            if c := caches['default'].get(REGEX_REPLACE_CACHE_KEY, None):
-                self.regex_replace[automation_type] = c[automation_type]
-                caches['default'].touch(REGEX_REPLACE_CACHE_KEY, 30)
-            else:
-                i = 0
-                for a in Automation.objects.filter(space=self.request.space, disabled=False, type=automation_type).only(
-                        'param_1', 'param_2', 'param_3').order_by('order').all()[:512]:
-                    self.regex_replace[automation_type][i] = [a.param_1, a.param_2, a.param_3]
-                    i += 1
-                caches['default'].set(REGEX_REPLACE_CACHE_KEY, self.regex_replace, 30)
+        if self.use_cache:
+            if self.regex_replace[automation_type] is None:
+                # cached for this space and this type only: what is cached must be nothing but the rules the key says it holds
+                cache_key = f'automation_regex_replace_{self.request.space.pk}_{automation_type}'
+                rules = caches['default'].get(cache_key, None)
+                if rules is None:
+                    rules = self._load_regex_rules(automation_type)
+                    caches['default'].set(cache_key, rules, 30)
+                else:
+                    caches['default'].touch(cache_key, 30)
+                self.regex_replace[automation_type] = rules
+            rules = self.regex_replace[automation_type]
         else:
-            self.regex_replace[automation_type] = {}
+            rules = self._load_regex_rules(automation_type)
 
-        if self.regex_replace[automation_type]:
-            for rule in self.regex_replace[automation_type].values():
-                if regex.match(rule[0], (self.source)[:512], timeout=REGEX_TIMEOUT):
-                    string = regex.sub(rule[1], rule[2], string, flags=regex.IGNORECASE, timeout=REGEX_TIMEOUT)
-        else:
-            for rule in Automation.objects.filter(space=self.request.space, disabled=False, type=automation_type).only(
-                    'param_1', 'param_2', 'param_3').order_by('order').all()[:512]:
-                if regex.match(rule.param_1, (self.source)[:512], timeout=REGEX_TIMEOUT):
-                    string = regex.sub(rule.param_2, rule.param_3, string, flags=regex.IGNORECASE, timeout=REGEX_TIMEOUT)
+        for rule in rules:
+            source_pattern, pattern, replacement = rule
+            if source_pattern is None or pattern is None or rule in self.failed_regex_rules:
+                continue
+            try:
+                if regex.search(source_pattern, (self.source)[:512], flags=regex.IGNORECASE, timeout=REGEX_TIMEOUT):
+                    string = regex.sub(pattern, replacement, string, flags=regex.IGNORECASE, timeout=REGEX_TIMEOUT)
+            except (regex.error, IndexError, TimeoutError):
+                # a rule that is not a usable pattern or takes too long must not stop the import or the rules after it, and is not tried again
+                # for the other strings of this import
+                self.failed_regex_rules.add(rule)
+                print(f'automation: skipped the {automation_type} rule "{pattern}" for "{source_pattern}", it is not a usable pattern or took too long')
         return string
+
+    def _load_regex_rules(self, automation_type):
+        """the enabled rules of the space for an automation type, in their order, as (source pattern, pattern to replace, replacement)"""
+        return [(a.param_1, a.param_2, a.param_3 or '') for a in Automation.objects.filter(space=self.request.space, disabled=False, type=automation_type).only(
+            'param_1', 'param_2', 'param_3').order_by('order').all()[:512]]

@@ -3539,6 +3539,14 @@ class CustomAuthToken(ObtainAuthToken):
         })
 
 
+# youtube.com with or without www, its mobile and music hosts, and youtu.be; the host is not case sensitive
+YOUTUBE_URL = re.compile(r'^(https?://)?((www|m|music)\.)?(youtube\.com|youtu\.be)/.+$', re.IGNORECASE)
+_SHARE_UUID = r'[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}'
+# the two forms of a link that shares a recipe of another Tandoor: .../recipe/<id>/?share=<uuid> and .../view/recipe/<id>/<uuid>
+TANDOOR_SHARE_URL = re.compile(rf'^(?P<base>.*)/recipe/(?P<id>[0-9]+)/\?share=(?P<share>{_SHARE_UUID})$')
+TANDOOR_VIEW_SHARE_URL = re.compile(rf'^(?P<base>.*)/view/recipe/(?P<id>[0-9]+)/(?P<share>{_SHARE_UUID})$')
+
+
 class RecipeUrlImportView(APIView):
     throttle_classes = [RecipeImportThrottle]
     permission_classes = [CustomIsUser & CustomTokenHasReadWriteScope]
@@ -3567,7 +3575,7 @@ class RecipeUrlImportView(APIView):
                 bookmarklet.delete()
 
             url = serializer.validated_data.get('url', None)
-            data = unquote(serializer.validated_data.get('data', ''))
+            data = unquote(serializer.validated_data.get('data') or '')
 
             if not url and not data:
                 response['error'] = True
@@ -3575,33 +3583,38 @@ class RecipeUrlImportView(APIView):
                 return Response(RecipeFromSourceResponseSerializer().to_representation(response), status=status.HTTP_400_BAD_REQUEST)
 
             elif url and not data:
-                if re.match('^(https?://)?(www\\.youtube\\.com|youtu\\.be)/.+$', url):
+                if YOUTUBE_URL.match(url):
                     response['recipe'] = get_from_youtube_scraper(url, request)
                     if url and url.strip() != '':
                         response['duplicates'] = Recipe.objects.filter(space=request.space, source_url=url.strip()).values('id', 'name').all()
                     return Response(RecipeFromSourceResponseSerializer(context={'request': request}).to_representation(response), status=status.HTTP_200_OK)
 
                 tandoor_url = None
-                if re.match(r'^(.)*/recipe/[0-9]+/\?share=[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$', url):
-                    tandoor_url = url.replace('/recipe/', '/api/recipe/')
-                elif re.match(r'^(.)*/view/recipe/[0-9]+/[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$', url):
-                    tandoor_url = (url.replace('/view/recipe/', '/api/recipe/').replace(re.split('/recipe/[0-9]+', url)[1], '') + '?share=' +
-                                   re.split('/recipe/[0-9]+', url)[1].replace('/', ''))
+                if share := TANDOOR_SHARE_URL.match(url):
+                    tandoor_url = f"{share['base']}/api/recipe/{share['id']}/?share={share['share']}"
+                elif share := TANDOOR_VIEW_SHARE_URL.match(url):
+                    tandoor_url = f"{share['base']}/api/recipe/{share['id']}?share={share['share']}"
                 if tandoor_url:
-                    recipe_json = safe_request('GET', tandoor_url).json()
+                    try:
+                        recipe_json = safe_request('GET', tandoor_url).json()
+                    except (requests.exceptions.RequestException, ValueError):
+                        response['error'] = True
+                        response['msg'] = _('The requested page could not be loaded.')
+                        return Response(RecipeFromSourceResponseSerializer().to_representation(response), status=status.HTTP_400_BAD_REQUEST)
                     recipe_json = clean_dict(recipe_json, 'id')
                     serialized_recipe = RecipeExportSerializer(data=recipe_json, context={'request': request})
                     if serialized_recipe.is_valid():
                         recipe = serialized_recipe.save()
-                        if '?' in recipe_json['image']:
-                            filetype = pathlib.Path(recipe_json['image'].split('?')[0]).suffix
-                        else:
-                            filetype = pathlib.Path(recipe_json["image"]).suffix
-                        image = File(handle_image(request,
-                                                  File(io.BytesIO(safe_request('GET', recipe_json['image']).content), name='image'),
-                                                  filetype=filetype),
-                                     name=f'{uuid.uuid4()}_{recipe.pk}.{filetype}')
-                        set_primary_recipe_image(recipe, image, request=request)
+                        if image_url := recipe_json.get('image'):
+                            filetype = pathlib.Path(image_url.split('?')[0]).suffix
+                            try:
+                                image = File(handle_image(request,
+                                                          File(io.BytesIO(safe_request('GET', image_url).content), name='image'),
+                                                          filetype=filetype),
+                                             name=f'{uuid.uuid4()}_{recipe.pk}.{filetype}')
+                                set_primary_recipe_image(recipe, image, request=request)
+                            except requests.exceptions.RequestException:
+                                print('recipe import: the image of the shared recipe could not be loaded, saved the recipe without it')
                         response['recipe_id'] = recipe.pk
                         return Response(RecipeFromSourceResponseSerializer(context={'request': request}).to_representation(response), status=status.HTTP_200_OK)
                 else:
@@ -3630,19 +3643,31 @@ class RecipeUrlImportView(APIView):
                         response['error'] = True
                         response['msg'] = _('Bad URL Schema.')
                         return Response(RecipeFromSourceResponseSerializer().to_representation(response), status=status.HTTP_400_BAD_REQUEST)
+                    except requests.exceptions.RequestException:
+                        # timeouts, redirect loops, invalid addresses and addresses the SSRF filter blocks look the same to the user
+                        response['error'] = True
+                        response['msg'] = _('The requested page could not be loaded.')
+                        return Response(RecipeFromSourceResponseSerializer().to_representation(response), status=status.HTTP_400_BAD_REQUEST)
             else:
                 try:
                     data_json = json.loads(data)
-                    if '@context' not in data_json:
-                        data_json['@context'] = 'https://schema.org'
-                    if '@type' not in data_json:
-                        data_json['@type'] = 'Recipe'
-                    data = "<script type='application/ld+json'>" + json.dumps(data_json) + "</script>"
                 except JSONDecodeError:
-                    pass
-                scrape = scrape_html(html=data, org_url='https://urlnotfound.none', supported_only=False)
-                if not url and (found_url := scrape.schema.data.get('url', 'https://urlnotfound.none')):
-                    scrape = scrape_html(html=data, org_url=found_url, supported_only=False)
+                    pass  # not JSON, so it is the HTML of a page
+                else:
+                    if isinstance(data_json, dict):
+                        if '@context' not in data_json:
+                            data_json['@context'] = 'https://schema.org'
+                        # a document that names no type is taken to be the recipe itself, unless the recipe sits inside its @graph
+                        if '@type' not in data_json and '@graph' not in data_json:
+                            data_json['@type'] = 'Recipe'
+                    data = "<script type='application/ld+json'>" + json.dumps(data_json) + "</script>"
+                try:
+                    # a URL sent along with the HTML (the bookmarklet does) is the page's address; the placeholder is only for HTML without one
+                    scrape = scrape_html(html=data, org_url=url.strip() if url and url.strip() else 'https://urlnotfound.none', supported_only=False)
+                    if not url and (found_url := scrape.schema.data.get('url', 'https://urlnotfound.none')):
+                        scrape = scrape_html(html=data, org_url=found_url, supported_only=False)
+                except NoSchemaFoundInWildMode:
+                    scrape = None
 
             if scrape:
                 response['recipe'] = helper.get_from_scraper(scrape, request)
