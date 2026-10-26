@@ -342,6 +342,12 @@ def test_parse_servings(servings, expected):
     ('garbage', 0),
     (['PT20M'], 20),
     ([], 0),
+    # the Copy Me That, Recipe Keeper and Nextcloud Cookbook importers read their prep and cook times with this
+    ('PT2H', 120),
+    ('PT0H15M', 15),
+    ('P1D', 1440),  # no time part
+    ('PT90S', 2),  # seconds count
+    ('pt1h', 60),  # capitals do not matter
 ])
 def test_parse_time(recipe_time, expected):
     assert parse_time(recipe_time) == expected
@@ -1020,6 +1026,13 @@ def _amounts(space, nutrients):
     ({'servingSize': '100 g', 'calories': '300 kcal', 'proteinContent': '12 g'}, {'property-calories': 300, 'property-proteins': 12}),
     ({'servingSize': '250 ml', 'calories': '300 kcal'}, {'property-calories': 300}),
     ({'servingSize': '1 cup', 'calories': '300 kcal'}, {'property-calories': 300}),
+    ({'servingSize': '2 SERVINGS', 'calories': '300 kcal'}, {'property-calories': 150}),
+    ({'servingSize': '2 Portions', 'calories': '300 kcal'}, {'property-calories': 150}),
+    ({'servingSize': '  2  ', 'calories': '300 kcal'}, {'property-calories': 150}),
+    ({'servingSize': 0.5, 'calories': '300 kcal'}, {'property-calories': 600}),  # half a serving: the values are for half of it
+    ({'servingSize': '0.5 servings', 'calories': '300 kcal'}, {'property-calories': 300}),  # only a whole number in text counts
+    ({'servingSize': ['4'], 'calories': '300 kcal'}, {'property-calories': 300}),
+    ({'servingSize': None, 'calories': '300 kcal'}, {'property-calories': 300}),
     # a number of servings that is zero or negative is no number of servings
     ({'servingSize': -5, 'calories': '300 kcal'}, {'property-calories': 300}),
     ({'servingSize': -2.5, 'calories': '300 kcal'}, {'property-calories': 300}),

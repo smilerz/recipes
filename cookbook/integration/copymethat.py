@@ -4,7 +4,7 @@ from bs4 import BeautifulSoup, Tag
 from django.utils.translation import gettext as _
 
 from cookbook.helper.ingredient_parser import IngredientParser
-from cookbook.helper.recipe_url_import import iso_duration_to_minutes, parse_servings
+from cookbook.helper.recipe_url_import import parse_servings, parse_time
 from cookbook.integration.integration import Integration
 from cookbook.models import Ingredient, Keyword, Recipe, Step
 from recipes.settings import DEBUG
@@ -33,8 +33,8 @@ class CopyMeThat(Integration):
 
         try:
             recipe.servings = parse_servings(file.find("a", {"id": "recipeYield"}).text.strip())
-            recipe.working_time = iso_duration_to_minutes(file.find("span", {"meta": "prepTime"}).text.strip())
-            recipe.waiting_time = iso_duration_to_minutes(file.find("span", {"meta": "cookTime"}).text.strip())
+            recipe.working_time = parse_time(file.find("span", {"meta": "prepTime"}).text.strip())
+            recipe.waiting_time = parse_time(file.find("span", {"meta": "cookTime"}).text.strip())
         except AttributeError:
             pass
 

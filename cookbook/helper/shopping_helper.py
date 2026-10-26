@@ -1,8 +1,7 @@
 
 from decimal import Decimal
 
-from django.db.models import F, OuterRef, Q, Subquery, Value
-from django.db.models.functions import Coalesce
+from django.db.models import Q
 from django.utils.translation import gettext as _
 
 from cookbook.connectors.connector_manager import ActionType, ConnectorManager
@@ -10,28 +9,7 @@ from cookbook.helper.food_availability_helper import (
     _is_available, _substitute_available, children_substitute_filter, sibling_substitute_filter,
 )
 from cookbook.helper.permission_helper import get_household_user_ids
-from cookbook.models import Food, Ingredient, MealPlan, Recipe, ShoppingListEntry, ShoppingListRecipe, SupermarketCategoryRelation
-
-
-def shopping_helper(qs, request):
-    supermarket = request.query_params.get('supermarket', None)
-    checked = request.query_params.get('checked', 'recent')
-    supermarket_order = [F('food__supermarket_category__name').asc(nulls_first=True), 'food__name']
-
-    # TODO created either scheduled task or startup task to delete very old shopping list entries
-    # TODO create user preference to define 'very old'
-    if supermarket:
-        supermarket_categories = SupermarketCategoryRelation.objects.filter(supermarket=supermarket, category=OuterRef('food__supermarket_category'))
-        qs = qs.annotate(supermarket_order=Coalesce(Subquery(supermarket_categories.values('order')), Value(9999)))
-        supermarket_order = ['supermarket_order'] + supermarket_order
-    if checked in ['false', 0, '0']:
-        qs = qs.filter(checked=False)
-    elif checked in ['true', 1, '1']:
-        qs = qs.filter(checked=True)
-    elif checked in ['recent']:
-        supermarket_order = ['checked'] + supermarket_order
-
-    return qs.distinct().order_by(*supermarket_order).select_related('unit', 'food', 'ingredient', 'created_by', 'list_recipe', 'list_recipe__mealplan', 'list_recipe__recipe')
+from cookbook.models import Food, Ingredient, MealPlan, Recipe, ShoppingListEntry, ShoppingListRecipe
 
 
 class RecipeShoppingEditor():
