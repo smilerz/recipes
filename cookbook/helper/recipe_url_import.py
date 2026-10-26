@@ -1,8 +1,9 @@
 import re
 import traceback
-from html import unescape
+import warnings
 from urllib.parse import urljoin
 
+from bs4 import BeautifulSoup, MarkupResemblesLocatorWarning
 from django.utils.translation import gettext as _
 from isodate import parse_duration as iso_parse_duration
 from isodate.isoerror import ISO8601Error
@@ -493,15 +494,28 @@ def listify_keywords(keyword_list):
     return [x.strip() for x in keyword_list]
 
 
+BLOCK_ELEMENTS = ['address', 'article', 'blockquote', 'dd', 'div', 'dl', 'dt', 'figcaption', 'figure', 'footer', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
+                  'header', 'hr', 'li', 'ol', 'p', 'pre', 'section', 'table', 'tr', 'ul']
+
+
 def normalize_string(string):
-    # Convert all named and numeric character references (e.g. &gt;, &#62;)
-    unescaped_string = unescape(string)
-    unescaped_string = re.sub('<[^<]+?>', '', unescaped_string)
-    unescaped_string = re.sub(' +', ' ', unescaped_string)
-    unescaped_string = re.sub('</p>', '\n', unescaped_string)
-    unescaped_string = re.sub(r'\n\s*\n', '\n\n', unescaped_string)
-    unescaped_string = unescaped_string.replace("\xa0", " ").replace("\t", " ").strip()
-    return unescaped_string
+    """
+    HTML as plain text: tags and their formatting are removed, links keep their text but not their address, and the content of scripts, styles
+    and comments is dropped. Block elements and line breaks end a line, character references are decoded once.
+    """
+    with warnings.catch_warnings():
+        warnings.simplefilter('ignore', MarkupResemblesLocatorWarning)  # a text that is only an address or a file name is not a mistake
+        soup = BeautifulSoup(string, 'html.parser')
+    for line_break in soup.find_all('br'):
+        line_break.replace_with('\n')
+    for element in reversed(soup.find_all(BLOCK_ELEMENTS)):  # the innermost first, so a block ending in a block is not given a second break
+        if not element.get_text().endswith('\n'):
+            element.append('\n')
+    text = soup.get_text().replace('\xa0', ' ').replace('\t', ' ')
+    text = re.sub(' +', ' ', text)
+    text = re.sub(r' ?\n ?', '\n', text)
+    text = re.sub(r'\n\s*\n', '\n\n', text)
+    return text.strip()
 
 
 def iso_duration_to_minutes(string):
