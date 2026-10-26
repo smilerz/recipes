@@ -1059,3 +1059,22 @@ def test_get_from_scraper_adds_the_nutrition_of_the_page_as_properties(u1_s1):
 
 def test_get_from_scraper_survives_a_page_whose_nutrition_cannot_be_read(u1_s1):
     assert scraped(u1_s1, FakeScrape(nutrients=Exception('no')))['properties'] == []
+
+
+@pytest.mark.parametrize("replace_type", [Automation.NAME_REPLACE, Automation.DESCRIPTION_REPLACE, Automation.INSTRUCTION_REPLACE])
+def test_get_from_scraper_imports_although_a_replacement_rule_is_broken(replace_type, u1_s1):
+    space = _space(u1_s1)
+    with scope(space=space):
+        Automation.objects.create(name='broken', type=replace_type, param_1='.*', param_2='(', param_3='x', created_by=auth.get_user(u1_s1), space=space)
+    recipe = scraped(u1_s1, FakeScrape(title='Soup', description='A dish', instructions_list=['Boil it']))
+    assert (recipe['name'], recipe['description'], recipe['steps'][0]['instruction']) == ('Soup', 'A dish', 'Boil it')
+
+
+@pytest.mark.parametrize("replace_type", [Automation.FOOD_REPLACE, Automation.UNIT_REPLACE])
+def test_get_from_scraper_still_parses_ingredients_when_a_replacement_rule_is_broken(replace_type, u1_s1):
+    space = _space(u1_s1)
+    with scope(space=space):
+        Automation.objects.create(name='broken', type=replace_type, param_1='.*', param_2='(', param_3='x', created_by=auth.get_user(u1_s1), space=space)
+    recipe = scraped(u1_s1, FakeScrape(ingredients=['2 cups flour']))
+    ingredient = recipe['steps'][0]['ingredients'][0]
+    assert (ingredient['amount'], ingredient['food']['name']) == (2, 'flour')
