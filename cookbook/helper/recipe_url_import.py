@@ -1,13 +1,13 @@
 import re
 import traceback
 from html import unescape
+from urllib.parse import urljoin
 
-from django.utils.dateparse import parse_duration
 from django.utils.translation import gettext as _
 from isodate import parse_duration as iso_parse_duration
 from isodate.isoerror import ISO8601Error
 from pytubefix import YouTube
-from recipe_scrapers._utils import get_host_name, get_minutes
+from recipe_scrapers._utils import get_minutes
 
 from cookbook.helper.automation_helper import AutomationEngine
 from cookbook.helper.ingredient_parser import IngredientParser
@@ -365,22 +365,21 @@ def parse_instructions(instructions):
 
 
 def parse_image(image):
-    # check if list of images is returned, take first if so
     if not image:
         return None
+    # a list of images: take the first one that is usable
     if isinstance(image, list):
         for pic in image:
-            if (isinstance(pic, str)) and (pic[:4] == 'http'):
-                image = pic
-            elif 'url' in pic:
-                image = pic['url']
-    elif isinstance(image, dict):
-        if 'url' in image:
-            image = image['url']
+            candidate = pic.get('url') if isinstance(pic, dict) else pic
+            if isinstance(candidate, str) and candidate[:4] == 'http':
+                return candidate
+        return ''
+    if isinstance(image, dict):
+        image = image.get('url')
 
     # ignore relative image paths
-    if image[:4] != 'http':
-        image = ''
+    if not isinstance(image, str) or image[:4] != 'http':
+        return ''
     return image
 
 
@@ -415,23 +414,29 @@ def parse_servings_text(servings):
 
 
 def parse_time(recipe_time):
+    """
+    Convert a time to minutes. It can already be a number, an ISO 8601 duration ('PT1H30M'), free text with the minutes in it ('15 min')
+    or a list of those, in which case the first one counts.
+    """
     if not recipe_time:
         return 0
-    if type(recipe_time) not in [int, float]:
-        try:
-            recipe_time = float(re.search(r'\d+', recipe_time).group())
-        except (ValueError, AttributeError):
-            try:
-                recipe_time = round(iso_parse_duration(recipe_time).seconds / 60)
-            except ISO8601Error:
-                try:
-                    if (isinstance(recipe_time, list) and len(recipe_time) > 0):
-                        recipe_time = recipe_time[0]
-                    recipe_time = round(parse_duration(recipe_time).seconds / 60)
-                except AttributeError:
-                    recipe_time = 0
+    if isinstance(recipe_time, list):
+        return parse_time(recipe_time[0])
+    if isinstance(recipe_time, (int, float)):
+        return recipe_time
+    if not isinstance(recipe_time, str):
+        return 0
 
-    return recipe_time
+    # an ISO duration has to be read as a whole: its first number is the hours in 'PT1H30M'
+    if recipe_time[:1] in ('P', 'p'):
+        try:
+            return round(iso_parse_duration(recipe_time).total_seconds() / 60)
+        except (ISO8601Error, AttributeError):
+            pass
+    try:
+        return int(re.search(r'\d+', recipe_time).group())
+    except AttributeError:
+        return 0
 
 
 def parse_keywords(keyword_json, request):
@@ -485,36 +490,35 @@ def iso_duration_to_minutes(string):
     return int(match['days'] or 0) * 24 * 60 + int(match['hours'] or 0) * 60 + int(match['minutes'] or 0)
 
 
+IMAGE_EXTENSION = re.compile(r'\.(?:jpe?g|gif|png|webp|avif)$', re.IGNORECASE)
+
+
 def get_images_from_soup(soup, url):
-    sources = ['src', 'srcset', 'data-src']
+    candidates = []
+    for img in soup.find_all('img'):
+        for attribute in ('src', 'srcset', 'data-src'):
+            value = img.get(attribute)
+            if not value:
+                continue
+            if attribute == 'srcset':
+                # "a.jpg 1x, b.jpg 2x": the address is the first word of each entry (an address may hold a comma, but not one followed by a space)
+                candidates += [entry.split()[0] for entry in re.split(r',\s+', value.strip()) if entry.split()]
+            else:
+                candidates.append(value.strip())
+
     images = []
-    img_tags = soup.find_all('img')
-    if url:
-        site = get_host_name(url)
-        prot = url.split(':')[0]
-
-    urls = []
-    for img in img_tags:
-        for src in sources:
-            try:
-                urls.append(img[src])
-            except KeyError:
-                pass
-
-    for u in urls:
-        u = u.split('?')[0]
-        filename = re.search(r'/([\w_-]+[.](jpg|jpeg|gif|png))$', u)
-        if filename:
-            if u.startswith('//'):
-                # urls from e.g. ottolenghi.co.uk start with //
-                u = 'https:' + u
-            if ('http' not in u) and url:
-                print(f'rewriting URL {u}')
-                # sometimes an image source can be relative
-                # if it is provide the base url
-                u = '{}://{}{}'.format(prot, site, u)
-            if 'http' in u:
-                images.append(u)
+    for candidate in candidates:
+        candidate = candidate.split('#')[0].split('?')[0]
+        if not IMAGE_EXTENSION.search(candidate):
+            continue
+        if url:
+            # relative addresses are resolved against the page they came from
+            candidate = urljoin(url, candidate)
+        elif candidate.startswith('//'):
+            # urls from e.g. ottolenghi.co.uk start with //
+            candidate = 'https:' + candidate
+        if candidate.startswith(('http://', 'https://')):
+            images.append(candidate)
     return images
 
 
