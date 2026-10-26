@@ -807,7 +807,7 @@ def test_import_reads_share_links_of_another_tandoor_through_its_api(url, api_ur
 
 @pytest.mark.parametrize("url", [
     f'https://t.example/recipe/12/?share={SHARE_UUID.upper()}',  # not a uuid4 as Tandoor writes it
-    f'https://t.example/recipe/12/?share=0192f2a1-7b4e-7d58-9a2c-5e81b0d7c4aa',  # a uuid7
+    'https://t.example/recipe/12/?share=0192f2a1-7b4e-7d58-9a2c-5e81b0d7c4aa',  # a uuid7
     f'https://t.example/recipe/12?share={SHARE_UUID}',  # no slash before the query
     'https://t.example/recipe/12/',
 ])
