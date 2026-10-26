@@ -226,26 +226,40 @@ def get_recipe_properties(space, property_data):
         "property-fats": "fatContent",
     }
 
-    serving_size = 1
-    try:
-        serving_size = parse_servings(property_data['servingSize'])
-    except KeyError:
-        pass
+    serving_size = parse_servings(property_data.get('servingSize')) or 1
 
     recipe_properties = []
     for pt in PropertyType.objects.filter(space=space, open_data_slug__in=list(properties.keys())).all():
         for p in list(properties.keys()):
             if pt.open_data_slug == p:
                 if properties[p] in property_data:
+                    amount = parse_amount(property_data[properties[p]])
+                    if amount is None:
+                        continue
                     recipe_properties.append({
                         'property_type': {
                             'id': pt.id,
                             'name': pt.name,
                         },
-                        'property_amount': parse_servings(property_data[properties[p]]) / serving_size,
+                        'property_amount': amount / serving_size,
                     })
 
     return recipe_properties
+
+
+def parse_amount(value):
+    """
+    The first number in a value like '7,66 g', '11.5g' or '1,200 kcal' as a float, or None when there is none.
+    A comma is a decimal comma, unless it is followed by exactly three digits, which makes it a thousands separator.
+    """
+    if isinstance(value, (int, float)):
+        return float(value)
+    thousands = r'\d{1,3}(?:,\d{3})+(?:\.\d+)?'
+    match = re.search(rf'{thousands}|\d+(?:[.,]\d+)?', str(value))
+    if not match:
+        return None
+    number = match.group()
+    return float(number.replace(',', '') if re.fullmatch(thousands, number) else number.replace(',', '.'))
 
 
 def get_from_youtube_scraper(url, request):
