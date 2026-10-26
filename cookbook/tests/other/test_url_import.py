@@ -199,13 +199,44 @@ def test_normalize_string(text, expected):
     assert normalize_string(text) == expected
 
 
-# TODO decision pending on HTML stripping: normalize_string deletes every "<...>" span first and only then looks for "</p>", which is
-#  already gone. These rows say what a reader would expect; today paragraphs run together and text between "<" and ">" is deleted.
 @pytest.mark.parametrize("text,expected", [
-    pytest.param('<p>One</p><p>Two</p>', 'One\nTwo', id='paragraphs run together'),
-    pytest.param('Bake until a < b and c > d', 'Bake until a < b and c > d', id='comparison is not a tag'),
+    # block elements end a line, inline elements do not
+    ('<p>One</p><p>Two</p>', 'One\nTwo'),
+    ('<div>One</div><div>Two</div>', 'One\nTwo'),
+    ('<h2>Title</h2>Text', 'Title\nText'),
+    ('<ul><li>One</li><li>Two</li></ul>', 'One\nTwo'),
+    ('Line<br>break', 'Line\nbreak'),
+    ('Line<br/>break', 'Line\nbreak'),
+    ('Mix <b>2</b> <i>eggs</i> in', 'Mix 2 eggs in'),
+    ('<span>one</span><span>two</span>', 'onetwo'),
+    # links keep their text and lose their address
+    ('Mix <a href="https://x.com/y">the flour</a> in', 'Mix the flour in'),
+    ('<a href="https://x.com/y"></a>Text', 'Text'),
+    ('https://example.com stays', 'https://example.com stays'),
+    # what is not text at all
+    ('Text<script>alert(1)</script>', 'Text'),
+    ('Text<style>p{color:red}</style>', 'Text'),
+    ('Text<!-- a comment -->', 'Text'),
+    ('<img src="a.jpg" alt="pic">Text', 'Text'),
+    # a "<" or ">" in the text is text, not a tag
+    ('Bake until a < b and c > d', 'Bake until a < b and c > d'),
+    ('Bake < 20 min', 'Bake < 20 min'),
+    ('Serves 2-3 <br> or 4', 'Serves 2-3\nor 4'),
+    # entities are decoded once
+    ('Salt &amp; pepper', 'Salt & pepper'),
+    ('Bake &lt; 20 min', 'Bake < 20 min'),
+    ('&#189; cup', '\u00bd cup'),
+    ('&amp;lt;b&amp;gt;', '&lt;b&gt;'),
+    ('1&nbsp;cup', '1 cup'),
+    # white space
+    ('too    many   spaces', 'too many spaces'),
+    ('a\tb', 'a b'),
+    ('  padded  ', 'padded'),
+    ('<p>One</p>\n\n\n<p>Two</p>', 'One\n\nTwo'),
+    ('One\n\n\n\nTwo', 'One\n\nTwo'),
+    ('', ''),
+    ('plain', 'plain'),
 ])
-@pytest.mark.xfail(strict=True, reason='TODO: HTML stripping needs a design decision (see comment above)')
 def test_normalize_string_html_stripping(text, expected):
     assert normalize_string(text) == expected
 
