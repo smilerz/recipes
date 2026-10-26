@@ -144,7 +144,8 @@ def get_from_scraper(scrape, request):
 
     try:
         recipe_json['keywords'] = parse_keywords(list(set(map(str.casefold, keywords))), request)
-    except AttributeError:
+    except (AttributeError, TypeError):
+        # keywords that come as objects instead of strings are handed over as they are
         recipe_json['keywords'] = keywords
 
     ingredient_parser = IngredientParser(request, True)
