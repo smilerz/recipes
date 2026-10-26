@@ -29,6 +29,7 @@ class AutomationEngine:
             Automation.UNIT_REPLACE: None,
             Automation.NAME_REPLACE: None,
         }
+        self.failed_regex_rules = set()
         if not source:
             self.source = "default_string_to_avoid_false_regex_match"
         else:
@@ -217,16 +218,21 @@ class AutomationEngine:
         else:
             rules = self._load_regex_rules(automation_type)
 
-        for source_pattern, pattern, replacement in rules:
+        for rule in rules:
+            source_pattern, pattern, replacement = rule
+            if source_pattern is None or pattern is None or rule in self.failed_regex_rules:
+                continue
             try:
                 if regex.search(source_pattern, (self.source)[:512], flags=regex.IGNORECASE, timeout=REGEX_TIMEOUT):
                     string = regex.sub(pattern, replacement, string, flags=regex.IGNORECASE, timeout=REGEX_TIMEOUT)
-            except (regex.error, TimeoutError):
-                # a rule that is not a valid pattern or takes too long must not stop the import or the rules after it
+            except (regex.error, IndexError, TimeoutError):
+                # a rule that is not a usable pattern or takes too long must not stop the import or the rules after it, and is not tried again
+                # for the other strings of this import
+                self.failed_regex_rules.add(rule)
                 print(f'automation: skipped the {automation_type} rule "{pattern}" for "{source_pattern}", it is not a usable pattern or took too long')
         return string
 
     def _load_regex_rules(self, automation_type):
         """the enabled rules of the space for an automation type, in their order, as (source pattern, pattern to replace, replacement)"""
-        return [(a.param_1, a.param_2, a.param_3) for a in Automation.objects.filter(space=self.request.space, disabled=False, type=automation_type).only(
+        return [(a.param_1, a.param_2, a.param_3 or '') for a in Automation.objects.filter(space=self.request.space, disabled=False, type=automation_type).only(
             'param_1', 'param_2', 'param_3').order_by('order').all()[:512]]
