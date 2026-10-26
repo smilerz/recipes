@@ -550,11 +550,6 @@ def normalize_string(string):
     return text.strip()
 
 
-def iso_duration_to_minutes(string):
-    """The prep and cook time reader of the importers that have an ISO duration, here so they share parse_time instead of a reader of their own."""
-    return parse_time(string)
-
-
 IMAGE_EXTENSION = re.compile(r'\.(?:jpe?g|gif|png|webp|avif)$', re.IGNORECASE)
 
 

@@ -7,7 +7,7 @@ from PIL import Image
 
 from cookbook.helper.image_processing import get_filetype, get_primary_recipe_image
 from cookbook.helper.ingredient_parser import IngredientParser
-from cookbook.helper.recipe_url_import import iso_duration_to_minutes
+from cookbook.helper.recipe_url_import import parse_time
 from cookbook.integration.integration import Integration
 from cookbook.models import Ingredient, Keyword, NutritionInformation, Recipe, Step
 
@@ -28,8 +28,8 @@ class NextcloudCookbook(Integration):
             servings=recipe_json['recipeYield'], space=self.request.space)
 
         try:
-            recipe.working_time = iso_duration_to_minutes(recipe_json['prepTime'])
-            recipe.waiting_time = iso_duration_to_minutes(recipe_json['cookTime'])
+            recipe.working_time = parse_time(recipe_json['prepTime'])
+            recipe.waiting_time = parse_time(recipe_json['cookTime'])
         except Exception:
             pass
 

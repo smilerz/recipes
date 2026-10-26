@@ -5,7 +5,7 @@ from bs4 import BeautifulSoup
 
 from django.utils.translation import gettext as _
 from cookbook.helper.ingredient_parser import IngredientParser
-from cookbook.helper.recipe_url_import import iso_duration_to_minutes, parse_servings
+from cookbook.helper.recipe_url_import import parse_servings, parse_time
 from cookbook.integration.integration import Integration
 from cookbook.models import Ingredient, Keyword, Recipe, Step
 
@@ -34,8 +34,8 @@ class RecipeKeeper(Integration):
 
         try:
             recipe.servings = parse_servings(file.find("span", {"itemprop": "recipeYield"}).text.strip())
-            recipe.working_time = iso_duration_to_minutes(file.find("span", {"meta": "prepTime"}).text.strip())
-            recipe.waiting_time = iso_duration_to_minutes(file.find("span", {"meta": "cookTime"}).text.strip())
+            recipe.working_time = parse_time(file.find("span", {"meta": "prepTime"}).text.strip())
+            recipe.waiting_time = parse_time(file.find("span", {"meta": "cookTime"}).text.strip())
             recipe.save()
         except AttributeError:
             pass
