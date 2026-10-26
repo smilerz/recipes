@@ -16393,7 +16393,7 @@ components:
         servings:
           type: integer
           maximum: 2147483647
-          minimum: -2147483648
+          minimum: 1
         file_path:
           type: string
           maxLength: 512
@@ -17531,7 +17531,7 @@ components:
         servings:
           type: integer
           maximum: 2147483647
-          minimum: -2147483648
+          minimum: 1
         file_path:
           type: string
           maxLength: 512
@@ -17606,6 +17606,7 @@ components:
           nullable: true
         servings:
           type: integer
+          minimum: 1
           nullable: true
         servings_text:
           type: string
