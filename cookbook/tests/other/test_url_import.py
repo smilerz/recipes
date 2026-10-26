@@ -4,6 +4,7 @@ from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
 
 import pytest
+import requests
 from bs4 import BeautifulSoup
 from django.contrib import auth
 from django.core.cache import caches
@@ -669,3 +670,334 @@ def test_get_from_scraper_applies_regex_replacements_to_matching_sources(source_
     recipe = scraped(u1_s1, FakeScrape(canonical_url=canonical_url, title='Soup', description='A tasty dish', instructions_list=['Boil it']))
     expected = ('Stew', 'A great dish', 'simmer it') if applied else ('Soup', 'A tasty dish', 'Boil it')
     assert (recipe['name'], recipe['description'], recipe['steps'][0]['instruction']) == expected
+
+
+# ---------------------------------------------------------------------------------------------------------------------
+# The import endpoint (RecipeUrlImportView.post): one test per branch.
+# ---------------------------------------------------------------------------------------------------------------------
+
+RECIPE_LD = {
+    '@context': 'https://schema.org', '@type': 'Recipe', 'name': 'Test Soup', 'recipeIngredient': ['1 cup water', '2 tsp salt'],
+    'recipeInstructions': ['Boil water.', 'Add salt.'], 'recipeYield': '4 servings', 'prepTime': 'PT10M', 'cookTime': 'PT20M',
+    'image': 'https://img.example.com/soup.jpg', 'keywords': 'soup, easy', 'author': {'@type': 'Person', 'name': 'Jo Cook'},
+}
+GRAPH_LD = {
+    '@context': 'https://schema.org',
+    '@graph': [{'@type': 'WebSite', '@id': 'https://example.com/#website', 'name': 'Example'},
+               {'@type': 'Recipe', 'name': 'Graph Soup', 'recipeIngredient': ['1 cup water'], 'recipeInstructions': ['Boil water.']}],
+}
+SHARE_UUID = '3f6c2a91-7b4e-4d58-9a2c-5e81b0d7c4aa'
+
+
+def ld_page(recipe=None, body=''):
+    return f'<html><head><script type="application/ld+json">{json.dumps(recipe or RECIPE_LD)}</script></head><body>{body}</body></html>'
+
+
+def post_import(client, **payload):
+    return client.post(reverse(IMPORT_SOURCE_URL), payload, content_type='application/json')
+
+
+def reply(html):
+    return MagicMock(ok=True, content=html.encode())
+
+
+def sent(response):
+    return json.loads(response.content)
+
+
+def test_import_rejects_an_invalid_request(u1_s1):
+    response = post_import(u1_s1, bookmarklet='not a number')
+    assert response.status_code == 400
+    assert sent(response)['error'] is True
+
+
+@pytest.mark.parametrize("payload", [{}, {'url': '', 'data': ''}, {'url': None, 'data': None}])
+def test_import_needs_a_url_or_data(payload, u1_s1):
+    response = post_import(u1_s1, **payload)
+    assert response.status_code == 400
+    assert sent(response)['msg'] == 'Nothing to do.'
+
+
+def test_import_reads_a_bookmarklet_import_and_removes_it(u1_s1):
+    from cookbook.models import BookmarkletImport
+    space = _space(u1_s1)
+    with scope(space=space):
+        bookmarklet = BookmarkletImport.objects.create(html=ld_page(), url='https://example.com/r/bm', created_by=auth.get_user(u1_s1), space=space)
+        pk = bookmarklet.pk
+    response = post_import(u1_s1, bookmarklet=pk)
+    assert response.status_code == 200
+    # the page declares no canonical address, so the one the bookmarklet sent is the source
+    assert sent(response)['recipe']['name'] == 'Test Soup'
+    assert sent(response)['recipe']['source_url'] == 'https://example.com/r/bm'
+    with scope(space=space):
+        assert not BookmarkletImport.objects.filter(pk=pk).exists()
+
+
+def test_import_ignores_a_bookmarklet_import_that_does_not_exist(u1_s1):
+    response = post_import(u1_s1, bookmarklet=987654)
+    assert response.status_code == 400
+    assert sent(response)['msg'] == 'Nothing to do.'
+
+
+def test_import_ignores_the_bookmarklet_import_of_another_space(u1_s1, u1_s2, space_2):
+    from django_scopes import scopes_disabled
+
+    from cookbook.models import BookmarkletImport
+    with scopes_disabled():
+        foreign = BookmarkletImport.objects.create(html=ld_page(), url='https://example.com/r/foreign', created_by=auth.get_user(u1_s2), space=space_2)
+    response = post_import(u1_s1, bookmarklet=foreign.pk)
+    assert response.status_code == 400
+    with scopes_disabled():
+        assert BookmarkletImport.objects.filter(pk=foreign.pk).exists()
+
+
+YOUTUBE_URLS = [
+    ('https://www.youtube.com/watch?v=x', True),
+    ('http://www.youtube.com/watch?v=x', True),
+    ('www.youtube.com/watch?v=x', True),
+    ('https://youtu.be/x', True),
+    ('youtu.be/x', True),
+    ('https://youtube.com/watch?v=x', True),
+    ('https://m.youtube.com/watch?v=x', True),
+    ('https://music.youtube.com/watch?v=x', True),
+    ('HTTPS://WWW.YOUTUBE.COM/watch?v=x', True),
+    ('https://www.youtube.com.evil.example/x', False),
+    ('https://notyoutube.com/x', False),
+    ('https://example.com/?next=https://youtu.be/x', False),
+    ('https://www.youtube.com', False),
+    ('https://youtu.be/', False),
+]
+
+
+@pytest.mark.parametrize("url,is_youtube", YOUTUBE_URLS)
+def test_import_sends_youtube_addresses_to_the_youtube_scraper(url, is_youtube, u1_s1):
+    not_found = MagicMock(ok=False, status_code=404)
+    with patch('cookbook.helper.recipe_url_import.YouTube', side_effect=Exception('offline')) as youtube, \
+            patch('cookbook.views.api.safe_request', return_value=not_found) as fetch:
+        response = post_import(u1_s1, url=url)
+    assert youtube.called is is_youtube
+    assert fetch.called is not is_youtube
+    if is_youtube:
+        assert response.status_code == 200
+        assert sent(response)['recipe']['source_url'] == url
+
+
+def test_import_reports_duplicates_of_an_imported_youtube_video(u1_s1, recipe_1_s1):
+    from django_scopes import scopes_disabled
+    url = 'https://youtu.be/dup'
+    with scopes_disabled():
+        recipe_1_s1.source_url = url
+        recipe_1_s1.save()
+    with patch('cookbook.helper.recipe_url_import.YouTube', side_effect=Exception('offline')):
+        response = post_import(u1_s1, url=url)
+    assert [d['id'] for d in sent(response)['duplicates']] == [recipe_1_s1.id]
+
+
+@pytest.mark.parametrize("url,api_url", [
+    (f'https://t.example/recipe/12/?share={SHARE_UUID}', f'https://t.example/api/recipe/12/?share={SHARE_UUID}'),
+    (f'https://t.example/view/recipe/12/{SHARE_UUID}', f'https://t.example/api/recipe/12?share={SHARE_UUID}'),
+    # only the recipe segment is rewritten, however often the path holds "/recipe/"
+    (f'https://t.example/recipe/x/recipe/12/?share={SHARE_UUID}', f'https://t.example/recipe/x/api/recipe/12/?share={SHARE_UUID}'),
+])
+def test_import_reads_share_links_of_another_tandoor_through_its_api(url, api_url, u1_s1):
+    with patch('cookbook.views.api.safe_request', return_value=MagicMock(json=lambda: {})) as fetch:
+        post_import(u1_s1, url=url)
+    assert fetch.call_args_list[0].args == ('GET', api_url)
+
+
+@pytest.mark.parametrize("url", [
+    f'https://t.example/recipe/12/?share={SHARE_UUID.upper()}',  # not a uuid4 as Tandoor writes it
+    f'https://t.example/recipe/12/?share=0192f2a1-7b4e-7d58-9a2c-5e81b0d7c4aa',  # a uuid7
+    f'https://t.example/recipe/12?share={SHARE_UUID}',  # no slash before the query
+    'https://t.example/recipe/12/',
+])
+def test_import_treats_other_recipe_addresses_as_ordinary_web_pages(url, u1_s1):
+    with patch('cookbook.views.api.safe_request', return_value=MagicMock(ok=False, status_code=404)) as fetch:
+        response = post_import(u1_s1, url=url)
+    assert fetch.call_args.args == ('GET', url)
+    assert 'headers' in fetch.call_args.kwargs
+    assert response.status_code == 400
+
+
+def test_import_reports_a_share_link_that_does_not_hold_a_valid_recipe(u1_s1):
+    with patch('cookbook.views.api.safe_request', return_value=MagicMock(json=lambda: {})):
+        response = post_import(u1_s1, url=f'https://t.example/recipe/12/?share={SHARE_UUID}')
+    assert response.status_code == 400
+    assert sent(response)['msg'] == 'No usable data could be found.'
+
+
+def _shared_recipe(client, recipe, image):
+    from rest_framework.renderers import JSONRenderer
+
+    from cookbook.serializer import RecipeExportSerializer
+    request = RequestFactory()
+    request.user = auth.get_user(client)
+    request.space = _space(client)
+    with scope(space=request.space):
+        data = json.loads(JSONRenderer().render(RecipeExportSerializer(recipe, context={'request': request}).data))
+    data['image'] = image
+    return data
+
+
+def test_import_saves_a_shared_recipe_that_has_no_image(u1_s1, recipe_1_s1):
+    shared = _shared_recipe(u1_s1, recipe_1_s1, None)
+    with patch('cookbook.views.api.safe_request', return_value=MagicMock(json=lambda: shared)):
+        response = post_import(u1_s1, url=f'https://t.example/recipe/12/?share={SHARE_UUID}')
+    assert response.status_code == 200
+    assert sent(response)['recipe_id']
+
+
+def test_import_saves_a_shared_recipe_with_its_image(u1_s1, recipe_1_s1):
+    import io
+
+    from PIL import Image
+    png = io.BytesIO()
+    Image.new('RGB', (4, 4), 'red').save(png, 'PNG')
+    shared = _shared_recipe(u1_s1, recipe_1_s1, 'https://t.example/media/pic.png?v=2')
+    with patch('cookbook.views.api.safe_request', side_effect=[MagicMock(json=lambda: shared), MagicMock(content=png.getvalue())]) as fetch:
+        response = post_import(u1_s1, url=f'https://t.example/recipe/12/?share={SHARE_UUID}')
+    assert response.status_code == 200
+    assert fetch.call_args_list[1].args == ('GET', 'https://t.example/media/pic.png?v=2')
+
+
+def test_import_reads_a_web_page_from_its_url(u1_s1):
+    page = ld_page(body='<img src="/img/a.jpg"><img src="https://cdn.example.com/b.png">')
+    with patch('cookbook.views.api.safe_request', return_value=reply(page)):
+        response = post_import(u1_s1, url='https://www.example.com/recipes/soup')
+    assert response.status_code == 200
+    body = sent(response)
+    assert body['recipe']['name'] == 'Test Soup'
+    assert body['recipe']['source_url'] == 'https://www.example.com/recipes/soup'
+    assert body['images'] == ['https://www.example.com/img/a.jpg', 'https://cdn.example.com/b.png']
+
+
+def test_import_points_out_recipes_that_were_imported_from_the_same_address(u1_s1, recipe_1_s1):
+    from django_scopes import scopes_disabled
+    url = 'https://www.example.com/recipes/soup'
+    with scopes_disabled():
+        recipe_1_s1.source_url = url
+        recipe_1_s1.save()
+    with patch('cookbook.views.api.safe_request', return_value=reply(ld_page())):
+        response = post_import(u1_s1, url=url)
+    assert [d['id'] for d in sent(response)['duplicates']] == [recipe_1_s1.id]
+
+
+def test_import_forwards_the_browser_of_the_user_when_it_fetches_a_page(u1_s1):
+    with patch('cookbook.views.api.safe_request', return_value=reply(ld_page())) as fetch:
+        u1_s1.post(reverse(IMPORT_SOURCE_URL), {'url': 'https://www.example.com/r'}, content_type='application/json', HTTP_USER_AGENT='TestBrowser/1.0')
+    assert fetch.call_args.kwargs['headers']['User-Agent'] == 'TestBrowser/1.0'
+
+
+def test_import_uses_a_generic_browser_name_when_the_user_sends_none(u1_s1):
+    with patch('cookbook.views.api.safe_request', return_value=reply(ld_page())) as fetch:
+        post_import(u1_s1, url='https://www.example.com/r')
+    assert fetch.call_args.kwargs['headers']['User-Agent'] == 'Mozilla/5.0'
+
+
+@pytest.mark.parametrize("error,message", [
+    (requests.exceptions.ConnectionError(), 'Connection Refused.'),
+    (requests.exceptions.MissingSchema(), 'Bad URL Schema.'),
+])
+def test_import_reports_a_page_that_cannot_be_reached(error, message, u1_s1):
+    with patch('cookbook.views.api.safe_request', side_effect=error):
+        response = post_import(u1_s1, url='https://www.example.com/r')
+    assert response.status_code == 400
+    assert sent(response)['msg'] == message
+
+
+# anything else that can go wrong while fetching a page is the user's problem to read about, not a server error
+@pytest.mark.parametrize("error", [
+    requests.exceptions.ReadTimeout(), requests.exceptions.TooManyRedirects(), requests.exceptions.InvalidSchema(),
+    requests.exceptions.InvalidURL(), requests.exceptions.ChunkedEncodingError(),
+])
+def test_import_reports_every_other_network_error_too(error, u1_s1):
+    with patch('cookbook.views.api.safe_request', side_effect=error):
+        response = post_import(u1_s1, url='https://www.example.com/r')
+    assert response.status_code == 400
+    assert sent(response)['error'] is True
+
+
+@pytest.mark.parametrize("url", ['not a url', 'ftp://example.com/recipe', 'http://127.0.0.1/recipe', 'http://169.254.169.254/latest/meta-data/'])
+def test_import_does_not_fetch_addresses_it_must_not_and_reports_them(url, u1_s1):
+    response = post_import(u1_s1, url=url)
+    assert response.status_code == 400
+    assert sent(response)['error'] is True
+
+
+def test_import_reports_a_page_without_recipe_data(u1_s1):
+    with patch('cookbook.views.api.safe_request', return_value=reply('<html><body>no recipe here</body></html>')):
+        response = post_import(u1_s1, url='https://www.example.com/r')
+    assert response.status_code == 400
+    assert sent(response)['msg'] == 'No usable data could be found.'
+
+
+def test_import_reads_html_that_is_sent_along(u1_s1):
+    response = post_import(u1_s1, data=ld_page(body='<img src="https://cdn.example.com/b.png"><img src="/rel.png">'))
+    assert response.status_code == 200
+    assert sent(response)['recipe']['name'] == 'Test Soup'
+    # without an address a relative image cannot be resolved
+    assert sent(response)['images'] == ['https://cdn.example.com/b.png']
+
+
+def test_import_decodes_data_that_arrives_percent_encoded(u1_s1):
+    from urllib.parse import quote
+    response = post_import(u1_s1, data=quote(ld_page()))
+    assert response.status_code == 200
+    assert sent(response)['recipe']['name'] == 'Test Soup'
+
+
+def test_import_takes_the_source_url_from_html_that_names_itself(u1_s1):
+    response = post_import(u1_s1, data=ld_page({**RECIPE_LD, 'url': 'https://example.com/r/9'}))
+    assert sent(response)['recipe']['source_url'] == 'https://example.com/r/9'
+
+
+def test_import_leaves_the_source_url_empty_for_html_that_does_not_name_itself(u1_s1):
+    assert sent(post_import(u1_s1, data=ld_page()))['recipe']['source_url'] == ''
+
+
+def test_import_lets_a_site_specific_replacement_rule_apply_to_html_sent_with_its_url(u1_s1):
+    space = _space(u1_s1)
+    with scope(space=space):
+        Automation.objects.create(name='rename', type=Automation.NAME_REPLACE, param_1='.*example.com.*', param_2='test soup', param_3='Stew',
+                                  created_by=auth.get_user(u1_s1), space=space)
+    assert sent(post_import(u1_s1, data=ld_page(), url='https://www.example.com/r/1'))['recipe']['name'] == 'Stew'
+    assert sent(post_import(u1_s1, data=ld_page(), url='https://www.other.com/r/1'))['recipe']['name'] == 'Test Soup'
+
+
+@pytest.mark.parametrize("data", [
+    json.dumps({k: v for k, v in RECIPE_LD.items() if k not in ('@context', '@type')}),  # neither context nor type: both are added
+    json.dumps({k: v for k, v in RECIPE_LD.items() if k != '@context'}),
+    json.dumps(RECIPE_LD),
+    json.dumps([RECIPE_LD]),
+    json.dumps(GRAPH_LD | {'@graph': [GRAPH_LD['@graph'][0], {**GRAPH_LD['@graph'][1], 'name': 'Test Soup'}]}),  # sites nest their recipe in a @graph
+], ids=['no context or type', 'no context', 'complete', 'list', 'graph'])
+def test_import_reads_a_recipe_sent_as_json(data, u1_s1):
+    response = post_import(u1_s1, data=data)
+    assert response.status_code == 200
+    assert sent(response)['recipe']['name'] == 'Test Soup'
+
+
+@pytest.mark.parametrize("data", ['[]', '123', '"just text"', 'null', '{"name": "unfinished', 'plain text', '<html></html>'])
+def test_import_reports_data_that_holds_no_recipe(data, u1_s1):
+    response = post_import(u1_s1, data=data)
+    assert response.status_code == 400
+    assert sent(response)['msg'] == 'No usable data could be found.'
+
+
+@pytest.mark.parametrize("failure", [
+    {'side_effect': requests.exceptions.ReadTimeout()},
+    {'return_value': MagicMock(json=MagicMock(side_effect=ValueError('not json')))},
+], ids=['unreachable', 'not json'])
+def test_import_reports_a_share_link_that_cannot_be_read(failure, u1_s1):
+    with patch('cookbook.views.api.safe_request', **failure):
+        response = post_import(u1_s1, url=f'https://t.example/recipe/12/?share={SHARE_UUID}')
+    assert response.status_code == 400
+    assert sent(response)['error'] is True
+
+
+def test_import_still_saves_a_shared_recipe_when_its_image_cannot_be_loaded(u1_s1, recipe_1_s1):
+    shared = _shared_recipe(u1_s1, recipe_1_s1, 'https://t.example/media/pic.png')
+    with patch('cookbook.views.api.safe_request', side_effect=[MagicMock(json=lambda: shared), requests.exceptions.ReadTimeout()]):
+        response = post_import(u1_s1, url=f'https://t.example/recipe/12/?share={SHARE_UUID}')
+    assert response.status_code == 200
+    assert sent(response)['recipe_id']
