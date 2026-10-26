@@ -8,7 +8,7 @@ from django.core.cache import cache
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.db.models import Q
 from django.http import Http404, HttpResponseRedirect
-from django.urls import reverse, reverse_lazy
+from django.urls import reverse_lazy
 from django.utils.translation import gettext as _
 from django_scopes import scopes_disabled
 from oauth2_provider.contrib.rest_framework import TokenHasReadWriteScope, TokenHasScope
@@ -248,31 +248,6 @@ class GroupRequiredMixin(object):
         return super(GroupRequiredMixin, self).dispatch(request, *args, **kwargs)
 
 
-class OwnerRequiredMixin(object):
-
-    def dispatch(self, request, *args, **kwargs):
-        if not request.user.is_authenticated:
-            messages.add_message(request, messages.ERROR,
-                                 _('You are not logged in and therefore cannot view this page!'))
-            return HttpResponseRedirect(reverse_lazy('account_login') + '?next=' + request.path)
-        else:
-            if not is_object_owner(request.user, self.get_object()):
-                messages.add_message(request, messages.ERROR,
-                                     _('You cannot interact with this object as it is not owned by you!'))
-                return HttpResponseRedirect(reverse('index'))
-
-        try:
-            obj = self.get_object()
-            if not request.user.userspace.filter(space=obj.get_space()).exists():
-                messages.add_message(request, messages.ERROR,
-                                     _('You do not have the required permissions to view this page!'))
-                return HttpResponseRedirect(reverse_lazy('index'))
-        except AttributeError:
-            pass
-
-        return super(OwnerRequiredMixin, self).dispatch(request, *args, **kwargs)
-
-
 # Django Rest Framework Permission classes
 
 class CustomIsOwner(permissions.BasePermission):
@@ -383,23 +358,6 @@ class CustomIsAdmin(permissions.BasePermission):
 
     def has_permission(self, request, view):
         return has_group_permission(request.user, ['admin'])
-
-
-class CustomIsShare(permissions.BasePermission):
-    """
-    Custom permission class for django rest framework views
-    verifies the requesting user provided a valid share link
-    """
-    message = _('You do not have the required permissions to view this page!')
-
-    def has_permission(self, request, view):
-        return request.method in SAFE_METHODS and 'pk' in view.kwargs
-
-    def has_object_permission(self, request, view, obj):
-        share = request.query_params.get('share', None)
-        if share:
-            return share_link_valid(obj, share)
-        return False
 
 
 def can_view_recipe(user, recipe):
