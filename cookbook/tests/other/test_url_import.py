@@ -1,5 +1,4 @@
 import json
-import os
 from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
 
@@ -17,39 +16,12 @@ from cookbook.helper.recipe_url_import import (clean_dict, clean_instruction_str
                                                listify_keywords, normalize_string, parse_image, parse_instructions, parse_servings, parse_servings_text,
                                                parse_time)
 from cookbook.models import Automation, PropertyType
-from cookbook.tests.conftest import validate_recipe
 from cookbook.tests.factories import KeywordFactory
 
-from ._recipes import (ALLRECIPES, AMERICAS_TEST_KITCHEN, CHEF_KOCH, CHEF_KOCH2, COOKPAD,
-                       COOKS_COUNTRY, DELISH, FOOD_NETWORK, GIALLOZAFFERANO, JOURNAL_DES_FEMMES,
-                       MADAME_DESSERT, MARMITON, TASTE_OF_HOME, THE_SPRUCE_EATS, TUDOGOSTOSO)
-
+# The importer is tested through the conditions it has to handle, with small inputs written in the tests, and not through saved copies of
+# real recipe sites: those test the scraper library and the layout of the site on the day they were saved. The conditions the old site
+# fixtures were added for (an ingredient with an empty name, a JSON-only source, a site-specific scraper) are covered below.
 IMPORT_SOURCE_URL = 'api_recipe_from_source'
-DATA_DIR = "cookbook/tests/other/test_data/"
-
-
-# These were chosen arbitrarily from:
-# Top 10 recipe websites listed here https://www.similarweb.com/top-websites/category/food-and-drink/cooking-and-recipes/
-# plus the test that previously existed
-# plus the custom scraper that was created
-# plus any specific defects discovered along the way
-RECIPES = [
-    ALLRECIPES,
-    AMERICAS_TEST_KITCHEN,
-    CHEF_KOCH,
-    CHEF_KOCH2,  # test for empty ingredient in ingredient_parser
-    COOKPAD,
-    COOKS_COUNTRY,
-    DELISH,
-    FOOD_NETWORK,
-    GIALLOZAFFERANO,
-    JOURNAL_DES_FEMMES,
-    MADAME_DESSERT,  # example of json only source
-    MARMITON,
-    TASTE_OF_HOME,
-    THE_SPRUCE_EATS,  # example of non-json recipes_scraper
-    TUDOGOSTOSO,
-]
 
 
 @pytest.mark.parametrize("arg", [
@@ -196,46 +168,17 @@ def test_source_import_step_serializer_preserves_given_name():
     assert SourceImportStepSerializer(step).data['name'] == 'Prep'
 
 
-@pytest.mark.parametrize("arg", RECIPES, ids=[x['file'][0] for x in RECIPES])
-def test_recipe_import(arg, u1_s1):
-    url = arg['url']
-    for f in list(arg['file']):  # url and files get popped later
-        if 'cookbook' in os.getcwd():
-            test_file = os.path.join(os.getcwd(), 'other', 'test_data', f)
-        else:
-            test_file = os.path.join(os.getcwd(), 'cookbook', 'tests', 'other', 'test_data', f)
-        with open(test_file, 'r', encoding='UTF-8') as d:
-            response = u1_s1.post(
-                reverse(IMPORT_SOURCE_URL),
-                {
-                    'data': d.read(),
-                    'url': url,
-                },
-                content_type='application/json')
-        recipe = json.loads(response.content)['recipe']
-        validate_recipe(arg, recipe)
-
-
-def _import_html(client, filename, url):
-    with open(os.path.join(os.path.dirname(__file__), 'test_data', filename), 'r', encoding='UTF-8') as page:
-        response = client.post(reverse(IMPORT_SOURCE_URL), {'data': page.read(), 'url': url}, content_type='application/json')
-    assert response.status_code == 200
-    return json.loads(response.content)['recipe']
-
-
-# Neither page declares a <link rel="canonical">, so the URL the client sent is the only source URL there is.
-# The bookmarklet sends the page HTML together with its URL.
-@pytest.mark.parametrize("filename, url", [
-    ('americastestkitchen.html', 'http://www.americastestkitchen.com/recipes/1771-pasta-with-chicken-broccoli-and-sun-dried-tomatoes'),
-    ('cookscountry.html', 'http://www.cookscountry.com/recipes/2202-shrimp-piccata-pasta'),
-])
-def test_import_html_with_url_keeps_the_supplied_source_url(filename, url, u1_s1):
-    assert _import_html(u1_s1, filename, url)['source_url'] == url
+# The page declares no <link rel="canonical">, so the address the client sent is the only source address there is. The bookmarklet sends the
+# HTML of a page together with its address.
+def test_import_html_with_url_keeps_the_supplied_source_url(u1_s1):
+    response = post_import(u1_s1, data=ld_page(), url='https://www.example.com/recipes/soup')
+    assert sent(response)['recipe']['source_url'] == 'https://www.example.com/recipes/soup'
 
 
 def test_import_html_with_url_prefers_the_pages_own_canonical_url(u1_s1):
-    recipe = _import_html(u1_s1, 'allrecipes.html', 'https://www.allrecipes.com/some/other/url')
-    assert recipe['source_url'] == 'https://www.allrecipes.com/recipe/24010/easy-chicken-marsala/'
+    page = ld_page().replace('<head>', '<head><link rel="canonical" href="https://www.example.com/canonical/soup">')
+    response = post_import(u1_s1, data=page, url='https://www.example.com/other/address')
+    assert sent(response)['recipe']['source_url'] == 'https://www.example.com/canonical/soup'
 
 
 # ---------------------------------------------------------------------------------------------------------------------
