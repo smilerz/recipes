@@ -230,14 +230,16 @@ def get_recipe_properties(space, property_data):
     # only a number of servings divides the values; an amount like '100 g' says what the values are for
     if not isinstance(serving_size, (int, float)) and not re.fullmatch(r'\s*\d+\s*(servings?|portions?)?\s*', str(serving_size), flags=re.IGNORECASE):
         serving_size = 1
-    serving_size = parse_servings(serving_size) or 1
+    serving_size = parse_servings(serving_size)
+    if not serving_size or serving_size < 0:
+        serving_size = 1
 
     recipe_properties = []
     for pt in PropertyType.objects.filter(space=space, open_data_slug__in=list(properties.keys())).all():
         for p in list(properties.keys()):
             if pt.open_data_slug == p:
                 if properties[p] in property_data:
-                    amount = parse_amount(property_data[properties[p]])
+                    amount = parse_nutrition_amount(property_data[properties[p]])
                     if amount is None:
                         continue
                     recipe_properties.append({
@@ -251,7 +253,7 @@ def get_recipe_properties(space, property_data):
     return recipe_properties
 
 
-def parse_amount(value):
+def parse_nutrition_amount(value):
     """
     The first number in a value like '7,66 g', '11.5g' or '1,200 kcal' as a float, or None when there is none.
     A comma is a decimal comma, unless it is followed by exactly three digits, which makes it a thousands separator.
