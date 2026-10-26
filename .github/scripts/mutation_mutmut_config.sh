@@ -8,6 +8,9 @@
 # config file. The tests are named explicitly: mutmut would otherwise run the whole suite once to
 # find which tests cover which code, and the suite does not pass in a single process.
 #
+# Lines that start with print( are not mutated: they are log messages, and changing their text
+# changes nothing a test could see, so every such mutant would survive.
+#
 # test_inherit is deselected: it compares names made by a counter, so it passes or fails with the
 # order the tests run in, and mutmut runs them in an order of its own.
 set -euo pipefail
@@ -27,6 +30,7 @@ cat >> pyproject.toml <<EOF
 source_paths = ["cookbook/"]
 only_mutate = [$(quote_list "$1")]
 do_not_mutate = ["cookbook/migrations/*", "cookbook/tests/*"]
+do_not_mutate_patterns = ["^ *print[(]"]
 also_copy = ["recipes/", "manage.py", "plugin.py", "version.py", "pytest.ini"]
 pytest_add_cli_args = ["--ds=mutation_settings", "--reuse-db", "-o", "addopts=", "-p", "no:cacheprovider", "-p", "no:xdist", "--deselect", "cookbook/tests/api/test_api_food.py::test_inherit"]
 pytest_add_cli_args_test_selection = [$(quote_list "$2")]
