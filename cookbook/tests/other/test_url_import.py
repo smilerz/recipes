@@ -198,3 +198,25 @@ def test_recipe_import(arg, u1_s1):
                 content_type='application/json')
         recipe = json.loads(response.content)['recipe']
         validate_recipe(arg, recipe)
+
+
+def _import_html(client, filename, url):
+    with open(os.path.join(os.path.dirname(__file__), 'test_data', filename), 'r', encoding='UTF-8') as page:
+        response = client.post(reverse(IMPORT_SOURCE_URL), {'data': page.read(), 'url': url}, content_type='application/json')
+    assert response.status_code == 200
+    return json.loads(response.content)['recipe']
+
+
+# Neither page declares a <link rel="canonical">, so the URL the client sent is the only source URL there is.
+# The bookmarklet sends the page HTML together with its URL.
+@pytest.mark.parametrize("filename, url", [
+    ('americastestkitchen.html', 'http://www.americastestkitchen.com/recipes/1771-pasta-with-chicken-broccoli-and-sun-dried-tomatoes'),
+    ('cookscountry.html', 'http://www.cookscountry.com/recipes/2202-shrimp-piccata-pasta'),
+])
+def test_import_html_with_url_keeps_the_supplied_source_url(filename, url, u1_s1):
+    assert _import_html(u1_s1, filename, url)['source_url'] == url
+
+
+def test_import_html_with_url_prefers_the_pages_own_canonical_url(u1_s1):
+    recipe = _import_html(u1_s1, 'allrecipes.html', 'https://www.allrecipes.com/some/other/url')
+    assert recipe['source_url'] == 'https://www.allrecipes.com/recipe/24010/easy-chicken-marsala/'
