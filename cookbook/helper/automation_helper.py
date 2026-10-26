@@ -6,6 +6,7 @@ from django.db.models.functions import Lower
 from cookbook.models import Automation
 
 REGEX_TIMEOUT = 0.05
+_MISSING = object()  # no alias or rule found, as opposed to one whose target is empty
 
 
 class AutomationEngine:
@@ -35,120 +36,87 @@ class AutomationEngine:
         else:
             self.source = source
 
+    def _cached(self, attribute, cache_name, load):
+        """
+        The rules a cached engine works with: read once per engine, from the cache shared with other requests (30 seconds) or else from the
+        database. An empty result is a result too, and is kept.
+        """
+        rules = getattr(self, attribute)
+        if rules is None:
+            cache_key = f'{cache_name}_{self.request.space.pk}'
+            rules = caches['default'].get(cache_key, None)
+            if rules is None:
+                rules = load()
+                caches['default'].set(cache_key, rules, 30)
+            else:
+                caches['default'].touch(cache_key, 30)
+            setattr(self, attribute, rules)
+        return rules
+
+    def _enabled_rules(self, rule_type):
+        return Automation.objects.filter(space=self.request.space, disabled=False, type=rule_type).only('param_1', 'param_2').order_by('order')
+
+    def _alias(self, alias_type, attribute, cache_name, text):
+        """The target of the alias for the text, or _MISSING when there is none. The first of several aliases by order wins."""
+        if self.use_cache:
+            def load():
+                aliases = {}
+                for a in self._enabled_rules(alias_type):
+                    if a.param_1 is not None:
+                        aliases.setdefault(a.param_1.lower(), a.param_2)
+                return aliases
+
+            return self._cached(attribute, cache_name, load).get(text.lower(), _MISSING)
+        automation = Automation.objects.filter(space=self.request.space, type=alias_type, param_1__iexact=text, disabled=False).order_by('order').first()
+        return automation.param_2 if automation else _MISSING
+
     def apply_keyword_automation(self, keyword):
         keyword = keyword.strip()
-        if self.use_cache and self.keyword_aliases is None:
-            self.keyword_aliases = {}
-            KEYWORD_CACHE_KEY = f'automation_keyword_alias_{self.request.space.pk}'
-            if c := caches['default'].get(KEYWORD_CACHE_KEY, None):
-                self.keyword_aliases = c
-                caches['default'].touch(KEYWORD_CACHE_KEY, 30)
-            else:
-                for a in Automation.objects.filter(space=self.request.space, disabled=False, type=Automation.KEYWORD_ALIAS).only('param_1', 'param_2').order_by('order').all():
-                    self.keyword_aliases[a.param_1.lower()] = a.param_2
-                caches['default'].set(KEYWORD_CACHE_KEY, self.keyword_aliases, 30)
-        else:
-            self.keyword_aliases = {}
-        if self.keyword_aliases:
-            try:
-                keyword = self.keyword_aliases[keyword.lower()]
-            except KeyError:
-                pass
-        else:
-            if automation := Automation.objects.filter(space=self.request.space, type=Automation.KEYWORD_ALIAS, param_1__iexact=keyword, disabled=False).order_by('order').first():
-                return automation.param_2
-        return keyword
+        alias = self._alias(Automation.KEYWORD_ALIAS, 'keyword_aliases', 'automation_keyword_alias', keyword)
+        return keyword if alias is _MISSING else alias
 
     def apply_unit_automation(self, unit):
         unit = unit.strip()
-        if self.use_cache and self.unit_aliases is None:
-            self.unit_aliases = {}
-            UNIT_CACHE_KEY = f'automation_unit_alias_{self.request.space.pk}'
-            if c := caches['default'].get(UNIT_CACHE_KEY, None):
-                self.unit_aliases = c
-                caches['default'].touch(UNIT_CACHE_KEY, 30)
-            else:
-                for a in Automation.objects.filter(space=self.request.space, disabled=False, type=Automation.UNIT_ALIAS).only('param_1', 'param_2').order_by('order').all():
-                    self.unit_aliases[a.param_1.lower()] = a.param_2
-                caches['default'].set(UNIT_CACHE_KEY, self.unit_aliases, 30)
-        else:
-            self.unit_aliases = {}
-        if self.unit_aliases:
-            try:
-                unit = self.unit_aliases[unit.lower()]
-            except KeyError:
-                pass
-        else:
-            if automation := Automation.objects.filter(space=self.request.space, type=Automation.UNIT_ALIAS, param_1__iexact=unit, disabled=False).order_by('order').first():
-                return automation.param_2
-        return self.apply_regex_replace_automation(unit, Automation.UNIT_REPLACE)
+        alias = self._alias(Automation.UNIT_ALIAS, 'unit_aliases', 'automation_unit_alias', unit)
+        return self.apply_regex_replace_automation(unit, Automation.UNIT_REPLACE) if alias is _MISSING else alias
 
     def apply_food_automation(self, food):
         food = food.strip()
-        if self.use_cache and self.food_aliases is None:
-            self.food_aliases = {}
-            FOOD_CACHE_KEY = f'automation_food_alias_{self.request.space.pk}'
-            if c := caches['default'].get(FOOD_CACHE_KEY, None):
-                self.food_aliases = c
-                caches['default'].touch(FOOD_CACHE_KEY, 30)
-            else:
-                for a in Automation.objects.filter(space=self.request.space, disabled=False, type=Automation.FOOD_ALIAS).only('param_1', 'param_2').order_by('order').all():
-                    self.food_aliases[a.param_1.lower()] = a.param_2
-                caches['default'].set(FOOD_CACHE_KEY, self.food_aliases, 30)
-        else:
-            self.food_aliases = {}
-
-        if self.food_aliases:
-            try:
-                return self.food_aliases[food.lower()]
-            except KeyError:
-                return self.apply_regex_replace_automation(food, Automation.FOOD_REPLACE)
-        else:
-            if automation := Automation.objects.filter(space=self.request.space, type=Automation.FOOD_ALIAS, param_1__iexact=food, disabled=False).order_by('order').first():
-                return automation.param_2
-        return self.apply_regex_replace_automation(food, Automation.FOOD_REPLACE)
+        alias = self._alias(Automation.FOOD_ALIAS, 'food_aliases', 'automation_food_alias', food)
+        return self.apply_regex_replace_automation(food, Automation.FOOD_REPLACE) if alias is _MISSING else alias
 
     def apply_never_unit_automation(self, tokens):
         """
         Moves a string that should never be treated as a unit to next token and optionally replaced with default unit
         e.g. NEVER_UNIT: param1: egg, param2: None would modify ['1', 'egg', 'white'] to ['1', '', 'egg', 'white']
         or NEVER_UNIT: param1: egg, param2: pcs would modify ['1', 'egg', 'yolk'] to ['1', 'pcs', 'egg', 'yolk']
+        A unit that is an alias of the string counts as the string. If several rules match, the first by order is used.
         :param1 tokens: string that should never be considered a unit, will be moved to token[2]
         :param2 (optional) unit as string: will insert unit string into token[1]
         :return: unit as string (possibly changed by automation)
         """
-
-        if self.use_cache and self.never_unit is None:
-            self.never_unit = {}
-            NEVER_UNIT_CACHE_KEY = f'automation_never_unit_{self.request.space.pk}'
-            if c := caches['default'].get(NEVER_UNIT_CACHE_KEY, None):
-                self.never_unit = c
-                caches['default'].touch(NEVER_UNIT_CACHE_KEY, 30)
-            else:
-                for a in Automation.objects.filter(space=self.request.space, disabled=False, type=Automation.NEVER_UNIT).only('param_1', 'param_2').order_by('order').all():
-                    self.never_unit[a.param_1.lower()] = a.param_2
-                caches['default'].set(NEVER_UNIT_CACHE_KEY, self.never_unit, 30)
-        else:
-            self.never_unit = {}
-
-        new_unit = None
         alt_unit = self.apply_unit_automation(tokens[1])
-        never_unit = False
-        if self.never_unit:
-            try:
-                new_unit = self.never_unit[tokens[1].lower()]
-                never_unit = True
-            except KeyError:
-                return tokens, never_unit
-        else:
-            if a := Automation.objects.annotate(param_1_lower=Lower('param_1')).filter(space=self.request.space, type=Automation.NEVER_UNIT, param_1_lower__in=[
-                    tokens[1].lower(), alt_unit.lower()], disabled=False).order_by('order').first():
-                new_unit = a.param_2
-                never_unit = True
+        candidates = {tokens[1].lower(), (alt_unit or '').lower()}
+        if self.use_cache:
+            def load():
+                rules = {}
+                for position, a in enumerate(self._enabled_rules(Automation.NEVER_UNIT)):
+                    if a.param_1 is not None:
+                        rules.setdefault(a.param_1.lower(), (position, a.param_2))
+                return rules
 
-        if never_unit:
-            tokens.insert(1, new_unit)
-        return tokens, never_unit
+            rules = self._cached('never_unit', 'automation_never_unit_rules', load)
+            matches = [rules[c] for c in candidates if c in rules]
+            new_unit = min(matches, key=lambda match: match[0])[1] if matches else _MISSING
+        else:
+            rule = Automation.objects.annotate(param_1_lower=Lower('param_1')).filter(
+                space=self.request.space, type=Automation.NEVER_UNIT, param_1_lower__in=list(candidates), disabled=False).order_by('order').first()
+            new_unit = rule.param_2 if rule else _MISSING
+
+        if new_unit is _MISSING:
+            return tokens, False
+        tokens.insert(1, new_unit)
+        return tokens, True
 
     def apply_transpose_automation(self, string):
         """
@@ -157,33 +125,20 @@ class AutomationEngine:
         :param 2: second word to detect
         return: new ingredient string
         """
-        if self.use_cache and self.transpose_words is None:
-            self.transpose_words = {}
-            TRANSPOSE_WORDS_CACHE_KEY = f'automation_transpose_words_{self.request.space.pk}'
-            if c := caches['default'].get(TRANSPOSE_WORDS_CACHE_KEY, None):
-                self.transpose_words = c
-                caches['default'].touch(TRANSPOSE_WORDS_CACHE_KEY, 30)
-            else:
-                i = 0
-                for a in Automation.objects.filter(space=self.request.space, disabled=False, type=Automation.TRANSPOSE_WORDS).only(
-                        'param_1', 'param_2').order_by('order').all()[:512]:
-                    self.transpose_words[i] = [a.param_1.lower(), a.param_2.lower()]
-                    i += 1
-                caches['default'].set(TRANSPOSE_WORDS_CACHE_KEY, self.transpose_words, 30)
-        else:
-            self.transpose_words = {}
-
         tokens = [x.lower() for x in string.replace(',', ' ').split()]
-        if self.transpose_words:
-            for key, value in self.transpose_words.items():
-                if value[0] in tokens and value[1] in tokens:
-                    string = regex.sub(rf"\b({value[0]})\W*({value[1]})\b", r"\2 \1", string, flags=regex.IGNORECASE, timeout=REGEX_TIMEOUT)
+        if self.use_cache:
+            def load():
+                return [(a.param_1.lower(), a.param_2.lower()) for a in self._enabled_rules(Automation.TRANSPOSE_WORDS)[:512] if a.param_1 and a.param_2]
+
+            rules = self._cached('transpose_words', 'automation_transpose_rules', load)
         else:
-            for rule in Automation.objects.filter(space=self.request.space, type=Automation.TRANSPOSE_WORDS, disabled=False) \
-                    .annotate(param_1_lower=Lower('param_1'), param_2_lower=Lower('param_2')) \
-                    .filter(param_1_lower__in=tokens, param_2_lower__in=tokens).order_by('order')[:512]:
-                if rule.param_1 in tokens and rule.param_2 in tokens:
-                    string = regex.sub(rf"\b({rule.param_1})\W*({rule.param_2})\b", r"\2 \1", string, flags=regex.IGNORECASE, timeout=REGEX_TIMEOUT)
+            rules = [(a.param_1.lower(), a.param_2.lower()) for a in self._enabled_rules(Automation.TRANSPOSE_WORDS)
+                     .annotate(param_1_lower=Lower('param_1'), param_2_lower=Lower('param_2'))
+                     .filter(param_1_lower__in=tokens, param_2_lower__in=tokens)[:512] if a.param_1 and a.param_2]
+
+        for first, second in rules:
+            if first in tokens and second in tokens:
+                string = regex.sub(rf"\b({first})\W*({second})\b", r"\2 \1", string, flags=regex.IGNORECASE, timeout=REGEX_TIMEOUT)
         return string
 
     def apply_regex_replace_automation(self, string, automation_type):
