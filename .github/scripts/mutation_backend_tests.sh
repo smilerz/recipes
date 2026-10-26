@@ -24,4 +24,6 @@ for module in "$@"; do
     found+=$'\n'
 done
 
-printf '%s\n' "$found" | sed '/^$/d' | sort -u | paste -sd, -
+# Tests that read the source files themselves cannot run against mutmut's mutated copy, which holds
+# every variant of every function side by side: the raw write audit sees each variant as a new write.
+printf '%s\n' "$found" | sed '/^$/d' | { grep -v '/test_raw_write_audit\.py$' || true; } | sort -u | paste -sd, -
