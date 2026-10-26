@@ -14,7 +14,7 @@ from django_scopes import scope
 
 from cookbook.helper.ingredient_parser import IngredientParser
 from cookbook.helper.recipe_url_import import (clean_dict, clean_instruction_string, get_from_scraper, get_images_from_soup, get_recipe_properties,
-                                               listify_keywords, normalize_string, parse_image, parse_instructions, parse_servings, parse_servings_text,
+                                               iso_duration_to_minutes, listify_keywords, normalize_string, parse_image, parse_instructions, parse_servings, parse_servings_text,
                                                parse_time)
 from cookbook.models import Automation, PropertyType
 from cookbook.tests.factories import KeywordFactory
@@ -345,6 +345,25 @@ def test_parse_servings(servings, expected):
 ])
 def test_parse_time(recipe_time, expected):
     assert parse_time(recipe_time) == expected
+
+
+# the importers for Copy Me That, Recipe Keeper and Nextcloud Cookbook read prep and cook times with this
+@pytest.mark.parametrize("duration,expected", [
+    ('PT1H30M', 90),
+    ('PT45M', 45),
+    ('PT2H', 120),
+    ('PT0H15M', 15),
+    ('P1DT2H', 1560),
+    ('P1D', 1440),  # no time part
+    ('PT90S', 2),  # seconds count
+    ('pt1h', 60),
+    ('15 min', 15),  # not an ISO duration, but a time
+    ('', 0),
+    ('garbage', 0),
+    (None, 0),
+])
+def test_iso_duration_to_minutes(duration, expected):
+    assert iso_duration_to_minutes(duration) == expected
 
 
 @pytest.mark.parametrize("keywords,expected", [
