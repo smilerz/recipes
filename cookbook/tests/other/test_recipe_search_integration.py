@@ -1,12 +1,14 @@
 import json
+from datetime import datetime, timedelta, timezone
 
 import pytest
 from django.contrib import auth
 from django.urls import reverse
+from django.utils import timezone as django_timezone
 from django_scopes import scope, scopes_disabled
 
-from cookbook.models import Recipe, SearchFields
-from cookbook.tests.factories import CookLogFactory, FoodFactory, IngredientFactory, KeywordFactory, RecipeBookEntryFactory, RecipeFactory, UnitFactory
+from cookbook.models import Keyword, Recipe, SearchFields
+from cookbook.tests.factories import CookLogFactory, FoodFactory, IngredientFactory, KeywordFactory, RecipeBookEntryFactory, RecipeFactory, UnitFactory, ViewLogFactory
 from cookbook.tests.other.conftest import _make_recipe_with_step, requires_postgres
 
 LIST_URL = 'api:recipe-list'
@@ -224,3 +226,171 @@ class TestHTTPDuplicateQueryParams:
         ids, _ = _get_ids(u1_s1, f'keywords={kw_a.id}&keywords={kw_b.id}')
         assert r1.id in ids
         assert r2.id in ids
+
+
+# ---------------------------------------------------------------------------------------------------------------------
+# Query string parameters, sent the way the frontend sends them. The filter tests above and in test_recipe_search_filters.py
+# hand their settings straight to RecipeSearch, so a parameter that is never read from the query string went unnoticed.
+# ---------------------------------------------------------------------------------------------------------------------
+
+def _recipe(space, client, **kwargs):
+    with scopes_disabled():
+        return RecipeFactory.create(space=space, created_by=auth.get_user(client), steps__count=0, keywords__count=0, **kwargs)
+
+
+def _ordered_ids(client, params=''):
+    """The ids of the recipe list in the order the API returned them."""
+    r = json.loads(client.get(reverse(LIST_URL) + f'?{params}').content)
+    return [x['id'] for x in r['results']]
+
+
+class TestHTTPTimeRanges:
+
+    @pytest.fixture
+    def timed(self, space_1, u1_s1):
+        # (working, waiting) -> total 20, 60, 95
+        return [_recipe(space_1, u1_s1, working_time=w, waiting_time=t) for w, t in ((10, 10), (30, 30), (5, 90))]
+
+    @pytest.mark.parametrize("params,expected", [
+        ('waiting_time_gte=30', {1, 2}),
+        ('waiting_time_lte=30', {0, 1}),
+        ('waiting_time_gte=20&waiting_time_lte=40', {1}),
+        ('waiting_time_gte=0', {0, 1, 2}),  # an explicit 0 is a boundary, not "not given"
+        ('waiting_time_lte=0', set()),
+        ('total_time_gte=60', {1, 2}),
+        ('total_time_lte=60', {0, 1}),  # the sum counts: recipe 2 works only 5 minutes but takes 95
+        ('total_time_gte=30&total_time_lte=70', {1}),
+        ('total_time_lte=19', set()),
+    ])
+    def test_time_bounds(self, params, expected, timed, u1_s1):
+        assert _get_ids(u1_s1, params)[0] == {timed[i].id for i in expected}
+
+
+class TestHTTPDateFilters:
+
+    @pytest.fixture
+    def dated(self, space_1, u1_s1):
+        noon = datetime(2020, 3, 1, 12, 0, tzinfo=timezone.utc)
+        recipes = [_recipe(space_1, u1_s1, created_at=noon + delta) for delta in (timedelta(0), timedelta(hours=1), timedelta(days=1))]
+        with scopes_disabled():
+            for recipe, delta in zip(recipes, (timedelta(0), timedelta(hours=1), timedelta(days=1))):
+                Recipe.objects.filter(pk=recipe.pk).update(updated_at=noon + delta + timedelta(days=100))
+        return recipes
+
+    @pytest.mark.parametrize("params,expected", [
+        ('createdon=2020-03-01', {0, 1}),
+        ('createdon=2020-03-02', {2}),
+        ('createdon=2020-03-05', set()),
+        ('updatedon=2020-06-09', {0, 1}),
+        ('updatedon=2020-06-10', {2}),
+        ('updatedon=2020-01-01', set()),
+    ])
+    def test_exact_dates(self, params, expected, dated, u1_s1):
+        assert _get_ids(u1_s1, params)[0] == {dated[i].id for i in expected}
+
+
+class TestHTTPStepsFilter:
+
+    def test_steps_by_one_or_more_ids(self, space_1, u1_s1):
+        recipes = [_make_recipe_with_step(space_1) for _ in range(3)]
+        with scopes_disabled():
+            step_ids = [r.steps.first().id for r in recipes]
+        assert _get_ids(u1_s1, f'steps={step_ids[0]}')[0] == {recipes[0].id}
+        assert _get_ids(u1_s1, f'steps={step_ids[0]}&steps={step_ids[2]}')[0] == {recipes[0].id, recipes[2].id}
+
+
+class TestHTTPPinnedAndFlagged:
+
+    def test_new_puts_recipes_created_in_the_last_week_first(self, space_1, u1_s1):
+        now = django_timezone.now()
+        old = _recipe(space_1, u1_s1, name='Aardvark stew', created_at=now - timedelta(days=30))
+        fresh = _recipe(space_1, u1_s1, name='Zebra stew', created_at=now - timedelta(days=1))
+        assert _ordered_ids(u1_s1) == [old.id, fresh.id]  # by name
+        assert _ordered_ids(u1_s1, 'new=true') == [fresh.id, old.id]
+        assert _ordered_ids(u1_s1, 'new=false') == [old.id, fresh.id]
+
+    def test_num_recent_puts_the_recipes_viewed_last_first(self, space_1, u1_s1):
+        first = _recipe(space_1, u1_s1, name='Alpha stew')
+        last = _recipe(space_1, u1_s1, name='Zulu stew')
+        with scopes_disabled():
+            ViewLogFactory.create(recipe=last, created_by=auth.get_user(u1_s1), space=space_1)
+        assert _ordered_ids(u1_s1) == [first.id, last.id]  # nothing is pinned by default
+        assert _ordered_ids(u1_s1, 'num_recent=1') == [last.id, first.id]
+
+    def test_unrated_returns_what_the_user_has_not_rated(self, space_1, u1_s1):
+        rated = _recipe(space_1, u1_s1)
+        unrated = _recipe(space_1, u1_s1)
+        with scopes_disabled():
+            CookLogFactory.create(recipe=rated, created_by=auth.get_user(u1_s1), rating=5, space=space_1)
+        assert _get_ids(u1_s1)[0] == {rated.id, unrated.id}
+        assert _get_ids(u1_s1, 'unrated=false')[0] == {rated.id, unrated.id}
+        assert _get_ids(u1_s1, 'unrated=true')[0] == {unrated.id}
+        assert _get_ids(u1_s1, 'unrated=true&rating_gte=3')[0] == {unrated.id}  # a rating bound does not empty the result
+
+    def test_sorting_by_rating(self, space_1, u1_s1):
+        low = _recipe(space_1, u1_s1, name='Alpha stew')
+        high = _recipe(space_1, u1_s1, name='Bravo stew')
+        none = _recipe(space_1, u1_s1, name='Charlie stew')
+        with scopes_disabled():
+            CookLogFactory.create(recipe=low, created_by=auth.get_user(u1_s1), rating=1, space=space_1)
+            CookLogFactory.create(recipe=high, created_by=auth.get_user(u1_s1), rating=5, space=space_1)
+        assert _ordered_ids(u1_s1, 'sort_order=rating') == [low.id, high.id, none.id]
+        assert _ordered_ids(u1_s1, 'sort_order=-rating') == [high.id, low.id, none.id]
+        assert _ordered_ids(u1_s1, 'sort_order=-name') == [none.id, high.id, low.id]
+
+
+class TestHTTPIncludeChildrenDefault:
+
+    def test_a_parent_keyword_finds_recipes_with_its_children_unless_told_not_to(self, space_1, u1_s1):
+        with scopes_disabled():
+            parent = Keyword.add_root(name='parent keyword', space=space_1)
+            child = parent.add_child(name='child keyword', space=space_1)
+        with_child = _recipe(space_1, u1_s1)
+        with_parent = _recipe(space_1, u1_s1)
+        with scopes_disabled():
+            with_child.keywords.add(child)
+            with_parent.keywords.add(parent)
+        both = {with_child.id, with_parent.id}
+        assert _get_ids(u1_s1, f'keywords_or={parent.id}')[0] == both
+        assert _get_ids(u1_s1, f'keywords_or={parent.id}&include_children=true')[0] == both
+        assert _get_ids(u1_s1, f'keywords_or={parent.id}&include_children=false')[0] == {with_parent.id}
+
+
+class TestHTTPRandomOrder:
+
+    @pytest.fixture
+    def many(self, space_1, u1_s1):
+        return [_recipe(space_1, u1_s1, name=f'recipe {n:02d}') for n in range(12)]
+
+    def test_a_seed_gives_one_order_and_another_seed_another(self, many, u1_s1):
+        by_name = _ordered_ids(u1_s1)
+        alpha = _ordered_ids(u1_s1, 'random=true&seed=alpha')
+        assert alpha == _ordered_ids(u1_s1, 'random=true&seed=alpha')
+        assert alpha != _ordered_ids(u1_s1, 'random=true&seed=beta')
+        assert alpha != by_name
+        assert sorted(alpha) == sorted(by_name)
+
+    def test_random_false_and_a_seed_alone_keep_the_name_order(self, many, u1_s1):
+        by_name = _ordered_ids(u1_s1)
+        assert _ordered_ids(u1_s1, 'random=false&seed=alpha') == by_name
+        assert _ordered_ids(u1_s1, 'seed=alpha') == by_name
+
+    @pytest.mark.parametrize("sort_order", ['random', '-random'])
+    def test_sort_order_random_is_the_random_flag(self, sort_order, many, u1_s1):
+        by_name = _ordered_ids(u1_s1)
+        shuffled = _ordered_ids(u1_s1, f'sort_order={sort_order}&seed=alpha')
+        assert shuffled == _ordered_ids(u1_s1, 'random=true&seed=alpha')
+        assert shuffled != by_name
+
+    @pytest.mark.parametrize("seed", ['bad seed', 'x;y', 'a' * 65])
+    def test_a_seed_that_is_not_letters_digits_dash_or_underscore_is_refused_with_a_reason(self, seed, many, u1_s1):
+        response = u1_s1.get(reverse(LIST_URL), {'seed': seed})
+        assert response.status_code == 400
+        assert response.json()['detail'] == 'Parameter seed must be 1-64 letters, digits, "_" or "-"'
+
+    def test_a_blank_seed_is_ignored_like_any_blank_parameter(self, many, u1_s1):
+        assert _ordered_ids(u1_s1, 'random=false&seed=') == _ordered_ids(u1_s1)
+
+    @pytest.mark.parametrize("seed", ['a', 'a-b_C1', 'a' * 64])
+    def test_a_seed_of_allowed_characters_is_accepted(self, seed, many, u1_s1):
+        assert u1_s1.get(reverse(LIST_URL), {'random': 'true', 'seed': seed}).status_code == 200
