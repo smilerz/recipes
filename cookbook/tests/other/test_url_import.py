@@ -969,6 +969,12 @@ def _amounts(space, nutrients):
     # per serving
     ({'servingSize': '2', 'calories': '300 kcal', 'proteinContent': '12 g'}, {'property-calories': 150, 'property-proteins': 6}),
     ({'servingSize': 'a dozen', 'calories': '300 kcal'}, {'property-calories': 300}),
+    ({'servingSize': '2 servings', 'calories': '300 kcal'}, {'property-calories': 150}),
+    ({'servingSize': 4, 'calories': '300 kcal'}, {'property-calories': 75}),
+    # a serving size that is an amount, not a number of servings, says what the values are for: they are not divided by it
+    ({'servingSize': '100 g', 'calories': '300 kcal', 'proteinContent': '12 g'}, {'property-calories': 300, 'property-proteins': 12}),
+    ({'servingSize': '250 ml', 'calories': '300 kcal'}, {'property-calories': 300}),
+    ({'servingSize': '1 cup', 'calories': '300 kcal'}, {'property-calories': 300}),
     # decimals, with a point or a comma
     ({'calories': '302 kcal', 'proteinContent': '7,66g', 'fatContent': '11.5 g'}, {'property-calories': 302, 'property-proteins': 7.66, 'property-fats': 11.5}),
     ({'calories': '1,200 kcal'}, {'property-calories': 1200}),
