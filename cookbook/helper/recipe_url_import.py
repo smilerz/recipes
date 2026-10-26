@@ -226,31 +226,38 @@ def get_recipe_properties(space, property_data):
         "property-fats": "fatContent",
     }
 
-    serving_size = property_data.get('servingSize')
-    # only a number of servings divides the values; an amount like '100 g' says what the values are for
-    if not isinstance(serving_size, (int, float)) and not re.fullmatch(r'\s*\d+\s*(servings?|portions?)?\s*', str(serving_size), flags=re.IGNORECASE):
-        serving_size = 1
-    serving_size = parse_servings(serving_size)
-    if not serving_size or serving_size < 0:
-        serving_size = 1
+    servings = parse_nutrition_servings(property_data.get('servingSize'))
 
     recipe_properties = []
-    for pt in PropertyType.objects.filter(space=space, open_data_slug__in=list(properties.keys())).all():
-        for p in list(properties.keys()):
-            if pt.open_data_slug == p:
-                if properties[p] in property_data:
-                    amount = parse_nutrition_amount(property_data[properties[p]])
-                    if amount is None:
-                        continue
-                    recipe_properties.append({
-                        'property_type': {
-                            'id': pt.id,
-                            'name': pt.name,
-                        },
-                        'property_amount': amount / serving_size,
-                    })
+    for pt in PropertyType.objects.filter(space=space, open_data_slug__in=list(properties)):
+        key = properties[pt.open_data_slug]
+        if key not in property_data:
+            continue
+        amount = parse_nutrition_amount(property_data[key])
+        if amount is None:
+            continue
+        recipe_properties.append({
+            'property_type': {
+                'id': pt.id,
+                'name': pt.name,
+            },
+            'property_amount': amount / servings,
+        })
 
     return recipe_properties
+
+
+def parse_nutrition_servings(value):
+    """
+    The number of servings the nutrition values are for. Only a number, or a whole number in text like '2' or '2 servings', is that; an
+    amount such as '100 g' says what the values are for, and anything that is zero, negative or not a number leaves them as they are (1).
+    """
+    if isinstance(value, str):
+        match = re.fullmatch(r'\s*(\d+)\s*(?:servings?|portions?)?\s*', value, flags=re.IGNORECASE)
+        value = int(match.group(1)) if match else None
+    if isinstance(value, (int, float)) and value > 0:
+        return value
+    return 1
 
 
 def parse_nutrition_amount(value):
