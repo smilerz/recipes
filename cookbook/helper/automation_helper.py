@@ -197,7 +197,7 @@ class AutomationEngine:
         Automation.NAME_REPLACE
 
         regex replacment utilized the following fields from the Automation model
-        :param 1: source that should apply the automation in regex format ('.*' for all)
+        :param 1: source that should apply the automation in regex format ('.*' for all), found anywhere in the address and not case sensitive
         :param 2: regex pattern to match ()
         :param 3: replacement string (leave blank to delete)
         return: new string
@@ -219,7 +219,7 @@ class AutomationEngine:
 
         for source_pattern, pattern, replacement in rules:
             try:
-                if regex.match(source_pattern, (self.source)[:512], timeout=REGEX_TIMEOUT):
+                if regex.search(source_pattern, (self.source)[:512], flags=regex.IGNORECASE, timeout=REGEX_TIMEOUT):
                     string = regex.sub(pattern, replacement, string, flags=regex.IGNORECASE, timeout=REGEX_TIMEOUT)
             except (regex.error, TimeoutError):
                 # a rule that is not a valid pattern or takes too long must not stop the import or the rules after it
