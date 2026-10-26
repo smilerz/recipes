@@ -13,9 +13,10 @@ from django.urls import reverse
 from django_scopes import scope
 
 from cookbook.helper.ingredient_parser import IngredientParser
-from cookbook.helper.recipe_url_import import (clean_dict, clean_instruction_string, get_from_scraper, get_images_from_soup, listify_keywords,
-                                               normalize_string, parse_image, parse_instructions, parse_servings, parse_servings_text, parse_time)
-from cookbook.models import Automation
+from cookbook.helper.recipe_url_import import (clean_dict, clean_instruction_string, get_from_scraper, get_images_from_soup, get_recipe_properties,
+                                               listify_keywords, normalize_string, parse_image, parse_instructions, parse_servings, parse_servings_text,
+                                               parse_time)
+from cookbook.models import Automation, PropertyType
 from cookbook.tests.conftest import validate_recipe
 from cookbook.tests.factories import KeywordFactory
 
@@ -1001,3 +1002,60 @@ def test_import_still_saves_a_shared_recipe_when_its_image_cannot_be_loaded(u1_s
         response = post_import(u1_s1, url=f'https://t.example/recipe/12/?share={SHARE_UUID}')
     assert response.status_code == 200
     assert sent(response)['recipe_id']
+
+
+# ---------------------------------------------------------------------------------------------------------------------
+# Nutrition information of a page becomes properties of the recipe, per serving.
+# ---------------------------------------------------------------------------------------------------------------------
+
+NUTRITION_SLUGS = {'calories': 'property-calories', 'carbohydrateContent': 'property-carbohydrates', 'proteinContent': 'property-proteins', 'fatContent': 'property-fats'}
+
+
+def _property_types(space, slugs=NUTRITION_SLUGS.values()):
+    return {slug: PropertyType.objects.create(name=slug, open_data_slug=slug, space=space) for slug in slugs}
+
+
+def _amounts(space, nutrients):
+    with scope(space=space):
+        return {p['property_type']['name']: p['property_amount'] for p in get_recipe_properties(space, nutrients)}
+
+
+@pytest.mark.parametrize("nutrients,expected", [
+    ({'calories': '300 kcal', 'proteinContent': '12 g', 'fatContent': '10 g', 'carbohydrateContent': '40 g'},
+     {'property-calories': 300, 'property-proteins': 12, 'property-fats': 10, 'property-carbohydrates': 40}),
+    # per serving
+    ({'servingSize': '2', 'calories': '300 kcal', 'proteinContent': '12 g'}, {'property-calories': 150, 'property-proteins': 6}),
+    ({'servingSize': 'a dozen', 'calories': '300 kcal'}, {'property-calories': 300}),
+    # decimals, with a point or a comma
+    ({'calories': '302 kcal', 'proteinContent': '7,66g', 'fatContent': '11.5 g'}, {'property-calories': 302, 'property-proteins': 7.66, 'property-fats': 11.5}),
+    ({'calories': '1,200 kcal'}, {'property-calories': 1200}),
+    ({'calories': 250, 'fatContent': 7.5}, {'property-calories': 250, 'property-fats': 7.5}),
+    # what is not a number, or not a known property, is left out
+    ({'calories': 'n/a', 'proteinContent': '12 g'}, {'property-proteins': 12}),
+    ({'sugarContent': '5 g', 'calories': '300 kcal'}, {'property-calories': 300}),
+    ({}, {}),
+])
+def test_get_recipe_properties(nutrients, expected, u1_s1):
+    space = _space(u1_s1)
+    with scope(space=space):
+        _property_types(space)
+    assert _amounts(space, nutrients) == expected
+
+
+def test_get_recipe_properties_only_uses_the_property_types_of_the_space(u1_s1):
+    space = _space(u1_s1)
+    with scope(space=space):
+        _property_types(space, ['property-calories'])
+    assert _amounts(space, {'calories': '300 kcal', 'proteinContent': '12 g'}) == {'property-calories': 300}
+
+
+def test_get_from_scraper_adds_the_nutrition_of_the_page_as_properties(u1_s1):
+    space = _space(u1_s1)
+    with scope(space=space):
+        types = _property_types(space, ['property-calories'])
+    recipe = scraped(u1_s1, FakeScrape(nutrients={'calories': '300 kcal'}))
+    assert recipe['properties'] == [{'property_type': {'id': types['property-calories'].id, 'name': 'property-calories'}, 'property_amount': 300}]
+
+
+def test_get_from_scraper_survives_a_page_whose_nutrition_cannot_be_read(u1_s1):
+    assert scraped(u1_s1, FakeScrape(nutrients=Exception('no')))['properties'] == []
