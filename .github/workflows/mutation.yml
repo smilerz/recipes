@@ -11,8 +11,9 @@ on:
   pull_request:
     paths:
       - "vue3/src/**"
+      - "cookbook/**/*.py"
       - ".github/workflows/mutation.yml"
-      - ".github/scripts/mutation_*.sh"
+      - ".github/scripts/mutation_*"
       - "vue3/stryker.config.json"
   schedule:
     - cron: "17 3 * * 0"
@@ -21,6 +22,9 @@ on:
       frontend_mutate:
         description: "Stryker --mutate globs/ranges, comma separated (relative to vue3/)"
         default: "src/utils/*.ts"
+      backend_mutate:
+        description: "Python files for mutmut to mutate, comma separated (repo-relative)"
+        default: "cookbook/helper/ingredient_parser.py"
 
 permissions:
   contents: read
@@ -33,6 +37,10 @@ env:
   STRYKER_VERSION: "10.1.1"
   # A PR changing more lines than this is skipped: at ~6s per mutant the run would not finish.
   MAX_CHANGED_LINES: "400"
+  MUTMUT_VERSION: "3.8.0"
+  # mutmut mutates whole files (about 1.5 mutants per line, a few seconds each, one at a time), so
+  # the cap is on the size of the changed files, not on the changed lines.
+  MAX_BACKEND_FILE_LINES: "600"
 
 jobs:
   frontend:
@@ -114,6 +122,16 @@ jobs:
             | ($caught + $survived + $nocov) as $total
             | "## Frontend mutation score\n\n| | Mutants |\n|---|---|\n| Caught | \($caught) |\n| Survived (tests run the line but do not notice) | \($survived) |\n| No test runs the line | \($nocov) |\n| **Score** | **\(if $total == 0 then "n/a" else (($caught * 1000 / $total | round) / 10 | tostring) + "%" end)** |"
           ' "$report" >> "$GITHUB_STEP_SUMMARY"
+          # Also as an annotation: check-run annotations are readable through the public API
+          # without a login, unlike job summaries and artifacts.
+          jq -r '
+            [.files[].mutants[]] as $m
+            | ($m | map(select(.status == "Killed" or .status == "Timeout")) | length) as $caught
+            | ($m | map(select(.status == "Survived")) | length) as $survived
+            | ($m | map(select(.status == "NoCoverage")) | length) as $nocov
+            | ($caught + $survived + $nocov) as $total
+            | "::notice title=Frontend mutation score::score=\(if $total == 0 then "n/a" else (($caught * 1000 / $total | round) / 10 | tostring) end) caught=\($caught) survived=\($survived) nocov=\($nocov) total=\($total)"
+          ' "$report"
 
       - name: Upload mutation report
         if: always() && steps.scope.outputs.skip != 'true'
@@ -121,4 +139,119 @@ jobs:
         with:
           name: mutation-frontend
           path: vue3/reports/mutation/
+          if-no-files-found: ignore
+
+  backend:
+    name: Backend mutation (mutmut)
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    # Report-only: show the result without ever turning the PR red.
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      # Same system packages as ci.yml, which the Python requirements need to build.
+      - name: Refresh apt package lists
+        timeout-minutes: 5
+        run: sudo apt-get update
+      - uses: awalsh128/cache-apt-pkgs-action@v1.6.3
+        with:
+          packages: libsasl2-dev python3-dev libxml2-dev libxmlsec1-dev libxslt-dev libxmlsec1-openssl libxslt-dev libldap2-dev libssl-dev gcc musl-dev postgresql-dev zlib-dev jpeg-dev libwebp-dev openssl-dev libffi-dev cargo openldap-dev python3-dev xmlsec-dev xmlsec build-base g++ curl
+          version: 1.0
+
+      - name: Set up Python 3.13
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.13"
+          cache: "pip"
+
+      # mutmut is installed for this job only, so it stays out of requirements.txt.
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt "mutmut==$MUTMUT_VERSION"
+
+      - name: Choose what to mutate
+        id: scope
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          BASE_REF: ${{ github.base_ref }}
+          DISPATCH_FILES: ${{ inputs.backend_mutate }}
+        run: |
+          if [ "$EVENT_NAME" = "pull_request" ]; then
+            files=$(git diff --name-only --diff-filter=AM "origin/$BASE_REF...HEAD" -- \
+              'cookbook/*.py' ':!cookbook/tests/*' ':!cookbook/migrations/*' | paste -sd, -)
+            if [ -z "$files" ]; then
+              echo "skip=true" >> "$GITHUB_OUTPUT"
+              echo "No mutable backend files changed." >> "$GITHUB_STEP_SUMMARY"
+              exit 0
+            fi
+            lines=$(printf '%s' "$files" | tr ',' '\n' | xargs wc -l | tail -n 1 | awk '{print $1}')
+            echo "Changed files total $lines lines"
+            if [ "$lines" -gt "$MAX_BACKEND_FILE_LINES" ]; then
+              echo "skip=true" >> "$GITHUB_OUTPUT"
+              echo "Skipped: the changed files total $lines lines, over the $MAX_BACKEND_FILE_LINES-line limit for a PR run (mutmut mutates whole files)." >> "$GITHUB_STEP_SUMMARY"
+              exit 0
+            fi
+          else
+            files="${DISPATCH_FILES:-cookbook/helper/ingredient_parser.py}"
+          fi
+          tests=$(.github/scripts/mutation_backend_tests.sh $(printf '%s' "$files" | tr ',' ' '))
+          if [ -z "$tests" ]; then
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            echo "No test file mentions: $files. Nothing exercises this code, so there is nothing to mutate against." >> "$GITHUB_STEP_SUMMARY"
+            echo "::notice title=Backend mutation score::skipped, no test mentions $files"
+            exit 0
+          fi
+          echo "skip=false" >> "$GITHUB_OUTPUT"
+          echo "files=$files" >> "$GITHUB_OUTPUT"
+          echo "tests=$tests" >> "$GITHUB_OUTPUT"
+          echo "Mutating: $files"
+          echo "Against: $tests"
+
+      - name: Run mutmut
+        if: steps.scope.outputs.skip != 'true'
+        env:
+          FILES: ${{ steps.scope.outputs.files }}
+          TESTS: ${{ steps.scope.outputs.tests }}
+        run: |
+          .github/scripts/mutation_mutmut_config.sh "$FILES" "$TESTS"
+          # One mutant at a time: they share one SQLite test database file. The path is absolute
+          # because mutmut runs from inside its own mutants/ copy.
+          PYTHONPATH="$GITHUB_WORKSPACE/.github/scripts" mutmut run --max-children 1
+
+      - name: Summarize
+        if: always() && steps.scope.outputs.skip != 'true'
+        run: |
+          [ -d mutants ] || { echo "No mutation results were produced." >> "$GITHUB_STEP_SUMMARY"; exit 0; }
+          mutmut results --all true | sed 's/\x1b\[[0-9;]*m//g' > mutmut-results.txt
+          killed=$(grep -c ': killed$' mutmut-results.txt || true)
+          timeout=$(grep -c ': timeout$' mutmut-results.txt || true)
+          survived=$(grep -c ': survived$' mutmut-results.txt || true)
+          notests=$(grep -c ': no tests$' mutmut-results.txt || true)
+          caught=$((killed + timeout))
+          total=$((caught + survived + notests))
+          if [ "$total" -eq 0 ]; then score="n/a"; else score=$(awk -v c="$caught" -v t="$total" 'BEGIN { printf "%.1f", c * 100 / t }'); fi
+          {
+            echo "## Backend mutation score"
+            echo
+            echo "| | Mutants |"
+            echo "|---|---|"
+            echo "| Caught | $caught |"
+            echo "| Survived (tests run the line but do not notice) | $survived |"
+            echo "| No test runs the line | $notests |"
+            echo "| **Score** | **$score%** |"
+          } >> "$GITHUB_STEP_SUMMARY"
+          # Also as an annotation: check-run annotations are readable through the public API
+          # without a login, unlike job summaries and artifacts.
+          echo "::notice title=Backend mutation score::score=$score caught=$caught survived=$survived nocov=$notests total=$total"
+
+      - name: Upload mutation results
+        if: always() && steps.scope.outputs.skip != 'true'
+        uses: actions/upload-artifact@v7
+        with:
+          name: mutation-backend
+          path: mutmut-results.txt
           if-no-files-found: ignore
