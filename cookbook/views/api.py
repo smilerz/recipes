@@ -3539,6 +3539,14 @@ class CustomAuthToken(ObtainAuthToken):
         })
 
 
+# youtube.com with or without www, its mobile and music hosts, and youtu.be; the host is not case sensitive
+YOUTUBE_URL = re.compile(r'^(https?://)?((www|m|music)\.)?(youtube\.com|youtu\.be)/.+$', re.IGNORECASE)
+_SHARE_UUID = r'[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}'
+# the two forms of a link that shares a recipe of another Tandoor: .../recipe/<id>/?share=<uuid> and .../view/recipe/<id>/<uuid>
+TANDOOR_SHARE_URL = re.compile(rf'^(?P<base>.*)/recipe/(?P<id>[0-9]+)/\?share=(?P<share>{_SHARE_UUID})$')
+TANDOOR_VIEW_SHARE_URL = re.compile(rf'^(?P<base>.*)/view/recipe/(?P<id>[0-9]+)/(?P<share>{_SHARE_UUID})$')
+
+
 class RecipeUrlImportView(APIView):
     throttle_classes = [RecipeImportThrottle]
     permission_classes = [CustomIsUser & CustomTokenHasReadWriteScope]
@@ -3575,18 +3583,17 @@ class RecipeUrlImportView(APIView):
                 return Response(RecipeFromSourceResponseSerializer().to_representation(response), status=status.HTTP_400_BAD_REQUEST)
 
             elif url and not data:
-                if re.match('^(https?://)?(www\\.youtube\\.com|youtu\\.be)/.+$', url):
+                if YOUTUBE_URL.match(url):
                     response['recipe'] = get_from_youtube_scraper(url, request)
                     if url and url.strip() != '':
                         response['duplicates'] = Recipe.objects.filter(space=request.space, source_url=url.strip()).values('id', 'name').all()
                     return Response(RecipeFromSourceResponseSerializer(context={'request': request}).to_representation(response), status=status.HTTP_200_OK)
 
                 tandoor_url = None
-                if re.match(r'^(.)*/recipe/[0-9]+/\?share=[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$', url):
-                    tandoor_url = url.replace('/recipe/', '/api/recipe/')
-                elif re.match(r'^(.)*/view/recipe/[0-9]+/[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$', url):
-                    tandoor_url = (url.replace('/view/recipe/', '/api/recipe/').replace(re.split('/recipe/[0-9]+', url)[1], '') + '?share=' +
-                                   re.split('/recipe/[0-9]+', url)[1].replace('/', ''))
+                if share := TANDOOR_SHARE_URL.match(url):
+                    tandoor_url = f"{share['base']}/api/recipe/{share['id']}/?share={share['share']}"
+                elif share := TANDOOR_VIEW_SHARE_URL.match(url):
+                    tandoor_url = f"{share['base']}/api/recipe/{share['id']}?share={share['share']}"
                 if tandoor_url:
                     try:
                         recipe_json = safe_request('GET', tandoor_url).json()
@@ -3650,7 +3657,8 @@ class RecipeUrlImportView(APIView):
                     if isinstance(data_json, dict):
                         if '@context' not in data_json:
                             data_json['@context'] = 'https://schema.org'
-                        if '@type' not in data_json:
+                        # a document that names no type is taken to be the recipe itself, unless the recipe sits inside its @graph
+                        if '@type' not in data_json and '@graph' not in data_json:
                             data_json['@type'] = 'Recipe'
                     data = "<script type='application/ld+json'>" + json.dumps(data_json) + "</script>"
                 try:
