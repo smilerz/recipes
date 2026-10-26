@@ -1,0 +1,124 @@
+name: Mutation Testing
+
+# Report-only: nothing here is a required check and a failure never blocks a merge. Mutation
+# testing makes small deliberate bugs in the code and checks that the tests fail; a surviving
+# mutant is a line the tests run but do not actually pin down.
+#
+#   pull_request      only the lines the PR changed, so the run stays short
+#   schedule          a fixed scope, weekly
+#   workflow_dispatch the same, with the scope typed in
+on:
+  pull_request:
+    paths:
+      - "vue3/src/**"
+      - ".github/workflows/mutation.yml"
+      - ".github/scripts/mutation_*.sh"
+      - "vue3/stryker.config.json"
+  schedule:
+    - cron: "17 3 * * 0"
+  workflow_dispatch:
+    inputs:
+      frontend_mutate:
+        description: "Stryker --mutate globs/ranges, comma separated (relative to vue3/)"
+        default: "src/utils/*.ts"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: mutation-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  STRYKER_VERSION: "10.1.1"
+  # A PR changing more lines than this is skipped: at ~6s per mutant the run would not finish.
+  MAX_CHANGED_LINES: "400"
+
+jobs:
+  frontend:
+    name: Frontend mutation (Stryker)
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    # Report-only: show the result without ever turning the PR red.
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Set up Node 24
+        uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+          cache: "yarn"
+          cache-dependency-path: ./vue3/yarn.lock
+
+      - name: Install Vue dependencies
+        working-directory: ./vue3
+        run: yarn install --frozen-lockfile
+
+      # Installed for this job only, so Stryker stays out of package.json and every other install.
+      - name: Install Stryker
+        working-directory: ./vue3
+        run: yarn add --dev --exact "@stryker-mutator/core@$STRYKER_VERSION" "@stryker-mutator/vitest-runner@$STRYKER_VERSION"
+
+      - name: Choose what to mutate
+        id: scope
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          BASE_REF: ${{ github.base_ref }}
+          DISPATCH_MUTATE: ${{ inputs.frontend_mutate }}
+        run: |
+          if [ "$EVENT_NAME" = "pull_request" ]; then
+            ranges=$(.github/scripts/mutation_changed_ranges.sh "origin/$BASE_REF" vue3 -- \
+              'vue3/src/**/*.ts' 'vue3/src/**/*.vue' ':!vue3/src/__tests__/**' ':!vue3/src/openapi/**')
+            # Count from the trailing `:start-end` so a hyphen in a file name cannot shift the fields.
+            changed=$(printf '%s\n' "$ranges" | awk 'NF { i = match($0, /:[0-9]+-[0-9]+$/); split(substr($0, i + 1), r, "-"); n += r[2] - r[1] + 1 } END { print n + 0 }')
+            echo "Changed lines in scope: $changed"
+            if [ "$changed" -eq 0 ]; then
+              echo "skip=true" >> "$GITHUB_OUTPUT"
+              echo "No mutable frontend lines changed." >> "$GITHUB_STEP_SUMMARY"
+              exit 0
+            fi
+            if [ "$changed" -gt "$MAX_CHANGED_LINES" ]; then
+              echo "skip=true" >> "$GITHUB_OUTPUT"
+              echo "Skipped: $changed changed lines is over the $MAX_CHANGED_LINES-line limit for a PR run." >> "$GITHUB_STEP_SUMMARY"
+              exit 0
+            fi
+            mutate=$(printf '%s\n' "$ranges" | paste -sd, -)
+          else
+            mutate="${DISPATCH_MUTATE:-src/utils/*.ts}"
+          fi
+          echo "skip=false" >> "$GITHUB_OUTPUT"
+          echo "mutate=$mutate" >> "$GITHUB_OUTPUT"
+          echo "Mutating: $mutate"
+
+      - name: Run Stryker
+        if: steps.scope.outputs.skip != 'true'
+        working-directory: ./vue3
+        env:
+          MUTATE: ${{ steps.scope.outputs.mutate }}
+        run: yarn stryker run --mutate "$MUTATE"
+
+      - name: Summarize
+        if: always() && steps.scope.outputs.skip != 'true'
+        working-directory: ./vue3
+        run: |
+          report=reports/mutation/mutation.json
+          [ -f "$report" ] || { echo "No mutation report was produced." >> "$GITHUB_STEP_SUMMARY"; exit 0; }
+          jq -r '
+            [.files[].mutants[]] as $m
+            | ($m | map(select(.status == "Killed" or .status == "Timeout")) | length) as $caught
+            | ($m | map(select(.status == "Survived")) | length) as $survived
+            | ($m | map(select(.status == "NoCoverage")) | length) as $nocov
+            | ($caught + $survived + $nocov) as $total
+            | "## Frontend mutation score\n\n| | Mutants |\n|---|---|\n| Caught | \($caught) |\n| Survived (tests run the line but do not notice) | \($survived) |\n| No test runs the line | \($nocov) |\n| **Score** | **\(if $total == 0 then "n/a" else (($caught * 1000 / $total | round) / 10 | tostring) + "%" end)** |"
+          ' "$report" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload mutation report
+        if: always() && steps.scope.outputs.skip != 'true'
+        uses: actions/upload-artifact@v7
+        with:
+          name: mutation-frontend
+          path: vue3/reports/mutation/
+          if-no-files-found: ignore
