@@ -7,6 +7,10 @@ from dataclasses import dataclass
 from typing import Optional, Union
 
 
+class CooklangSyntaxError(ValueError):
+    """The text is not valid cooklang; the message says where and why."""
+
+
 @dataclass
 class Quantity:
     amount: Union[str, float]
@@ -32,7 +36,7 @@ class Quantity:
                     amount = int(fraction[0]) / int(fraction[1])
                     amount += whole_num
                 else:
-                    raise Exception(f"Cooklang:Quantity:parse Syntax Error: measurements must be in float or #/# format, received {amount}")
+                    raise CooklangSyntaxError(f"Cooklang:Quantity:parse Syntax Error: measurements must be in float or #/# format, received {amount}")
             amount = round(float(amount), 3)
         return Quantity(amount=amount, unit=unit)
 
@@ -63,7 +67,7 @@ class Timer:
     @classmethod
     def parse(cls, raw) -> "Timer":
         if len(timer_tokens := re.split(r'[{%]', raw)) < 3:
-            raise Exception(f"Cooklang:Recipe:Timer Syntax Error: timers must be in {{num%unit}} format, received {raw}")
+            raise CooklangSyntaxError(f"Cooklang:Recipe:Timer Syntax Error: timers must be in {{num%unit}} format, received {raw}")
         ingredient = timer_tokens[0]
         quantity = timer_tokens[1]
         unit = timer_tokens[2].replace("}", "")
@@ -79,7 +83,7 @@ class Timer:
                 quantity = int(fraction[0]) / int(fraction[1])
                 quantity += whole_num
             else:
-                raise Exception(f"Cooklang:Timer:parse Syntax Error: measurements must be in float or #/# format, received {quantity}")
+                raise CooklangSyntaxError(f"Cooklang:Timer:parse Syntax Error: measurements must be in float or #/# format, received {quantity}")
         quantity = round(float(quantity), 3)
         return Timer(ingredient_str=ingredient, quantity=quantity, unit=unit)
 
@@ -146,7 +150,7 @@ class Step:
         # ensure that the correct terminating delimiter is used
         def find_termination_token(current_token, next_token, termination_delimiter) -> str:
             if next_token != termination_delimiter:
-                raise Exception(f"Cooklang:Recipe:parse Syntax Error: expected terminating delimiter {termination_delimiter}, recieved {next_token}")
+                raise CooklangSyntaxError(f"Cooklang:Recipe:parse Syntax Error: expected terminating delimiter {termination_delimiter}, recieved {next_token}")
             else:
                 return current_token + termination_delimiter
 
@@ -189,14 +193,16 @@ class Step:
                     elif len(token_stream) == 0:
                         block.value = token
                     else:
-                        raise Exception("Cooklang:Step:parse Syntax Error: inline comments must end with a new line")
+                        raise CooklangSyntaxError("Cooklang:Step:parse Syntax Error: inline comments must end with a new line")
                 case "[-":
                     block.type = "block comment"
+                    if len(token_stream) < 2:
+                        raise CooklangSyntaxError("Cooklang:Step:parse Syntax Error: block comments must end with '-]'")
                     block.value = find_termination_token(token_stream.pop(0), token_stream.pop(0), '-]').replace("-]", "")
                 case "}":
-                    raise Exception("Cooklang:Step:parse Syntax Error: stray '}' found with no delimiting '@', '#' or '~'")
+                    raise CooklangSyntaxError("Cooklang:Step:parse Syntax Error: stray '}' found with no delimiting '@', '#' or '~'")
                 case "-]":
-                    raise Exception("Cooklang:Step:parse Syntax Error: stray '-]' found with no opening '[-'")
+                    raise CooklangSyntaxError("Cooklang:Step:parse Syntax Error: stray '-]' found with no opening '[-'")
                 case _:
                     block.type = "text"
                     block.value = token
