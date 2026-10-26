@@ -25,6 +25,9 @@ on:
       backend_mutate:
         description: "Python files for mutmut to mutate, comma separated (repo-relative)"
         default: "cookbook/helper/ingredient_parser.py"
+      backend_tests:
+        description: "Test files to run against them, comma separated (repo-relative). Empty chooses tests by name."
+        default: ""
 
 permissions:
   contents: read
@@ -179,6 +182,7 @@ jobs:
           EVENT_NAME: ${{ github.event_name }}
           BASE_REF: ${{ github.base_ref }}
           DISPATCH_FILES: ${{ inputs.backend_mutate }}
+          DISPATCH_TESTS: ${{ inputs.backend_tests }}
         run: |
           if [ "$EVENT_NAME" = "pull_request" ]; then
             files=$(git diff --name-only --diff-filter=AM "origin/$BASE_REF...HEAD" -- \
@@ -198,7 +202,11 @@ jobs:
           else
             files="${DISPATCH_FILES:-cookbook/helper/ingredient_parser.py}"
           fi
-          tests=$(.github/scripts/mutation_backend_tests.sh $(printf '%s' "$files" | tr ',' ' '))
+          if [ "$EVENT_NAME" != "pull_request" ] && [ -n "$DISPATCH_TESTS" ]; then
+            tests="$DISPATCH_TESTS"
+          else
+            tests=$(.github/scripts/mutation_backend_tests.sh $(printf '%s' "$files" | tr ',' ' '))
+          fi
           if [ -z "$tests" ]; then
             echo "skip=true" >> "$GITHUB_OUTPUT"
             echo "No test file mentions: $files. Nothing exercises this code, so there is nothing to mutate against." >> "$GITHUB_STEP_SUMMARY"
