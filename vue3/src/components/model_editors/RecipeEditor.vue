@@ -38,7 +38,7 @@
                                 <v-number-input :label="$t('WorkingTime')" v-model="editingObj.workingTime" :step="5"></v-number-input>
                             </v-col>
                             <v-col cols="12" md="6">
-                                <v-number-input :label="$t('Servings')" v-model="editingObj.servings">
+                                <v-number-input :label="$t('Servings')" v-model="editingObj.servings" :min="1">
                                     <template #append-inner>
                                         <v-btn icon variant="plain">
                                             <v-icon icon="fa-solid fa-sort-numeric-up"></v-icon>
