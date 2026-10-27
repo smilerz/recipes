@@ -350,6 +350,13 @@ def test_parse_servings(servings, expected):
     ('P1D', 1440),  # no time part
     ('PT90S', 2),  # seconds count
     ('pt1h', 60),  # capitals do not matter
+    (' PT1H', 60),  # and neither does space around the duration
+    ('PT1H ', 60),
+    ('\n PT1H30M\t', 90),
+    ('PT99999999999H', 0),  # too long to be a time
+    ('P99999999999D', 0),
+    ('P1M', 0),  # a month or a year is no length of time a recipe takes
+    ('P1Y', 0),
 ])
 def test_parse_time(recipe_time, expected):
     assert parse_time(recipe_time) == expected
