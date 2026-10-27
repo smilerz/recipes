@@ -1,0 +1,38 @@
+name: Warm apt cache
+
+# A pull request can only restore caches that its own runs or the default branch saved. The CI runs on pull
+# requests only, so nothing ever saved the system packages the builds need on the default branch, and every
+# pull request installed them from scratch. That usually takes seconds, but when the mirrors are slow it has
+# taken 25 minutes. Saving them here, on the default branch, lets every pull request restore them.
+#
+# The packages and the version are the cache key, so they must stay identical to the ones in ci.yml and
+# mutation.yml. Caches that nobody restored for a week are deleted, hence the weekly run.
+on:
+  push:
+    branches:
+      - preview
+    paths:
+      - ".github/workflows/ci.yml"
+      - ".github/workflows/mutation.yml"
+      - ".github/workflows/warm-apt-cache.yml"
+  schedule:
+    - cron: "23 4 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  warm:
+    name: Warm apt cache
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      # Same as ci.yml: the action no longer updates the package lists itself.
+      - name: Refresh apt package lists
+        timeout-minutes: 5
+        run: sudo apt-get update
+      - uses: awalsh128/cache-apt-pkgs-action@v1.6.3
+        with:
+          packages: libsasl2-dev python3-dev libxml2-dev libxmlsec1-dev libxslt-dev libxmlsec1-openssl libxslt-dev libldap2-dev libssl-dev gcc musl-dev postgresql-dev zlib-dev jpeg-dev libwebp-dev openssl-dev libffi-dev cargo openldap-dev python3-dev xmlsec-dev xmlsec build-base g++ curl
+          version: 1.0
