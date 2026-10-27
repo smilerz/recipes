@@ -109,11 +109,8 @@ def obj_tree_1(request, space_1):
     except AttributeError:
         params = {}
     inherit = params.pop('inherit', False)
-    FoodFactory.create_batch(3, space=space_1, **params)
-    objs = Food.objects.values_list('id', flat=True)
-    obj_id = objs[1]
-    child_id = objs[0]
-    parent_id = objs[2]
+    # the three foods made here, and not the first three in the table, which holds every food any other test left behind
+    child_id, obj_id, parent_id = (food.id for food in FoodFactory.create_batch(3, space=space_1, **params))
 
     # set all foods to inherit everything
     if inherit:
