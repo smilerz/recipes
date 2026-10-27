@@ -103,7 +103,7 @@ class RecipeShoppingEditor():
                 self.mealplan = MealPlan.objects.filter(id=mealplan['id'], space=self.space).first()
             else:
                 self.mealplan = mealplan
-            self.recipe = mealplan.recipe
+            self.recipe = self.mealplan.recipe
         elif recipe := kwargs.get('recipe', None):
             self.recipe = recipe
 
