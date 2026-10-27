@@ -10,6 +10,9 @@ from cookbook.helper.cooklang_parser import CooklangSyntaxError, Ingredient, Qua
     ('1 1/2', 1.5, ''),
     ('2%tsp', 2.0, 'tsp'),
     ('1/4%cup', 0.25, 'cup'),
+    (' 1/2', 0.5, ''),  # surrounding space does not matter, as it does not for a decimal
+    ('1/2 ', 0.5, ''),
+    (' 1 1/2 ', 1.5, ''),
     ('', '', ''),
 ])
 def test_quantity_parse(raw, amount, unit):
@@ -20,6 +23,7 @@ def test_quantity_parse(raw, amount, unit):
     ('boil{10%min}', 10.0, 'min'),
     ('rest{1/2%hour}', 0.5, 'hour'),
     ('rest{1 1/2%hour}', 1.5, 'hour'),
+    ('rest{ 1/2%hour}', 0.5, 'hour'),
 ])
 def test_timer_parse(raw, quantity, unit):
     timer = Timer.parse(raw)
@@ -41,12 +45,23 @@ def test_step_parse_splits_text_ingredients_cookware_and_timers():
     (Timer.parse, 'boil', 'timers must be in {num%unit} format'),
     (Timer.parse, 'boil{10}', 'timers must be in {num%unit} format'),
     (Timer.parse, 'boil{abc%min}', 'measurements must be in float or #/# format'),
+    (Quantity.parse, '1/0', 'measurements must be in float or #/# format'),  # a fraction with a zero denominator
+    (Quantity.parse, '1/x', 'measurements must be in float or #/# format'),
+    (Quantity.parse, 'x/2', 'measurements must be in float or #/# format'),
+    (Quantity.parse, '1 /2', 'measurements must be in float or #/# format'),
+    (Quantity.parse, '1 1/2 3', 'measurements must be in float or #/# format'),
+    (Quantity.parse, 'x 1/2', 'measurements must be in float or #/# format'),
+    (Timer.parse, 'boil{1/0%min}', 'measurements must be in float or #/# format'),
+    (Timer.parse, 'boil{1/x%min}', 'measurements must be in float or #/# format'),
+    (Timer.parse, 'boil{ %min}', 'measurements must be in float or #/# format'),
     (Step.parse, '-- a comment @salt', 'inline comments must end with a new line'),
     (Step.parse, 'a } b', "stray '}'"),
     (Step.parse, 'a -] b', "stray '-]'"),
     (Step.parse, '[- never closed @salt', 'expected terminating delimiter'),
     (Step.parse, '[- never closed', 'block comments must end with'),
-], ids=['quantity text', 'quantity fraction of three', 'timer without braces', 'timer without unit', 'timer text amount', 'inline comment',
+], ids=['quantity text', 'quantity fraction of three', 'timer without braces', 'timer without unit', 'timer text amount',
+        'quantity zero denominator', 'quantity fraction of text', 'quantity text over two', 'quantity space before slash', 'quantity three parts',
+        'quantity text before fraction', 'timer zero denominator', 'timer fraction of text', 'timer blank amount', 'inline comment',
         'stray brace', 'stray comment end', 'block comment next to a delimiter', 'block comment at the end'])
 def test_malformed_cooklang_raises_a_syntax_error_that_says_what_is_wrong(parse, raw, message):
     with pytest.raises(CooklangSyntaxError, match=message.replace('{', r'\{').replace('}', r'\}').replace('[', r'\[').replace('+', r'\+')):

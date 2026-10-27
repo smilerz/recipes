@@ -515,6 +515,17 @@ class TestTransposeRules:
         _alias(u1_s1, Automation.TRANSPOSE_WORDS, 'Second', 'FIRST')
         assert _call(u1_s1, _engine(u1_s1, use_cache=use_cache), 'apply_transpose_automation', 'second first') == 'first second'
 
+    @pytest.mark.parametrize("first,second,text,expected", [
+        ('c++', 'sauce', 'c++ sauce', 'sauce c++'),
+        ('a(', 'b', 'a( b', 'b a('),  # not a valid pattern, but a valid word
+        ('a.b', 'c', 'a.b c', 'c a.b'),
+        ('a.b', 'c', 'axb c', 'axb c'),  # the dot is a dot and not any character
+        ('a|b', 'c', 'a c', 'a c'),  # and the bar is not an alternative
+    ])
+    def test_the_words_are_taken_literally(self, first, second, text, expected, use_cache, u1_s1, empty_rule_cache):
+        _alias(u1_s1, Automation.TRANSPOSE_WORDS, first, second)
+        assert _call(u1_s1, _engine(u1_s1, use_cache=use_cache), 'apply_transpose_automation', text) == expected
+
     def test_disabled_rules_and_those_of_other_spaces_are_ignored(self, use_cache, u1_s1, u1_s2, empty_rule_cache):
         _alias(u1_s1, Automation.TRANSPOSE_WORDS, 'second', 'first', disabled=True)
         _alias(u1_s2, Automation.TRANSPOSE_WORDS, 'second', 'first')

@@ -454,6 +454,7 @@ def parse_time(recipe_time):
         return recipe_time
     if not isinstance(recipe_time, str):
         return 0
+    recipe_time = recipe_time.strip()
 
     # an ISO duration has to be read as a whole: its first number is the hours in 'PT1H30M'
     if recipe_time[:1] in ('P', 'p'):
@@ -461,6 +462,8 @@ def parse_time(recipe_time):
             return round(iso_parse_duration(recipe_time.upper()).total_seconds() / 60)
         except (ISO8601Error, AttributeError):
             pass
+        except OverflowError:
+            return 0  # too long to be a time
     try:
         return int(re.search(r'\d+', recipe_time).group())
     except AttributeError:
