@@ -10,13 +10,13 @@ from django.contrib import auth
 from django.core.cache import caches
 from django.test import RequestFactory
 from django.urls import reverse
-from django_scopes import scope
+from django_scopes import scope, scopes_disabled
 
 from cookbook.helper.ingredient_parser import IngredientParser
-from cookbook.helper.recipe_url_import import (clean_dict, clean_instruction_string, get_from_scraper, get_images_from_soup, get_recipe_properties,
-                                               listify_keywords, normalize_string, parse_image, parse_instructions, parse_servings, parse_servings_text,
-                                               parse_time)
-from cookbook.models import Automation, PropertyType
+from cookbook.helper.recipe_url_import import (clean_dict, clean_instruction_string, get_from_scraper, get_from_youtube_scraper, get_images_from_soup,
+                                               get_recipe_properties, listify_keywords, normalize_string, parse_image, parse_instructions, parse_keywords,
+                                               parse_name, parse_servings, parse_servings_text, parse_time)
+from cookbook.models import Automation, Keyword, PropertyType, UserPreference
 from cookbook.tests.factories import KeywordFactory
 
 # The importer is tested through the conditions it has to handle, with small inputs written in the tests, and not through saved copies of
@@ -237,6 +237,8 @@ def test_normalize_string(text, expected):
     ('One\n\n\n\nTwo', 'One\n\nTwo'),
     ('', ''),
     ('plain', 'plain'),
+    ('a\x00b', 'ab'),  # the character that marks a block in the text is not text
+    ('<p>a</p>\x00<p>b</p>', 'a\nb'),
 ])
 def test_normalize_string_html_stripping(text, expected):
     assert normalize_string(text) == expected
@@ -382,6 +384,17 @@ PAGE = 'https://www.example.com/recipes/soup'
      ['https://cdn.example.com/a.jpg', 'https://cdn.example.com/b.jpg']),
     # without a page address a relative path cannot be resolved, so it is left out
     ('<img src="/img/photo.png"><img src="https://cdn.example.com/b.png">', None, ['https://cdn.example.com/b.png']),
+    # an address without a page to resolve it against still gets a protocol for a leading //
+    ('<img src="//cdn.example.com/x.gif">', None, ['https://cdn.example.com/x.gif']),
+    ('<img src="https://cdn.example.com/a.jpg#top">', PAGE, ['https://cdn.example.com/a.jpg']),
+    ('<img src="https://cdn.example.com/a.jpg#top?x=1.txt">', PAGE, ['https://cdn.example.com/a.jpg']),
+    # src and srcset of one image both count, in that order, and an entry that is no picture does not stop the ones after it
+    ('<img src="https://cdn.example.com/a.jpg" srcset="https://cdn.example.com/b.jpg 2x">', PAGE, ['https://cdn.example.com/a.jpg', 'https://cdn.example.com/b.jpg']),
+    ('<img src="/img/tracker.php" srcset="https://cdn.example.com/b.jpg 2x">', PAGE, ['https://cdn.example.com/b.jpg']),
+    ('<img src="data:image/png;base64,AAAA" data-src="https://cdn.example.com/c.jpg">', PAGE, ['https://cdn.example.com/c.jpg']),
+    ('<img src="https://cdn.example.com/1.jpg"><img src="https://cdn.example.com/2.jpg">', PAGE, ['https://cdn.example.com/1.jpg', 'https://cdn.example.com/2.jpg']),
+    # only images count
+    ('<script src="https://cdn.example.com/a.jpg"></script><img src="https://cdn.example.com/b.jpg">', PAGE, ['https://cdn.example.com/b.jpg']),
     # things that are not picture files
     ('<img src="/img/tracker.php"><img src="data:image/png;base64,AAAA"><img>', PAGE, []),
 ])
@@ -1091,3 +1104,159 @@ def test_get_from_scraper_still_parses_ingredients_when_a_replacement_rule_is_br
     recipe = scraped(u1_s1, FakeScrape(ingredients=['2 cups flour']))
     ingredient = recipe['steps'][0]['ingredients'][0]
     assert (ingredient['amount'], ingredient['food']['name']) == (2, 'flour')
+
+
+# ---------------------------------------------------------------------------------------------------------------------
+# Values and boundaries that the tests above left open (found by mutation testing)
+# ---------------------------------------------------------------------------------------------------------------------
+
+@pytest.mark.parametrize("methods,schema,working,waiting", [
+    # a duration of zero is a known time, not a missing one: it stays zero
+    ({'prep_time': 'PT0M', 'cook_time': 'PT0M'}, {}, 0, 0),
+    ({'prep_time': 'PT0M', 'cook_time': 'PT0M', 'total_time': 'PT0M'}, {}, 0, 0),
+    ({'prep_time': Exception('no'), 'cook_time': Exception('no')}, {'prepTime': 'PT0M', 'cookTime': 'PT0M'}, 0, 0),
+    ({'prep_time': Exception('no'), 'cook_time': Exception('no'), 'total_time': Exception('no')}, {'totalTime': 'PT0M'}, 0, 0),
+    # and when both are zero the total time is the working time
+    ({'prep_time': 'PT0M', 'cook_time': 'PT0M', 'total_time': 'PT30M'}, {}, 30, 0),
+    ({'prep_time': Exception('no'), 'cook_time': Exception('no')}, {'prepTime': 'PT0M', 'cookTime': 'PT0M', 'totalTime': 'PT40M'}, 40, 0),
+    # the total is the sum, so a known prep and cook time are not replaced by a total that is longer
+    ({'prep_time': 'PT30M', 'cook_time': 'PT30M', 'total_time': 'PT90M'}, {}, 30, 30),
+    ({'prep_time': 'PT0M', 'cook_time': 'PT20M', 'total_time': 'PT90M'}, {}, 0, 20),
+])
+def test_get_from_scraper_times_with_durations_of_zero(methods, schema, working, waiting, u1_s1):
+    recipe = scraped(u1_s1, FakeScrape(schema=schema, **methods))
+    assert (recipe['working_time'], recipe['waiting_time']) == (working, waiting)
+
+
+@pytest.mark.parametrize("scrape_methods,schema", [
+    ({'category': 'Cat', 'cuisine': 'Cui'}, {'keywords': 'k1'}),
+    ({'category': Exception('no'), 'cuisine': Exception('no')}, {'keywords': 'k1', 'recipeCategory': 'Cat', 'recipeCuisine': 'Cui'}),
+])
+@pytest.mark.parametrize("address", ['http://example.com/recipe', 'https://example.com/recipe'])
+def test_get_from_scraper_collects_the_keywords_of_every_source_next_to_the_host(address, scrape_methods, schema, u1_s1):
+    recipe = scraped(u1_s1, FakeScrape(canonical_url=address, schema=schema, author='Au', **scrape_methods))
+    assert {k['name'] for k in recipe['keywords']} == {'example.com', 'k1', 'cat', 'cui', 'au'}
+
+
+@pytest.mark.parametrize("length,in_front", [(255, False), (256, False), (257, True), (600, True)])
+def test_get_from_scraper_puts_a_description_of_more_than_256_characters_in_front_of_the_first_step(length, in_front, u1_s1):
+    recipe = scraped(u1_s1, FakeScrape(description='x' * length, instructions_list=['Chop.']))
+    shown = 'x' * min(length, 512)
+    assert recipe['description'] == shown
+    assert recipe['steps'][0]['instruction'] == (f'*{shown}*  \n\nChop.' if in_front else 'Chop.')
+
+
+@pytest.mark.parametrize("show", [True, False])
+def test_get_from_scraper_gives_each_instruction_the_users_setting_for_the_ingredient_table(show, u1_s1):
+    with scopes_disabled():
+        UserPreference.objects.filter(user=auth.get_user(u1_s1)).update(show_step_ingredients=show)
+    recipe = scraped(u1_s1, FakeScrape(instructions_list=['Chop.', 'Boil.']))
+    assert [step['show_ingredients_table'] for step in recipe['steps']] == [show, show]
+
+
+@pytest.mark.parametrize("name,expected", [
+    ('Soup', 'Soup'),
+    (['First', 'Second'], 'First'),
+    ([], 'ERROR'),  # a list without a name is reported as an error name
+    (' <b>Soup</b> ', 'Soup'),
+])
+def test_parse_name(name, expected):
+    assert parse_name(name) == expected
+
+
+def _request(client):
+    request = RequestFactory()
+    request.user = auth.get_user(client)
+    request.space = _space(client)
+    return request
+
+
+def test_parse_keywords_reports_new_and_existing_keywords_and_drops_blank_ones(u1_s1):
+    request = _request(u1_s1)
+    with scope(space=request.space):
+        existing = KeywordFactory(name='Soup', space=request.space)
+        result = parse_keywords(['a', 'soup', '   ', '', ' <b>Dinner</b> '], request)
+    assert result == [
+        {'label': 'a', 'name': 'a', 'import_keyword': False},  # one character is enough
+        {'label': str(existing), 'name': 'Soup', 'id': existing.id, 'import_keyword': True},
+        {'label': 'Dinner', 'name': 'Dinner', 'import_keyword': False},
+    ]
+
+
+# ---------------------------------------------------------------------------------------------------------------------
+# The YouTube scraper, with a video to scrape. The tests of the import endpoint stop it at the first request.
+# ---------------------------------------------------------------------------------------------------------------------
+
+YOUTUBE_URL_UNDER_TEST = 'https://www.youtube.com/watch?v=abc123'
+
+
+def _youtube(client, **video_attributes):
+    video = MagicMock(**video_attributes)
+    request = _request(client)
+    with patch('cookbook.helper.recipe_url_import.YouTube', return_value=video) as youtube, scope(space=request.space):
+        recipe = get_from_youtube_scraper(YOUTUBE_URL_UNDER_TEST, request)
+    return recipe, video, youtube, request
+
+
+def test_youtube_scraper_reads_name_image_and_description_of_the_video(u1_s1):
+    recipe, video, youtube, request = _youtube(u1_s1, title='My Soup', thumbnail_url='https://img.example.com/t.jpg', description='Boil it\nServe it')
+    with scope(space=request.space):
+        keyword = Keyword.objects.get(name='YouTube', space=request.space)
+    assert recipe == {
+        'name': 'My Soup',
+        'internal': True,
+        'description': '',
+        'servings': 1,
+        'working_time': 0,
+        'waiting_time': 0,
+        'image': 'https://img.example.com/t.jpg',
+        'keywords': [{'name': 'YouTube', 'label': 'YouTube', 'id': keyword.pk}],
+        'source_url': YOUTUBE_URL_UNDER_TEST,
+        'steps': [{'ingredients': [], 'instruction': 'Boil it\nServe it'}],
+    }
+    youtube.assert_called_once_with(YOUTUBE_URL_UNDER_TEST)
+    video.streams.first.assert_called_once()  # this is what makes the video load its description
+
+
+@pytest.mark.parametrize("description", [None, ''])
+def test_youtube_scraper_leaves_the_instruction_empty_for_a_video_without_description(description, u1_s1):
+    recipe = _youtube(u1_s1, title='My Soup', thumbnail_url='https://img.example.com/t.jpg', description=description)[0]
+    assert recipe['steps'] == [{'ingredients': [], 'instruction': ''}]
+    assert recipe['name'] == 'My Soup'
+
+
+def test_youtube_scraper_applies_the_replacement_rules_of_the_address(u1_s1):
+    space = _space(u1_s1)
+    user = auth.get_user(u1_s1)
+    with scope(space=space):
+        Automation.objects.create(name='name', type=Automation.NAME_REPLACE, param_1='.*youtube.com.*', param_2=' \\| Channel', param_3='', created_by=user, space=space)
+        Automation.objects.create(name='text', type=Automation.INSTRUCTION_REPLACE, param_1='.*youtube.com.*', param_2='Subscribe!', param_3='', created_by=user, space=space)
+        Automation.objects.create(name='other', type=Automation.NAME_REPLACE, param_1='.*vimeo.com.*', param_2='Soup', param_3='Stew', created_by=user, space=space)
+    recipe = _youtube(u1_s1, title='My Soup | Channel', thumbnail_url='', description='Boil it. Subscribe!')[0]
+    assert recipe['name'] == 'My Soup'
+    assert recipe['steps'][0]['instruction'] == 'Boil it. '
+
+
+def test_youtube_scraper_gives_the_empty_recipe_when_the_video_cannot_be_read(u1_s1):
+    request = _request(u1_s1)
+    with patch('cookbook.helper.recipe_url_import.YouTube', side_effect=Exception('offline')), scope(space=request.space):
+        recipe = get_from_youtube_scraper(YOUTUBE_URL_UNDER_TEST, request)
+    assert (recipe['name'], recipe['image'], recipe['steps'], recipe['source_url']) == ('', '', [{'ingredients': [], 'instruction': ''}], YOUTUBE_URL_UNDER_TEST)
+    assert [k['name'] for k in recipe['keywords']] == ['YouTube']
+
+
+def test_youtube_scraper_keeps_what_it_read_before_the_video_failed(u1_s1):
+    video = MagicMock(title='My Soup')
+    type(video).thumbnail_url = property(lambda self: (_ for _ in ()).throw(Exception('no thumbnail')))
+    request = _request(u1_s1)
+    with patch('cookbook.helper.recipe_url_import.YouTube', return_value=video), scope(space=request.space):
+        recipe = get_from_youtube_scraper(YOUTUBE_URL_UNDER_TEST, request)
+    assert (recipe['name'], recipe['image'], recipe['steps'][0]['instruction']) == ('My Soup', '', '')
+
+
+def test_youtube_scraper_reuses_its_keyword(u1_s1):
+    first = _youtube(u1_s1, title='One', thumbnail_url='', description='')[0]
+    second = _youtube(u1_s1, title='Two', thumbnail_url='', description='')[0]
+    assert first['keywords'] == second['keywords']
+    with scope(space=_space(u1_s1)):
+        assert Keyword.objects.filter(name='YouTube').count() == 1
