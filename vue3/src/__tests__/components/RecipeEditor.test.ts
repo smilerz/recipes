@@ -205,3 +205,37 @@ describe('RecipeEditor - Keywords picker label', () => {
         w.unmount()
     })
 })
+
+// A recipe cannot be for zero or fewer servings (the API refuses it), so the field must not offer it.
+describe('RecipeEditor - servings', () => {
+    beforeEach(() => {
+        resetApiMock()
+    })
+
+    function servingsField(w: ReturnType<typeof mountEditor>) {
+        return w.findAllComponents(vuetifyComponents.VNumberInput).find(c => c.props('label') === 'Servings')
+    }
+
+    it('has a minimum of one serving', () => {
+        const w = mountEditor(makeRecipe({id: 5, name: 'Sourdough Bread', servings: 4}))
+
+        expect(servingsField(w)).toBeTruthy()
+        expect(servingsField(w)!.props('min')).toBe(1)
+
+        w.unmount()
+    })
+
+    it('brings a typed zero back to one serving', async () => {
+        const w = mountEditor(makeRecipe({id: 5, name: 'Sourdough Bread', servings: 4}))
+        const input = servingsField(w)!.find('input')
+
+        await input.trigger('focus')
+        await input.setValue('0')
+        await input.trigger('blur')
+        await flushPromises()
+
+        expect((w.vm as any).editingObj.servings).toBe(1)
+
+        w.unmount()
+    })
+})
