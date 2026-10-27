@@ -138,7 +138,7 @@ class AutomationEngine:
 
         for first, second in rules:
             if first in tokens and second in tokens:
-                string = regex.sub(rf"\b({first})\W*({second})\b", r"\2 \1", string, flags=regex.IGNORECASE, timeout=REGEX_TIMEOUT)
+                string = regex.sub(rf"\b({regex.escape(first)})\W*({regex.escape(second)})\b", r"\2 \1", string, flags=regex.IGNORECASE, timeout=REGEX_TIMEOUT)
         return string
 
     def apply_regex_replace_automation(self, string, automation_type):

@@ -11,6 +11,24 @@ class CooklangSyntaxError(ValueError):
     """The text is not valid cooklang; the message says where and why."""
 
 
+def _parse_measurement(raw, where):
+    """A measurement written as a number ('1.5') or as a fraction with an optional whole number ('1/2', '1 1/2'), rounded to 3 decimals."""
+    text = raw.strip()
+    try:
+        return round(float(text), 3)
+    except ValueError:
+        pass
+    try:
+        parts = text.split(' ')
+        fraction = parts[-1].split('/')
+        if len(parts) <= 2 and len(fraction) == 2:
+            whole = int(parts[0]) if len(parts) == 2 else 0
+            return round(int(fraction[0]) / int(fraction[1]) + whole, 3)
+    except (ValueError, ZeroDivisionError):
+        pass
+    raise CooklangSyntaxError(f"Cooklang:{where}:parse Syntax Error: measurements must be in float or #/# format, received {raw}")
+
+
 @dataclass
 class Quantity:
     amount: Union[str, float]
@@ -24,20 +42,7 @@ class Quantity:
             amount = quantity_tokens[0]
             unit = quantity_tokens[1]
         if amount != "":
-            try:
-                float(amount)
-            except ValueError:
-                whole_num = 0
-                if len(integer_fraction_tokens := re.split(r' ', amount)) == 2:
-                    whole_num = int(integer_fraction_tokens[0])
-                    amount = integer_fraction_tokens[1]
-
-                if len(fraction := re.split(r'/', amount)) == 2:
-                    amount = int(fraction[0]) / int(fraction[1])
-                    amount += whole_num
-                else:
-                    raise CooklangSyntaxError(f"Cooklang:Quantity:parse Syntax Error: measurements must be in float or #/# format, received {amount}")
-            amount = round(float(amount), 3)
+            amount = _parse_measurement(amount, 'Quantity')
         return Quantity(amount=amount, unit=unit)
 
     @classmethod
@@ -72,19 +77,7 @@ class Timer:
         quantity = timer_tokens[1]
         unit = timer_tokens[2].replace("}", "")
 
-        try:
-            float(quantity)
-        except ValueError:
-            whole_num = 0
-            if len(integer_fraction_tokens := re.split(r' ', quantity)) == 2:
-                whole_num = int(integer_fraction_tokens[0])
-                quantity = integer_fraction_tokens[1]
-            if len(fraction := re.split(r'/', quantity)) == 2:
-                quantity = int(fraction[0]) / int(fraction[1])
-                quantity += whole_num
-            else:
-                raise CooklangSyntaxError(f"Cooklang:Timer:parse Syntax Error: measurements must be in float or #/# format, received {quantity}")
-        quantity = round(float(quantity), 3)
+        quantity = _parse_measurement(quantity, 'Timer')
         return Timer(ingredient_str=ingredient, quantity=quantity, unit=unit)
 
 
