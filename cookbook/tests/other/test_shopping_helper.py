@@ -215,6 +215,14 @@ def test_create_with_ingredients_adds_only_those_and_not_foods_that_are_not_shop
     assert sorted(e.ingredient_id for e in _entries(editor)) == ids[:2]
 
 
+def test_create_takes_a_recipe_that_is_named_in_the_call(u1_s1, space_1, recipe_1_s1):
+    editor = _editor(u1_s1, space_1)
+    assert editor.create(recipe=recipe_1_s1) is True
+    slr = editor._shopping_list_recipe
+    assert (slr.recipe, slr.servings) == (recipe_1_s1, 4)
+    assert _entries(slr).count() == 10
+
+
 def test_create_for_a_meal_plan_takes_its_recipe_and_servings(u1_s1, space_1, recipe_1_s1):
     plan = MealPlanFactory(space=space_1, created_by=_user(u1_s1), recipe=recipe_1_s1, servings=6)
     editor = _editor(u1_s1, space_1)
@@ -283,6 +291,15 @@ def _open(client, space, recipe, slr, **kwargs):
 def test_edit_scales_the_entries_when_the_servings_change(u1_s1, space_1, recipe_1_s1):
     slr = _created(u1_s1, space_1, recipe_1_s1)._shopping_list_recipe
     assert _open(u1_s1, space_1, recipe_1_s1, slr, servings=8).edit(servings=8) is True
+    slr.refresh_from_db()
+    assert slr.servings == 8
+    assert {e.amount for e in _entries(slr)} == {Decimal(2)}
+
+
+def test_edit_takes_the_servings_it_is_given_by_an_editor_that_only_knows_the_list(u1_s1, space_1, recipe_1_s1):
+    """What a changed meal plan does: an editor with the id of the list, and the new servings only in the call."""
+    slr = _created(u1_s1, space_1, recipe_1_s1)._shopping_list_recipe
+    assert _editor(u1_s1, space_1, id=slr.id).edit(servings=8) is True
     slr.refresh_from_db()
     assert slr.servings == 8
     assert {e.amount for e in _entries(slr)} == {Decimal(2)}
