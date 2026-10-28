@@ -874,6 +874,9 @@ function loadStats() {
 
 watch(showStats, (on) => { if (on) loadStats() })
 
+// the API client asks for make now while the badge is on, the cards on screen only follow when searched again
+watch(() => useUserPreferenceStore().deviceSettings.card_showMakeNowBadge, () => searchRecipes())
+
 // Apply filters emitted by a stat-chip click. Replace semantics: the chip
 // represents a global stat over the whole visible set, so the drill-down
 // should yield exactly that population — any existing filters are cleared

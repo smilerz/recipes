@@ -229,6 +229,30 @@ describe('RecipeCard display settings', () => {
         })
     })
 
+    describe('make now badge', () => {
+        it('shows the badge when card_showMakeNowBadge is true and the recipe can be made now', () => {
+            const w = mountRecipeCard({ recipe: makeRecipeOverview({ makenow: true } as any) }, { card_showMakeNowBadge: true })
+            expect(w.find('.recipe-card-makenow-badge').exists()).toBe(true)
+        })
+
+        it('hides the badge when card_showMakeNowBadge is false', () => {
+            const w = mountRecipeCard({ recipe: makeRecipeOverview({ makenow: true } as any) }, { card_showMakeNowBadge: false })
+            expect(w.find('.recipe-card-makenow-badge').exists()).toBe(false)
+        })
+
+        it.each([false, null])('hides the badge for a recipe that cannot be made now (makenow %s) even if the setting is on', (makenow) => {
+            const w = mountRecipeCard({ recipe: makeRecipeOverview({ makenow } as any) }, { card_showMakeNowBadge: true })
+            expect(w.find('.recipe-card-makenow-badge').exists()).toBe(false)
+        })
+
+        it('is off by default', async () => {
+            const { useUserPreferenceStore } = await import('@/stores/UserPreferenceStore')
+            const w = mountRecipeCard({ recipe: makeRecipeOverview({ makenow: true } as any) })
+            expect(useUserPreferenceStore().deviceSettings.card_showMakeNowBadge).toBe(false)
+            expect(w.find('.recipe-card-makenow-badge').exists()).toBe(false)
+        })
+    })
+
     describe('cook time chip', () => {
         // The cook time chip (workingTime + waitingTime) shows in the
         // keyword chip row; gated by card_show_cook_time which defaults ON

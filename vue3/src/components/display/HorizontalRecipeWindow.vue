@@ -40,7 +40,7 @@
 
 
 <script lang="ts" setup>
-import {computed, onMounted, ref} from 'vue'
+import {computed, onMounted, ref, watch} from 'vue'
 import RecipeCard from "@/components/display/RecipeCard.vue";
 import {useDisplay} from "vuetify";
 import {ApiApi, ApiRecipeListRequest, Recipe, RecipeOverview} from "@/openapi";
@@ -50,6 +50,7 @@ import {useI18n} from "vue-i18n";
 import {DateTime} from "luxon";
 import {useRouter} from "vue-router";
 import type {StartPageSectionMode} from "@/types/settings";
+import {useUserPreferenceStore} from "@/stores/UserPreferenceStore";
 
 const MODE_CONFIG: Record<StartPageSectionMode, { icon: string, label: string }> = {
     meal_plan: {icon: 'fa-solid fa-calendar-days', label: 'Meal_Plan'},
@@ -103,6 +104,7 @@ const router = useRouter()
 const {name} = useDisplay()
 
 const api = new ApiApi()
+const deviceSettings = useUserPreferenceStore().deviceSettings
 const loading = ref(true)
 const recipes = ref<(Recipe | RecipeOverview)[]>([])
 const entityName = ref('')
@@ -128,6 +130,9 @@ const cardColStyle = computed(() => {
 onMounted(() => {
     loadRecipes()
 })
+
+// the API client asks for make now while the badge is on, the cards on screen only follow when loaded again
+watch(() => deviceSettings.card_showMakeNowBadge, () => loadRecipes())
 
 /**
  * Fetch a single entity by ID, set display name, then query recipes filtered by that entity.

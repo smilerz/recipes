@@ -1344,9 +1344,16 @@ class CommentSerializer(serializers.ModelSerializer):
 class RecipeOverviewSerializer(PrimaryRecipeImageMixin, RecipeBaseSerializer):
     keywords = KeywordLabelSerializer(many=True, read_only=True)
     new = serializers.SerializerMethodField('is_recipe_new', read_only=True)
+    makenow = serializers.SerializerMethodField('is_makenow', read_only=True)
     rating = CustomDecimalField(required=False, allow_null=True, read_only=True)
     last_cooked = serializers.DateTimeField(source='lastcooked', required=False, allow_null=True, read_only=True)
     created_by = UserSerializer(read_only=True)
+
+    @extend_schema_field({'type': 'boolean', 'nullable': True})
+    def is_makenow(self, obj):
+        """Whether the household can make the recipe now; null unless the list was asked for it (makenow_badge)."""
+        makenow_ids = self.context.get('makenow_ids')
+        return None if makenow_ids is None else obj.id in makenow_ids
 
     def create(self, validated_data):
         pass
@@ -1359,7 +1366,7 @@ class RecipeOverviewSerializer(PrimaryRecipeImageMixin, RecipeBaseSerializer):
         fields = (
             'id', 'name', 'description', 'image', 'image_crop_data', 'keywords', 'working_time',
             'waiting_time', 'created_by', 'created_at', 'updated_at',
-            'internal', 'private', 'servings', 'servings_text', 'rating', 'last_cooked', 'new'
+            'internal', 'private', 'servings', 'servings_text', 'rating', 'last_cooked', 'new', 'makenow'
         )
         # TODO having these readonly fields makes "RecipeOverview.ts" (API Client) not generate the RecipeOverviewToJSON second else block which leads to errors when using the api
         # TODO find a solution (custom schema?) to have these fields readonly (to save performance) and generate a proper client (two serializers would probably do the trick)
@@ -1368,7 +1375,7 @@ class RecipeOverviewSerializer(PrimaryRecipeImageMixin, RecipeBaseSerializer):
         #                     'internal', 'servings', 'servings_text', 'rating', 'last_cooked', 'new', 'recent']
         read_only_fields = ['image', 'keywords', 'working_time',
                             'waiting_time', 'created_by', 'created_at', 'updated_at',
-                            'internal', 'servings', 'servings_text', 'diameter', 'diameter_text', 'rating', 'last_cooked', 'new', 'recent']
+                            'internal', 'servings', 'servings_text', 'diameter', 'diameter_text', 'rating', 'last_cooked', 'new', 'makenow', 'recent']
 
 
 class RecipeImageSerializer(serializers.ModelSerializer):
@@ -1615,7 +1622,7 @@ class RecipeBookEntrySerializer(serializers.ModelSerializer):
 
     @extend_schema_field(RecipeOverviewSerializer)
     def get_recipe_content(self, obj):
-        return RecipeOverviewSerializer(context={'request': self.context['request']}).to_representation(obj.recipe)
+        return RecipeOverviewSerializer(context={'request': self.context['request'], 'makenow_ids': self.context.get('makenow_ids')}).to_representation(obj.recipe)
 
     def _check_access(self, book, recipe, check_recipe=True):
         user = self.context['request'].user

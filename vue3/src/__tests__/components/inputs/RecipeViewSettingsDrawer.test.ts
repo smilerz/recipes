@@ -61,6 +61,7 @@ function mountDrawer({mobile = false} = {}) {
             Show_Author: 'Show author',
             Show_Last_Cooked: 'Show last cooked',
             Show_New_Badge: 'Show new badge',
+            Show_Make_Now_Badge: 'Show make now badge',
             Show_Cook_Time: 'Show cook time',
             Max_Keywords: 'Max keywords',
             Menu_Items: 'Menu items',
@@ -358,6 +359,17 @@ describe('Card Display panel + recipe-view gating', () => {
         expect(showRating, 'Show rating switch should exist').toBeTruthy()
         await showRating!.find('input').setValue(true)
         expect(store.deviceSettings.card_showRating).toBe(true)
+    })
+
+    it('toggling Show Make Now Badge updates deviceSettings.card_showMakeNowBadge, which is off by default', async () => {
+        routeState.name = 'SearchPage'
+        const w = mountDrawer()
+        const store = (w.vm.$pinia as any)._s.get('user_preference_store')
+        expect(store.deviceSettings.card_showMakeNowBadge).toBe(false)
+        const makeNow = w.findAll('.v-switch').find(s => s.text().includes('Show make now badge'))
+        expect(makeNow, 'Show make now badge switch should exist').toBeTruthy()
+        await makeNow!.find('input').setValue(true)
+        expect(store.deviceSettings.card_showMakeNowBadge).toBe(true)
     })
 
     it('checking a menu item adds it to card_visibleMenuItems', async () => {

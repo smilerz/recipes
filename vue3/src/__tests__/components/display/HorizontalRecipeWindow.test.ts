@@ -332,3 +332,38 @@ describe('HorizontalRecipeWindow — randomize (D09)', () => {
         expect(call![0].random).toBe('true')
     })
 })
+
+describe('HorizontalRecipeWindow — make now badge', () => {
+    beforeEach(() => {
+        resetApiMock()
+    })
+
+    async function mountWindow(makenowBadge: boolean, mode: StartPageSectionMode = 'new') {
+        apiMock.apiRecipeList = vi.fn().mockResolvedValue({ count: 0, results: [] })
+        const pinia = createPinia()
+        pinia.use(({ store }) => {
+            if (store.$id === 'user_preference_store') store.deviceSettings.card_showMakeNowBadge = makenowBadge
+        })
+        const i18n = createI18n({ legacy: false, locale: 'en', messages: { en: {} }, missingWarn: false, fallbackWarn: false })
+        const router: Router = createRouter({ history: createMemoryHistory(), routes: [{ path: '/', component: { template: '<div/>' } }, { path: '/advanced-search', name: 'SearchPage', component: { template: '<div/>' } }] })
+        const wrapper = mount(HorizontalRecipeWindow, { props: { mode }, global: { plugins: [pinia, i18n, router], stubs: { RecipeCard: { template: '<div class="stub-card"/>' } } } })
+        await flushPromises()
+        return { wrapper, list: apiMock.apiRecipeList as any }
+    }
+
+    // whether make now is asked for is decided for every request by the API client (makenowBadge.ts), not per window
+    it('does not ask for make now itself', async () => {
+        const { list } = await mountWindow(true)
+        expect(list).toHaveBeenCalled()
+        list.mock.calls.forEach((call: any[]) => expect(call[0]).not.toHaveProperty('makenowBadge'))
+    })
+
+    it.each([true, false])('loads the recipes again when the make now badge is turned %s, so the cards on screen follow the setting', async (on) => {
+        const { wrapper, list } = await mountWindow(!on)
+        const before = list.mock.calls.length
+        const store = (wrapper.vm.$pinia as any)._s.get('user_preference_store')
+        store.deviceSettings.card_showMakeNowBadge = on
+        await flushPromises()
+        expect(list.mock.calls.length).toBeGreaterThan(before)
+    })
+})

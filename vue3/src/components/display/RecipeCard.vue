@@ -12,6 +12,10 @@
                         <v-icon icon="fa-solid fa-star" size="x-small" color="amber" />
                         <span class="card-overlay-rating-text">{{ recipe.rating.toFixed(1) }}</span>
                     </span>
+                    <span v-if="deviceSettings.card_showMakeNowBadge && (recipe as RecipeOverview).makenow"
+                          class="card-overlay-top-left card-overlay-makenow recipe-card-makenow-badge">
+                        {{ t('MakeNow') }}
+                    </span>
                     <span v-if="deviceSettings.card_showNewBadge && (recipe as any)._new"
                           class="card-overlay-bottom-left card-overlay-new recipe-card-new-badge">
                         {{ t('New') }}
@@ -186,6 +190,7 @@ function openRecipe() {
     -webkit-box-orient: vertical;
 }
 
+.card-overlay-top-left,
 .card-overlay-top-right,
 .card-overlay-bottom-right,
 .card-overlay-bottom-left {
@@ -225,6 +230,19 @@ function openRecipe() {
 .card-overlay-bottom-left {
     bottom: 6px;
     left: 6px;
+}
+
+.card-overlay-top-left {
+    top: 6px;
+    left: 6px;
+}
+
+.card-overlay-makenow {
+    background: rgb(var(--v-theme-success));
+    color: rgb(var(--v-theme-on-success));
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
 }
 
 .card-overlay-new {

@@ -206,6 +206,22 @@ describe('SearchPage (Phase 3 rewrite)', () => {
             expect(arg.pageSize).toBe(25)
         })
 
+        // whether make now is asked for is decided for every request by the API client (makenowBadge.ts), not per page
+        it('does not ask for make now itself', async () => {
+            await mountSearchPage({}, 'grid', {card_showMakeNowBadge: true})
+            expect((apiMock.apiRecipeList as any).mock.calls[0][0]).not.toHaveProperty('makenowBadge')
+        })
+
+        it.each([true, false])('searches again when the make now badge is turned %s, so the cards on screen follow the setting', async (on) => {
+            const {wrapper} = await mountSearchPage({}, 'grid', {card_showMakeNowBadge: !on})
+            const calls = apiMock.apiRecipeList as any
+            const before = calls.mock.calls.length
+            const store = (wrapper.vm.$pinia as any)._s.get('user_preference_store')
+            store.deviceSettings.card_showMakeNowBadge = on
+            await flushPromises()
+            expect(calls.mock.calls.length).toBeGreaterThan(before)
+        })
+
         it('translates ?keywords=1,2 into a keywords array on the API call', async () => {
             await mountSearchPage({keywords: '1,2'})
             const arg = (apiMock.apiRecipeList as any).mock.calls[0][0]

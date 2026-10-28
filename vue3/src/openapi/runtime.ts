@@ -1,6 +1,7 @@
 /* tslint:disable */
 /* eslint-disable */
 import {getCookie} from "@/utils/cookie"; // MANUAL: CSRF cookie reader
+import {makenowBadgeMiddleware} from "@/utils/makenowBadge"; // MANUAL: asks for make now on recipe lists while the badge is on
 
 /**
  * Tandoor
@@ -85,7 +86,7 @@ export class Configuration {
     }
 }
 
-export const DefaultConfig = new Configuration();
+export const DefaultConfig = new Configuration({middleware: [makenowBadgeMiddleware]}); // MANUAL: default middleware
 
 /**
  * This is the base class for all generated API classes.

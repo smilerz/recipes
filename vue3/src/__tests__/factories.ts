@@ -398,6 +398,7 @@ export function makeRecipeOverview(overrides: Partial<RecipeOverview> = {}): Rec
         rating: null,
         lastCooked: null,
         _new: false,
+        makenow: null,
         imageCropData: null,
         ...overrides,
     }

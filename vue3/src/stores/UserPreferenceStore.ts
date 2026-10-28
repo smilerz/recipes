@@ -8,8 +8,8 @@ import {DeviceSettings} from "@/types/settings";
 import {useRouter} from "vue-router";
 import vuetify from '@/vuetify'
 import {useRouteQuery} from "@vueuse/router";
+import {DEVICE_SETTINGS_KEY} from "@/utils/deviceSettingsStorage";
 
-const DEVICE_SETTINGS_KEY = 'TANDOOR_DEVICE_SETTINGS'
 const USER_PREFERENCE_KEY = 'TANDOOR_USER_PREFERENCE'
 const SERVER_SETTINGS_KEY = 'TANDOOR_SERVER_SETTINGS'
 const ACTIVE_SPACE_KEY = 'TANDOOR_ACTIVE_SPACE'
@@ -330,6 +330,8 @@ export const useUserPreferenceStore = defineStore('user_preference_store', () =>
             card_showAuthor: false,
             card_showLastCooked: false,
             card_showNewBadge: false,
+            // Off: the server only works out which recipes can be made now when asked (makenow_badge)
+            card_showMakeNowBadge: false,
             // Default ON — preserves the prior unconditional "cook time
             // chip in the keyword row" behavior on cards.
             card_show_cook_time: true,

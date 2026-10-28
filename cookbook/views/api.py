@@ -2082,15 +2082,38 @@ class RecipeBookViewSet(LoggingMixin, FuzzyFilterMixin, DeleteRelationMixing):
         return super().get_queryset()
 
 
+# Lets a list endpoint say which of the recipes of the page the household can make now (query param
+# makenow_badge). It is worked out for the page only, and only when asked for, because it is a query over
+# the ingredients of the recipes. The serializer reads the ids from its context (makenow_ids).
+# (a comment and not a docstring: drf-spectacular would take a docstring as the description of the endpoint)
+class MakenowBadgeMixin:
+    def set_makenow_ids(self, recipe_ids):
+        if self.action == 'list' and str2bool(self.request.GET.get('makenow_badge', False)):
+            self._makenow_ids = set(Recipe.objects.cookable(request_household(self.request), missing=0, within=recipe_ids).values_list('id', flat=True))
+
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        if hasattr(self, '_makenow_ids'):
+            context['makenow_ids'] = self._makenow_ids
+        return context
+
+
 @extend_schema_view(list=extend_schema(parameters=[
     OpenApiParameter(name='recipe', description='id of recipe - only return books for that recipe', type=int),
     OpenApiParameter(name='book', description='id of book - only return recipes in that book', type=int),
+    OpenApiParameter(name='makenow_badge', description=_('Tell for every recipe of the page whether it can be made with the food the household has (makenow). [''true''/''<b>false</b>'']'), type=bool),
 ]))
-class RecipeBookEntryViewSet(LoggingMixin, viewsets.ModelViewSet):
+class RecipeBookEntryViewSet(MakenowBadgeMixin, LoggingMixin, viewsets.ModelViewSet):
     queryset = RecipeBookEntry.objects
     serializer_class = RecipeBookEntrySerializer
     permission_classes = [(CustomIsOwner | (CustomIsShared & IsReadOnlyDRF)) & CustomTokenHasReadWriteScope]
     pagination_class = DefaultPagination
+
+    def paginate_queryset(self, queryset):
+        page = super().paginate_queryset(queryset)
+        if page is not None:
+            self.set_makenow_ids([entry.recipe_id for entry in page])
+        return page
 
     def get_queryset(self):
         # entries of a shared book only show the recipes the user may see, a private recipe stays private
@@ -2439,8 +2462,9 @@ class RecipePagination(PageNumberPagination):
     OpenApiParameter(name='has_keywords', description=_('Filter recipes that have keywords. [''true''/''false'']'), type=bool),
     OpenApiParameter(name='makenow', description=_('Filter recipes that can be made with OnHand food. [''true''/''<b>false</b>'']'), type=bool),
     OpenApiParameter(name='include_children', description=_('Include child keywords and foods in search results. [''<b>true</b>''/''false'']'), type=bool),
+    OpenApiParameter(name='makenow_badge', description=_('Tell for every recipe of the page whether it can be made with the food the household has (makenow). [''true''/''<b>false</b>'']'), type=bool),
 ]))
-class RecipeViewSet(LoggingMixin, viewsets.ModelViewSet, DeleteRelationMixing):
+class RecipeViewSet(MakenowBadgeMixin, LoggingMixin, viewsets.ModelViewSet, DeleteRelationMixing):
     queryset = Recipe.objects
     serializer_class = RecipeSerializer
     # TODO split read and write permission for meal plan guest
@@ -2521,6 +2545,12 @@ class RecipeViewSet(LoggingMixin, viewsets.ModelViewSet, DeleteRelationMixing):
         if self.request.GET.get('debug', False) and settings.DEBUG and request.user.is_superuser:
             return JsonResponse({'new': str(self.get_queryset().query), })
         return super().list(request, *args, **kwargs)
+
+    def paginate_queryset(self, queryset):
+        page = super().paginate_queryset(queryset)
+        if page is not None:
+            self.set_makenow_ids([recipe.id for recipe in page])
+        return page
 
     def get_serializer_class(self):
         if self.action == 'list':

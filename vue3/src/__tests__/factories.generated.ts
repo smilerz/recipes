@@ -2488,6 +2488,7 @@ export function makeRecipeOverview(overrides: Partial<RecipeOverview> = {}): Rec
         rating: 0,
         lastCooked: new Date('2026-01-01T00:00:00Z'),
         new: false,
+        makenow: false,
         ...overrides,
     } as RecipeOverview
 }
@@ -2510,6 +2511,7 @@ export function makeMinimalRecipeOverview(overrides: Partial<RecipeOverview> = {
         rating: 0,
         lastCooked: new Date('2026-01-01T00:00:00Z'),
         new: false,
+        makenow: false,
         ...overrides,
     } as RecipeOverview
 }
@@ -2534,6 +2536,7 @@ export function makeEdgeCaseRecipeOverview(overrides: Partial<RecipeOverview> = 
         rating: null,
         lastCooked: null,
         new: false,
+        makenow: null,
         ...overrides,
     } as RecipeOverview
 }
