@@ -1,4 +1,6 @@
+import inspect
 import uuid
+from unittest.mock import patch
 
 import pytest
 from django.contrib import auth
@@ -38,6 +40,13 @@ def test_has_group_permission(u1_s1, a_u, space_2):
         assert not has_group_permission(auth.get_user(a_u), ('guest',), no_cache=True)
         assert not has_group_permission(auth.get_user(a_u), ('user',), no_cache=True)
         assert not has_group_permission(auth.get_user(a_u), ('admin',), no_cache=True)
+
+
+def test_has_group_permission_does_not_walk_the_call_stack(u1_s1):
+    """The check runs several times for every request; inspect.stack() reads the source of every frame of a deep stack to get a constant name."""
+    with patch.object(inspect, 'stack', side_effect=AssertionError('walked the call stack')):
+        assert has_group_permission(auth.get_user(u1_s1), ('user',), no_cache=True)
+        assert has_group_permission(auth.get_user(u1_s1), ('user',))
 
 
 def test_is_owner(u1_s1, u2_s1, u1_s2, a_u, space_1, recipe_1_s1):
