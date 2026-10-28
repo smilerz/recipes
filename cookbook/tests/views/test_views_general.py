@@ -140,3 +140,21 @@ def test_docs_send_a_visitor_to_the_login_page_and_back(url_name, a_u):
     response = a_u.get(url)
     assert response.status_code == 302
     assert response['Location'] == reverse('account_login') + '?next=' + url
+
+
+# The views that are for users only (export file, telegram bot, sync) send everybody else to the no permission page.
+def test_the_no_permission_page_sends_a_visitor_to_the_login_page(a_u):
+    response = a_u.get(reverse('view_no_perm'))
+    assert response.status_code == 302
+    assert response['Location'] == reverse('account_login') + '?next=/search/'
+
+
+def test_the_no_permission_page_tells_a_logged_in_user_that_they_may_not_see_the_page(g1_s1):
+    assert g1_s1.get(reverse('view_no_perm')).status_code == 200
+
+
+@pytest.mark.parametrize("fixture", ['a_u', 'g1_s1'])
+def test_a_view_for_users_only_sends_others_to_the_no_permission_page(fixture, request):
+    response = request.getfixturevalue(fixture).get(reverse('view_export_file', args=[1]))
+    assert response.status_code == 302
+    assert response['Location'].startswith(reverse('view_no_perm'))
