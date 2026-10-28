@@ -599,3 +599,32 @@ def test_batch_update_sets_servings(u1_s1, recipe_1_s1):
     assert r.status_code == 200
     recipe_1_s1.refresh_from_db()
     assert recipe_1_s1.servings == 6
+
+
+# A space with a recipe limit may not get more recipes than that, but it may keep working on the ones it has.
+def _limit_recipes_to_what_the_space_has(space):
+    with scopes_disabled():
+        space.max_recipes = Recipe.objects.filter(space=space).count()
+        space.save()
+
+
+def test_update_is_allowed_when_the_space_is_at_its_recipe_limit(u1_s1, space_1, recipe_1_s1):
+    _limit_recipes_to_what_the_space_has(space_1)
+    r = u1_s1.patch(reverse(DETAIL_URL, args={recipe_1_s1.id}), {'name': 'renamed'}, content_type='application/json')
+    assert r.status_code == 200
+    assert json.loads(r.content)['name'] == 'renamed'
+
+
+def test_add_is_refused_when_the_space_is_at_its_recipe_limit(u1_s1, space_1, recipe_1_s1):
+    _limit_recipes_to_what_the_space_has(space_1)
+    r = u1_s1.post(reverse(LIST_URL), get_random_json_recipe(), content_type='application/json')
+    assert r.status_code == 400
+    assert 'maximum number of recipes' in r.content.decode()
+
+
+def test_add_is_allowed_below_the_recipe_limit(u1_s1, space_1, recipe_1_s1):
+    _limit_recipes_to_what_the_space_has(space_1)
+    with scopes_disabled():
+        space_1.max_recipes += 1
+        space_1.save()
+    assert u1_s1.post(reverse(LIST_URL), get_random_json_recipe(), content_type='application/json').status_code == 201
