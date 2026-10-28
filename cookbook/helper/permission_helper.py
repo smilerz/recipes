@@ -1,5 +1,3 @@
-import inspect
-
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import user_passes_test
@@ -49,7 +47,7 @@ def has_group_permission(user, groups, no_cache=False):
         return False
     groups_allowed = get_allowed_groups(groups)
 
-    CACHE_KEY = hash((inspect.stack()[0][3], (user.pk, user.username, user.email), groups_allowed))
+    CACHE_KEY = hash(('has_group_permission', (user.pk, user.username, user.email), groups_allowed))
     if not no_cache:
         cached_result = cache.get(CACHE_KEY, default=None)
         if cached_result is not None:
