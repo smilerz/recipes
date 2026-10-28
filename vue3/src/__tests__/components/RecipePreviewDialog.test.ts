@@ -13,7 +13,7 @@ function mountDialog(modelValue = true) {
         global: {
             plugins: [createPinia(), createI18n({ legacy: false, locale: 'en', messages: { en: { Preview: 'Preview' } }, missingWarn: false, fallbackWarn: false }), createVuetify()],
             stubs: {
-                VDialog: { props: ['modelValue'], emits: ['update:modelValue'], template: '<div class="stub-dialog" :data-open="modelValue"><slot/></div>' },
+                VDialog: { name: 'VDialog', props: ['modelValue'], emits: ['update:modelValue'], template: '<div class="stub-dialog"><slot/></div>' },
                 VClosableCardTitle: { name: 'VClosableCardTitle', props: ['title', 'modelValue'], emits: ['update:modelValue'], template: '<div class="stub-title">{{ title }}</div>' },
                 BookEntryCard: { name: 'BookEntryCard', props: ['recipeOverview'], template: '<div class="stub-book-entry-card"/>' },
             },
@@ -32,11 +32,17 @@ describe('RecipePreviewDialog', () => {
         expect(card.props('recipeOverview')).toMatchObject({ id: 42 })
     })
 
-    it('is open or closed as the model says', async () => {
+    it('passes whether it is open on to the dialog', async () => {
         const w = mountDialog(true)
-        expect(w.find('.stub-dialog').attributes('data-open')).toBe('true')
+        expect(w.findComponent({ name: 'VDialog' }).props('modelValue')).toBe(true)
         await w.setProps({ modelValue: false })
-        expect(w.find('.stub-dialog').attributes('data-open')).toBe('false')
+        expect(w.findComponent({ name: 'VDialog' }).props('modelValue')).toBe(false)
+    })
+
+    it('reports that it was closed by the dialog itself (the scrim or Escape)', () => {
+        const w = mountDialog()
+        w.findComponent({ name: 'VDialog' }).vm.$emit('update:modelValue', false)
+        expect(w.emitted('update:modelValue')).toEqual([[false]])
     })
 
     it('reports that it was closed from the title bar', async () => {

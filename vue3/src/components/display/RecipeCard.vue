@@ -4,6 +4,7 @@
         <component :is="props.disableLink ? 'div' : 'router-link'"
                    :to="props.disableLink ? undefined : dest"
                    :target="props.disableLink ? undefined : linkTarget"
+                   :class="{'press-target': !props.disableLink}"
                    v-bind="pressHandlers">
             <recipe-image :style="{height: props.height}" :recipe="recipe" rounded="lg" class="mr-3 ml-3" :disable-lightbox="true">
                 <template #overlay>
@@ -31,7 +32,7 @@
         </component>
         <div class="ml-3">
             <div class="d-flex ">
-                <div class="flex-grow-1" :class="{'cursor-pointer': !props.disableLink}" @click="!props.disableLink && openRecipe()" v-bind="pressHandlers">
+                <div class="flex-grow-1" :class="{'cursor-pointer': !props.disableLink, 'press-target': !props.disableLink}" @click="!props.disableLink && openRecipe()" v-bind="pressHandlers">
                     <p class="font-weight-bold mt-1">{{ recipe.name }}</p>
                 </div>
                 <div class="mt-1">
@@ -188,6 +189,12 @@ function openRecipe() {
     -webkit-line-clamp: 2;
     line-clamp: 2;
     -webkit-box-orient: vertical;
+}
+
+/* a long press opens the preview, so keep the browser's own long press (link sheet, text selection) out of it */
+.press-target {
+    -webkit-touch-callout: none;
+    user-select: none;
 }
 
 .card-overlay-top-left,

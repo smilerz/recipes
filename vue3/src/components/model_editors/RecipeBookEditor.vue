@@ -210,7 +210,7 @@ function loadRecipeBookEntries(options: VDataTableUpdateOptions) {
         useUserPreferenceStore().deviceSettings.general_tableItemsPerPage = options.itemsPerPage
     }
 
-    api.apiRecipeBookEntryList({page: options.page, pageSize: options.itemsPerPage, book: editingObj.value.id}).then((r: any) => {
+    api.apiRecipeBookEntryList({page: options.page, pageSize: options.itemsPerPage, book: editingObj.value.id, makenowBadge: false}).then((r: any) => {
         recipeBookEntries.value = r.results
         itemCount.value = r.count
     }).catch((err: any) => {

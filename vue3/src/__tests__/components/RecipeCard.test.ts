@@ -141,6 +141,24 @@ describe('RecipeCard preview', () => {
         expect(w.find('.stub-preview-dialog').exists()).toBe(true)
     })
 
+    it('opens the recipe on an ordinary click of the title', async () => {
+        const w = mountRecipeCard({ recipe: makeRecipeOverview({ id: 7 }) })
+        vi.useRealTimers()
+        await w.find('.flex-grow-1').trigger('click')
+        await flushPromises()
+        expect((w.vm as any).$route.name).toBe('RecipeViewPage')
+    })
+
+    it('keeps the click that ends a long press of the title from opening the recipe', async () => {
+        const w = mountRecipeCard({ recipe: makeRecipeOverview({ id: 7 }) })
+        await hold(w.find('.flex-grow-1'))
+        vi.useRealTimers()
+        await w.find('.flex-grow-1').trigger('click')
+        await flushPromises()
+        expect((w.vm as any).$route.name).not.toBe('RecipeViewPage')
+        expect(w.find('.stub-preview-dialog').exists()).toBe(true)
+    })
+
     it('opens the preview when the context menu asks for it', async () => {
         const w = mountRecipeCard()
         w.findComponent({ name: 'RecipeContextMenu' }).vm.$emit('preview')

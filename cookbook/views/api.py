@@ -2086,14 +2086,18 @@ class RecipeBookViewSet(LoggingMixin, FuzzyFilterMixin, DeleteRelationMixing):
 # makenow_badge). It is worked out for the page only, and only when asked for, because it is a query over
 # the ingredients of the recipes. The serializer reads the ids from its context (makenow_ids).
 # (a comment and not a docstring: drf-spectacular would take a docstring as the description of the endpoint)
+# It is called from the paginate_queryset of the viewset, so it only works for a paginated list: without
+# pagination makenow stays null for every recipe, as if it was not asked for.
 class MakenowBadgeMixin:
+    _makenow_ids = None  # the recipe ids of the page that can be made now, None if it was not asked for
+
     def set_makenow_ids(self, recipe_ids):
         if self.action == 'list' and str2bool(self.request.GET.get('makenow_badge', False)):
             self._makenow_ids = set(Recipe.objects.cookable(request_household(self.request), missing=0, within=recipe_ids).values_list('id', flat=True))
 
     def get_serializer_context(self):
         context = super().get_serializer_context()
-        if hasattr(self, '_makenow_ids'):
+        if self._makenow_ids is not None:
             context['makenow_ids'] = self._makenow_ids
         return context
 

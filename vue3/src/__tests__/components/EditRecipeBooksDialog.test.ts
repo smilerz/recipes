@@ -65,6 +65,12 @@ describe('EditRecipeBooksDialog', () => {
         expect(w.text()).toContain('Weeknight')
     })
 
+    it('does not ask the server which recipes can be made now, it shows book names and no cards', async () => {
+        mountDialog()
+        await flushPromises()
+        expect(listMock).toHaveBeenCalledWith(expect.objectContaining({ makenowBadge: false }))
+    })
+
     it('adds the recipe to the picked book and shows the book in the list', async () => {
         createMock.mockResolvedValue(entry(3, 3, 'Dinners'))
         const w = mountDialog()

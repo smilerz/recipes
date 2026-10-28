@@ -133,6 +133,21 @@ describe('BookViewPage', () => {
             expect(wrapper.find('[data-testid="book-next"]').attributes('disabled')).toBeDefined()
         })
 
+        it('does not turn back past the first recipe when the table of contents landed on the second', async () => {
+            desktop.on = true
+            const wrapper = await mountBookOf(5)
+            const window = wrapper.findComponent({ name: 'VWindow' })
+            await wrapper.find('.v-expansion-panel-title').trigger('click')
+            const entry = wrapper.findAll('.v-expansion-panel-text .v-list-item').find(i => i.text().includes('Recipe 2'))
+            expect(entry, 'table of contents entry of Recipe 2').toBeTruthy()
+            await entry!.trigger('click')
+            expect(window.props('modelValue')).toBe(1)
+
+            await wrapper.find('[data-testid="book-previous"]').trigger('click')
+            expect(window.props('modelValue')).toBe(0)
+            expect(wrapper.find('[data-testid="book-previous"]').attributes('disabled')).toBeDefined()
+        })
+
         it('turns two recipes at a time on a wide screen', async () => {
             desktop.on = true
             const wrapper = await mountBookOf(5)

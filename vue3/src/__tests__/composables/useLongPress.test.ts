@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+import { effectScope } from 'vue'
 import { useLongPress } from '@/composables/useLongPress'
 
 const down = (pointerType = 'mouse', x = 100, y = 100, button = 0) => ({ pointerType, clientX: x, clientY: y, button }) as any
@@ -123,6 +124,68 @@ describe('useLongPress', () => {
         const click = clickEvent()
         press.onClickCapture(click)
         expect(click.preventDefault).not.toHaveBeenCalled()
+    })
+
+    it('swallows a click only right after the long press, not a keyboard click long after it', () => {
+        // a held mouse button opens the preview under the pointer, so its click never reaches the element
+        const press = useLongPress(vi.fn())
+        press.onPointerdown(down())
+        vi.advanceTimersByTime(600)
+        press.onPointerup(down())
+        vi.advanceTimersByTime(1000)
+        const click = clickEvent()
+        press.onClickCapture(click)
+        expect(click.preventDefault).not.toHaveBeenCalled()
+    })
+
+    it('still swallows the click that comes straight after the release', () => {
+        const press = useLongPress(vi.fn())
+        press.onPointerdown(down())
+        vi.advanceTimersByTime(600)
+        press.onPointerup(down())
+        vi.advanceTimersByTime(50)
+        const click = clickEvent()
+        press.onClickCapture(click)
+        expect(click.preventDefault).toHaveBeenCalled()
+    })
+
+    it('does not swallow the click of a key press', () => {
+        const press = useLongPress(vi.fn())
+        press.onPointerdown(down())
+        vi.advanceTimersByTime(600)
+        press.onKeydown({} as any)
+        const click = clickEvent()
+        press.onClickCapture(click)
+        expect(click.preventDefault).not.toHaveBeenCalled()
+    })
+
+    it('ignores a second finger, so a two finger hold does not open anything', () => {
+        const onLongPress = vi.fn()
+        const press = useLongPress(onLongPress)
+        press.onPointerdown({ ...down('touch'), isPrimary: true } as any)
+        vi.advanceTimersByTime(300)
+        press.onPointerdown({ ...down('touch', 140, 140), isPrimary: false } as any)
+        vi.advanceTimersByTime(1000)
+        expect(onLongPress).not.toHaveBeenCalled()
+    })
+
+    it('still fires for a pointer that reports isPrimary', () => {
+        const onLongPress = vi.fn()
+        const press = useLongPress(onLongPress)
+        press.onPointerdown({ ...down('touch'), isPrimary: true } as any)
+        vi.advanceTimersByTime(600)
+        expect(onLongPress).toHaveBeenCalledTimes(1)
+    })
+
+    it('stops waiting when the component goes away', () => {
+        const onLongPress = vi.fn()
+        const scope = effectScope()
+        const press = scope.run(() => useLongPress(onLongPress))!
+        press.onPointerdown(down())
+        vi.advanceTimersByTime(300)
+        scope.stop()
+        vi.advanceTimersByTime(1000)
+        expect(onLongPress).not.toHaveBeenCalled()
     })
 
     it('hides the native context menu that a touch long press brings up', () => {

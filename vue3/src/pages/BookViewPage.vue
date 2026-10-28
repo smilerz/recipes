@@ -66,7 +66,7 @@
         <v-row>
             <v-col class="d-flex justify-center ga-4">
                 <v-btn icon="fa-solid fa-chevron-left" variant="tonal" data-testid="book-previous" :aria-label="$t('Previous')" :disabled="page <= 0"
-                       @click="page = page - recipesPerPage"></v-btn>
+                       @click="page = Math.max(0, page - recipesPerPage)"></v-btn>
                 <v-btn icon="fa-solid fa-chevron-right" variant="tonal" data-testid="book-next" :aria-label="$t('Next')" :disabled="page + recipesPerPage >= recipes.length"
                        @click="page = page + recipesPerPage"></v-btn>
             </v-col>

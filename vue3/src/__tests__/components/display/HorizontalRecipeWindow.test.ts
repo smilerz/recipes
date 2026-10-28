@@ -338,17 +338,23 @@ describe('HorizontalRecipeWindow — make now badge', () => {
         resetApiMock()
     })
 
-    async function mountWindow(makenowBadge: boolean, mode: StartPageSectionMode = 'new') {
-        apiMock.apiRecipeList = vi.fn().mockResolvedValue({ count: 0, results: [] })
+    async function mountWindow(makenowBadge: boolean, mode: StartPageSectionMode = 'new', extraProps: Record<string, unknown> = {}, impl?: (...args: any[]) => Promise<any>) {
+        apiMock.apiRecipeList = impl ? vi.fn(impl) : vi.fn().mockResolvedValue({ count: 0, results: [] })
         const pinia = createPinia()
         pinia.use(({ store }) => {
             if (store.$id === 'user_preference_store') store.deviceSettings.card_showMakeNowBadge = makenowBadge
         })
         const i18n = createI18n({ legacy: false, locale: 'en', messages: { en: {} }, missingWarn: false, fallbackWarn: false })
         const router: Router = createRouter({ history: createMemoryHistory(), routes: [{ path: '/', component: { template: '<div/>' } }, { path: '/advanced-search', name: 'SearchPage', component: { template: '<div/>' } }] })
-        const wrapper = mount(HorizontalRecipeWindow, { props: { mode }, global: { plugins: [pinia, i18n, router], stubs: { RecipeCard: { template: '<div class="stub-card"/>' } } } })
+        const wrapper = mount(HorizontalRecipeWindow, { props: { mode, ...extraProps }, global: { plugins: [pinia, i18n, router], stubs: { RecipeCard: { template: '<div class="stub-card"/>' } } } })
         await flushPromises()
         return { wrapper, list: apiMock.apiRecipeList as any }
+    }
+
+    const switchBadge = async (wrapper: any, on: boolean) => {
+        const store = (wrapper.vm.$pinia as any)._s.get('user_preference_store')
+        store.deviceSettings.card_showMakeNowBadge = on
+        await flushPromises()
     }
 
     // whether make now is asked for is decided for every request by the API client (makenowBadge.ts), not per window
@@ -365,5 +371,44 @@ describe('HorizontalRecipeWindow — make now badge', () => {
         store.deviceSettings.card_showMakeNowBadge = on
         await flushPromises()
         expect(list.mock.calls.length).toBeGreaterThan(before)
+    })
+    describe('when the make now badge is switched', () => {
+        it('keeps the random sample of a randomized section instead of drawing a new one', async () => {
+            const { wrapper, list } = await mountWindow(false, 'rating', { randomize: true })
+            const seeds = () => list.mock.calls.map((c: any[]) => c[0].seed)
+            expect(seeds()[0]).toBeTruthy()
+            await switchBadge(wrapper, true)
+            expect(list.mock.calls.length).toBe(2)
+            expect(seeds()[1]).toBe(seeds()[0])
+            expect(list.mock.calls[1][0].random).toBe('true')
+        })
+
+        it('keeps the random sample of a books section too', async () => {
+            apiMock.apiRecipeBookRetrieve = vi.fn().mockResolvedValue({ id: 3, name: 'Book', filter: null })
+            const { wrapper, list } = await mountWindow(false, 'books', { randomize: true, filterId: 3 })
+            expect(list.mock.calls[0][0].seed).toBeTruthy()
+            await switchBadge(wrapper, true)
+            expect(list.mock.calls[1][0].seed).toBe(list.mock.calls[0][0].seed)
+        })
+
+        it('does not seed a section that is not randomized', async () => {
+            const { list } = await mountWindow(false, 'rating', { randomize: false })
+            expect(list.mock.calls[0][0].seed).toBeUndefined()
+            expect(list.mock.calls[0][0].random).toBeUndefined()
+        })
+
+        it('shows the answer of the latest request when an older one answers after it', async () => {
+            const pending: Array<(v: any) => void> = []
+            const { wrapper, list } = await mountWindow(false, 'new', {}, () => new Promise(resolve => { pending.push(resolve) }))
+            await switchBadge(wrapper, true)
+            expect(list.mock.calls.length).toBe(2)
+            const recipe = (id: number) => ({ id, name: `Recipe ${id}`, _new: true })
+            pending[1]({ count: 1, results: [recipe(20)] })
+            await flushPromises()
+            expect(wrapper.findAll('.stub-card')).toHaveLength(1)
+            pending[0]({ count: 3, results: [recipe(1), recipe(2), recipe(3)] })
+            await flushPromises()
+            expect(wrapper.findAll('.stub-card')).toHaveLength(1)
+        })
     })
 })

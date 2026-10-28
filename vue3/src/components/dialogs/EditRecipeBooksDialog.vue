@@ -62,7 +62,7 @@ watch(() => [props.modelValue, props.recipe.id], ([open]) => {
 function loadEntries() {
     const recipeId = props.recipe.id!
     loading.value = true
-    new ApiApi().apiRecipeBookEntryList({recipe: recipeId, pageSize: 100}).then(r => {
+    new ApiApi().apiRecipeBookEntryList({recipe: recipeId, pageSize: 100, makenowBadge: false}).then(r => {
         if (recipeId === props.recipe.id) entries.value = r.results
     }).catch(err => {
         useMessageStore().addError(ErrorMessageType.FETCH_ERROR, err)

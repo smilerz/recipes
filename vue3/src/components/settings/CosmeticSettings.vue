@@ -138,6 +138,7 @@ onMounted(() => {
         if (r.results?.length) {
             const recipe = {...r.results[0]}
             recipe._new = true
+            ;(recipe as any).makenow = true
             if (!recipe.lastCooked) {
                 recipe.lastCooked = new Date(Date.now() - 3 * 86400000)
             }

@@ -191,7 +191,8 @@ watch(debouncedSearchQuery, (val) => {
     if (val != null && val != '') {
         let api = new ApiApi()
         asyncLoading.value = true
-        api.apiRecipeList({query: val}, {signal: signal.value}).then(r => {
+        // the results are names, no cards, so nothing needs the make now answer
+        api.apiRecipeList({query: val, makenowBadge: false}, {signal: signal.value}).then(r => {
             asyncSearchResults.value = r.results
         }).catch(err => {
             if (err.name !== 'AbortError' && err.cause.name !== 'AbortError') {

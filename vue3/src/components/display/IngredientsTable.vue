@@ -46,7 +46,7 @@
                         </span>
                     </td>
                     <td v-if="useUserPreferenceStore().isPrintMode">
-                        <span class="text-disabled font-italic"> {{ i.note }}</span>
+                        <span v-if="hasNote(i)" class="text-disabled font-italic"> {{ i.note }}</span>
                     </td>
                     <td style="width: 1%; text-wrap: nowrap" v-if="!useUserPreferenceStore().isPrintMode">
                         <v-icon class="far fa-comment float-right"

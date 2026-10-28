@@ -16,6 +16,13 @@ vi.mock('@/stores/MessageStore', async (imp) => ({
     useMessageStore: () => ({addMessage: addMessageMock, addError: vi.fn(), addPreparedMessage: vi.fn()}),
 }))
 
+import {apiMock, resetApiMock} from '@/__tests__/api-mock'
+
+vi.mock('@/openapi', async (importOriginal) => ({
+    ...(await importOriginal<any>()),
+    ApiApi: class { constructor() { return apiMock } },
+}))
+
 import RecipeBookEditor from '@/components/model_editors/RecipeBookEditor.vue'
 
 function mountEditor() {
@@ -39,5 +46,19 @@ describe('RecipeBookEditor duplicate-recipe warning (script used $t, undefined o
 
         expect(() => (wrapper.vm as any).addRecipeToBook()).not.toThrow()
         expect(addMessageMock).toHaveBeenCalled()
+    })
+})
+
+describe('RecipeBookEditor list of recipes', () => {
+    beforeEach(() => {
+        setActivePinia(createPinia())
+        resetApiMock()
+    })
+
+    it('does not ask the server which recipes can be made now, the table shows names and no cards', () => {
+        apiMock.apiRecipeBookEntryList = vi.fn().mockResolvedValue({results: [], count: 0})
+        const wrapper = mountEditor()
+        ;(wrapper.vm as any).loadRecipeBookEntries({page: 1, sortBy: []})
+        expect(apiMock.apiRecipeBookEntryList).toHaveBeenCalledWith(expect.objectContaining({makenowBadge: false}))
     })
 })
