@@ -151,7 +151,7 @@ const menuItemOptions = [
     {key: 'edit', label: 'Edit'},
     {key: 'plan', label: 'Add_to_Plan'},
     {key: 'shopping', label: 'Add_to_Shopping'},
-    {key: 'book', label: 'Add_to_Book'},
+    {key: 'book', label: 'Edit_Books'},
     {key: 'cooklog', label: 'Log_Cooking'},
     {key: 'photo', label: 'Edit_Photo'},
     {key: 'properties', label: 'Property_Editor'},

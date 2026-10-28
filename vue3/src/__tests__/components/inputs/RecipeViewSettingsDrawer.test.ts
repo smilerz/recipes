@@ -68,7 +68,7 @@ function mountDrawer({mobile = false} = {}) {
             Edit: 'Edit',
             Add_to_Plan: 'Add to plan',
             Add_to_Shopping: 'Add to shopping',
-            Add_to_Book: 'Add to book',
+            Edit_Books: 'Edit books',
             Log_Cooking: 'Log cooking',
             Edit_Photo: 'Edit photo',
             Property_Editor: 'Property editor',
@@ -365,8 +365,8 @@ describe('Card Display panel + recipe-view gating', () => {
         const w = mountDrawer()
         const store = (w.vm.$pinia as any)._s.get('user_preference_store')
         expect(store.deviceSettings.card_visibleMenuItems).not.toContain('book')
-        const bookCheckbox = w.findAll('.v-checkbox').find(c => c.text().includes('Add to book'))
-        expect(bookCheckbox, 'Add to book checkbox should exist').toBeTruthy()
+        const bookCheckbox = w.findAll('.v-checkbox').find(c => c.text().includes('Edit books'))
+        expect(bookCheckbox, 'Edit books checkbox should exist').toBeTruthy()
         await bookCheckbox!.find('input[type="checkbox"]').setValue(true)
         expect(store.deviceSettings.card_visibleMenuItems).toContain('book')
     })
