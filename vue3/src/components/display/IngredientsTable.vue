@@ -237,7 +237,7 @@ function toggleNoteExpand(idx: number) {
 }
 
 function hasNote(i: Ingredient): boolean {
-    return i.note != null && i.note !== ''
+    return props.showNotes && i.note != null && i.note !== ''
 }
 
 function truncateNote(note: string | null | undefined, reserved: number = 0): string {

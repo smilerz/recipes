@@ -21,6 +21,20 @@ vi.mock('@vueuse/router', () => ({
     useRouteQuery: () => ({ value: false }),
 }))
 
+// jsdom is narrower than the md breakpoint; let a test choose the layout
+const { desktop } = vi.hoisted(() => ({ desktop: { on: false } }))
+vi.mock('vuetify', async (importOriginal) => {
+    const original = await importOriginal<any>()
+    const { computed } = await import('vue')
+    return {
+        ...original,
+        useDisplay: () => {
+            const real = original.useDisplay()
+            return new Proxy(real, { get: (target, key) => key === 'mdAndUp' ? computed(() => desktop.on) : (target as any)[key] })
+        },
+    }
+})
+
 import BookViewPage from '@/pages/BookViewPage.vue'
 
 describe('BookViewPage', () => {
@@ -79,6 +93,57 @@ describe('BookViewPage', () => {
         await flushPromises()
 
         expect(apiMock.apiRecipeBookEntryList).toHaveBeenCalled()
+    })
+
+    describe('paging through the recipes', () => {
+        async function mountBookOf(count: number) {
+            apiMock.apiRecipeBookRetrieve.mockResolvedValue(makeRecipeBook({ id: 1 }))
+            apiMock.apiRecipeBookEntryList.mockResolvedValue({
+                results: Array.from({ length: count }, (_, i) => makeRecipeBookEntry({ id: i + 1, recipeContent: makeRecipeOverview({ id: i + 1, name: `Recipe ${i + 1}` }) })),
+                count,
+                next: null,
+            })
+            const wrapper = mountBookPage()
+            await flushPromises()
+            return wrapper
+        }
+
+        beforeEach(() => {
+            desktop.on = false
+        })
+
+        it('does not float arrows over the recipes', async () => {
+            const wrapper = await mountBookOf(3)
+            expect(wrapper.findComponent({ name: 'VWindow' }).props('showArrows')).toBeFalsy()
+        })
+
+        it('turns the pages with buttons beside the recipes, not over them', async () => {
+            const wrapper = await mountBookOf(3)
+            const window = wrapper.findComponent({ name: 'VWindow' })
+            expect(window.props('modelValue')).toBe(0)
+            expect(wrapper.find('[data-testid="book-previous"]').attributes('disabled')).toBeDefined()
+
+            await wrapper.find('[data-testid="book-next"]').trigger('click')
+            expect(window.props('modelValue')).toBe(1)
+            expect(wrapper.find('[data-testid="book-previous"]').attributes('disabled')).toBeUndefined()
+
+            await wrapper.find('[data-testid="book-next"]').trigger('click')
+            await wrapper.find('[data-testid="book-next"]').trigger('click')
+            expect(window.props('modelValue')).toBe(2)
+            expect(wrapper.find('[data-testid="book-next"]').attributes('disabled')).toBeDefined()
+        })
+
+        it('turns two recipes at a time on a wide screen', async () => {
+            desktop.on = true
+            const wrapper = await mountBookOf(5)
+            const window = wrapper.findComponent({ name: 'VWindow' })
+            await wrapper.find('[data-testid="book-next"]').trigger('click')
+            expect(window.props('modelValue')).toBe(2)
+            await wrapper.find('[data-testid="book-next"]').trigger('click')
+            expect(window.props('modelValue')).toBe(4)
+            expect(wrapper.find('[data-testid="book-next"]').attributes('disabled')).toBeDefined()
+        })
+
     })
 
     it('displays shared users when present', async () => {

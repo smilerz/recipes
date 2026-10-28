@@ -391,4 +391,29 @@ describe('IngredientsTable mobile Option-C list layout', () => {
         await note.trigger('click')
         expect(w.find('[data-test="ingredient-note"]').text()).toContain('finely minced')
     })
+
+    describe('showNotes', () => {
+        async function mountWithNote(mode: string, extraProps: any = {}) {
+            const w = mountTableMobile([makeIngredient({note: 'finely chopped'})], 'step', extraProps)
+            const store = (w.vm.$pinia as any)._s.get('user_preference_store')
+            store.deviceSettings.recipe_stepNotesDisplay = mode
+            await w.vm.$nextTick()
+            return w
+        }
+
+        it.each(['inline', 'truncate'])('%s mode shows the note by default', async (mode) => {
+            expect((await mountWithNote(mode)).text()).toContain('finely chopped')
+        })
+
+        it('bubble mode shows a note bubble by default', async () => {
+            expect((await mountWithNote('bubble')).find('.fa-comment').exists()).toBe(true)
+        })
+
+        it.each(['inline', 'truncate', 'bubble'])('%s mode shows no note when showNotes is false', async (mode) => {
+            const w = await mountWithNote(mode, {showNotes: false})
+            expect(w.text()).not.toContain('finely chopped')
+            expect(w.find('.fa-comment').exists()).toBe(false)
+            expect(w.find('[data-test="ingredient-note"]').exists()).toBe(false)
+        })
+    })
 })

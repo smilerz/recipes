@@ -42,14 +42,7 @@
 
         <v-row>
             <v-col cols="12">
-                <v-window v-model="page" show-arrows>
-                    <template #next>
-                        <v-btn icon="fa-solid fa-chevron-right" variant="plain" @click="page = page + (mdAndUp ? 2 : 1)"></v-btn>
-                    </template>
-                    <template #prev>
-                        <v-btn icon="fa-solid fa-chevron-left" variant="plain" @click="page = page - (mdAndUp ? 2 : 1)"></v-btn>
-                    </template>
-
+                <v-window v-model="page">
                     <v-window-item v-for="(entry, i) in recipes" :key="entry.id">
                         <v-row>
                             <v-col cols="12" md="6">
@@ -67,6 +60,15 @@
                         </v-row>
                     </v-window-item>
                 </v-window>
+            </v-col>
+        </v-row>
+
+        <v-row>
+            <v-col class="d-flex justify-center ga-4">
+                <v-btn icon="fa-solid fa-chevron-left" variant="tonal" data-testid="book-previous" :aria-label="$t('Previous')" :disabled="page <= 0"
+                       @click="page = page - recipesPerPage"></v-btn>
+                <v-btn icon="fa-solid fa-chevron-right" variant="tonal" data-testid="book-next" :aria-label="$t('Next')" :disabled="page + recipesPerPage >= recipes.length"
+                       @click="page = page + recipesPerPage"></v-btn>
             </v-col>
         </v-row>
     </v-container>

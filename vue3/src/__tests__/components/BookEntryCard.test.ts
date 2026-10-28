@@ -44,7 +44,7 @@ function mountBookEntryCard() {
             plugins: [createPinia(), i18n, vuetify, router],
             stubs: {
                 RecipeCard: { name: 'RecipeCard', props: ['recipe', 'disableLink', 'showMenu', 'height'], template: '<div class="stub-recipe-card"/>' },
-                IngredientsTable: { name: 'IngredientsTable', props: ['modelValue'], template: '<div class="stub-ingredients-table"/>' },
+                IngredientsTable: { name: 'IngredientsTable', props: ['modelValue', 'showNotes'], template: '<div class="stub-ingredients-table"/>' },
             },
         },
     })
@@ -59,6 +59,12 @@ describe('BookEntryCard (D08 — reuses RecipeCard for the display)', () => {
         expect(card.props('disableLink')).toBe(true)
         expect(card.props('showMenu')).toBe(false)
         expect(card.props('recipe')).toMatchObject({ id: 42 })
+    })
+
+    it('lists the ingredients without their notes', () => {
+        retrieveMock.mockResolvedValue({ id: 42, steps: [] })
+        const w = mountBookEntryCard()
+        expect(w.findComponent({ name: 'IngredientsTable' }).props('showNotes')).toBe(false)
     })
 
     it('provides an "Open" button as the sole navigation', () => {
