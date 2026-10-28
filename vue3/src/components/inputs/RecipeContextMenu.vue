@@ -11,6 +11,10 @@
                              :to="{ name: 'ModelEditPage', params: {model: 'recipe', id: recipe.id} }" prepend-icon="$edit">
                     {{ $t('Edit') }}
                 </v-list-item>
+                <v-list-item v-if="props.context === 'card'"
+                             prepend-icon="fa-solid fa-eye" @click="emit('preview')">
+                    {{ $t('Preview') }}
+                </v-list-item>
                 <v-list-item v-if="isVisible('plan')"
                              prepend-icon="$mealplan" @click="mealPlanDialog = true">
                     {{ $t('Add_to_Plan') }}
@@ -129,6 +133,7 @@ const props = defineProps({
 const emit = defineEmits<{
     deleted: [id: number]
     'update:recipe': [recipe: Recipe | RecipeOverview]
+    preview: []
 }>()
 
 const mealPlanDialog = ref(false)

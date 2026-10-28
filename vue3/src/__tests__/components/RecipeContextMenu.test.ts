@@ -51,7 +51,7 @@ function mountMenu(deviceOverrides: Record<string, any> = {}, props: Record<stri
         legacy: false, locale: 'en',
         messages: { en: {
             Edit: 'Edit', Add_to_Plan: 'Add to Plan', Add_to_Shopping: 'Add to Shopping',
-            Edit_Books: 'Edit Books', Log_Cooking: 'Log Cooking', Edit_Photo: 'Edit Photo',
+            Edit_Books: 'Edit Books', Log_Cooking: 'Log Cooking', Edit_Photo: 'Edit Photo', Preview: 'Preview',
             Property_Editor: 'Property Editor', Share: 'Share', Export: 'Export',
             Duplicate: 'Duplicate', Print: 'Print', Delete: 'Delete', Copy: 'Copy',
             DisplaySettings: 'Display Settings', UseUp: 'Use up', PantryForThisRecipe: 'Pantry for this recipe',
@@ -112,6 +112,26 @@ function mountMenu(deviceOverrides: Record<string, any> = {}, props: Record<stri
 describe('RecipeContextMenu', () => {
     beforeEach(() => {
         resetApiMock()
+    })
+
+    describe('preview', () => {
+        const previewItem = (w: ReturnType<typeof mountMenu>) => w.findAll('.v-list-item').find(i => i.text().includes('Preview'))
+
+        // the only way to the preview without a long press, so it is not part of the trimmed down card menu
+        it('is in a card menu, also one trimmed down to a single item', () => {
+            expect(previewItem(mountMenu())).toBeTruthy()
+            expect(previewItem(mountMenu({ card_visibleMenuItems: ['edit'] }))).toBeTruthy()
+        })
+
+        it('is not in the menu of the recipe page, which already shows the whole recipe', () => {
+            expect(previewItem(mountMenu({}, { context: 'view' }))).toBeFalsy()
+        })
+
+        it('tells the card to open the preview when it is chosen', async () => {
+            const w = mountMenu({ card_visibleMenuItems: ['edit'] })
+            await previewItem(w)!.trigger('click')
+            expect(w.emitted('preview')).toHaveLength(1)
+        })
     })
 
     describe('visibility config', () => {

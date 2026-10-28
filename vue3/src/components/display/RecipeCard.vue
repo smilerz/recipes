@@ -3,7 +3,8 @@
 
         <component :is="props.disableLink ? 'div' : 'router-link'"
                    :to="props.disableLink ? undefined : dest"
-                   :target="props.disableLink ? undefined : linkTarget">
+                   :target="props.disableLink ? undefined : linkTarget"
+                   v-bind="pressHandlers">
             <recipe-image :style="{height: props.height}" :recipe="recipe" rounded="lg" class="mr-3 ml-3" :disable-lightbox="true">
                 <template #overlay>
                     <span v-if="deviceSettings.card_showRating && recipe.rating != null"
@@ -26,11 +27,11 @@
         </component>
         <div class="ml-3">
             <div class="d-flex ">
-                <div class="flex-grow-1" :class="{'cursor-pointer': !props.disableLink}" @click="!props.disableLink && openRecipe()">
+                <div class="flex-grow-1" :class="{'cursor-pointer': !props.disableLink}" @click="!props.disableLink && openRecipe()" v-bind="pressHandlers">
                     <p class="font-weight-bold mt-1">{{ recipe.name }}</p>
                 </div>
                 <div class="mt-1">
-                    <recipe-context-menu :recipe="recipe" size="small" v-if="props.showMenu" @update:recipe="onContextMenuRecipeUpdated"></recipe-context-menu>
+                    <recipe-context-menu :recipe="recipe" size="small" v-if="props.showMenu" @update:recipe="onContextMenuRecipeUpdated" @preview="previewDialog = true"></recipe-context-menu>
                 </div>
             </div>
             <keywords-component variant="outlined" :keywords="recipe.keywords" :max-keywords="deviceSettings.card_maxKeywords" v-if="props.showKeywords">
@@ -49,6 +50,7 @@
                 </template>
             </keywords-component>
         </div>
+        <recipe-preview-dialog v-if="previewDialog" :recipe="recipe" v-model="previewDialog"></recipe-preview-dialog>
     </template>
     <template v-else>
         <v-card :style="{'height': props.height}">
@@ -76,6 +78,8 @@ import {useRouter} from "vue-router";
 import PrivateRecipeBadge from "@/components/display/PrivateRecipeBadge.vue";
 import {useUserPreferenceStore} from "@/stores/UserPreferenceStore";
 import {useI18n} from "vue-i18n";
+import RecipePreviewDialog from "@/components/dialogs/RecipePreviewDialog.vue";
+import {useLongPress} from "@/composables/useLongPress";
 
 const props = defineProps({
     recipe: {type: {} as PropType<Recipe | RecipeOverview>, required: true,},
@@ -108,6 +112,11 @@ function onContextMenuRecipeUpdated(updated: Recipe | RecipeOverview) {
     recipe.value = updated
     emit('update:recipe', updated)
 }
+
+const previewDialog = ref(false)
+const longPress = useLongPress(() => previewDialog.value = true)
+// a card that does not link to its recipe (the one inside a book) has nothing to press and hold
+const pressHandlers = computed(() => props.disableLink ? {} : longPress)
 
 const router = useRouter()
 const {t} = useI18n()
