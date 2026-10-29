@@ -151,6 +151,12 @@ export interface RecipeOverview {
      * @memberof RecipeOverview
      */
     readonly _new: boolean;
+    /**
+     * 
+     * @type {boolean}
+     * @memberof RecipeOverview
+     */
+    readonly makenow: boolean | null;
 }
 
 /**
@@ -172,6 +178,7 @@ export function instanceOfRecipeOverview(value: object): value is RecipeOverview
     if (!('rating' in value) || value['rating'] === undefined) return false;
     if (!('lastCooked' in value) || value['lastCooked'] === undefined) return false;
     if (!('_new' in value) || value['_new'] === undefined) return false;
+    if (!('makenow' in value) || value['makenow'] === undefined) return false;
     return true;
 }
 
@@ -203,6 +210,7 @@ export function RecipeOverviewFromJSONTyped(json: any, ignoreDiscriminator: bool
         'rating': json['rating'],
         'lastCooked': (json['last_cooked'] == null ? null : new Date(json['last_cooked'])),
         '_new': json['new'],
+        'makenow': json['makenow'],
     };
 }
 
@@ -210,7 +218,7 @@ export function RecipeOverviewToJSON(json: any): RecipeOverview {
     return RecipeOverviewToJSONTyped(json, false);
 }
 
-export function RecipeOverviewToJSONTyped(value?: Omit<RecipeOverview, 'image'|'image_crop_data'|'keywords'|'working_time'|'waiting_time'|'created_by'|'created_at'|'updated_at'|'internal'|'servings'|'servings_text'|'rating'|'last_cooked'|'new'> | null, ignoreDiscriminator: boolean = false): any {
+export function RecipeOverviewToJSONTyped(value?: Omit<RecipeOverview, 'image'|'image_crop_data'|'keywords'|'working_time'|'waiting_time'|'created_by'|'created_at'|'updated_at'|'internal'|'servings'|'servings_text'|'rating'|'last_cooked'|'new'|'makenow'> | null, ignoreDiscriminator: boolean = false): any {
     if (value == null) {
         return value;
     }

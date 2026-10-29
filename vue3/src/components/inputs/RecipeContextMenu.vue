@@ -11,6 +11,10 @@
                              :to="{ name: 'ModelEditPage', params: {model: 'recipe', id: recipe.id} }" prepend-icon="$edit">
                     {{ $t('Edit') }}
                 </v-list-item>
+                <v-list-item v-if="props.context === 'card'"
+                             prepend-icon="fa-solid fa-eye" @click="emit('preview')">
+                    {{ $t('Preview') }}
+                </v-list-item>
                 <v-list-item v-if="isVisible('plan')"
                              prepend-icon="$mealplan" @click="mealPlanDialog = true">
                     {{ $t('Add_to_Plan') }}
@@ -20,8 +24,8 @@
                     {{ $t('Add_to_Shopping') }}
                 </v-list-item>
                 <v-list-item v-if="isVisible('book')"
-                             prepend-icon="fa-solid fa-book-bookmark" @click="addToBookDialog = true">
-                    {{ $t('Add_to_Book') }}
+                             prepend-icon="fa-solid fa-book-bookmark" @click="editBooksDialog = true">
+                    {{ $t('Edit_Books') }}
                 </v-list-item>
                 <v-list-item v-if="isVisible('cooklog') && props.context === 'card'"
                              prepend-icon="fa-solid fa-utensils" @click="logCookingDialog = true">
@@ -75,7 +79,7 @@
 
     <add-to-shopping-dialog v-if="isVisible('shopping')" :recipe="props.recipe" v-model="shoppingDialog"></add-to-shopping-dialog>
     <recipe-share-dialog v-if="isVisible('share')" :recipe="props.recipe" v-model="shareDialog"></recipe-share-dialog>
-    <add-to-book-dialog v-if="addToBookDialog" :recipe="props.recipe" v-model="addToBookDialog"></add-to-book-dialog>
+    <edit-recipe-books-dialog v-if="editBooksDialog" :recipe="props.recipe" v-model="editBooksDialog"></edit-recipe-books-dialog>
     <log-cooking-dialog v-if="logCookingDialog" :recipe="props.recipe" v-model="logCookingDialog"></log-cooking-dialog>
     <use-up-dialog v-if="props.context === 'view'" ref="useUpDialog"></use-up-dialog>
     <delete-confirm-dialog v-if="deleteDialog" :object-name="props.recipe.name" model-name="Recipe"
@@ -98,7 +102,7 @@ import {ApiApi, Recipe, RecipeFlat, RecipeOverview, RecipeSimple} from "@/openap
 import ModelEditDialog from "@/components/dialogs/ModelEditDialog.vue";
 import RecipeShareDialog from "@/components/dialogs/RecipeShareDialog.vue";
 import AddToShoppingDialog from "@/components/dialogs/AddToShoppingDialog.vue";
-import AddToBookDialog from "@/components/dialogs/AddToBookDialog.vue";
+import EditRecipeBooksDialog from "@/components/dialogs/EditRecipeBooksDialog.vue";
 import LogCookingDialog from "@/components/dialogs/LogCookingDialog.vue";
 import UseUpDialog from "@/components/dialogs/UseUpDialog.vue";
 import {recipeFoodIds} from "@/utils/pantry_utils";
@@ -129,12 +133,13 @@ const props = defineProps({
 const emit = defineEmits<{
     deleted: [id: number]
     'update:recipe': [recipe: Recipe | RecipeOverview]
+    preview: []
 }>()
 
 const mealPlanDialog = ref(false)
 const shoppingDialog = ref(false)
 const shareDialog = ref(false)
-const addToBookDialog = ref(false)
+const editBooksDialog = ref(false)
 const logCookingDialog = ref(false)
 const deleteDialog = ref(false)
 const photoEditorDialog = ref(false)

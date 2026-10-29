@@ -87,6 +87,8 @@
                                       :label="$t('last_cooked')" density="compact" hide-details color="primary" />
                             <v-switch v-model="deviceSettings.card_showNewBadge"
                                       :label="$t('New')" density="compact" hide-details color="primary" />
+                            <v-switch v-model="deviceSettings.card_showMakeNowBadge"
+                                      :label="$t('Show_Make_Now_Badge')" density="compact" hide-details color="primary" />
                             <v-select v-model="deviceSettings.card_maxKeywords"
                                       :label="$t('Keywords')" density="compact" hide-details class="mt-2"
                                       :items="[{title: '3', value: 3}, {title: '5', value: 5}, {title: '10', value: 10}, {title: $t('All'), value: 0}]" />
@@ -136,6 +138,7 @@ onMounted(() => {
         if (r.results?.length) {
             const recipe = {...r.results[0]}
             recipe._new = true
+            ;(recipe as any).makenow = true
             if (!recipe.lastCooked) {
                 recipe.lastCooked = new Date(Date.now() - 3 * 86400000)
             }
@@ -151,7 +154,7 @@ const menuItemOptions = [
     {key: 'edit', label: 'Edit'},
     {key: 'plan', label: 'Add_to_Plan'},
     {key: 'shopping', label: 'Add_to_Shopping'},
-    {key: 'book', label: 'Add_to_Book'},
+    {key: 'book', label: 'Edit_Books'},
     {key: 'cooklog', label: 'Log_Cooking'},
     {key: 'photo', label: 'Edit_Photo'},
     {key: 'properties', label: 'Property_Editor'},

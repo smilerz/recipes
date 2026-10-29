@@ -40,16 +40,17 @@
 
 
 <script lang="ts" setup>
-import {computed, onMounted, ref} from 'vue'
+import {computed, onMounted, ref, watch} from 'vue'
 import RecipeCard from "@/components/display/RecipeCard.vue";
 import {useDisplay} from "vuetify";
 import {ApiApi, ApiRecipeListRequest, Recipe, RecipeOverview} from "@/openapi";
 import {homePageCols} from "@/utils/breakpoint_utils";
-import {getOrMintStoredSeed} from "@/utils/randomSeed";
+import {getOrMintStoredSeed, mintSeed} from "@/utils/randomSeed";
 import {useI18n} from "vue-i18n";
 import {DateTime} from "luxon";
 import {useRouter} from "vue-router";
 import type {StartPageSectionMode} from "@/types/settings";
+import {useUserPreferenceStore} from "@/stores/UserPreferenceStore";
 
 const MODE_CONFIG: Record<StartPageSectionMode, { icon: string, label: string }> = {
     meal_plan: {icon: 'fa-solid fa-calendar-days', label: 'Meal_Plan'},
@@ -103,6 +104,12 @@ const router = useRouter()
 const {name} = useDisplay()
 
 const api = new ApiApi()
+const deviceSettings = useUserPreferenceStore().deviceSettings
+
+// the random sample of this window, so loading again (a setting changed) shows the same recipes
+const sampleSeed = mintSeed()
+// every load is a run; the answer of an older run must not replace that of a newer one
+let latestRun = 0
 const loading = ref(true)
 const recipes = ref<(Recipe | RecipeOverview)[]>([])
 const entityName = ref('')
@@ -129,10 +136,13 @@ onMounted(() => {
     loadRecipes()
 })
 
+// the API client asks for make now while the badge is on, the cards on screen only follow when loaded again
+watch(() => deviceSettings.card_showMakeNowBadge, () => loadRecipes())
+
 /**
  * Fetch a single entity by ID, set display name, then query recipes filtered by that entity.
  */
-function loadEntitySection(requestParameters: ApiRecipeListRequest) {
+function loadEntitySection(requestParameters: ApiRecipeListRequest, isCurrent: () => boolean) {
     const config = ENTITY_MODES[props.mode]
     if (!config) return
 
@@ -145,15 +155,15 @@ function loadEntitySection(requestParameters: ApiRecipeListRequest) {
                 (requestParameters as any)[config.param] = [r.id!]
             }
             queryParams.value = {[config.param]: r.id!}
-            doRecipeRequest(requestParameters)
-        }).catch(() => { loading.value = false })
+            doRecipeRequest(requestParameters, isCurrent)
+        }).catch(() => { if (isCurrent()) loading.value = false })
     } else if (props.mode === 'keyword') {
         api.apiKeywordList({random: "true", limit: "1"}).then((r) => {
             if (r.count > 0) {
                 entityName.value = r.results[0].label ?? r.results[0].name ?? ''
                 requestParameters.keywords = [r.results[0].id!]
                 queryParams.value = {keywords: r.results[0].id!}
-                doRecipeRequest(requestParameters)
+                doRecipeRequest(requestParameters, isCurrent)
             } else {
                 loading.value = false
             }
@@ -167,7 +177,7 @@ function loadEntitySection(requestParameters: ApiRecipeListRequest) {
                 // recipe-order randomness is applied centrally via useRandom (D09); the random
                 // USER pick above stays regardless so the section still rotates whom it features.
                 queryParams.value = {createdby: user.id!}
-                doRecipeRequest(requestParameters)
+                doRecipeRequest(requestParameters, isCurrent)
             } else {
                 loading.value = false
             }
@@ -178,6 +188,8 @@ function loadEntitySection(requestParameters: ApiRecipeListRequest) {
 }
 
 function loadRecipes() {
+    const run = ++latestRun
+    const isCurrent = () => run === latestRun
     const requestParameters = {pageSize: 16} as ApiRecipeListRequest
 
     // Randomize the sample for the applicable modes (D09). `books` builds its own requests in
@@ -187,6 +199,7 @@ function loadRecipes() {
 // param (and this component's own existing test) uses the string 'true' - matches the actual
 // wire contract; typed here rather than changed to avoid altering the generated client.
 requestParameters.random = 'true' as any
+        requestParameters.seed = sampleSeed
     }
 
     switch (props.mode) {
@@ -225,22 +238,22 @@ requestParameters.random = 'true' as any
                     entityName.value = r.name
                     requestParameters.filter = props.filterId
                     queryParams.value = {}
-                    doRecipeRequest(requestParameters)
-                }).catch(() => { loading.value = false })
+                    doRecipeRequest(requestParameters, isCurrent)
+                }).catch(() => { if (isCurrent()) loading.value = false })
             } else {
                 console.debug(`[StartPage] saved_search section has no filterId, skipping`)
                 loading.value = false
             }
             return
         case 'books':
-            loadBooksSection()
+            loadBooksSection(isCurrent)
             return
         default:
             // keyword, food, created_by — entity-based modes
-            loadEntitySection(requestParameters)
+            loadEntitySection(requestParameters, isCurrent)
             return
     }
-    doRecipeRequest(requestParameters)
+    doRecipeRequest(requestParameters, isCurrent)
 }
 
 /**
@@ -249,7 +262,7 @@ requestParameters.random = 'true' as any
  * saved-search-only book would render empty here. Mirror BookViewPage: also pull the filter's
  * recipes and merge (deduped), so the home preview shows the book's full contents.
  */
-function loadBooksSection() {
+function loadBooksSection(isCurrent: () => boolean) {
     if (!props.filterId) {
         loading.value = false
         return
@@ -260,12 +273,13 @@ function loadBooksSection() {
         // to the book's manual entries.
         queryParams.value = book.filter ? {filter: book.filter.id!} : {books: book.id!}
 
-        const randomFlag = useRandom.value ? {random: 'true' as any} : {}
+        const randomFlag = useRandom.value ? {random: 'true' as any, seed: sampleSeed} : {}
         const requests = [api.apiRecipeList({books: [book.id!], pageSize: 16, ...randomFlag})]
         if (book.filter) {
             requests.push(api.apiRecipeList({filter: book.filter.id, pageSize: 16, ...randomFlag}))
         }
         Promise.all(requests).then((results) => {
+            if (!isCurrent()) return
             const seen = new Set<number>()
             const merged: (Recipe | RecipeOverview)[] = []
             for (const res of results) {
@@ -277,16 +291,17 @@ function loadBooksSection() {
                 }
             }
             recipes.value = merged.slice(0, 16)
-        }).finally(() => { loading.value = false })
-    }).catch(() => { loading.value = false })
+        }).finally(() => { if (isCurrent()) loading.value = false })
+    }).catch(() => { if (isCurrent()) loading.value = false })
 }
 
 /**
  * actual request function requesting the recipes from the server based on the given parameters
  * @param params
  */
-function doRecipeRequest(params: ApiRecipeListRequest) {
+function doRecipeRequest(params: ApiRecipeListRequest, isCurrent: () => boolean) {
     api.apiRecipeList(params).then((r) => {
+        if (!isCurrent()) return
         if (props.mode == 'new') {
             recipes.value = r.results.filter(r => r._new)
         } else if (props.mode == 'recent') {
@@ -300,7 +315,7 @@ function doRecipeRequest(params: ApiRecipeListRequest) {
             recipes.value = r.results
         }
     }).finally(() => {
-        loading.value = false
+        if (isCurrent()) loading.value = false
     })
 }
 

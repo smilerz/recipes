@@ -1499,6 +1499,7 @@ export interface ApiRecipeBookEntryDestroyRequest {
 
 export interface ApiRecipeBookEntryListRequest {
     book?: number;
+    makenowBadge?: boolean;
     page?: number;
     pageSize?: number;
     recipe?: number;
@@ -1697,6 +1698,7 @@ export interface ApiRecipeListRequest {
     keywordsOr?: Array<number>;
     keywordsOrNot?: Array<number>;
     makenow?: boolean;
+    makenowBadge?: boolean;
     _new?: boolean;
     numRecent?: number;
     page?: number;
@@ -11423,6 +11425,10 @@ export class ApiApi extends runtime.BaseAPI {
             queryParameters['book'] = requestParameters['book'];
         }
 
+        if (requestParameters['makenowBadge'] != null) {
+            queryParameters['makenow_badge'] = requestParameters['makenowBadge'];
+        }
+
         if (requestParameters['page'] != null) {
             queryParameters['page'] = requestParameters['page'];
         }
@@ -13100,6 +13106,10 @@ export class ApiApi extends runtime.BaseAPI {
 
         if (requestParameters['makenow'] != null) {
             queryParameters['makenow'] = requestParameters['makenow'];
+        }
+
+        if (requestParameters['makenowBadge'] != null) {
+            queryParameters['makenow_badge'] = requestParameters['makenowBadge'];
         }
 
         if (requestParameters['_new'] != null) {

@@ -688,15 +688,25 @@ function shuffle() {
 function searchRecipes(opts?: {page?: number}) {
     if (opts?.page !== undefined) page.value = opts.page
 
-    abortController.abort()
-    abortController = new AbortController()
-
     loading.value = true
     selectedItems.value = []
     useUserPreferenceStore().deviceSettings.search_itemsPerPage = pageSize.value
 
-    const api = new ApiApi()
-    api.apiRecipeList(buildSearchParams(), {signal: abortController.signal})
+    requestRecipes().finally(() => {
+        loading.value = false
+        window.scrollTo({top: 0, behavior: 'smooth'})
+    })
+}
+
+/**
+ * load the recipes of the current search into the list (an older request still running is aborted), without
+ * touching the selection or the scroll position
+ */
+function requestRecipes() {
+    abortController.abort()
+    abortController = new AbortController()
+
+    return new ApiApi().apiRecipeList(buildSearchParams(), {signal: abortController.signal})
         .then((r) => {
             recipes.value = r.results
             tableItemCount.value = r.count
@@ -705,10 +715,6 @@ function searchRecipes(opts?: {page?: number}) {
             if (err.name !== 'AbortError' && err?.cause?.name !== 'AbortError') {
                 useMessageStore().addError(ErrorMessageType.FETCH_ERROR, err)
             }
-        })
-        .finally(() => {
-            loading.value = false
-            window.scrollTo({top: 0, behavior: 'smooth'})
         })
 }
 
@@ -873,6 +879,9 @@ function loadStats() {
 }
 
 watch(showStats, (on) => { if (on) loadStats() })
+
+// the API client asks for make now while the badge is on, the cards on screen only follow when searched again
+watch(() => useUserPreferenceStore().deviceSettings.card_showMakeNowBadge, () => requestRecipes())
 
 // Apply filters emitted by a stat-chip click. Replace semantics: the chip
 // represents a global stat over the whole visible set, so the drill-down

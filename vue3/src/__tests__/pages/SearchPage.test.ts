@@ -206,6 +206,61 @@ describe('SearchPage (Phase 3 rewrite)', () => {
             expect(arg.pageSize).toBe(25)
         })
 
+        // whether make now is asked for is decided for every request by the API client (makenowBadge.ts), not per page
+        it('does not ask for make now itself', async () => {
+            await mountSearchPage({}, 'grid', {card_showMakeNowBadge: true})
+            expect((apiMock.apiRecipeList as any).mock.calls[0][0]).not.toHaveProperty('makenowBadge')
+        })
+
+        describe('when the make now badge is switched', () => {
+            async function mountAndSwitch() {
+                const scrollTo = vi.fn()
+                window.scrollTo = scrollTo as any
+                const {wrapper} = await mountSearchPage()
+                ;(wrapper.vm as any).selectedItems = [{id: 1}, {id: 2}]
+                scrollTo.mockClear()
+                const calls = apiMock.apiRecipeList as any
+                const before = calls.mock.calls.length
+                const store = (wrapper.vm.$pinia as any)._s.get('user_preference_store')
+                store.deviceSettings.card_showMakeNowBadge = true
+                await flushPromises()
+                return {wrapper, scrollTo, requests: calls.mock.calls.length - before}
+            }
+
+            it('shows the new cards but keeps the selection', async () => {
+                const {wrapper, requests} = await mountAndSwitch()
+                expect(requests).toBe(1)
+                expect((wrapper.vm as any).selectedItems).toEqual([{id: 1}, {id: 2}])
+            })
+
+            it('does not scroll back to the top', async () => {
+                const {scrollTo} = await mountAndSwitch()
+                expect(scrollTo).not.toHaveBeenCalled()
+            })
+        })
+
+        it('still clears the selection and scrolls to the top for an ordinary search', async () => {
+            const scrollTo = vi.fn()
+            window.scrollTo = scrollTo as any
+            const {wrapper} = await mountSearchPage()
+            ;(wrapper.vm as any).selectedItems = [{id: 1}]
+            scrollTo.mockClear()
+            ;(wrapper.vm as any).searchRecipes({page: 2})
+            await flushPromises()
+            expect((wrapper.vm as any).selectedItems).toEqual([])
+            expect(scrollTo).toHaveBeenCalled()
+        })
+
+        it.each([true, false])('searches again when the make now badge is turned %s, so the cards on screen follow the setting', async (on) => {
+            const {wrapper} = await mountSearchPage({}, 'grid', {card_showMakeNowBadge: !on})
+            const calls = apiMock.apiRecipeList as any
+            const before = calls.mock.calls.length
+            const store = (wrapper.vm.$pinia as any)._s.get('user_preference_store')
+            store.deviceSettings.card_showMakeNowBadge = on
+            await flushPromises()
+            expect(calls.mock.calls.length).toBeGreaterThan(before)
+        })
+
         it('translates ?keywords=1,2 into a keywords array on the API call', async () => {
             await mountSearchPage({keywords: '1,2'})
             const arg = (apiMock.apiRecipeList as any).mock.calls[0][0]

@@ -192,6 +192,11 @@
                             hide-details density="compact" color="primary"
                         />
                         <v-switch
+                            v-model="deviceSettings.card_showMakeNowBadge"
+                            :label="$t('Show_Make_Now_Badge')"
+                            hide-details density="compact" color="primary"
+                        />
+                        <v-switch
                             v-model="deviceSettings.card_show_cook_time"
                             :label="$t('Show_Cook_Time')"
                             hide-details density="compact" color="primary"
@@ -274,7 +279,7 @@ const menuItemDefs: ReadonlyArray<{key: string; labelKey: string}> = [
     {key: 'edit', labelKey: 'Edit'},
     {key: 'plan', labelKey: 'Add_to_Plan'},
     {key: 'shopping', labelKey: 'Add_to_Shopping'},
-    {key: 'book', labelKey: 'Add_to_Book'},
+    {key: 'book', labelKey: 'Edit_Books'},
     {key: 'cooklog', labelKey: 'Log_Cooking'},
     {key: 'photo', labelKey: 'Edit_Photo'},
     {key: 'properties', labelKey: 'Property_Editor'},

@@ -1,5 +1,6 @@
-import { describe, it, expect, vi } from 'vitest'
-import { mount } from '@vue/test-utils'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+import { nextTick } from 'vue'
+import { mount, flushPromises } from '@vue/test-utils'
 import { createPinia, type PiniaPlugin } from 'pinia'
 import { createI18n } from 'vue-i18n'
 import { createVuetify } from 'vuetify'
@@ -65,7 +66,8 @@ function mountRecipeCard(props: Record<string, any> = {}, deviceOverrides: Recor
         global: {
             plugins: [pinia, i18n, vuetify, router],
             stubs: {
-                RecipeContextMenu: { template: '<div class="stub-context-menu"/>' },
+                RecipeContextMenu: { name: 'RecipeContextMenu', emits: ['preview', 'update:recipe'], template: '<div class="stub-context-menu"/>' },
+                RecipePreviewDialog: { name: 'RecipePreviewDialog', props: ['recipe', 'modelValue'], template: '<div class="stub-preview-dialog"/>' },
                 RecipeImage: { template: '<div class="stub-recipe-image"><slot name="overlay"/></div>' },
                 PrivateRecipeBadge: { template: '<div class="stub-private-badge"/>' },
                 KeywordsBar: { template: '<div class="stub-keywords-bar"/>' },
@@ -73,6 +75,107 @@ function mountRecipeCard(props: Record<string, any> = {}, deviceOverrides: Recor
         },
     })
 }
+
+describe('RecipeCard preview', () => {
+    beforeEach(() => { vi.useFakeTimers() })
+    afterEach(() => { vi.useRealTimers() })
+
+    // jsdom builds pointer events as read-only mouse events, so fire plain events carrying the pointer fields
+    const press = async (el: any, pointerType = 'touch') => {
+        el.element.dispatchEvent(Object.assign(new Event('pointerdown', { bubbles: true }), { pointerType, clientX: 10, clientY: 10, button: 0 }))
+        await nextTick()
+    }
+    const hold = async (el: any, pointerType = 'touch') => {
+        await press(el, pointerType)
+        vi.advanceTimersByTime(600)
+        await nextTick()
+    }
+
+    it('opens the preview of the recipe when the image is pressed and held', async () => {
+        const w = mountRecipeCard({ recipe: makeRecipeOverview({ id: 7 }) })
+        expect(w.find('.stub-preview-dialog').exists()).toBe(false)
+        await hold(w.find('a'))
+        const dialog = w.findComponent({ name: 'RecipePreviewDialog' })
+        expect(dialog.exists()).toBe(true)
+        expect(dialog.props('recipe')).toMatchObject({ id: 7 })
+        expect(dialog.props('modelValue')).toBe(true)
+    })
+
+    it('opens the preview when the title is pressed and held', async () => {
+        const w = mountRecipeCard()
+        await hold(w.find('.flex-grow-1'))
+        expect(w.find('.stub-preview-dialog').exists()).toBe(true)
+    })
+
+    it('opens the preview for a held mouse button too', async () => {
+        const w = mountRecipeCard()
+        await hold(w.find('a'), 'mouse')
+        expect(w.find('.stub-preview-dialog').exists()).toBe(true)
+    })
+
+    it('does not open the preview for a quick press', async () => {
+        const w = mountRecipeCard()
+        await press(w.find('a'))
+        vi.advanceTimersByTime(200)
+        await w.find('a').trigger('pointerup')
+        vi.advanceTimersByTime(1000)
+        await nextTick()
+        expect(w.find('.stub-preview-dialog').exists()).toBe(false)
+    })
+
+    it('opens the recipe on an ordinary click', async () => {
+        const w = mountRecipeCard({ recipe: makeRecipeOverview({ id: 7 }) })
+        vi.useRealTimers()
+        await w.find('a').trigger('click')
+        await flushPromises()
+        expect((w.vm as any).$route.name).toBe('RecipeViewPage')
+    })
+
+    it('keeps the click that ends a long press from opening the recipe', async () => {
+        const w = mountRecipeCard({ recipe: makeRecipeOverview({ id: 7 }) })
+        await hold(w.find('a'))
+        vi.useRealTimers()
+        await w.find('a').trigger('click')
+        await flushPromises()
+        expect((w.vm as any).$route.name).not.toBe('RecipeViewPage')
+        expect(w.find('.stub-preview-dialog').exists()).toBe(true)
+    })
+
+    it('opens the recipe on an ordinary click of the title', async () => {
+        const w = mountRecipeCard({ recipe: makeRecipeOverview({ id: 7 }) })
+        vi.useRealTimers()
+        await w.find('.flex-grow-1').trigger('click')
+        await flushPromises()
+        expect((w.vm as any).$route.name).toBe('RecipeViewPage')
+    })
+
+    it('keeps the click that ends a long press of the title from opening the recipe', async () => {
+        const w = mountRecipeCard({ recipe: makeRecipeOverview({ id: 7 }) })
+        await hold(w.find('.flex-grow-1'))
+        vi.useRealTimers()
+        await w.find('.flex-grow-1').trigger('click')
+        await flushPromises()
+        expect((w.vm as any).$route.name).not.toBe('RecipeViewPage')
+        expect(w.find('.stub-preview-dialog').exists()).toBe(true)
+    })
+
+    it('opens the preview when the context menu asks for it', async () => {
+        const w = mountRecipeCard()
+        w.findComponent({ name: 'RecipeContextMenu' }).vm.$emit('preview')
+        await nextTick()
+        expect(w.find('.stub-preview-dialog').exists()).toBe(true)
+    })
+
+    it('has no press and hold when the card does not link to the recipe, like the card inside a book', async () => {
+        const w = mountRecipeCard({ disableLink: true, showMenu: false })
+        await hold(w.find('.flex-grow-1'))
+        const image = w.find('.stub-recipe-image').element.parentElement!
+        image.dispatchEvent(Object.assign(new Event('pointerdown', { bubbles: true }), { pointerType: 'touch', clientX: 10, clientY: 10, button: 0 }))
+        vi.advanceTimersByTime(600)
+        await nextTick()
+        expect(w.find('.stub-preview-dialog').exists()).toBe(false)
+    })
+})
 
 describe('RecipeCard display settings', () => {
     describe('rating display', () => {
@@ -141,6 +244,30 @@ describe('RecipeCard display settings', () => {
             const recipe = makeRecipeOverview({ _new: true })
             const w = mountRecipeCard({ recipe }, { card_showNewBadge: false })
             expect(w.find('.recipe-card-new-badge').exists()).toBe(false)
+        })
+    })
+
+    describe('make now badge', () => {
+        it('shows the badge when card_showMakeNowBadge is true and the recipe can be made now', () => {
+            const w = mountRecipeCard({ recipe: makeRecipeOverview({ makenow: true } as any) }, { card_showMakeNowBadge: true })
+            expect(w.find('.recipe-card-makenow-badge').exists()).toBe(true)
+        })
+
+        it('hides the badge when card_showMakeNowBadge is false', () => {
+            const w = mountRecipeCard({ recipe: makeRecipeOverview({ makenow: true } as any) }, { card_showMakeNowBadge: false })
+            expect(w.find('.recipe-card-makenow-badge').exists()).toBe(false)
+        })
+
+        it.each([false, null])('hides the badge for a recipe that cannot be made now (makenow %s) even if the setting is on', (makenow) => {
+            const w = mountRecipeCard({ recipe: makeRecipeOverview({ makenow } as any) }, { card_showMakeNowBadge: true })
+            expect(w.find('.recipe-card-makenow-badge').exists()).toBe(false)
+        })
+
+        it('is off by default', async () => {
+            const { useUserPreferenceStore } = await import('@/stores/UserPreferenceStore')
+            const w = mountRecipeCard({ recipe: makeRecipeOverview({ makenow: true } as any) })
+            expect(useUserPreferenceStore().deviceSettings.card_showMakeNowBadge).toBe(false)
+            expect(w.find('.recipe-card-makenow-badge').exists()).toBe(false)
         })
     })
 

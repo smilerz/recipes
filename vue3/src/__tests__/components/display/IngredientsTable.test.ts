@@ -391,4 +391,77 @@ describe('IngredientsTable mobile Option-C list layout', () => {
         await note.trigger('click')
         expect(w.find('[data-test="ingredient-note"]').text()).toContain('finely minced')
     })
+
+    describe('showNotes', () => {
+        async function mountWithNote(mode: string, extraProps: any = {}) {
+            const w = mountTableMobile([makeIngredient({note: 'finely chopped'})], 'step', extraProps)
+            const store = (w.vm.$pinia as any)._s.get('user_preference_store')
+            store.deviceSettings.recipe_stepNotesDisplay = mode
+            await w.vm.$nextTick()
+            return w
+        }
+
+        it.each(['inline', 'truncate'])('%s mode shows the note by default', async (mode) => {
+            expect((await mountWithNote(mode)).text()).toContain('finely chopped')
+        })
+
+        it('bubble mode shows a note bubble by default', async () => {
+            expect((await mountWithNote('bubble')).find('.fa-comment').exists()).toBe(true)
+        })
+
+        it.each(['inline', 'truncate', 'bubble'])('%s mode shows no note when showNotes is false', async (mode) => {
+            const w = await mountWithNote(mode, {showNotes: false})
+            expect(w.text()).not.toContain('finely chopped')
+            expect(w.find('.fa-comment').exists()).toBe(false)
+            expect(w.find('[data-test="ingredient-note"]').exists()).toBe(false)
+        })
+    })
+})
+
+describe('IngredientsTable showNotes on the desktop table', () => {
+    function mountDesktop(extraProps: any = {}) {
+        const prePopulate: PiniaPlugin = ({store}) => {
+            if (store.$id === 'user_preference_store') store.userSettings = makeUserPreference() as any
+        }
+        const pinia = createPinia()
+        pinia.use(prePopulate)
+        const i18n = createI18n({legacy: false, locale: 'en', messages: {en: {}}, missingWarn: false, fallbackWarn: false})
+        const vuetify = createVuetify({components: vuetifyComponents, directives: vuetifyDirectives, display: {mobileBreakpoint: 0}})
+        const router = createRouter({history: createMemoryHistory(), routes: [{path: '/', component: {template: '<div/>'}}]})
+        return mount(IngredientsTable, {
+            props: {modelValue: [makeIngredient({note: 'finely chopped'})], ingredientFactor: 1, showCheckbox: false, context: 'step', ...extraProps},
+            global: {plugins: [pinia, i18n, vuetify, router], stubs: {IngredientContextMenu: {template: '<div class="stub-ctxmenu"/>'}}},
+        })
+    }
+
+    async function withNotes(mode: string, extraProps: any = {}, printMode = false) {
+        const w = mountDesktop(extraProps)
+        const store = (w.vm.$pinia as any)._s.get('user_preference_store')
+        store.deviceSettings.recipe_stepNotesDisplay = mode
+        store.isPrintMode = printMode
+        await w.vm.$nextTick()
+        return w
+    }
+
+    it.each(['inline', 'truncate'])('%s mode shows the note by default', async (mode) => {
+        expect((await withNotes(mode)).text()).toContain('finely chopped')
+    })
+
+    it('bubble mode shows a note bubble by default', async () => {
+        expect((await withNotes('bubble')).find('.fa-comment').exists()).toBe(true)
+    })
+
+    it.each(['inline', 'truncate', 'bubble'])('%s mode shows no note when showNotes is false', async (mode) => {
+        const w = await withNotes(mode, {showNotes: false})
+        expect(w.text()).not.toContain('finely chopped')
+        expect(w.find('.fa-comment').exists()).toBe(false)
+    })
+
+    it('print mode shows the note by default', async () => {
+        expect((await withNotes('bubble', {}, true)).text()).toContain('finely chopped')
+    })
+
+    it('print mode shows no note either when showNotes is false', async () => {
+        expect((await withNotes('bubble', {showNotes: false}, true)).text()).not.toContain('finely chopped')
+    })
 })

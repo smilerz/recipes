@@ -194,3 +194,27 @@ def test_makenow_sibling_substitute(recipes, makenow_recipe, user1, household, s
         search = search.get_queryset(Recipe.objects.all())
         assert search.count() == 1
         assert search.first().id == makenow_recipe.id
+
+
+def test_cookable_within_only_looks_at_the_given_recipes(space_1, household, u1_s1):
+    user = auth.get_user(u1_s1)
+    with scope(space=space_1):
+        stocked_in, stocked_out, not_stocked = RecipeFactory.create_batch(3, space=space_1)
+        for recipe in (stocked_in, stocked_out):
+            for food in Food.objects.filter(ingredient__step__recipe=recipe.id):
+                _stock(food, household, space_1, user)
+
+        everywhere = set(Recipe.objects.cookable(household, missing=0).values_list('id', flat=True))
+        within = set(Recipe.objects.cookable(household, missing=0, within=[stocked_in.id, not_stocked.id]).values_list('id', flat=True))
+
+    assert {stocked_in.id, stocked_out.id} <= everywhere
+    assert within == {stocked_in.id}
+
+
+def test_cookable_within_nothing_finds_nothing(space_1, household, u1_s1):
+    user = auth.get_user(u1_s1)
+    with scope(space=space_1):
+        recipe = RecipeFactory(space=space_1)
+        for food in Food.objects.filter(ingredient__step__recipe=recipe.id):
+            _stock(food, household, space_1, user)
+        assert list(Recipe.objects.cookable(household, missing=0, within=[])) == []

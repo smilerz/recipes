@@ -601,6 +601,95 @@ def test_batch_update_sets_servings(u1_s1, recipe_1_s1):
     assert recipe_1_s1.servings == 6
 
 
+# ---------------------------------------------------------------------------------------------------------------------
+# make now badge: which recipes of the page can be made with what the household has, only when asked for
+# ---------------------------------------------------------------------------------------------------------------------
+
+def _household_with_stock_for(client_user, space, *recipes):
+    """Put the user into a household and stock every ingredient of the given recipes in its pantry."""
+    from cookbook.models import UserSpace
+    from cookbook.tests.factories import HouseholdFactory, InventoryEntryFactory, InventoryLocationFactory
+    with scopes_disabled():
+        household = HouseholdFactory(space=space)
+        user = auth.get_user(client_user)
+        UserSpace.objects.filter(space=space, user=user).update(household=household)
+        location = InventoryLocationFactory(space=space, household=household)
+        for recipe in recipes:
+            for food in Food.objects.filter(ingredient__step__recipe=recipe.id):
+                InventoryEntryFactory(space=space, food=food, inventory_location=location, amount=1, created_by=user)
+
+
+@pytest.fixture
+def cookable_and_not(space_1):
+    with scopes_disabled():
+        return RecipeFactory(space=space_1, name='can make'), RecipeFactory(space=space_1, name='cannot make')
+
+
+def _makenow_by_name(response):
+    return {r['name']: r['makenow'] for r in json.loads(response.content)['results']}
+
+
+def test_list_says_nothing_about_make_now_unless_asked(u1_s1, space_1, cookable_and_not):
+    _household_with_stock_for(u1_s1, space_1, cookable_and_not[0])
+    r = u1_s1.get(reverse(LIST_URL))
+    assert r.status_code == 200
+    assert set(_makenow_by_name(r).values()) == {None}
+
+
+def test_list_says_nothing_about_make_now_when_not_asked_for_explicitly(u1_s1, space_1, cookable_and_not):
+    _household_with_stock_for(u1_s1, space_1, cookable_and_not[0])
+    r = u1_s1.get(reverse(LIST_URL) + '?makenow_badge=false')
+    assert set(_makenow_by_name(r).values()) == {None}
+
+
+def test_list_marks_the_recipes_that_can_be_made(u1_s1, space_1, cookable_and_not):
+    _household_with_stock_for(u1_s1, space_1, cookable_and_not[0])
+    r = u1_s1.get(reverse(LIST_URL) + '?makenow_badge=true')
+    assert r.status_code == 200
+    assert _makenow_by_name(r) == {'can make': True, 'cannot make': False}
+
+
+def test_a_recipe_missing_one_ingredient_cannot_be_made(u1_s1, space_1, cookable_and_not):
+    recipe = cookable_and_not[0]
+    _household_with_stock_for(u1_s1, space_1, recipe)
+    from cookbook.models import InventoryEntry
+    with scopes_disabled():
+        InventoryEntry.objects.filter(food=Food.objects.filter(ingredient__step__recipe=recipe.id).first()).delete()
+    r = u1_s1.get(reverse(LIST_URL) + '?makenow_badge=true')
+    assert _makenow_by_name(r)['can make'] is False
+
+
+def test_nothing_can_be_made_without_a_household(u1_s1, space_1, cookable_and_not):
+    r = u1_s1.get(reverse(LIST_URL) + '?makenow_badge=true')
+    assert r.status_code == 200
+    assert _makenow_by_name(r) == {'can make': False, 'cannot make': False}
+
+
+def test_make_now_belongs_to_the_household_of_the_user(u1_s1, u2_s1, space_1, cookable_and_not):
+    _household_with_stock_for(u1_s1, space_1, cookable_and_not[0])
+    r = u2_s1.get(reverse(LIST_URL) + '?makenow_badge=true')
+    assert _makenow_by_name(r) == {'can make': False, 'cannot make': False}
+
+
+def test_make_now_is_only_worked_out_for_the_recipes_of_the_page(u1_s1, space_1, cookable_and_not):
+    from unittest.mock import patch
+
+    from cookbook.managers import RecipeQuerySet
+    _household_with_stock_for(u1_s1, space_1, *cookable_and_not)
+    asked = []
+    real = RecipeQuerySet.cookable
+
+    def spy(self, household, missing=0, within=None):
+        asked.append(within)
+        return real(self, household, missing=missing, within=within)
+
+    with patch.object(RecipeQuerySet, 'cookable', spy):
+        r = u1_s1.get(reverse(LIST_URL) + '?makenow_badge=true&page_size=1')
+    page_ids = [x['id'] for x in json.loads(r.content)['results']]
+    assert len(page_ids) == 1
+    assert [sorted(w) for w in asked if w is not None] == [page_ids]
+
+
 # A space with a recipe limit may not get more recipes than that, but it may keep working on the ones it has.
 def _limit_recipes_to_what_the_space_has(space):
     with scopes_disabled():

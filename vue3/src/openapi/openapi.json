@@ -6400,6 +6400,12 @@ paths:
           type: boolean
         description: Filter recipes that can be made with OnHand food. [true/<b>false</b>]
       - in: query
+        name: makenow_badge
+        schema:
+          type: boolean
+        description: Tell for every recipe of the page whether it can be made with
+          the food the household has (makenow). [true/<b>false</b>]
+      - in: query
         name: new
         schema:
           type: boolean
@@ -6730,6 +6736,12 @@ paths:
         schema:
           type: integer
         description: id of book - only return recipes in that book
+      - in: query
+        name: makenow_badge
+        schema:
+          type: boolean
+        description: Tell for every recipe of the page whether it can be made with
+          the food the household has (makenow). [true/<b>false</b>]
       - name: page
         required: false
         in: query
@@ -17898,6 +17910,10 @@ components:
         new:
           type: boolean
           readOnly: true
+        makenow:
+          type: boolean
+          nullable: true
+          readOnly: true
       required:
       - created_at
       - created_by
@@ -17906,6 +17922,7 @@ components:
       - internal
       - keywords
       - last_cooked
+      - makenow
       - name
       - new
       - rating

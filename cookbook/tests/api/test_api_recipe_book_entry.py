@@ -214,3 +214,46 @@ def test_list_hides_entries_whose_recipe_the_user_cannot_see(u1_s1, u2_s1, space
     assert 'U2-PRIVATE-SECRET-RECIPE' not in r.content.decode()
     # the owner of the book sees their own private recipes, but not a private recipe of the user who added it
     assert {e['recipe'] for e in json.loads(u2_s1.get(reverse(LIST_URL)).content)['results']} == {public.id, secret.id, shared_with_user1.id}
+
+
+# ---------------------------------------------------------------------------------------------------------------------
+# make now badge: the recipes of the entries tell whether the household can make them now, only when asked for
+# ---------------------------------------------------------------------------------------------------------------------
+
+@pytest.fixture
+def stocked_and_not(space_1, u1_s1):
+    from cookbook.models import Food, UserSpace
+    from cookbook.tests.factories import HouseholdFactory, InventoryEntryFactory, InventoryLocationFactory, RecipeFactory
+    user = auth.get_user(u1_s1)
+    with scopes_disabled():
+        stocked, other = RecipeFactory(space=space_1, name='stocked'), RecipeFactory(space=space_1, name='other')
+        book = RecipeBook.objects.create(name='book', created_by=user, space=space_1)
+        for recipe in (stocked, other):
+            RecipeBookEntry.objects.create(book=book, recipe=recipe)
+        household = HouseholdFactory(space=space_1)
+        UserSpace.objects.filter(space=space_1, user=user).update(household=household)
+        location = InventoryLocationFactory(space=space_1, household=household)
+        for food in Food.objects.filter(ingredient__step__recipe=stocked.id):
+            InventoryEntryFactory(space=space_1, food=food, inventory_location=location, amount=1, created_by=user)
+    return book
+
+
+def _makenow_by_recipe(response):
+    return {e['recipe_content']['name']: e['recipe_content']['makenow'] for e in json.loads(response.content)['results']}
+
+
+def test_entries_say_nothing_about_make_now_unless_asked(u1_s1, stocked_and_not):
+    r = u1_s1.get(reverse(LIST_URL))
+    assert r.status_code == 200
+    assert set(_makenow_by_recipe(r).values()) == {None}
+
+
+def test_entries_mark_the_recipes_that_can_be_made(u1_s1, stocked_and_not):
+    r = u1_s1.get(reverse(LIST_URL) + '?makenow_badge=true')
+    assert r.status_code == 200
+    assert _makenow_by_recipe(r) == {'stocked': True, 'other': False}
+
+
+def test_entries_of_one_book_are_marked_too(u1_s1, stocked_and_not):
+    r = u1_s1.get(reverse(LIST_URL) + f'?book={stocked_and_not.id}&makenow_badge=true')
+    assert _makenow_by_recipe(r) == {'stocked': True, 'other': False}

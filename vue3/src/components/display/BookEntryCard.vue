@@ -11,7 +11,7 @@
             height="25vh"
         ></recipe-card>
         <v-card-subtitle>{{ props.recipeOverview.description }}</v-card-subtitle>
-        <ingredients-table :ingredient-factor="1" v-model="ingredients" :show-checkbox="false"></ingredients-table>
+        <ingredients-table class="book-entry-ingredients" :ingredient-factor="1" v-model="ingredients" :show-checkbox="false" :show-notes="false"></ingredients-table>
         <v-card-actions>
             <v-btn :to="{name: 'RecipeViewPage', params: {id: props.recipeOverview.id}}">{{$t('Open')}}</v-btn>
         </v-card-actions>
@@ -61,5 +61,8 @@ function loadRecipe() {
 
 
 <style scoped>
-
+/* the mobile ingredient list has no side padding of its own; line it up with the description above it */
+.book-entry-ingredients :deep(.v-list-item) {
+    padding-inline: 16px;
+}
 </style>

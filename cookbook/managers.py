@@ -388,7 +388,10 @@ class RecipeQuerySet(models.QuerySet):
     #  Availability (makenow)
     # ------------------------------------------------------------------ #
 
-    def cookable(self, household, missing=0):
+    def cookable(self, household, missing=0, within=None):
+        """Recipes of this queryset missing at most `missing` foods. `within` (recipe ids) makes the
+        availability check look at those recipes only, so asking about one page does not count the
+        ingredients of every recipe in the space."""
         from cookbook.helper.food_availability_helper import (
             _is_available, _substitute_available,
             children_substitute_filter, sibling_substitute_filter,
@@ -402,7 +405,8 @@ class RecipeQuerySet(models.QuerySet):
         siblings_resolved = sibling_substitute_filter(household)
 
         # Count foods that are needed but not resolved through any path
-        makenow_recipes = Recipe.objects.annotate(
+        candidates = Recipe.objects.all() if within is None else Recipe.objects.filter(id__in=within)
+        makenow_recipes = candidates.annotate(
             missing_foods=Count(
                 'steps__ingredients__food__pk',
                 filter=(
