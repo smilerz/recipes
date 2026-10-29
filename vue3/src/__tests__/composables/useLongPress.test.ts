@@ -204,4 +204,91 @@ describe('useLongPress', () => {
         press.onContextmenu(menu)
         expect(menu.preventDefault).not.toHaveBeenCalled()
     })
+
+    // the preview opens under the pointer, so the release and the context menu of a touch long press go to the dialog, not to the pressed element
+    describe('context menu of the page after a long press', () => {
+        const contextMenuOn = (target: EventTarget) => {
+            const event = new MouseEvent('contextmenu', { bubbles: true, cancelable: true })
+            target.dispatchEvent(event)
+            return event.defaultPrevented
+        }
+        const releaseOn = (target: EventTarget) => target.dispatchEvent(new Event('pointerup', { bubbles: true }))
+        const longPress = (press: ReturnType<typeof useLongPress>, pointerType = 'touch') => {
+            press.onPointerdown(down(pointerType))
+            vi.advanceTimersByTime(600)
+        }
+
+        afterEach(() => {
+            // let a guard of a test end, whatever it was doing
+            vi.advanceTimersByTime(60_000)
+        })
+
+        it('is blocked wherever it lands once a long press fired, also on what opened under the pointer', () => {
+            const dialog = document.createElement('div')
+            document.body.appendChild(dialog)
+            longPress(useLongPress(vi.fn()))
+            expect(contextMenuOn(dialog)).toBe(true)
+            dialog.remove()
+        })
+
+        it('is blocked just after the release, which also lands elsewhere', () => {
+            const dialog = document.createElement('div')
+            document.body.appendChild(dialog)
+            longPress(useLongPress(vi.fn()), 'mouse')
+            releaseOn(dialog)
+            vi.advanceTimersByTime(300)
+            expect(contextMenuOn(dialog)).toBe(true)
+            dialog.remove()
+        })
+
+        it('is allowed again a moment after the release', () => {
+            longPress(useLongPress(vi.fn()))
+            releaseOn(document.body)
+            vi.advanceTimersByTime(1500)
+            expect(contextMenuOn(document.body)).toBe(false)
+        })
+
+        it('stays blocked while the press is held on, however long', () => {
+            longPress(useLongPress(vi.fn()))
+            vi.advanceTimersByTime(5000)
+            expect(contextMenuOn(document.body)).toBe(true)
+        })
+
+        it('is not blocked when no long press happened, so an ordinary right click keeps its menu', () => {
+            useLongPress(vi.fn())
+            expect(contextMenuOn(document.body)).toBe(false)
+        })
+
+        it('is not blocked after a press that was released early', () => {
+            const press = useLongPress(vi.fn())
+            press.onPointerdown(down())
+            vi.advanceTimersByTime(200)
+            press.onPointerup(down())
+            expect(contextMenuOn(document.body)).toBe(false)
+        })
+
+        it('is allowed again at the latest after a few seconds, if the release never came', () => {
+            longPress(useLongPress(vi.fn()))
+            vi.advanceTimersByTime(30_000)
+            expect(contextMenuOn(document.body)).toBe(false)
+        })
+
+        it('is allowed again when the component goes away', () => {
+            const scope = effectScope()
+            const press = scope.run(() => useLongPress(vi.fn()))!
+            longPress(press)
+            scope.stop()
+            expect(contextMenuOn(document.body)).toBe(false)
+        })
+
+        it('does not pile up when there are several long presses', () => {
+            const press = useLongPress(vi.fn())
+            longPress(press)
+            releaseOn(document.body)
+            longPress(press)
+            releaseOn(document.body)
+            vi.advanceTimersByTime(1500)
+            expect(contextMenuOn(document.body)).toBe(false)
+        })
+    })
 })

@@ -14,6 +14,10 @@ import {onScopeDispose} from 'vue'
 
 /** how long after a long press the click that ends it can still arrive (a held mouse button), ms */
 const CLICK_AFTER_PRESS = 400
+/** how long after the release the context menu of a touch long press can still arrive, ms */
+const MENU_AFTER_RELEASE = 800
+/** the longest the context menu of the page stays blocked, in case the release is never seen, ms */
+const MENU_GUARD_MAX = 10_000
 
 export function useLongPress(onLongPress: () => void, options: {delay?: number, tolerance?: number} = {}) {
     const {delay = 500, tolerance = 8} = options
@@ -40,9 +44,39 @@ export function useLongPress(onLongPress: () => void, options: {delay?: number, 
         }
     }
 
+    let stopMenuGuard: (() => void) | null = null
+
+    /**
+     * Block the context menu of the whole page for the rest of this press. What a long press opens (the
+     * preview) appears under the pointer, so the release and the context menu that a touch long press
+     * brings up land on it and not on the pressed element, where the handlers below could stop them.
+     */
+    function guardContextMenu() {
+        stopMenuGuard?.()
+        const block = (e: Event) => e.preventDefault()
+        let afterRelease: ReturnType<typeof setTimeout> | null = null
+        const released = () => {
+            if (afterRelease === null) afterRelease = setTimeout(stop, MENU_AFTER_RELEASE)
+        }
+        const longest = setTimeout(stop, MENU_GUARD_MAX)
+        function stop() {
+            document.removeEventListener('contextmenu', block, true)
+            document.removeEventListener('pointerup', released, true)
+            document.removeEventListener('pointercancel', released, true)
+            clearTimeout(longest)
+            if (afterRelease !== null) clearTimeout(afterRelease)
+            if (stopMenuGuard === stop) stopMenuGuard = null
+        }
+        document.addEventListener('contextmenu', block, true)
+        document.addEventListener('pointerup', released, true)
+        document.addEventListener('pointercancel', released, true)
+        stopMenuGuard = stop
+    }
+
     onScopeDispose(() => {
         cancel()
         clearFired()
+        stopMenuGuard?.()
     })
 
     /**
@@ -70,6 +104,7 @@ export function useLongPress(onLongPress: () => void, options: {delay?: number, 
             timer = setTimeout(() => {
                 timer = null
                 fired = true
+                guardContextMenu()
                 onLongPress()
             }, delay)
         },
