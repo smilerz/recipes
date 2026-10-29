@@ -1466,9 +1466,11 @@ class RecipeSerializer(PrimaryRecipeImageMixin, RecipeBaseSerializer):
         extra_kwargs = {'servings': {'min_value': 1}}
 
     def validate(self, data):
-        above_limit, msg = above_space_limit(self.context['request'].space)
-        if above_limit:
-            raise serializers.ValidationError(msg)
+        # the limit keeps a space from getting more recipes, it must not stop it from working on the ones it has
+        if self.instance is None:
+            above_limit, msg = above_space_limit(self.context['request'].space)
+            if above_limit:
+                raise serializers.ValidationError(msg)
         return super().validate(data)
 
     def create(self, validated_data):
