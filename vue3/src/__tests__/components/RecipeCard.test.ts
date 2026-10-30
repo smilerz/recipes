@@ -341,6 +341,33 @@ describe('RecipeCard display settings', () => {
         })
     })
 
+    describe('cook time on the picture', () => {
+        const card = (recipe: Record<string, any> = {}, deviceOverrides: Record<string, any> = {}) =>
+            mountRecipeCard({ recipe: makeRecipeOverview({ workingTime: 15, waitingTime: 5, ...recipe }) }, { card_show_cook_time: true, ...deviceOverrides })
+
+        it('is a pill in the top left corner of the picture, with the clock and the total time', () => {
+            const pill = card().find('.stub-recipe-image .recipe-card-cooktime')
+            expect(pill.exists()).toBe(true)
+            expect(pill.classes()).toContain('card-overlay-top-left')
+            expect(pill.find('.fa-clock').exists()).toBe(true)
+            expect(pill.text()).toBe('20')
+        })
+
+        it('is not in the keywords row any more, the clock shows once and on the picture', () => {
+            const w = card()
+            expect(w.findAll('.fa-clock')).toHaveLength(1)
+            expect(w.find('.stub-recipe-image .fa-clock').exists()).toBe(true)
+        })
+
+        it('is off when the setting is off', () => {
+            expect(card({}, { card_show_cook_time: false }).find('.recipe-card-cooktime').exists()).toBe(false)
+        })
+
+        it.each([0, undefined])('is not shown for a recipe with a working time of %s', (workingTime) => {
+            expect(card({ workingTime }).find('.recipe-card-cooktime').exists()).toBe(false)
+        })
+    })
+
     describe('cook time chip', () => {
         // The cook time chip (workingTime + waitingTime) shows in the
         // keyword chip row; gated by card_show_cook_time which defaults ON
