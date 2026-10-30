@@ -89,6 +89,8 @@
                                       :label="$t('New')" density="compact" hide-details color="primary" />
                             <v-switch v-model="deviceSettings.card_showMakeNowBadge"
                                       :label="$t('Show_Make_Now_Badge')" density="compact" hide-details color="primary" />
+                            <v-switch v-model="deviceSettings.card_show_cook_time"
+                                      :label="$t('Show_Cook_Time')" density="compact" hide-details color="primary" />
                             <v-select v-model="deviceSettings.card_maxKeywords"
                                       :label="$t('Keywords')" density="compact" hide-details class="mt-2"
                                       :items="[{title: '3', value: 3}, {title: '5', value: 5}, {title: '10', value: 10}, {title: $t('All'), value: 0}]" />

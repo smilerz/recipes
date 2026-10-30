@@ -1,6 +1,6 @@
 /**
  * A sample recipe card for the settings that decide what a card shows. It is one random recipe, dressed up so
- * that every optional element of a card (new badge, make now chip and ring, rating, last cooked) shows on it,
+ * that every optional element of a card (new badge, make now chip and ring, rating, last cooked, cook time) shows on it,
  * whatever the real recipe is, and given as many keywords as the card is set to show.
  */
 import {computed, ref} from "vue";
@@ -49,6 +49,11 @@ export function useRecipeCardPreview(options: {maxKeywords: () => number, sample
                 }
                 if (!recipe.rating) {
                     recipe.rating = 4.5
+                }
+                // the cook time pill needs a working time; both parts are made up so the total is a number
+                if (!recipe.workingTime) {
+                    recipe.workingTime = 30
+                    recipe.waitingTime = 15
                 }
                 fetched.value = recipe as RecipeOverview
             }

@@ -16,6 +16,7 @@ import {ref} from 'vue'
 
 import {apiMock, resetApiMock} from '@/__tests__/api-mock'
 import {makeRecipeOverview, makeUserPreference} from '@/__tests__/factories'
+import {useUserPreferenceStore} from '@/stores/UserPreferenceStore'
 
 // CosmeticSettings → LanguageSelect → @/i18n.ts → virtual:locale-coverage
 // which is provided by a Vite plugin not loaded in the vitest env. Short-
@@ -104,6 +105,20 @@ describe('CosmeticSettings', () => {
             const makeNow = w.findAll('.v-switch').find(s => s.text().includes('Show_Make_Now_Badge'))
             expect(makeNow, 'make now switch should exist').toBeTruthy()
             expect(makeNow!.find('.fa-utensils').exists()).toBe(false)
+        })
+
+        it('has a switch for the cook time, as the display settings drawer has', async () => {
+            await sampleCard(makeRecipeOverview())
+            const w = mountSettings()
+            await flushPromises()
+            for (const title of w.findAll('.v-expansion-panel-title')) await title.trigger('click')
+            await flushPromises()
+            const cookTime = w.findAll('.v-switch').find(s => s.text().includes('Show_Cook_Time'))
+            expect(cookTime, 'cook time switch should exist').toBeTruthy()
+            const input = cookTime!.find('input')
+            const before = useUserPreferenceStore().deviceSettings.card_show_cook_time
+            await input.setValue(!before)
+            expect(useUserPreferenceStore().deviceSettings.card_show_cook_time).toBe(!before)
         })
 
         it('does not change the recipe it was given', async () => {

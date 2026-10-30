@@ -63,6 +63,35 @@ describe('useRecipeCardPreview', () => {
         expect((previewRecipe.value as any).lastCooked).toBe(cooked)
     })
 
+    it('gives the recipe a cook time when it has none, so the cook time pill shows', async () => {
+        answer(makeRecipeOverview({ workingTime: 0, waitingTime: 0 } as any))
+        const { previewRecipe, loadPreview } = useRecipeCardPreview({ maxKeywords: () => 3 })
+        loadPreview()
+        await flushPromises()
+        const recipe = previewRecipe.value as any
+        expect(recipe.workingTime).toBeGreaterThan(0)
+        expect(Number.isFinite(recipe.workingTime + recipe.waitingTime)).toBe(true)
+    })
+
+    it('gives a recipe without any times a cook time too, not NaN', async () => {
+        answer(makeRecipeOverview({ workingTime: undefined, waitingTime: undefined } as any))
+        const { previewRecipe, loadPreview } = useRecipeCardPreview({ maxKeywords: () => 3 })
+        loadPreview()
+        await flushPromises()
+        const recipe = previewRecipe.value as any
+        expect(recipe.workingTime).toBeGreaterThan(0)
+        expect(Number.isFinite(recipe.workingTime + recipe.waitingTime)).toBe(true)
+    })
+
+    it('keeps the working and waiting time the recipe really has', async () => {
+        answer(makeRecipeOverview({ workingTime: 20, waitingTime: 10 } as any))
+        const { previewRecipe, loadPreview } = useRecipeCardPreview({ maxKeywords: () => 3 })
+        loadPreview()
+        await flushPromises()
+        expect((previewRecipe.value as any).workingTime).toBe(20)
+        expect((previewRecipe.value as any).waitingTime).toBe(10)
+    })
+
     it('does not change the recipe it was given', async () => {
         const original = makeRecipeOverview({ _new: false, makenow: false, rating: null } as any)
         answer(original)
