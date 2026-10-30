@@ -207,6 +207,31 @@ describe('SearchPage (Phase 3 rewrite)', () => {
         })
 
         // whether make now is asked for is decided for every request by the API client (makenowBadge.ts), not per page
+        describe('select mode on the cards of the grid', () => {
+            // the selection checkbox sits at the top left of a card; the cards use this class to keep the cook time next to it
+            const mountWithRecipes = async () => {
+                apiMock.apiRecipeList = vi.fn().mockResolvedValue({results: [{id: 1, name: 'A'}, {id: 2, name: 'B'}], count: 2, next: null, previous: null})
+                return mountSearchPage({}, 'grid')
+            }
+
+            it('marks every card of the grid while select mode is on', async () => {
+                const {wrapper} = await mountWithRecipes()
+                expect(wrapper.findAll('.recipe-select-mode')).toHaveLength(0)
+                ;(wrapper.vm as any).selectMode = true
+                await flushPromises()
+                expect(wrapper.findAll('.recipe-select-mode')).toHaveLength(2)
+            })
+
+            it('stops marking them when select mode is turned off again', async () => {
+                const {wrapper} = await mountWithRecipes()
+                ;(wrapper.vm as any).selectMode = true
+                await flushPromises()
+                ;(wrapper.vm as any).selectMode = false
+                await flushPromises()
+                expect(wrapper.findAll('.recipe-select-mode')).toHaveLength(0)
+            })
+        })
+
         it('does not ask for make now itself', async () => {
             await mountSearchPage({}, 'grid', {card_showMakeNowBadge: true})
             expect((apiMock.apiRecipeList as any).mock.calls[0][0]).not.toHaveProperty('makenowBadge')

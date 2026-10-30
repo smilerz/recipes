@@ -181,7 +181,7 @@
         <template v-if="recipes.length > 0 && useUserPreferenceStore().deviceSettings.search_viewMode == 'grid'">
             <v-row>
                 <v-col cols="6" md="4" v-for="r in recipes" :key="r.id" class="pa-0">
-                    <div class="position-relative">
+                    <div class="position-relative" :class="{'recipe-select-mode': selectMode}">
                         <v-checkbox-btn
                             v-if="selectMode"
                             :model-value="selectedItems.some(s => s.id === r.id)"

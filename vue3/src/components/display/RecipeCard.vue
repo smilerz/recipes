@@ -13,6 +13,9 @@
                         <v-icon icon="fa-solid fa-star" size="x-small" color="amber" />
                         <span class="card-overlay-rating-text">{{ recipe.rating.toFixed(1) }}</span>
                     </span>
+                    <span v-if="showCookTime" class="card-overlay-top-left recipe-card-cooktime">
+                        <v-icon icon="far fa-clock" size="x-small"></v-icon>{{ recipe.workingTime! + recipe.waitingTime! }}
+                    </span>
                     <span v-if="showMakeNow" role="img" :aria-label="t('MakeNow')" :title="t('MakeNow')"
                           class="card-overlay-bottom-right card-overlay-makenow recipe-card-makenow-badge">
                         <v-icon icon="fa-solid fa-utensils" size="x-small"></v-icon>
@@ -47,10 +50,6 @@
                     <v-chip class="mb-1 me-1" size="x-small" label variant="outlined" color="info"
                             v-if="recipe.internal == false">
                         {{ $t('External') }}
-                    </v-chip>
-                    <v-chip class="mb-1 me-1" size="x-small" prepend-icon="far fa-clock" label variant="outlined"
-                            v-if="deviceSettings.card_show_cook_time && recipe.workingTime != undefined && recipe.workingTime > 0">
-                        {{ recipe.workingTime! + recipe.waitingTime! }}
                     </v-chip>
                 </template>
             </keywords-component>
@@ -127,6 +126,9 @@ const router = useRouter()
 const {t} = useI18n()
 const deviceSettings = useUserPreferenceStore().deviceSettings
 
+/** the cook time is on and the recipe has one: shown as a pill at the top left of the picture */
+const showCookTime = computed(() => !!deviceSettings.card_show_cook_time && recipe.value.workingTime != undefined && recipe.value.workingTime > 0)
+
 /** the setting is on and the household can make the recipe now: shown as an icon and a ring around the picture */
 const showMakeNow = computed(() => !!deviceSettings.card_showMakeNowBadge && !!(recipe.value as RecipeOverview).makenow)
 
@@ -200,6 +202,7 @@ function openRecipe() {
     user-select: none;
 }
 
+.card-overlay-top-left,
 .card-overlay-top-right,
 .card-overlay-bottom-right,
 .card-overlay-bottom-left {
@@ -212,6 +215,14 @@ function openRecipe() {
     line-height: 1;
     padding: 3px 6px;
     border-radius: 4px;
+}
+
+.card-overlay-top-left {
+    top: 6px;
+    left: 6px;
+    display: flex;
+    align-items: center;
+    gap: 3px;
 }
 
 .card-overlay-top-right {
@@ -273,5 +284,13 @@ function openRecipe() {
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.5px;
+}
+</style>
+
+<style>
+/* the selection checkbox of the search page (about 40px wide) is at the top left of a card while selecting;
+   unscoped because the class is on the wrapper the page puts around the card */
+.recipe-select-mode .card-overlay-top-left {
+    left: 36px;
 }
 </style>
