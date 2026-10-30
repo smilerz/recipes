@@ -87,11 +87,8 @@
                                       :label="$t('last_cooked')" density="compact" hide-details color="primary" />
                             <v-switch v-model="deviceSettings.card_showNewBadge"
                                       :label="$t('New')" density="compact" hide-details color="primary" />
-                            <v-switch v-model="deviceSettings.card_showMakeNowBadge" density="compact" hide-details color="primary">
-                                <template #label>
-                                    <v-icon icon="fa-solid fa-utensils" size="x-small" color="success" class="mr-2"></v-icon>{{ $t('Show_Make_Now_Badge') }}
-                                </template>
-                            </v-switch>
+                            <v-switch v-model="deviceSettings.card_showMakeNowBadge"
+                                      :label="$t('Show_Make_Now_Badge')" density="compact" hide-details color="primary" />
                             <v-select v-model="deviceSettings.card_maxKeywords"
                                       :label="$t('Keywords')" density="compact" hide-details class="mt-2"
                                       :items="[{title: '3', value: 3}, {title: '5', value: 5}, {title: '10', value: 10}, {title: $t('All'), value: 0}]" />
@@ -125,7 +122,7 @@
 import {onMounted, ref} from "vue"
 import {useI18n} from "vue-i18n"
 import {useUserPreferenceStore} from "@/stores/UserPreferenceStore"
-import {ApiApi, type RecipeOverview} from "@/openapi"
+import {useRecipeCardPreview} from "@/composables/useRecipeCardPreview"
 import LanguageSelect from "@/components/inputs/LanguageSelect.vue"
 import RecipeCard from "@/components/display/RecipeCard.vue"
 
@@ -134,24 +131,9 @@ const userPrefs = useUserPreferenceStore()
 const deviceSettings = userPrefs.deviceSettings
 const openPanels = ref(['appearance', 'recipe-display'])
 
-const previewRecipe = ref<RecipeOverview | null>(null)
+const {previewRecipe, loadPreview} = useRecipeCardPreview({maxKeywords: () => deviceSettings.card_maxKeywords, sampleKeyword: t('Keyword')})
 
-onMounted(() => {
-    new ApiApi().apiRecipeList({pageSize: 1, random: true}).then(r => {
-        if (r.results?.length) {
-            const recipe = {...r.results[0]}
-            recipe._new = true
-            ;(recipe as any).makenow = true
-            if (!recipe.lastCooked) {
-                recipe.lastCooked = new Date(Date.now() - 3 * 86400000)
-            }
-            if (!recipe.rating) {
-                recipe.rating = 4.5
-            }
-            previewRecipe.value = recipe as RecipeOverview
-        }
-    }).catch(() => {})
-})
+onMounted(loadPreview)
 
 const menuItemOptions = [
     {key: 'edit', label: 'Edit'},
