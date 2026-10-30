@@ -6,23 +6,23 @@
                    :target="props.disableLink ? undefined : linkTarget"
                    :class="{'press-target': !props.disableLink}"
                    v-bind="pressHandlers">
-            <recipe-image :style="{height: props.height}" :recipe="recipe" rounded="lg" class="mr-3 ml-3" :disable-lightbox="true">
+            <recipe-image :style="{height: props.height}" :recipe="recipe" rounded="lg" class="mr-3 ml-3" :class="{'recipe-card-makenow-ring': showMakeNow}" :disable-lightbox="true">
                 <template #overlay>
                     <span v-if="deviceSettings.card_showRating && recipe.rating != null"
                           class="card-overlay-top-right recipe-card-rating">
                         <v-icon icon="fa-solid fa-star" size="x-small" color="amber" />
                         <span class="card-overlay-rating-text">{{ recipe.rating.toFixed(1) }}</span>
                     </span>
-                    <span v-if="deviceSettings.card_showMakeNowBadge && (recipe as RecipeOverview).makenow"
-                          class="card-overlay-top-left card-overlay-makenow recipe-card-makenow-badge">
-                        {{ t('MakeNow') }}
+                    <span v-if="showMakeNow" role="img" :aria-label="t('MakeNow')" :title="t('MakeNow')"
+                          class="card-overlay-bottom-right card-overlay-makenow recipe-card-makenow-badge">
+                        <v-icon icon="fa-solid fa-utensils" size="x-small"></v-icon>
                     </span>
                     <span v-if="deviceSettings.card_showNewBadge && (recipe as any)._new"
                           class="card-overlay-bottom-left card-overlay-new recipe-card-new-badge">
                         {{ t('New') }}
                     </span>
                     <span v-if="hasMetadataOverlay"
-                          class="card-overlay-bottom-right">
+                          class="card-overlay-bottom-right" :class="{'recipe-card-meta-shifted': showMakeNow}">
                         <span v-if="deviceSettings.card_showAuthor" class="recipe-card-author">{{ recipe.createdBy?.displayName }}</span>
                         <span v-if="deviceSettings.card_showAuthor && deviceSettings.card_showLastCooked && recipe.lastCooked"> · </span>
                         <span v-if="deviceSettings.card_showLastCooked && recipe.lastCooked" class="recipe-card-last-cooked">{{ lastCookedText }}</span>
@@ -127,6 +127,9 @@ const router = useRouter()
 const {t} = useI18n()
 const deviceSettings = useUserPreferenceStore().deviceSettings
 
+/** the setting is on and the household can make the recipe now: shown as an icon and a ring around the picture */
+const showMakeNow = computed(() => !!deviceSettings.card_showMakeNowBadge && !!(recipe.value as RecipeOverview).makenow)
+
 const hasMetadataOverlay = computed(() =>
     (deviceSettings.card_showAuthor && recipe.value.createdBy?.displayName) ||
     (deviceSettings.card_showLastCooked && recipe.value.lastCooked)
@@ -197,7 +200,6 @@ function openRecipe() {
     user-select: none;
 }
 
-.card-overlay-top-left,
 .card-overlay-top-right,
 .card-overlay-bottom-right,
 .card-overlay-bottom-left {
@@ -239,17 +241,31 @@ function openRecipe() {
     left: 6px;
 }
 
-.card-overlay-top-left {
-    top: 6px;
-    left: 6px;
+/* the chip (22px) takes the bottom right corner, the author and last cooked pill moves left of it; the selection
+   checkbox of the search page is at the top left of a card and the rating at the top right */
+.recipe-card-meta-shifted {
+    right: 34px;
+    max-width: calc(70% - 28px);
 }
 
+/* icon only chip: the fork and knife of the "ready to cook" stat; its name is in the aria-label and the title */
 .card-overlay-makenow {
     background: rgb(var(--v-theme-success));
     color: rgb(var(--v-theme-on-success));
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
+    width: 22px;
+    height: 22px;
+    padding: 0;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* thin inset ring around the picture so the cards that can be made now stand out in a grid;
+   an outline (drawn over the picture, following its rounded corners) and not a shadow, which the image would cover */
+.recipe-card-makenow-ring {
+    outline: 2px solid rgb(var(--v-theme-success));
+    outline-offset: -2px;
 }
 
 .card-overlay-new {

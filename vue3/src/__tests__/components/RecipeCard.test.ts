@@ -263,6 +263,76 @@ describe('RecipeCard display settings', () => {
             expect(w.find('.recipe-card-makenow-badge').exists()).toBe(false)
         })
 
+        describe('as an icon', () => {
+            const on = () => mountRecipeCard({ recipe: makeRecipeOverview({ makenow: true } as any) }, { card_showMakeNowBadge: true })
+
+            it('is the fork and knife icon of the ready to cook stat, with no text on the card', () => {
+                const chip = on().find('.recipe-card-makenow-badge')
+                expect(chip.find('.fa-utensils').exists()).toBe(true)
+                expect(chip.text()).toBe('')
+            })
+
+            it('says what it is to screen readers and on hover', () => {
+                const chip = on().find('.recipe-card-makenow-badge')
+                expect(chip.attributes('role')).toBe('img')
+                expect(chip.attributes('aria-label')).toBe('MakeNow')
+                expect(chip.attributes('title')).toBe('MakeNow')
+            })
+        })
+
+        describe('where it sits', () => {
+            // the selection checkbox of the search page is at the top left of a card and the rating at the top right,
+            // so the chip is at the bottom right
+            const card = (deviceOverrides: Record<string, any>, makenow = true) =>
+                mountRecipeCard({ recipe: makeRecipeOverview({ makenow, rating: 4.5, createdBy: makeUser({ displayName: 'Chef Test' }) } as any) },
+                    { card_showMakeNowBadge: true, card_showRating: true, card_showAuthor: true, ...deviceOverrides })
+
+            it('is in the bottom right corner, away from the selection checkbox and the rating', () => {
+                const chip = card({}).find('.recipe-card-makenow-badge')
+                expect(chip.classes()).toContain('card-overlay-bottom-right')
+                expect(chip.classes()).not.toContain('card-overlay-top-right')
+                expect(chip.classes()).not.toContain('card-overlay-top-left')
+            })
+
+            it('leaves the rating where it is', () => {
+                expect(card({}).find('.recipe-card-rating').classes()).not.toContain('recipe-card-rating-shifted')
+            })
+
+            const authorPill = (w: ReturnType<typeof mountRecipeCard>) => w.find('.recipe-card-author').element.parentElement!
+
+            it('moves the author and last cooked pill over to make room for it', () => {
+                expect(authorPill(card({})).classList.contains('recipe-card-meta-shifted')).toBe(true)
+            })
+
+            it('leaves the author and last cooked pill where it is when there is no chip', () => {
+                expect(authorPill(card({}, false)).classList.contains('recipe-card-meta-shifted')).toBe(false)
+                expect(authorPill(card({ card_showMakeNowBadge: false })).classList.contains('recipe-card-meta-shifted')).toBe(false)
+            })
+        })
+
+        describe('ring around the picture', () => {
+            const ring = (w: ReturnType<typeof mountRecipeCard>) => w.find('.stub-recipe-image').classes().includes('recipe-card-makenow-ring')
+
+            it('frames the picture of a recipe that can be made now', () => {
+                expect(ring(mountRecipeCard({ recipe: makeRecipeOverview({ makenow: true } as any) }, { card_showMakeNowBadge: true }))).toBe(true)
+            })
+
+            it('is off when the setting is off', () => {
+                expect(ring(mountRecipeCard({ recipe: makeRecipeOverview({ makenow: true } as any) }, { card_showMakeNowBadge: false }))).toBe(false)
+            })
+
+            it.each([false, null])('is off for a recipe that cannot be made now (makenow %s)', (makenow) => {
+                expect(ring(mountRecipeCard({ recipe: makeRecipeOverview({ makenow } as any) }, { card_showMakeNowBadge: true }))).toBe(false)
+            })
+
+            it('is not drawn on the cards that do not link to their recipe, only the badge shows there too', () => {
+                // the card inside a book or the preview keeps both, so the ring follows the same rule as the badge
+                const w = mountRecipeCard({ recipe: makeRecipeOverview({ makenow: true } as any), disableLink: true, showMenu: false }, { card_showMakeNowBadge: true })
+                expect(ring(w)).toBe(true)
+                expect(w.find('.recipe-card-makenow-badge').exists()).toBe(true)
+            })
+        })
+
         it('is off by default', async () => {
             const { useUserPreferenceStore } = await import('@/stores/UserPreferenceStore')
             const w = mountRecipeCard({ recipe: makeRecipeOverview({ makenow: true } as any) })
