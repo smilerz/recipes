@@ -30,7 +30,7 @@ django-scopes==2.1.0
 django-treebeard==7.0.3
 django-cors-headers==4.9.0
 django-storages==1.14.6
-boto3==1.43.118
+boto3==1.43.119
 # Pinned to a master commit: the released 2.5.0 caps Django <6.1 but master supports 6.1 (django-commons/django-prometheus#537).
 # Switch back to a PyPI release once one allows Django 6.1+.
 django-prometheus @ git+https://github.com/django-commons/django-prometheus.git@c04929aac027bde8410bde20af6ca864a1e6929d
@@ -46,7 +46,7 @@ python3-saml==1.16.0
 django-vite==3.2.0
 litellm==1.106.4
 rapidfuzz==3.14.6
-stripe==15.6.1
+stripe==15.6.2
 regex==2026.9.29
 
 # Development
