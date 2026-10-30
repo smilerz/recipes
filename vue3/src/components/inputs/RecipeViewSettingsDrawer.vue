@@ -193,9 +193,12 @@
                         />
                         <v-switch
                             v-model="deviceSettings.card_showMakeNowBadge"
-                            :label="$t('Show_Make_Now_Badge')"
                             hide-details density="compact" color="primary"
-                        />
+                        >
+                            <template #label>
+                                <v-icon icon="fa-solid fa-utensils" size="x-small" color="success" class="mr-2"></v-icon>{{ $t('Show_Make_Now_Badge') }}
+                            </template>
+                        </v-switch>
                         <v-switch
                             v-model="deviceSettings.card_show_cook_time"
                             :label="$t('Show_Cook_Time')"
