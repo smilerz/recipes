@@ -7,7 +7,7 @@
  * data-test hooks so the tests survive visual layout changes.
  */
 import {describe, it, expect, beforeEach, vi} from 'vitest'
-import {mount, type VueWrapper} from '@vue/test-utils'
+import {flushPromises, mount, type VueWrapper} from '@vue/test-utils'
 import {createPinia, setActivePinia, type PiniaPlugin} from 'pinia'
 import {createI18n} from 'vue-i18n'
 import {createVuetify} from 'vuetify'
@@ -17,7 +17,7 @@ import {createRouter, createMemoryHistory} from 'vue-router'
 import {ref} from 'vue'
 
 import {apiMock, resetApiMock} from '@/__tests__/api-mock'
-import {makeUserPreference} from '@/__tests__/factories'
+import {makeRecipeOverview, makeUserPreference} from '@/__tests__/factories'
 
 const routeState = vi.hoisted(() => ({name: 'RecipeViewPage' as string | null}))
 vi.mock('vue-router', async (imp) => ({
@@ -93,6 +93,7 @@ function mountDrawer({mobile = false} = {}) {
                 // The preview renders real IngredientsTable rows; its internals are
                 // covered by IngredientsTable's own tests, so stub it here.
                 IngredientsTable: true,
+                RecipeCard: {name: 'RecipeCard', props: ['recipe'], template: '<div class="stub-recipe-card"/>'},
                 TabbedDrawer: {
                     props: ['modelValue', 'activeTab', 'pinned', 'pinnable', 'tabs', 'width', 'useSheet'],
                     template: '<div class="stub-drawer"><slot name="settings"/></div>',
@@ -370,6 +371,74 @@ describe('Card Display panel + recipe-view gating', () => {
         expect(makeNow, 'Show make now badge switch should exist').toBeTruthy()
         await makeNow!.find('input').setValue(true)
         expect(store.deviceSettings.card_showMakeNowBadge).toBe(true)
+    })
+
+    it('has the same plain switch label for make now as the other card switches, no icon of its own', () => {
+        routeState.name = 'SearchPage'
+        const w = mountDrawer()
+        const makeNow = w.findAll('.v-switch').find(s => s.text().includes('Show make now badge'))
+        expect(makeNow, 'Show make now badge switch should exist').toBeTruthy()
+        expect(makeNow!.find('.fa-utensils').exists()).toBe(false)
+    })
+
+    describe('sample card of the card display panel', () => {
+        beforeEach(() => {
+            apiMock.apiRecipeList = vi.fn().mockResolvedValue({results: [makeRecipeOverview({makenow: null, rating: null} as any)], count: 1})
+            useRecipeViewSettings().isOpen.value = false
+        })
+
+        it('is shown once the drawer is open on a page with recipe cards, with every optional element on it', async () => {
+            routeState.name = 'SearchPage'
+            useRecipeViewSettings().isOpen.value = true
+            const w = mountDrawer()
+            await flushPromises()
+            const card = w.findComponent({name: 'RecipeCard'})
+            expect(card.exists()).toBe(true)
+            expect(card.props('recipe')).toMatchObject({_new: true, makenow: true, rating: 4.5})
+        })
+
+        it('has as many keywords as the card is set to show, and follows the setting', async () => {
+            routeState.name = 'SearchPage'
+            useRecipeViewSettings().isOpen.value = true
+            const w = mountDrawer()
+            await flushPromises()
+            const keywords = () => (w.findComponent({name: 'RecipeCard'}).props('recipe') as any).keywords.length
+            expect(settings(w).card_maxKeywords).toBe(3)
+            expect(keywords()).toBe(3)
+            settings(w).card_maxKeywords = 10
+            await flushPromises()
+            expect(keywords()).toBe(10)
+        })
+
+        it('is not loaded while the drawer is closed, the drawer is part of every page', async () => {
+            routeState.name = 'SearchPage'
+            mountDrawer()
+            await flushPromises()
+            expect(apiMock.apiRecipeList).not.toHaveBeenCalled()
+        })
+
+        it('is not loaded on a page without recipe cards', async () => {
+            routeState.name = 'RecipeViewPage'
+            useRecipeViewSettings().isOpen.value = true
+            const w = mountDrawer()
+            await flushPromises()
+            expect(apiMock.apiRecipeList).not.toHaveBeenCalled()
+            expect(w.findComponent({name: 'RecipeCard'}).exists()).toBe(false)
+        })
+
+        it('is loaded when the drawer is opened later, and only once however often it is opened', async () => {
+            routeState.name = 'SearchPage'
+            const w = mountDrawer()
+            await flushPromises()
+            const {isOpen} = useRecipeViewSettings()
+            isOpen.value = true
+            await flushPromises()
+            isOpen.value = false
+            isOpen.value = true
+            await flushPromises()
+            expect(apiMock.apiRecipeList).toHaveBeenCalledTimes(1)
+            expect(w.findComponent({name: 'RecipeCard'}).exists()).toBe(true)
+        })
     })
 
     it('checking a menu item adds it to card_visibleMenuItems', async () => {

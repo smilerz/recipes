@@ -171,6 +171,10 @@
                 <v-expansion-panel v-if="isOnCardContext" data-test="card-display-panel">
                     <v-expansion-panel-title>{{ $t('CardDisplay') }}</v-expansion-panel-title>
                     <v-expansion-panel-text>
+                        <!-- sample card: shows what the switches below do (not clickable) -->
+                        <div v-if="previewRecipe" class="mb-3 mx-auto" style="pointer-events: none; max-width: 240px;">
+                            <recipe-card :recipe="previewRecipe" :show-menu="false" :show-keywords="true" />
+                        </div>
                         <v-switch
                             v-model="deviceSettings.card_showRating"
                             :label="$t('Show_Rating')"
@@ -193,12 +197,9 @@
                         />
                         <v-switch
                             v-model="deviceSettings.card_showMakeNowBadge"
+                            :label="$t('Show_Make_Now_Badge')"
                             hide-details density="compact" color="primary"
-                        >
-                            <template #label>
-                                <v-icon icon="fa-solid fa-utensils" size="x-small" color="success" class="mr-2"></v-icon>{{ $t('Show_Make_Now_Badge') }}
-                            </template>
-                        </v-switch>
+                        />
                         <v-switch
                             v-model="deviceSettings.card_show_cook_time"
                             :label="$t('Show_Cook_Time')"
@@ -229,7 +230,7 @@
 </template>
 
 <script setup lang="ts">
-import {computed} from 'vue'
+import {computed, watch} from 'vue'
 import {useI18n} from 'vue-i18n'
 import {useDisplay} from 'vuetify'
 import {useRoute} from 'vue-router'
@@ -238,6 +239,8 @@ import {useUserPreferenceStore} from '@/stores/UserPreferenceStore'
 import {useRecipeViewSettings} from '@/composables/useRecipeViewSettings'
 import TabbedDrawer from '@/components/common/TabbedDrawer.vue'
 import IngredientsTable from '@/components/display/IngredientsTable.vue'
+import RecipeCard from '@/components/display/RecipeCard.vue'
+import {useRecipeCardPreview} from '@/composables/useRecipeCardPreview'
 
 const {t} = useI18n()
 const {mobile} = useDisplay()
@@ -251,6 +254,13 @@ const isOnRecipeView = computed(() => route.name === 'RecipeViewPage')
 // sees. Outside these, the panel is gated out so the drawer is contextual.
 const CARD_CONTEXT_ROUTES = new Set(['SearchPage', 'StartPage', 'BookEntryPage', 'MealPlanPage'])
 const isOnCardContext = computed(() => CARD_CONTEXT_ROUTES.has(route.name as string))
+
+// sample card of the card display panel; the drawer is part of every page, so it is fetched when the drawer is
+// opened on a page with cards, not before
+const {previewRecipe, loadPreview} = useRecipeCardPreview({maxKeywords: () => deviceSettings.card_maxKeywords, sampleKeyword: t('Keyword')})
+watch([isOpen, isOnCardContext], ([open, onCards]) => {
+    if (open && onCards) loadPreview()
+}, {immediate: true})
 
 const drawerTabs = computed(() => [
     {key: 'settings', label: t('DisplaySettings'), icon: 'fa-solid fa-gear'},

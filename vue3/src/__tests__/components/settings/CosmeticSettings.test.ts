@@ -95,6 +95,17 @@ describe('CosmeticSettings', () => {
             expect((card.props('recipe') as any).makenow).toBe(true)
         })
 
+        it('has plain switch labels, the make now one like the others, no icon of its own', async () => {
+            await sampleCard(makeRecipeOverview())
+            const w = mountSettings()
+            await flushPromises()
+            for (const title of w.findAll('.v-expansion-panel-title')) await title.trigger('click')
+            await flushPromises()
+            const makeNow = w.findAll('.v-switch').find(s => s.text().includes('Show_Make_Now_Badge'))
+            expect(makeNow, 'make now switch should exist').toBeTruthy()
+            expect(makeNow!.find('.fa-utensils').exists()).toBe(false)
+        })
+
         it('does not change the recipe it was given', async () => {
             const recipe = makeRecipeOverview({makenow: false} as any)
             await sampleCard(recipe)
