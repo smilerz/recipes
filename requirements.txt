@@ -50,7 +50,7 @@ stripe==16.0.1
 regex==2026.9.29
 
 # Development
-pytest== 9.1.1
+pytest== 9.2.0
 pytest-django==4.14.0
 pytest-cov===7.1.0
 pytest-factoryboy==2.8.1
