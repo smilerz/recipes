@@ -58,5 +58,5 @@ pytest-html==4.2.0
 pytest-asyncio==1.4.1.post1
 pytest-xdist==3.8.0
 autopep8==2.3.2
-flake8==7.4.1
+flake8==7.5.0
 yapf==0.43.0
