@@ -121,7 +121,7 @@ function loadRecipeData() {
 
     let recipeRequest = api.apiRecipeRetrieve({id: props.recipe.id!}).then(r => {
         recipe.value = r
-        servings.value = r.servings ? r.servings : 1
+        servings.value = props.mealPlan?.servings || (r.servings ? r.servings : 1)
         panel.value = r.id!
     }).catch(err => {
         useMessageStore().addError(ErrorMessageType.FETCH_ERROR, err)

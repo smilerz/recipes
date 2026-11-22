@@ -15,6 +15,7 @@ import * as vuetifyDirectives from 'vuetify/directives'
 import {apiMock, resetApiMock} from '@/__tests__/api-mock'
 import {makeMealPlan} from '@/__tests__/factories'
 import {useMessageStore} from '@/stores/MessageStore'
+import {useMealPlanStore} from '@/stores/MealPlanStore'
 
 vi.mock('@/openapi', async (importOriginal) => {
     const actual = await importOriginal<typeof import('@/openapi')>()
@@ -214,6 +215,81 @@ describe('MealPlanEditor', () => {
         await flushPromises()
 
         expect((w.vm as any).editingObj.shopping).toBe(true)
+        expect((w.vm as any).editingObjChanged).toBe(true)
+
+        w.unmount()
+    })
+
+    // The calendar's cart icon (MealPlanCalendarItem) reads the plan from MealPlanStore, not from the
+    // editor. The preview persists the shopping list itself, so the editor flips its own copy to
+    // shopping=true - the store's copy must follow or the plan never shows as part of a shopping list.
+    it('marks the plan as having a shopping list in the meal plan store once the preview creates it', async () => {
+        const item = makeMealPlan({id: 12, shopping: false})
+        ;(apiMock as any).apiShoppingListEntryList = vi.fn().mockResolvedValue({count: 0, next: null, previous: null, results: [], timestamp: new Date()})
+        const w = mountEditor(item)
+        await flushPromises()
+        const store = useMealPlanStore()
+        store.plans.set(12, makeMealPlan({id: 12, shopping: false}))
+
+        ;(w.vm as any).onShoppingCreated()
+        await flushPromises()
+
+        expect(store.plans.get(12)?.shopping).toBe(true)
+
+        w.unmount()
+    })
+
+    // The Plan tab's Servings and the Shopping tab's preview servings are one value: the preview was
+    // never bound to the plan, so each tab kept its own number.
+    it('keeps the Shopping tab preview servings in sync with the plan servings, in both directions', async () => {
+        const item = makeMealPlan({id: 18, shopping: false, servings: 10})
+        const w = mountEditor(item)
+        await flushPromises()
+        ;(w.vm as any).tab = 'shopping'
+        await flushPromises()
+
+        expect(w.findComponent('.stub-recipe-shopping-preview').attributes('servings')).toBe('10')
+
+        ;(w.vm as any).editingObj.servings = 6
+        await flushPromises()
+        expect(w.findComponent('.stub-recipe-shopping-preview').attributes('servings')).toBe('6')
+
+        ;(w.findComponent('.stub-recipe-shopping-preview') as any).vm.$emit('update:servings', 8)
+        await flushPromises()
+        expect((w.vm as any).editingObj.servings).toBe(8)
+
+        w.unmount()
+    })
+
+    // MealPlanSerializer.update() ignores addshopping (only create() reads it), so on an existing
+    // plan the checkbox just reveals the Shopping tab - it must not count as an unsaved edit and
+    // force the user to re-save a plan nothing changed on.
+    it('ticking Add to Shopping on an existing plan does not mark the plan as unsaved', async () => {
+        const item = makeMealPlan({id: 19, shopping: false})
+        const w = mountEditor(item)
+        await flushPromises()
+        expect((w.vm as any).editingObjChanged).toBe(false)
+
+        await w.find('[data-test="addshopping-checkbox"] input[type="checkbox"]').setValue(true)
+        await flushPromises()
+
+        expect(w.findAll('.v-tab').some(t => t.text().includes('Shopping'))).toBe(true)
+        expect((w.vm as any).editingObjChanged).toBe(false)
+
+        w.unmount()
+    })
+
+    it('keeps an existing unsaved edit when Add to Shopping is ticked on an existing plan', async () => {
+        const item = makeMealPlan({id: 20, shopping: false})
+        const w = mountEditor(item)
+        await flushPromises()
+        ;(w.vm as any).editingObj.note = 'unsaved note edit'
+        await flushPromises()
+        expect((w.vm as any).editingObjChanged).toBe(true)
+
+        await w.find('[data-test="addshopping-checkbox"] input[type="checkbox"]').setValue(true)
+        await flushPromises()
+
         expect((w.vm as any).editingObjChanged).toBe(true)
 
         w.unmount()

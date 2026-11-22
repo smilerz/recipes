@@ -6,7 +6,7 @@ import { useShoppingStore } from '@/stores/ShoppingStore'
 import { createI18n } from 'vue-i18n'
 import { createRouter, createMemoryHistory } from 'vue-router'
 import { apiMock, resetApiMock } from '@/__tests__/api-mock'
-import { makeRecipe, makeStep, makeIngredient, makeFood, makeFoodSimple, makeUnit, makeUserPreference, makeShoppingListEntry } from '@/__tests__/factories'
+import { makeMealPlan, makeRecipe, makeStep, makeIngredient, makeFood, makeFoodSimple, makeUnit, makeUserPreference, makeShoppingListEntry } from '@/__tests__/factories'
 
 vi.mock('@/openapi', async (importOriginal) => ({
     ...(await importOriginal<any>()),
@@ -151,6 +151,18 @@ describe('RecipeShoppingPreview', () => {
         await flushPromises()
 
         expect(document.body.innerHTML).toContain('Flour')
+    })
+
+    // Opened for a meal plan, the preview must start from the plan's servings. It used to overwrite
+    // them with the recipe's own default once the recipe loaded, so a plan of 10 showed the recipe's 4.
+    it('starts from the meal plan servings, not the recipe default, when a meal plan is given', async () => {
+        apiMock.apiRecipeRetrieve.mockResolvedValue(makeRecipe({ id: 1, servings: 4, steps: [makeStep({ ingredients: [makeIngredient()] })] }))
+        apiMock.apiRecipeRelatedList.mockResolvedValue([])
+
+        const wrapper = mountPreview(undefined, { mealPlan: makeMealPlan({ id: 5, servings: 10 }) })
+        await flushPromises()
+
+        expect(wrapper.emitted('update:servings')?.at(-1)).toEqual([10])
     })
 
     // D11 Phase 1: the dialog already auto-unchecks on-hand ingredients silently — make that
