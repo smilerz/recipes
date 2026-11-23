@@ -31,7 +31,7 @@
                                 <!--TODO create days input with +/- synced to date -->
                                 <recipe-card :recipe="editingObj.recipe" :servings="editingObj.servings" v-if="editingObj && editingObj.recipe" link-target="_blank"></recipe-card>
 
-                                <v-checkbox :label="$t('AddToShopping')" v-model="editingObj.addshopping" hide-details
+                                <v-checkbox :label="$t('AddToShopping')" :model-value="editingObj.addshopping" @update:model-value="onAddShoppingToggle" hide-details
                                             data-test="addshopping-checkbox" v-if="editingObj.recipe && !editingObj.shopping"></v-checkbox>
                             </v-col>
                             <v-col cols="12" md="6">
@@ -100,10 +100,10 @@
                          real, editable ShoppingListEntry rows once they're loaded. -->
                     <recipe-shopping-preview v-if="editingObj.recipe && editingObj.shopping && shoppingEntries !== undefined"
                                               :key="editingObj.id"
-                                              :recipe="editingObj.recipe" :meal-plan="editingObj"
+                                              :recipe="editingObj.recipe" :meal-plan="editingObj" v-model:servings="editingObj.servings"
                                               :existing-entries="shoppingEntries"></recipe-shopping-preview>
                     <recipe-shopping-preview v-else-if="editingObj.recipe && !editingObj.shopping"
-                                              :recipe="editingObj.recipe" :meal-plan="editingObj"
+                                              :recipe="editingObj.recipe" :meal-plan="editingObj" v-model:servings="editingObj.servings"
                                               :on-before-commit="ensurePlanSaved"
                                               @created="onShoppingCreated"></recipe-shopping-preview>
                     <div v-else class="d-flex justify-center pa-4"><v-progress-circular indeterminate></v-progress-circular></div>
@@ -215,6 +215,21 @@ watch(() => editingObj.value.addshopping, (val) => {
 })
 
 /**
+ * MealPlanSerializer.update() ignores addshopping (only create() reads it), so on an existing plan
+ * the checkbox only reveals the Shopping tab - it is not an unsaved edit. Same restore-after-flush
+ * pattern as onShoppingCreated(): the deep change watcher runs on the next flush, so the previous
+ * state is put back after it.
+ */
+function onAddShoppingToggle(val: boolean | null) {
+    const changed = editingObjChanged.value
+    editingObj.value.addshopping = !!val
+    if (!isUpdate()) return
+    nextTick(() => {
+        editingObjChanged.value = changed
+    })
+}
+
+/**
  * ensures the plan is persisted before the shopping preview commits its entries - a shopping
  * entry links to a real meal-plan id, but staging/reviewing it never required one. Called by
  * RecipeShoppingPreview only when its own "Add to Shopping" button is clicked.
@@ -286,6 +301,10 @@ function onShoppingCreated() {
     // shopping is server-computed (readonly) on the generated type, but this is a deliberate
     // local-cache sync after the preview dialog persisted the shopping list itself.
     ;(editingObj.value as any).shopping = true
+    // the calendar reads the plan from the store, which still holds the pre-shopping copy
+    const mealPlanStore = useMealPlanStore()
+    const storedPlan = editingObj.value.id !== undefined ? mealPlanStore.plans.get(editingObj.value.id) : undefined
+    if (storedPlan) mealPlanStore.plans.set(storedPlan.id!, {...storedPlan, shopping: true})
     loadShoppingEntries()
     nextTick(() => {
         editingObjChanged.value = changed
