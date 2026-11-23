@@ -1,4 +1,4 @@
-import {Food, Ingredient, Recipe, ShoppingListEntry, Unit} from "@/openapi";
+import {Food, FoodShopping, Ingredient, Recipe, ShoppingList, ShoppingListEntry, SupermarketCategory, Unit} from "@/openapi";
 
 /**
  * enum of different options a shopping list can be grouped by
@@ -78,14 +78,29 @@ export type ShoppingListStats = {
  * DELAY: ShoppingListEntry was postponed/delayed
  * UNDELAY: ShoppingListEntry delay was removed
  */
-export type ShoppingOperationHistoryType = 'CHECKED' | 'UNCHECKED' | 'DELAY' | 'UNDELAY' | 'IGNORE' | 'UNIGNORE' | 'CREATE' | 'DESTROY'
+export type ShoppingOperationHistoryType = 'CHECKED' | 'UNCHECKED' | 'DELAY' | 'UNDELAY' | 'IGNORE' | 'UNIGNORE' | 'CREATE' | 'DESTROY' | 'SCALE' | 'LISTS' | 'LISTS_SET' | 'CATEGORY' | 'PANTRY_ADD'
+
+/**
+ * history types that are only a note in the history: listed, but there is nothing to undo
+ * PANTRY_ADD: foods were added to the pantry (undo never removes inventory)
+ */
+export const NOT_UNDOABLE_HISTORY_TYPES: ShoppingOperationHistoryType[] = ['PANTRY_ADD']
 
 /**
  * history event consisting of a type and affected entries
+ * SCALE also keeps the amounts the entries had before, so undoing restores them exactly instead of dividing back
+ * LISTS keeps, per list, the entries that actually gained it (entries already on it keep it when undone)
+ * CATEGORY keeps each food's category from before the change
+ * notes (PANTRY_ADD) carry only a count
  */
 export type ShoppingOperationHistoryEntry = {
     type: ShoppingOperationHistoryType,
-    entries: ShoppingListEntry[]
+    entries: ShoppingListEntry[],
+    amounts?: number[],
+    lists?: { list: ShoppingList, entries: ShoppingListEntry[] }[],
+    previousLists?: { entry: ShoppingListEntry, lists: ShoppingList[] }[],
+    categories?: { food: FoodShopping, previous: SupermarketCategory | null | undefined }[],
+    count?: number,
 }
 
 export type ShoppingDialogRecipe = {

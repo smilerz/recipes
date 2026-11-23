@@ -6,7 +6,7 @@
             <v-card-text class="pt-0 pr-4 pl-4">
 
                 <v-label>{{ $t('Choose_Category') }}</v-label>
-                <model-select model="SupermarketCategory" @update:modelValue="category => useShoppingStore().updateCategories([shoppingListFood], category)" allow-create></model-select>
+                <model-select model="SupermarketCategory" @update:modelValue="category => useShoppingStore().updateCategories([shoppingListFood], category, true)" allow-create></model-select>
 
                 <v-label>{{ $t('ShoppingList') }}</v-label>
                 <model-select model="ShoppingList" @update:modelValue="shoppingListUpdate" mode="tags" allow-create></model-select>
@@ -176,14 +176,8 @@ function shoppingListUpdate(shoppingLists: ShoppingList[]) {
     const promises: Promise<any>[] = []
     shoppingListUpdateLoading.value = true
 
-    shoppingListFood.value.entries.forEach(e => {
-        e.shoppingLists = shoppingLists
-        promises.push(api.apiShoppingListEntryUpdate({id: e.id!, shoppingListEntry: e}).then(r => {
-
-        }).catch(err => {
-            useMessageStore().addError(ErrorMessageType.UPDATE_ERROR, err)
-        }))
-    })
+    // through the store, so the change is in the undo history
+    promises.push(useShoppingStore().updateEntryShoppingLists(Array.from(shoppingListFood.value.entries.values()), shoppingLists, true))
     if (useUserPreferenceStore().userSettings.shoppingUpdateFoodLists){
         shoppingListFood.value.food.shoppingLists = shoppingLists
         promises.push(api.apiFoodUpdate({id: shoppingListFood.value.food.id!, food: shoppingListFood.value.food}).then(r => {

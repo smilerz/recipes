@@ -4,6 +4,7 @@
  * this thumbnail rendering) was dropped during a chain rebaseline. Restored end-to-end.
  */
 import {describe, it, expect, vi, beforeEach} from 'vitest'
+import {flushPromises} from '@vue/test-utils'
 import {mount} from '@vue/test-utils'
 import {createPinia, setActivePinia, type PiniaPlugin} from 'pinia'
 import {createI18n} from 'vue-i18n'
@@ -12,6 +13,8 @@ import * as vuetifyComponents from 'vuetify/components'
 import * as vuetifyDirectives from 'vuetify/directives'
 import {ref} from 'vue'
 
+const {quickPantryAddMock} = vi.hoisted(() => ({quickPantryAddMock: vi.fn()}))
+vi.mock('@/composables/useInventoryActions', () => ({useInventoryActions: () => ({quickPantryAdd: quickPantryAddMock})}))
 vi.mock('@vueuse/core', async (imp) => ({...(await imp<any>()), useStorage: (_k: string, d: any) => ref(d)}))
 vi.mock('@vueuse/router', () => ({useRouteQuery: (_k: string, d: any) => ref(d)}))
 vi.mock('vue-router', () => ({useRouter: () => ({push: vi.fn().mockResolvedValue(undefined)})}))
@@ -24,8 +27,9 @@ vi.mock('vue-i18n', async (importOriginal) => ({
 import ShoppingLineItem from '@/components/display/ShoppingLineItem.vue'
 import {useUserPreferenceStore} from '@/stores/UserPreferenceStore'
 import {makeUserPreference} from '@/__tests__/factories'
+import {useShoppingStore} from '@/stores/ShoppingStore'
 
-function mountItem(showFoodImages: boolean, foodImage: any) {
+function mountItem(showFoodImages: boolean, foodImage: any, checked = false) {
     const prePopulate: PiniaPlugin = ({store}) => {
         if (store.$id === 'user_preference_store') {
             store.userSettings = makeUserPreference() as any
@@ -40,7 +44,7 @@ function mountItem(showFoodImages: boolean, foodImage: any) {
 
     const shoppingListFood = {
         food: {id: 1, name: 'Milk', foodImage},
-        entries: new Map([[1, {id: 1, amount: 1, checked: false, food: {id: 1, name: 'Milk'}}]]),
+        entries: new Map([[1, {id: 1, amount: 1, checked, food: {id: 1, name: 'Milk'}}]]),
     }
 
     return mount(ShoppingLineItem, {
@@ -76,6 +80,39 @@ describe('ShoppingLineItem food image (#42)', () => {
     it('renders an empty placeholder slot (alignment) when the setting is on but the food has no image', () => {
         const w = mountItem(true, null)
         expect(w.find('.shopping-food-image-empty').exists()).toBe(true)
+        w.unmount()
+    })
+})
+
+// The one-tap "Add to pantry" on a marked-off line is a pantry add like Stock up: it goes into the shopping undo
+// history as a note (greyed out there, since undo never removes inventory).
+describe('ShoppingLineItem add to pantry', () => {
+    beforeEach(() => {
+        setActivePinia(createPinia())
+        quickPantryAddMock.mockReset()
+    })
+
+    it('leaves a pantry note in the shopping history after the food was added', async () => {
+        quickPantryAddMock.mockResolvedValue(true)
+        const w = mountItem(false, null, true)
+
+        await w.find('[data-test="add-pantry-chip"]').trigger('click')
+        await flushPromises()
+
+        const note = useShoppingStore().undoStack.at(-1)
+        expect(note?.type).toBe('PANTRY_ADD')
+        expect(note?.count).toBe(1)
+        w.unmount()
+    })
+
+    it('leaves no note when adding to the pantry failed', async () => {
+        quickPantryAddMock.mockResolvedValue(false)
+        const w = mountItem(false, null, true)
+
+        await w.find('[data-test="add-pantry-chip"]').trigger('click')
+        await flushPromises()
+
+        expect(useShoppingStore().undoStack.length).toBe(0)
         w.unmount()
     })
 })
