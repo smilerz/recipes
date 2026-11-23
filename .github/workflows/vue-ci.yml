@@ -23,7 +23,31 @@ jobs:
           # Full history: the diff-coverage step diffs against the PR's base branch.
           fetch-depth: 0
 
+      # A path filter on the workflow would leave the required vue-tests check pending forever on PRs that do not
+      # touch the frontend, so the job always runs and skips its steps instead (a skipped step leaves the job, and
+      # the check, green) - the same pattern as docker-build-check.yml. Only a pull_request has a base to diff
+      # against; any other caller (workflow_call) always runs everything.
+      - name: Does this PR touch the frontend?
+        id: relevant
+        run: |
+          if [ "$GITHUB_EVENT_NAME" != "pull_request" ]; then
+            echo "vue=true" | tee -a "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          # On pull_request the checkout is the merge commit, so HEAD^1 is the base branch.
+          changed=$(git diff --name-only HEAD^1 HEAD)
+          echo "$changed"
+          # (captured, not piped into grep -q: an early-closed pipe fails the pipeline under pipefail)
+          relevant=$(echo "$changed" | grep -E '^(vue3/|\.nvmrc$|\.github/workflows/vue-ci\.yml$)' || true)
+          if [ -n "$relevant" ]; then
+            echo "vue=true" | tee -a "$GITHUB_OUTPUT"
+          else
+            echo "vue=false" | tee -a "$GITHUB_OUTPUT"
+            echo "Nothing the frontend tests depend on changed; skipping."
+          fi
+
       - name: Set up Node ${{ matrix.node-version }}
+        if: steps.relevant.outputs.vue == 'true'
         uses: actions/setup-node@v7
         with:
           node-version: ${{ matrix.node-version }}
@@ -31,10 +55,12 @@ jobs:
           cache-dependency-path: ./vue3/yarn.lock
 
       - name: Install Vue dependencies
+        if: steps.relevant.outputs.vue == 'true'
         working-directory: ./vue3
         run: yarn install
 
       - name: Run Vue tests
+        if: steps.relevant.outputs.vue == 'true'
         working-directory: ./vue3
         run: yarn test:coverage
 
@@ -42,7 +68,7 @@ jobs:
       # are executed by a test. lcov paths are relative to vue3/ while git's are relative to the
       # repo root, so prefix them or diff-cover matches nothing and silently passes.
       - name: Diff coverage (changed frontend lines must be tested)
-        if: github.event_name == 'pull_request' && matrix.node-version == '24'
+        if: steps.relevant.outputs.vue == 'true' && github.event_name == 'pull_request' && matrix.node-version == '24'
         env:
           BASE_REF: ${{ github.base_ref }}
         run: |
@@ -56,12 +82,13 @@ jobs:
           exit $status
 
       - name: Dev server health check
+        if: steps.relevant.outputs.vue == 'true'
         working-directory: ./vue3
         run: yarn healthcheck
 
       # One upload per push/PR is enough - coverage doesn't vary by Node version.
       - name: Upload frontend coverage to Codecov
-        if: matrix.node-version == '24'
+        if: steps.relevant.outputs.vue == 'true' && matrix.node-version == '24'
         uses: codecov/codecov-action@v7
         with:
           token: ${{ secrets.CODECOV_TOKEN }}

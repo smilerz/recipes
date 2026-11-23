@@ -30,30 +30,63 @@ jobs:
               with:
                   # Full history: the diff-coverage step diffs against the PR's base branch.
                   fetch-depth: 0
+
+            # A path filter on the workflow would leave the required build checks pending forever on PRs that do not
+            # touch what the Python suite tests, so the job always runs and skips its steps instead (a skipped step
+            # leaves the job, and the check, green) - the same pattern as docker-build-check.yml. Only a pull_request
+            # has a base to diff against; any other caller (workflow_call) always runs everything.
+            - name: Does this PR touch anything the backend tests depend on?
+              id: relevant
+              run: |
+                  if [ "$GITHUB_EVENT_NAME" != "pull_request" ]; then
+                      echo "build=true" | tee -a "$GITHUB_OUTPUT"
+                      exit 0
+                  fi
+                  # On pull_request the checkout is the merge commit, so HEAD^1 is the base branch.
+                  changed=$(git diff --name-only HEAD^1 HEAD)
+                  echo "$changed"
+                  # The Python suite cannot depend on notes, docs, other workflows, or the frontend's dependency
+                  # manifests alone (the static files it uses are cached on the frontend source, not on them), so a PR
+                  # that changes only those skips it. Anything else, or a change to this workflow, runs it.
+                  # (captured, not piped into grep -q: an early-closed pipe fails the pipeline under pipefail)
+                  own=$(echo "$changed" | grep -E '^\.github/workflows/ci\.yml$' || true)
+                  others=$(echo "$changed" | grep -v -E '^(\.claude/|docs/|\.github/|vue3/package\.json$|vue3/yarn\.lock$)|\.md$' || true)
+                  if [ -n "$own" ] || [ -n "$others" ]; then
+                      echo "build=true" | tee -a "$GITHUB_OUTPUT"
+                  else
+                      echo "build=false" | tee -a "$GITHUB_OUTPUT"
+                      echo "Nothing the backend tests depend on changed; skipping."
+                  fi
+
             # cache-apt-pkgs-action >=1.6.3 no longer runs `apt update` on GitHub runners, so a
             # cache-cold install resolves against the runner image's stale lists and 404s.
             - name: Refresh apt package lists
               # apt-get update normally takes seconds but can hang on the runner's mirrors; fail fast so a re-run is quick.
+              if: steps.relevant.outputs.build == 'true'
               timeout-minutes: 5
               run: sudo apt-get update
             - uses: awalsh128/cache-apt-pkgs-action@v1.6.3
+              if: steps.relevant.outputs.build == 'true'
               with:
                   packages: libsasl2-dev python3-dev libxml2-dev libxmlsec1-dev libxslt-dev libxmlsec1-openssl libxslt-dev libldap2-dev libssl-dev gcc musl-dev postgresql-dev zlib-dev jpeg-dev libwebp-dev openssl-dev libffi-dev cargo openldap-dev python3-dev xmlsec-dev xmlsec build-base g++ curl
                   version: 1.0
 
             # Setup python & dependencies
             - name: Set up Python ${{ matrix.python-version }}
+              if: steps.relevant.outputs.build == 'true'
               uses: actions/setup-python@v7
               with:
                   python-version: ${{ matrix.python-version }}
                   cache: "pip"
 
             - name: Install Python Dependencies
+              if: steps.relevant.outputs.build == 'true'
               run: |
                   python -m pip install --upgrade pip
                   pip install -r requirements.txt
 
             - name: Cache StaticFiles
+              if: steps.relevant.outputs.build == 'true'
               uses: actions/cache@v6
               id: django_cache
               with:
@@ -65,7 +98,7 @@ jobs:
 
             # Build Vue frontend & Dependencies
             - name: Set up Node ${{ matrix.node-version }}
-              if: steps.django_cache.outputs.cache-hit != 'true'
+              if: steps.relevant.outputs.build == 'true' && steps.django_cache.outputs.cache-hit != 'true'
               uses: actions/setup-node@v7
               with:
                   node-version: ${{ matrix.node-version }}
@@ -73,22 +106,22 @@ jobs:
                   cache-dependency-path: ./vue3/yarn.lock
 
             - name: Install Vue dependencies
-              if: steps.django_cache.outputs.cache-hit != 'true'
+              if: steps.relevant.outputs.build == 'true' && steps.django_cache.outputs.cache-hit != 'true'
               working-directory: ./vue3
               run: yarn install
 
             - name: Build Vue dependencies
-              if: steps.django_cache.outputs.cache-hit != 'true'
+              if: steps.relevant.outputs.build == 'true' && steps.django_cache.outputs.cache-hit != 'true'
               working-directory: ./vue3
               run: yarn build
 
             - name: Compile Django StaticFiles
-              if: steps.django_cache.outputs.cache-hit != 'true'
+              if: steps.relevant.outputs.build == 'true' && steps.django_cache.outputs.cache-hit != 'true'
               run: |
                   python3 manage.py collectstatic --noinput
 
             - uses: actions/cache/save@v6
-              if: steps.django_cache.outputs.cache-hit != 'true'
+              if: steps.relevant.outputs.build == 'true' && steps.django_cache.outputs.cache-hit != 'true'
               with:
                   path: |
                       ./cookbook/static
@@ -97,13 +130,14 @@ jobs:
                       ${{ runner.os }}-${{ matrix.python-version }}-${{ matrix.node-version }}-collectstatic-${{ hashFiles('**/*.css', '**/*.js', 'vue/src/*') }}
 
             - name: Django Testing project
+              if: steps.relevant.outputs.build == 'true'
               run: pytest --junitxml=junit/test-results-${{ matrix.python-version }}.xml
 
             # Tests for the lines a PR changes are mandatory: fail when under 80% of the changed
             # lines are executed by a test. Tests and migrations are excluded so their own
             # (always-executed) changed lines can't dilute the ratio.
             - name: Diff coverage (changed backend lines must be tested)
-              if: github.event_name == 'pull_request' && matrix.python-version == '3.13'
+              if: steps.relevant.outputs.build == 'true' && github.event_name == 'pull_request' && matrix.python-version == '3.13'
               env:
                   BASE_REF: ${{ github.base_ref }}
               run: |
@@ -119,7 +153,7 @@ jobs:
 
             # One upload per push/PR is enough - coverage doesn't vary by matrix leg.
             - name: Upload backend coverage to Codecov
-              if: matrix.python-version == '3.13' && matrix.node-version == '24'
+              if: steps.relevant.outputs.build == 'true' && matrix.python-version == '3.13' && matrix.node-version == '24'
               uses: codecov/codecov-action@v7
               with:
                   token: ${{ secrets.CODECOV_TOKEN }}
