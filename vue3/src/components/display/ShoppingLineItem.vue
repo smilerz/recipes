@@ -157,7 +157,11 @@ async function addToPantry() {
     if (!food?.id || pantryAdding.value) return  // re-entrancy guard against a double-tap
     pantryAdding.value = true
     const ok = await quickPantryAdd({id: food.id, name: food.name}, t)
-    if (ok) pantryAddedLocal.value = true
+    if (ok) {
+        pantryAddedLocal.value = true
+        // listed in the shopping undo history, greyed out: undo never removes inventory
+        useShoppingStore().registerNote('PANTRY_ADD', 1)
+    }
     pantryAdding.value = false
 }
 

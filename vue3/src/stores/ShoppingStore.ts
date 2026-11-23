@@ -22,6 +22,7 @@ import {
     IShoppingSyncQueueEntry,
     ShoppingGroupingOptions,
     ShoppingListStats,
+    NOT_UNDOABLE_HISTORY_TYPES,
     ShoppingOperationHistoryEntry,
     ShoppingOperationHistoryType
 } from "@/types/Shopping";
@@ -543,8 +544,14 @@ export const useShoppingStore = defineStore(_STORE_ID, () => {
         }
         entries.forEach(entry => {
             entry.delayUntil = (delay ? delayDate : new Date('1970-01-01'))
-            updateObject(entry)
+            globalEntriesMap.value.set(entry.id!, entry)
         })
+
+        // the screen reads the pre-built grouped list: rebuild it now so postponed entries leave (or come back to) it
+        // right away instead of waiting for the saves or the next refresh - same as checking an entry off does
+        updateEntriesStructure()
+
+        Promise.all(entries.map(entry => updateObject(entry))).then(() => updateEntriesStructure())
     }
 
     /**
@@ -619,40 +626,131 @@ export const useShoppingStore = defineStore(_STORE_ID, () => {
     }
 
     /**
-     * takes the last item from the undo stack and reverts it
+     * add a note to the history that cannot be undone (e.g. foods added to the pantry), so the history stays honest
+     * about what happened; undo skips it
+     */
+    function registerNote(type: ShoppingOperationHistoryType, count: number) {
+        undoStack.value.push({'type': type, 'entries': [], 'count': count} as ShoppingOperationHistoryEntry)
+    }
+
+    function isUndoable(item: ShoppingOperationHistoryEntry) {
+        return !NOT_UNDOABLE_HISTORY_TYPES.includes(item.type)
+    }
+
+    /** if there is anything left that undo can revert (notes do not count) */
+    const canUndo = computed(() => undoStack.value.some(isUndoable))
+
+    /**
+     * takes the newest undoable item from the undo stack and reverts it; notes are left where they are
      */
     function undoChange() {
-        let last_item = undoStack.value.pop()
-        if (last_item !== undefined) {
-            let type = last_item['type']
-            let entries = last_item['entries']
-
-            if (type === 'CHECKED' || type === 'UNCHECKED') {
-                setEntriesCheckedState(entries, (type === 'UNCHECKED'), false)
-            } else if (type === 'DELAY' || type === 'UNDELAY') {
-                setEntriesDelayedState(entries, (type === 'UNDELAY'), false)
-            } else if (type === 'CREATE') {
-                for (let i in entries) {
-                    let e = entries[i]
-                    deleteObject(e, false)
-                }
-            } else if (type === 'DESTROY') {
-                for (let i in entries) {
-                    let e = entries[i]
-                    createObject(e, false)
-                }
-            } else if (type === 'IGNORE' || type === 'UNIGNORE') {
-                setFoodIgnoredState(entries, (type === 'UNIGNORE'), false)
+        for (let i = undoStack.value.length - 1; i >= 0; i--) {
+            if (isUndoable(undoStack.value[i])) {
+                const [item] = undoStack.value.splice(i, 1)
+                revertChange(item)
+                return
             }
-        } else {
-            // can use localization in store
-            //StandardToasts.makeStandardToast(this, this.$t('NoMoreUndo'))
         }
     }
 
-    function updateCategories(shoppingListFoods: IShoppingListFood[], category: SupermarketCategory) {
+    /**
+     * undo back through the history item at the given index (oldest first), newest first; notes in between stay
+     * @param index index in undoStack; a note cannot be undone, so nothing happens for it
+     */
+    function undoUntil(index: number) {
+        if (index < 0 || index >= undoStack.value.length || !isUndoable(undoStack.value[index])) return
+        for (let i = undoStack.value.length - 1; i >= index; i--) {
+            if (!isUndoable(undoStack.value[i])) continue
+            const [item] = undoStack.value.splice(i, 1)
+            revertChange(item)
+        }
+    }
+
+    function revertChange(item: ShoppingOperationHistoryEntry) {
+        const type = item['type']
+        const entries = item['entries']
+
+        if (type === 'CHECKED' || type === 'UNCHECKED') {
+            setEntriesCheckedState(entries, (type === 'UNCHECKED'), false)
+        } else if (type === 'DELAY' || type === 'UNDELAY') {
+            setEntriesDelayedState(entries, (type === 'UNDELAY'), false)
+        } else if (type === 'CREATE') {
+            for (let i in entries) {
+                let e = entries[i]
+                deleteObject(e, false)
+            }
+        } else if (type === 'DESTROY') {
+            for (let i in entries) {
+                let e = entries[i]
+                createObject(e, false)
+            }
+        } else if (type === 'IGNORE' || type === 'UNIGNORE') {
+            setFoodIgnoredState(entries, (type === 'UNIGNORE'), false)
+        } else if (type === 'SCALE' && item.amounts) {
+            const originalAmounts = item.amounts
+            entries.forEach((e, i) => {
+                e.amount = originalAmounts[i]
+                globalEntriesMap.value.set(e.id!, e)
+            })
+            updateEntriesStructure()
+            Promise.all(entries.map(e => updateObject(e))).then(() => updateEntriesStructure())
+        } else if (type === 'LISTS' && item.lists) {
+            revertShoppingListsAdded(item.lists)
+        } else if (type === 'LISTS_SET' && item.previousLists) {
+            revertShoppingListsSet(item.previousLists)
+        } else if (type === 'CATEGORY' && item.categories) {
+            revertCategories(item.entries, item.categories)
+        }
+    }
+
+    /** remove each list again from just the entries that gained it; entries that were already on it keep it */
+    function revertShoppingListsAdded(added: { list: ShoppingList, entries: ShoppingListEntry[] }[]) {
+        const api = new ApiApi()
+        added.forEach(({list, entries}) => {
+            if (entries.length === 0) return
+            entries.forEach(e => e.shoppingLists = (e.shoppingLists ?? []).filter(l => l.id !== list.id))
+            api.apiShoppingListEntryBulkCreate({
+                shoppingListEntryBulk: {ids: entries.map(e => e.id!), shoppingListsRemove: [list.id!]}
+            }).catch(err => {
+                useMessageStore().addError(ErrorMessageType.UPDATE_ERROR, err)
+            })
+        })
+        updateEntriesStructure()
+    }
+
+    /** put each food back to the category it had, one batch call per previous category */
+    function revertCategories(entries: ShoppingListEntry[], categories: { food: FoodShopping, previous: SupermarketCategory | null | undefined }[]) {
+        const api = new ApiApi()
+        const foodsByCategory = new Map<number | null, number[]>()
+        categories.forEach(({food, previous}) => {
+            (food as any).supermarketCategory = previous
+            entries.filter(e => e.food?.id === food.id).forEach(e => (e.food as any).supermarketCategory = previous)
+            const key = previous?.id ?? null
+            foodsByCategory.set(key, [...(foodsByCategory.get(key) ?? []), food.id!])
+        })
+        updateEntriesStructure()
+
+        foodsByCategory.forEach((foodIds, categoryId) => {
+            api.apiFoodBatchUpdateUpdate({foodBatchUpdate: {foods: foodIds, category: categoryId} as FoodBatchUpdate}).catch(err => {
+                useMessageStore().addError(ErrorMessageType.UPDATE_ERROR, err)
+            })
+        })
+    }
+
+    /**
+     * change the supermarket category of foods
+     * @param undo if the user should be able to undo the change; undoing restores each food's previous category
+     */
+    function updateCategories(shoppingListFoods: IShoppingListFood[], category: SupermarketCategory, undo: boolean = false) {
         const api = new ApiApi()
         const foodIds: number[] = []
+        if (undo) {
+            undoStack.value.push({
+                'type': 'CATEGORY',
+                'entries': shoppingListFoods.flatMap(sLF => Array.from(sLF.entries.values())),
+                'categories': shoppingListFoods.map(sLF => ({food: sLF.food as FoodShopping, previous: (sLF.food as any).supermarketCategory}))
+            } as ShoppingOperationHistoryEntry)
+        }
         shoppingListFoods.forEach(sLF => {
             // supermarketCategory is server-managed (readonly) on the generated type; this is an
             // optimistic local cache update ahead of the API call below, same pattern as the
@@ -675,27 +773,116 @@ export const useShoppingStore = defineStore(_STORE_ID, () => {
         })
     }
 
-    function updateEntryShoppingLists(entries: ShoppingListEntry[], shoppingLists: ShoppingList[]) {
+    /**
+     * multiply the amount of each entry by a factor and save each one (there is no bulk amount endpoint)
+     * @param entries entries to scale
+     * @param factor 2 doubles, 0.5 halves
+     * @param undo if the user should be able to undo the change; undoing restores the exact previous amounts
+     */
+    function scaleEntries(entries: ShoppingListEntry[], factor: number, undo: boolean) {
+        if (undo) {
+            undoStack.value.push({'type': 'SCALE', 'entries': entries, 'amounts': entries.map(e => e.amount)} as ShoppingOperationHistoryEntry)
+        }
+        entries.forEach(entry => {
+            entry.amount = entry.amount * factor
+            globalEntriesMap.value.set(entry.id!, entry)
+        })
+        // rebuild the grouped list the screen reads, so the lines show the new amounts right away
+        updateEntriesStructure()
+        return Promise.all(entries.map(entry => updateObject(entry))).then(results => {
+            updateEntriesStructure()
+            return results
+        })
+    }
+
+    /**
+     * add the given shopping lists to the entries, keeping the lists each entry is already on
+     * @param undo if the user should be able to undo the change; undoing removes each list only from the entries that gained it
+     */
+    function addEntriesToShoppingLists(entries: ShoppingListEntry[], shoppingLists: ShoppingList[], undo: boolean = false) {
         const api = new ApiApi()
-        console.log('updating entries ', entries, ' with lists ', shoppingLists)
+        if (undo) {
+            undoStack.value.push({
+                'type': 'LISTS',
+                'entries': entries,
+                'lists': shoppingLists.map(list => ({list, entries: entries.filter(e => !(e.shoppingLists ?? []).some(existing => existing.id === list.id))}))
+            } as ShoppingOperationHistoryEntry)
+        }
+        entries.forEach(entry => {
+            const merged = [...(entry.shoppingLists ?? [])]
+            shoppingLists.forEach(list => {
+                if (!merged.some(existing => existing.id === list.id)) merged.push(list)
+            })
+            entry.shoppingLists = merged
+        })
+
+        updateEntriesStructure()
+
+        return api.apiShoppingListEntryBulkCreate({
+            shoppingListEntryBulk: {
+                ids: entries.map(e => e.id!),
+                shoppingListsAdd: shoppingLists.map(sl => sl.id!)
+            }
+        }).then(() => {
+            useMessageStore().addPreparedMessage(PreparedMessage.UPDATE_SUCCESS)
+        }).catch(err => {
+            useMessageStore().addError(ErrorMessageType.UPDATE_ERROR, err)
+        })
+    }
+
+    /**
+     * replace the lists of the entries with the given ones (the server ignores an empty set, so none means remove all)
+     * @param undo if the user should be able to undo the change; undoing restores each entry's previous lists
+     */
+    function updateEntryShoppingLists(entries: ShoppingListEntry[], shoppingLists: ShoppingList[], undo: boolean = false) {
+        const api = new ApiApi()
+        if (undo) {
+            undoStack.value.push({
+                'type': 'LISTS_SET',
+                'entries': entries,
+                'previousLists': entries.map(entry => ({entry, lists: entry.shoppingLists ?? []}))
+            } as ShoppingOperationHistoryEntry)
+        }
         entries.forEach(sLE => {
             sLE.shoppingLists = shoppingLists
         })
 
         updateEntriesStructure()
 
-        api.apiShoppingListEntryBulkCreate({
-            shoppingListEntryBulk: {
-                ids: entries.map(e => e.id!),
-                shoppingListsSet: shoppingLists.map(sl => sl.id!)
-            }
-        }).then(r => {
+        return setShoppingListsOnServer(entries.map(e => e.id!), shoppingLists).then(() => {
             useMessageStore().addPreparedMessage(PreparedMessage.UPDATE_SUCCESS)
         }).catch(err => {
             useMessageStore().addError(ErrorMessageType.UPDATE_ERROR, err)
         })
 
         //TODO if food update that as well
+    }
+
+    /** one bulk call that makes the given lists the only lists of the given entries */
+    function setShoppingListsOnServer(entryIds: number[], shoppingLists: ShoppingList[]) {
+        return new ApiApi().apiShoppingListEntryBulkCreate({
+            shoppingListEntryBulk: shoppingLists.length > 0
+                ? {ids: entryIds, shoppingListsSet: shoppingLists.map(sl => sl.id!)}
+                : {ids: entryIds, shoppingListsRemoveAll: true}
+        })
+    }
+
+    /** put each entry back on the lists it was on, one bulk call per distinct set of lists */
+    function revertShoppingListsSet(previous: { entry: ShoppingListEntry, lists: ShoppingList[] }[]) {
+        const groups = new Map<string, { ids: number[], lists: ShoppingList[] }>()
+        previous.forEach(({entry, lists}) => {
+            entry.shoppingLists = lists
+            const key = lists.map(l => l.id).sort().join(',')
+            const group = groups.get(key) ?? {ids: [], lists}
+            group.ids.push(entry.id!)
+            groups.set(key, group)
+        })
+        updateEntriesStructure()
+        groups.forEach(group => {
+            setShoppingListsOnServer(group.ids, group.lists).catch(err => {
+                useMessageStore().addError(ErrorMessageType.UPDATE_ERROR, err)
+            })
+        })
     }
 
     /**
@@ -728,6 +915,9 @@ export const useShoppingStore = defineStore(_STORE_ID, () => {
         hasFailedItems,
         itemCheckSyncQueue,
         undoStack,
+        canUndo,
+        registerNote,
+        undoUntil,
         totalFoods,
         shoppingLists,
         selectedMealPlan,
@@ -745,6 +935,8 @@ export const useShoppingStore = defineStore(_STORE_ID, () => {
         entriesByGroupMealPlan,
         updateCategories,
         updateEntryShoppingLists,
+        addEntriesToShoppingLists,
+        scaleEntries,
         loadShoppingLists,
     }
 })

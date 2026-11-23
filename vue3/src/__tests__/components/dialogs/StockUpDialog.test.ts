@@ -18,6 +18,7 @@ import * as vuetifyDirectives from 'vuetify/directives'
 import {apiMock, resetApiMock} from '@/__tests__/api-mock'
 import {makeUserPreference} from '@/__tests__/factories'
 import {useUserPreferenceStore} from '@/stores/UserPreferenceStore'
+import {useShoppingStore} from '@/stores/ShoppingStore'
 
 vi.mock('@/openapi', async (imp) => ({...(await imp<any>()), ApiApi: class { constructor() { return apiMock } }}))
 vi.mock('@vueuse/core', async (imp) => ({...(await imp<any>()), useStorage: (_key: string, defaultValue: any) => ({value: defaultValue})}))
@@ -102,6 +103,24 @@ describe('StockUpDialog seeding (D3)', () => {
         expect(apiMock.apiInventoryEntryStockUpCreate).toHaveBeenCalledTimes(1)
         const {items} = apiMock.apiInventoryEntryStockUpCreate.mock.calls[0][0].stockUp
         expect(items).toEqual([expect.objectContaining({food: 1, amount: 2, unit: 5})])
+    })
+
+    it('SU-13: leaves a note in the shopping undo history that foods went to the pantry (listed, but cannot be undone there)', async () => {
+        apiMock.apiShoppingListEntryList.mockResolvedValue({results: [
+            {food: {id: 1, name: 'Milk'}, amount: 2, unit: L, checked: true},
+            {food: {id: 2, name: 'Eggs'}, amount: 1, unit: null, checked: true},
+        ]})
+        apiMock.apiInventoryEntryStockUpCreate.mockResolvedValue({created: 2})
+
+        const wrapper = mountDialog()
+        void (wrapper.vm as any).open()
+        await flushPromises()
+        clickConfirm()
+        await flushPromises()
+
+        const note = useShoppingStore().undoStack.at(-1)
+        expect(note?.type).toBe('PANTRY_ADD')
+        expect(note?.count).toBe(2)
     })
 
     it('SU-02: renders one row per (food, unit) for mixed-unit entries and posts both', async () => {

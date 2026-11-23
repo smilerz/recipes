@@ -264,6 +264,7 @@ export const useUserPreferenceStore = defineStore('user_preference_store', () =>
             shopping_input_autocomplete: true,
             shopping_show_debug: false,
             shopping_showFoodImages: false,
+            shopping_show_search: true,
 
             mealplan_displayPeriod: 'week',
             mealplan_displayPeriodCount: 3,

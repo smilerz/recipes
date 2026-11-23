@@ -13,6 +13,7 @@ export type DeviceSettings = {
     shopping_input_autocomplete: boolean
     shopping_show_debug: boolean
     shopping_showFoodImages: boolean
+    shopping_show_search: boolean
 
     mealplan_displayPeriod: string
     mealplan_displayPeriodCount: number

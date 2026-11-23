@@ -93,6 +93,7 @@ import ClosableHelpAlert from "@/components/display/ClosableHelpAlert.vue";
 import PantryJarIndicator from "@/components/display/PantryJarIndicator.vue";
 import {stockUpItemsFromRows, stockUpRowsFromEntries} from "@/utils/pantry_utils.ts";
 import {ErrorMessageType, MessageType, useMessageStore} from "@/stores/MessageStore.ts";
+import {useShoppingStore} from "@/stores/ShoppingStore";
 import {useLookbackPeriod} from "@/composables/useLookbackPeriod.ts";
 
 interface Row {
@@ -249,6 +250,8 @@ async function confirm() {
     try {
         await new ApiApi().apiInventoryEntryStockUpCreate({stockUp: {items}})
         useMessageStore().addMessage(MessageType.SUCCESS, t('StockedN', {count: items.length}), 3000)
+        // listed in the shopping undo history, greyed out: undo never removes inventory
+        useShoppingStore().registerNote('PANTRY_ADD', items.length)
         emit('stocked')
         showDialog.value = false
     } catch (err) {
