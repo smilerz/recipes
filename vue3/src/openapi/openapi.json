@@ -11922,6 +11922,32 @@ paths:
               schema:
                 $ref: '#/components/schemas/PaginatedUserSpaceList'
           description: ''
+    post:
+      operationId: apiUserSpaceCreate
+      description: logs request counts to redis cache total/per user/
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserSpace'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/UserSpace'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/UserSpace'
+        required: true
+      security:
+      - ApiKeyAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserSpace'
+          description: ''
   /api/user-space/{id}/:
     get:
       operationId: apiUserSpaceRetrieve
@@ -12072,6 +12098,35 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/UserSpaceBatchUpdate'
+          description: ''
+  /api/user-space/create_user/:
+    post:
+      operationId: apiUserSpaceCreateUserCreate
+      description: |-
+        create a user with a username and password in the requesting admin's space, without an invite
+        only the space owner can create admins; the space's user limit applies
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserSpaceCreateUser'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/UserSpaceCreateUser'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/UserSpaceCreateUser'
+        required: true
+      security:
+      - ApiKeyAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserSpace'
           description: ''
   /api/user/{id}/:
     get:
@@ -13512,6 +13567,16 @@ components:
           readOnly: true
       required:
       - name
+    GroupEnum:
+      enum:
+      - guest
+      - user
+      - admin
+      type: string
+      description: |-
+        * `guest` - guest
+        * `user` - user
+        * `admin` - admin
     Household:
       type: object
       description: Adds nested create feature
@@ -19442,6 +19507,33 @@ components:
       required:
       - group_set
       - user_spaces
+    UserSpaceCreateUser:
+      type: object
+      description: |-
+        Input for an admin creating a user directly, without an invite. The password has to pass the instance's
+        password validators (AUTH_PASSWORD_VALIDATORS), checked against the new user's own username and email.
+      properties:
+        username:
+          type: string
+          pattern: ^[\w.@+-]+$
+          maxLength: 150
+        password:
+          type: string
+          writeOnly: true
+        email:
+          oneOf:
+          - type: string
+            format: email
+            default: ''
+          - type: string
+            maxLength: 0
+        group:
+          allOf:
+          - $ref: '#/components/schemas/GroupEnum'
+          default: user
+      required:
+      - password
+      - username
     ViewLog:
       type: object
       properties:

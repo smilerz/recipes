@@ -7,6 +7,7 @@ const API_METHODS = [
     'apiSpaceCurrentRetrieve',
     'apiSpacePartialUpdate',
     'apiUserSpaceAllPersonalList',
+    'apiUserSpaceCreateUserCreate',
     'apiSpaceList',
     'apiSwitchActiveSpaceRetrieve',
     'apiUnitList',

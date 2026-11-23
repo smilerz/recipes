@@ -117,6 +117,30 @@ describe('ModelListPage', () => {
         }
     })
 
+    it('opens the create-user dialog from the UserSpace list header, and only there', async () => {
+        mockTreeModel.model.name = 'UserSpace'
+        ;(mockTreeModel.model as any).headerActions = [{type: 'button', key: 'createUser', labelKey: 'CreateUser', icon: 'fa-solid fa-user-plus', dialogKey: 'createUser'}]
+        try {
+            const wrapper = mountPage(ModelListPage, { props: { model: 'UserSpace' } })
+            await flushPromises()
+            expect(wrapper.find('.stub-user-space-create-user-dialog').attributes('data-open')).toBe('false')
+
+            const button = wrapper.findAll('button').find(b => b.text().includes('CreateUser'))
+            expect(button, 'the header action renders as a button').toBeDefined()
+            await button!.trigger('click')
+            await flushPromises()
+
+            expect(wrapper.find('.stub-user-space-create-user-dialog').attributes('data-open')).toBe('true')
+        } finally {
+            mockTreeModel.model.name = 'Food'
+            delete (mockTreeModel.model as any).headerActions
+        }
+
+        const food = mountPage(ModelListPage, { props: { model: 'Food' } })
+        await flushPromises()
+        expect(food.find('.stub-user-space-create-user-dialog').exists()).toBe(false)
+    })
+
     it('FOOD-01: page=2 URL param is not reset to page=1 by treeActive init on a tree model', async () => {
         // Simulate navigating to ?page=2 when the user has tree view enabled.
         // Bug: treeActive transitions false→true in onBeforeMount (model not yet set → model set),

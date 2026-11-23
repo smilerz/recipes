@@ -36,6 +36,7 @@ models/FoodSimple.ts
 models/FoodStats.ts
 models/GenericModelReference.ts
 models/Group.ts
+models/GroupEnum.ts
 models/Household.ts
 models/ImportLog.ts
 models/ImportOpenData.ts
@@ -208,5 +209,7 @@ models/UserFileView.ts
 models/UserPreference.ts
 models/UserSpace.ts
 models/UserSpaceBatchUpdate.ts
+models/UserSpaceCreateUser.ts
+models/UserSpaceCreateUserEmail.ts
 models/ViewLog.ts
 models/index.ts

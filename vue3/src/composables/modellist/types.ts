@@ -168,6 +168,8 @@ export type BatchAction = {
 export type HeaderAction =
     | { type: 'button', key: string, labelKey: string, icon: string, color?: string, size?: string,
         routeName?: string, routeParams?: Record<string, any>,
+        /** opens the dialog the page hosts under this key (see ModelListPage's headerDialog) */
+        dialogKey?: string,
         handler?: () => Promise<void> | void }
     | { type: 'widget', component: ReturnType<typeof import('vue').defineAsyncComponent> }
 
