@@ -2,11 +2,11 @@
     <v-dialog max-width="600px" v-model="dialog">
         <template #activator="{ props }">
             <v-list-item v-bind="props" prepend-icon="fa-solid fa-calendar-days" link>
-                {{ $t('Calendar') }}
+                {{ $t('CalendarFeed') }}
             </v-list-item>
         </template>
         <v-card :loading="loading">
-            <v-closable-card-title v-model="dialog" :title="$t('Calendar')" icon="fa-solid fa-calendar-days"></v-closable-card-title>
+            <v-closable-card-title v-model="dialog" :title="$t('CalendarFeed')" icon="fa-solid fa-calendar-days"></v-closable-card-title>
 
             <v-card-text>
                 <p class="mb-4">{{ $t('CalendarIcsHelp') }}</p>

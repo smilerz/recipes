@@ -34,16 +34,20 @@ function mountView(view?: 'auto' | 'list' | 'calendar') {
     if (view) (useUserPreferenceStore().deviceSettings as any).mealplan_view = view
     // Vuetify reads the window width when it is created: 500 is a phone (md breakpoint), 1400 a desktop
     window.innerWidth = display.mobile ? 500 : 1400
-    const i18n = createI18n({legacy: false, locale: 'en', messages: {en: {List: 'List', Calendar: 'Calendar'}}, missingWarn: false, fallbackWarn: false})
+    const i18n = createI18n({legacy: false, locale: 'en', messages: {en: {List: 'List', Calendar: 'Calendar', Settings: 'Settings'}}, missingWarn: false, fallbackWarn: false})
     return mount(MealPlanView, {
         attachTo: document.body,
         global: {
             plugins: [pinia, i18n, createVuetify({display: {mobileBreakpoint: 'md'}})],
             stubs: {
-                MealPlanCalendarHeader: {template: '<div class="stub-calendar-header"><slot name="actions" /></div>'},
+                MealPlanCalendarHeader: {template: '<div class="stub-calendar-header"><div class="slot-start"><slot name="actions" /></div><div class="slot-end"><slot name="end-actions" /></div></div>'},
+                MealPlanSettingsDrawer: {
+                    props: ['modelValue', 'showingCalendar'],
+                    template: '<div class="stub-settings-drawer" :data-open="String(modelValue)" :data-calendar="String(showingCalendar)" />',
+                },
                 MealPlanAgendaList: {
                     emits: ['add', 'edit'],
-                    template: `<div class="stub-agenda"><slot name="toolbar-start" />
+                    template: `<div class="stub-agenda"><div class="slot-start"><slot name="toolbar-start" /></div><div class="slot-end"><slot name="toolbar-end" /></div>
                         <button class="stub-add" @click="$emit('add', new Date(2026, 10, 24))" />
                         <button class="stub-edit" @click="$emit('edit', {id: 5})" /></div>`,
                 },
@@ -121,6 +125,35 @@ describe('MealPlanView', () => {
 
         expect((useUserPreferenceStore().deviceSettings as any).mealplan_view).toBe('list')
         expect(w.find('.stub-agenda').exists()).toBe(true)
+    })
+
+    it.each([
+        ['the day list', true, 'false'],
+        ['the calendar', false, 'true'],
+    ])('opens the settings drawer from the gear in %s, telling it whether the calendar is showing', async (_name, mobile, calendarShowing) => {
+        display.mobile = mobile
+        const w = mountView()
+        await flushPromises()
+        expect(w.find('.stub-settings-drawer').attributes('data-open')).toBe('false')
+
+        await w.find('[data-test="mealplan-settings"]').trigger('click')
+        await flushPromises()
+
+        expect(w.find('.stub-settings-drawer').attributes('data-open')).toBe('true')
+        expect(w.find('.stub-settings-drawer').attributes('data-calendar')).toBe(calendarShowing)
+    })
+
+    it.each([
+        ['the day list', true],
+        ['the calendar', false],
+    ])('puts the view toggle at the start and the settings gear at the far end of %s', async (_name, mobile) => {
+        display.mobile = mobile
+        const w = mountView()
+        await flushPromises()
+
+        expect(w.find('.slot-start [data-test="mealplan-view-list"]').exists()).toBe(true)
+        expect(w.find('.slot-start [data-test="mealplan-settings"]').exists()).toBe(false)
+        expect(w.find('.slot-end [data-test="mealplan-settings"]').exists()).toBe(true)
     })
 
     it('opens the new entry dialog for the day whose add button was tapped', async () => {

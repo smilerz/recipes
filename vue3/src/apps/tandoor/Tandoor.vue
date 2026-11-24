@@ -76,7 +76,6 @@
                 <v-divider></v-divider>
                 <component :is="item.component" v-bind="{prependIcon: item.prependIcon, title: item.title, to: item.to, href: item.href, onClick: item.onClick}" :key="item.title" v-for="item in useNavigation().getNavigationDrawer()"></component>
 
-                <navigation-drawer-context-menu></navigation-drawer-context-menu>
             </v-list>
 
             <template #append>
@@ -109,9 +108,6 @@
                 <v-bottom-sheet activator="parent" close-on-content-click>
                     <v-list nav>
                         <component :is="item.component" v-bind="{prependIcon: item.prependIcon, title: item.title, to: item.to, href: item.href, onClick: item.onClick}" :key="item.title" v-for="item in useNavigation().getBottomNavigation()"></component>
-                        <div @click.stop>
-                            <navigation-drawer-context-menu actions-only></navigation-drawer-context-menu>
-                        </div>
                     </v-list>
                 </v-bottom-sheet>
             </v-btn>
@@ -137,7 +133,6 @@ import {VDivider} from "vuetify/components"
 import {toVuetifyLocale} from "@/vuetify"
 import VSnackbarQueued from "@/components/display/VSnackbarQueued.vue";
 import {useUserPreferenceStore} from "@/stores/UserPreferenceStore";
-import NavigationDrawerContextMenu from "@/components/display/NavigationDrawerContextMenu.vue";
 import {nextTick, onMounted, ref, watch} from "vue";
 import {isSpaceAboveLimit} from "@/utils/logic_utils";
 import {useTitle} from "@vueuse/core";

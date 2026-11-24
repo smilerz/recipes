@@ -1,15 +1,16 @@
 <template>
     <div>
         <v-row class="pa-2 align-center">
-            <!-- a row of its own on a phone, where beside the date field it squeezes the date; left of the date range from md up -->
-            <v-col cols="12" md="auto" class="py-1">
+            <!-- on a phone the toggle and the end actions share a row above the date field, where beside it they would squeeze the date;
+                 from md up the order is toggle, date range, date field, end actions -->
+            <v-col class="py-1 order-0" cols md="auto">
                 <slot name="actions"></slot>
             </v-col>
-            <v-col class="align-center d-none d-md-flex text-h5">
+            <v-col class="align-center d-none d-md-flex text-h5 order-md-1">
                 {{ DateTime.fromJSDate(props.headerProps?.displayFirstDate).toLocaleString(DateTime.DATE_MED) }} -
                 {{ DateTime.fromJSDate(props.headerProps?.displayLastDate).toLocaleString(DateTime.DATE_MED) }}
             </v-col>
-            <v-col md="4">
+            <v-col cols="12" md="4" class="order-2 order-md-2">
                 <v-date-input
                     v-model="date"
                     prepend-icon=""
@@ -27,6 +28,9 @@
                         <v-btn density="compact" icon="fa-solid fa-chevron-right" variant="plain" @click="date = props.headerProps.nextFullPeriod"></v-btn>
                     </template>
                 </v-date-input>
+            </v-col>
+            <v-col cols="auto" class="py-1 order-1 order-md-3">
+                <slot name="end-actions"></slot>
             </v-col>
         </v-row>
     </div>
