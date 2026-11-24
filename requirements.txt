@@ -24,13 +24,13 @@ pyyaml==6.0.4
 uritemplate==4.2.0
 beautifulsoup4==4.15.0
 Jinja2==3.1.6
-django-allauth[mfa,socialaccount]==65.21.1
-recipe-scrapers==15.13.0
-django-scopes==2.1.0
+django-allauth[mfa,socialaccount]==65.22.1
+recipe-scrapers==15.14.0
+django-scopes==2.2.0
 django-treebeard==7.0.3
 django-cors-headers==4.9.0
 django-storages==1.14.6
-boto3==1.43.123
+boto3==1.44.4
 # Pinned to a master commit: the released 2.5.0 caps Django <6.1 but master supports 6.1 (django-commons/django-prometheus#537).
 # Switch back to a PyPI release once one allows Django 6.1+.
 django-prometheus @ git+https://github.com/django-commons/django-prometheus.git@c04929aac027bde8410bde20af6ca864a1e6929d
@@ -44,10 +44,10 @@ requests-oauthlib==2.0.0
 pyjwt==2.15.1
 python3-saml==1.16.0
 django-vite==3.2.0
-litellm==1.106.6
+litellm==1.109.1
 rapidfuzz==3.14.6
 stripe==16.1.0
-regex==2026.9.29
+regex==2026.11.15
 
 # Development
 pytest== 9.2.0
