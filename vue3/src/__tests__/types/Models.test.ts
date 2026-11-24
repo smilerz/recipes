@@ -3,6 +3,8 @@ import { describe, it, expect, vi } from 'vitest'
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { getGenericModelFromString, canRouteToModel, DATABASE_MODELS, type EditorSupportedModels, type GenericModel } from '@/types/Models'
+import { TUserSpace } from '@/types/Models'
+import en from '@/locales/en.json'
 
 const t = (k: string) => k
 
@@ -223,5 +225,13 @@ describe('list-ignores-query — endpoints that cannot filter are flagged so pic
     it.each(['Food', 'Keyword', 'Unit', 'Recipe', 'Supermarket'])('%s can filter on the server, so it is not flagged', (name) => {
         const model = (getGenericModelFromString(name as EditorSupportedModels, t) as GenericModel).model
         expect(model.listIgnoresQuery).toBeFalsy()
+    })
+})
+
+describe('UserSpace list description', () => {
+    // admins can create a user directly now, so the text no longer says invite links are the only way to add one
+    it('says users can be added in the list as well as with invite links', () => {
+        const description = (en as Record<string, string>)[(TUserSpace as any).localizationKeyDescription]
+        expect(description).toBe('Users and their permissions in a space. Add users here or with invite links.')
     })
 })

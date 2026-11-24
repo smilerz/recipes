@@ -852,7 +852,7 @@
   "SpaceLimitReached": "This Space has reached a limit. No more objects of this type can be created.",
   "SpaceMemberHelp": "Add users to your space by creating an Invite Link and sending it to the person you want to add.",
   "SpaceMembers": "Space Members",
-  "SpaceMembersHelp": "Users and their permissions in a space. Add additional users using invite links.",
+  "SpaceMembersHelp": "Users and their permissions in a space. Add users here or with invite links.",
   "SpaceName": "Space Name",
   "SpacePrivateObjectsHelp": "Some things are private by default and can be shared with members of your space.",
   "SpaceSettings": "Space Settings",
