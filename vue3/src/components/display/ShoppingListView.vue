@@ -374,7 +374,7 @@
 
 <script setup lang="ts">
 
-import {computed, onMounted, ref, shallowRef, toRef, watch} from "vue";
+import {computed, onBeforeUnmount, onMounted, ref, shallowRef, toRef, watch} from "vue";
 import {useShoppingStore} from "@/stores/ShoppingStore";
 import {ApiApi, Recipe, ResponseError, ShoppingList, ShoppingListEntry, ShoppingListRecipe, Supermarket, SupermarketCategory} from "@/openapi";
 import {ErrorMessageType, PreparedMessage, useMessageStore} from "@/stores/MessageStore";
@@ -559,7 +559,11 @@ function updateRecipeServings(recipe: ShoppingListRecipe, servings: number) {
 /**
  * run the autosync function in a loop
  */
+let autoSyncStopped = false
+
 function autoSyncLoop() {
+    if (autoSyncStopped) return
+
     // this should not happen in production but sometimes in development with HMR
     clearTimeout(useShoppingStore().autoSyncTimeoutId)
 
@@ -580,6 +584,14 @@ function autoSyncLoop() {
  * cancel auto sync loop before leaving to another page
  */
 onBeforeRouteLeave(() => {
+    clearTimeout(useShoppingStore().autoSyncTimeoutId)
+})
+
+/**
+ * the loop belongs to this list: leaving the route is not the only way it goes away (the meal plan's Shopping tab is unmounted when its dialog closes)
+ */
+onBeforeUnmount(() => {
+    autoSyncStopped = true
     clearTimeout(useShoppingStore().autoSyncTimeoutId)
 })
 

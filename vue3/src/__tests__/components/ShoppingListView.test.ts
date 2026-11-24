@@ -115,6 +115,35 @@ describe('ShoppingListView', () => {
         ;(apiMock as any).apiShoppingListList = vi.fn().mockResolvedValue({count: 0, next: null, previous: null, results: []})
     })
 
+    // The loop re-schedules itself forever (every second while auto sync is off) and was only stopped by leaving the route, so a list
+    // that was merely unmounted - the meal plan's Shopping tab when its dialog closes, or a test - kept polling, and in the tests a
+    // timer firing after the environment was torn down failed the run with "window is not defined".
+    it('stops its auto sync loop when it is unmounted, so no timer outlives it', async () => {
+        const pending: Array<() => void> = []
+        const realSetTimeout = window.setTimeout.bind(window)
+        // auto sync is off in these tests, so the loop checks again every second; keep those timers instead of running them
+        const spy = vi.spyOn(window, 'setTimeout').mockImplementation(((callback: () => void, ms?: number, ...args: unknown[]) => {
+            if (ms === 1000) {
+                pending.push(callback)
+                return 1
+            }
+            return realSetTimeout(callback, ms, ...args)
+        }) as any)
+
+        try {
+            const w = mountView()
+            await flushPromises()
+            expect(pending).toHaveLength(1)
+
+            w.unmount()
+            pending[0]()
+
+            expect(pending, 'the loop scheduled another timer after the list was gone').toHaveLength(1)
+        } finally {
+            spy.mockRestore()
+        }
+    })
+
     it('scopes the initial entry load to the given meal plan instead of fetching the whole shopping list', async () => {
         const w = mountView({mealPlanId: 42})
         await flushPromises()
