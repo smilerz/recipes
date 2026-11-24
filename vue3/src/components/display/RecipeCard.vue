@@ -39,6 +39,8 @@
                     <p class="font-weight-bold mt-1">{{ recipe.name }}</p>
                 </div>
                 <div class="mt-1">
+                    <v-btn v-if="props.showOpenButton" icon="$recipes" variant="text" size="small" :aria-label="t('OpenRecipe', {name: recipe.name})"
+                           data-test="recipe-card-open" @click.stop="openRecipe()"></v-btn>
                     <recipe-context-menu :recipe="recipe" size="small" v-if="props.showMenu" @update:recipe="onContextMenuRecipeUpdated" @preview="previewDialog = true"></recipe-context-menu>
                 </div>
             </div>
@@ -93,6 +95,7 @@ const props = defineProps({
     height: {type: String, required: false, default: '15vh'},
     linkTarget: {type: String, required: false, default: ''},
     showMenu: {type: Boolean, default: true, required: false},
+    showOpenButton: {type: Boolean, default: false, required: false},
     // Drop the built-in whole-card navigation (image link + title click). The book
     // card reuses RecipeCard purely as the settings-driven display and supplies its
     // own "Open" button instead (D08).
