@@ -48,7 +48,7 @@ let routes: RouteRecordRaw[] = [
 ]
 
 let settings: RouteRecordRaw = {
-    path: '/settings', component: () => import("@/pages/SettingsPage.vue"), name: 'SettingsPage', redirect: '/settings/account',
+    path: '/settings', component: () => import("@/pages/SettingsPage.vue"), name: 'SettingsPage',
     children: [
         {path: 'account', component: () => import("@/components/settings/AccountSettings.vue"), name: 'AccountSettings', meta: {title: 'Settings'}},
         {path: 'cosmetic', component: () => import("@/components/settings/CosmeticSettings.vue"), name: 'CosmeticSettings', meta: {title: 'Settings'}},
