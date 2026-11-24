@@ -34,6 +34,7 @@ const DEFAULT_STUBS: Record<string, Component> = {
     OpenDataImportSettings: { template: '<div class="stub-open-data-import-settings"/>' },
     SyncDialog: { template: '<div class="stub-sync-dialog"/>' },
     BatchEditUserSpaceDialog: { template: '<div class="stub-batch-edit-user-space-dialog"/>' },
+    UserSpaceCreateUserDialog: { props: ['modelValue'], template: '<div class="stub-user-space-create-user-dialog" :data-open="String(modelValue)"/>' },
     // Model list components (food-filters)
     ListToolbar: { template: '<div class="stub-list-toolbar"/>' },
     ModelListDataTable: { template: '<div class="stub-model-list-data-table"/>' },

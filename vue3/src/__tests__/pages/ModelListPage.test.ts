@@ -3,6 +3,8 @@ import { ref } from 'vue'
 import { flushPromises } from '@vue/test-utils'
 import { apiMock, resetApiMock } from '@/__tests__/api-mock'
 import { mountPage } from '@/__tests__/pages/page-mount-helper'
+import { makeUser, makeGroup, makeSpace, makeUserSpace, makeUserPreference } from '@/__tests__/factories'
+import { useUserPreferenceStore } from '@/stores/UserPreferenceStore'
 
 vi.mock('@/openapi', async (importOriginal) => ({
     ...(await importOriginal<any>()),
@@ -81,6 +83,19 @@ vi.mock('@vueuse/router', async () => {
 
 import ModelListPage from '@/pages/ModelListPage.vue'
 
+// the role the signed-in user has in the space: a plain user, an admin, or the space owner (who is an admin too)
+function signInAs(role: 'user' | 'admin' | 'owner') {
+    const store = useUserPreferenceStore()
+    store.userSettings = makeUserPreference({ user: makeUser({ id: 5 }) }) as any
+    store.activeSpace = makeSpace({ id: 1, createdBy: makeUser({ id: role === 'owner' ? 5 : 9 }) }) as any
+    store.userSpaces = [makeUserSpace({ space: 1, groups: [makeGroup({ name: role === 'user' ? 'user' : 'admin' })] })] as any
+}
+
+const USER_SPACE_HEADER_ACTIONS = [
+    { type: 'button', key: 'createUser', labelKey: 'CreateUser', icon: 'fa-solid fa-user-plus', dialogKey: 'createUser', requires: 'admin' },
+    { type: 'button', key: 'invites', labelKey: 'Invites', icon: 'fa-solid fa-link', routeName: 'ModelListPage', routeParams: { model: 'InviteLink' }, requires: 'owner' },
+]
+
 describe('ModelListPage', () => {
     beforeEach(() => {
         resetApiMock()
@@ -114,6 +129,52 @@ describe('ModelListPage', () => {
             expect(wrapper.find('.stub-batch-edit-food-dialog').exists()).toBe(false)
         } finally {
             mockTreeModel.model.name = 'Food'
+        }
+    })
+
+    it('opens the create-user dialog from the UserSpace list header, and only there', async () => {
+        mockTreeModel.model.name = 'UserSpace'
+        ;(mockTreeModel.model as any).headerActions = USER_SPACE_HEADER_ACTIONS
+        try {
+            const wrapper = mountPage(ModelListPage, { props: { model: 'UserSpace' } })
+            signInAs('admin')
+            await flushPromises()
+            expect(wrapper.find('.stub-user-space-create-user-dialog').attributes('data-open')).toBe('false')
+
+            const button = wrapper.findAll('button').find(b => b.text().includes('CreateUser'))
+            expect(button, 'the header action renders as a button').toBeDefined()
+            await button!.trigger('click')
+            await flushPromises()
+
+            expect(wrapper.find('.stub-user-space-create-user-dialog').attributes('data-open')).toBe('true')
+        } finally {
+            mockTreeModel.model.name = 'Food'
+            delete (mockTreeModel.model as any).headerActions
+        }
+
+        const food = mountPage(ModelListPage, { props: { model: 'Food' } })
+        await flushPromises()
+        expect(food.find('.stub-user-space-create-user-dialog').exists()).toBe(false)
+    })
+
+    it.each([
+        ['a plain user', 'user', [], ['CreateUser', 'Invites']],
+        ['an admin who is not the owner', 'admin', ['CreateUser'], ['Invites']],
+        ['the space owner', 'owner', ['CreateUser', 'Invites'], []],
+    ] as const)('shows %s only the header buttons they can use', async (_name, role, shown, hidden) => {
+        mockTreeModel.model.name = 'UserSpace'
+        ;(mockTreeModel.model as any).headerActions = USER_SPACE_HEADER_ACTIONS
+        try {
+            const wrapper = mountPage(ModelListPage, { props: { model: 'UserSpace' } })
+            signInAs(role)
+            await flushPromises()
+
+            const labels = wrapper.findAll('button, a').map(b => b.text())
+            for (const label of shown) expect(labels.some(l => l.includes(label)), `${label} is shown`).toBe(true)
+            for (const label of hidden) expect(labels.some(l => l.includes(label)), `${label} is hidden`).toBe(false)
+        } finally {
+            mockTreeModel.model.name = 'Food'
+            delete (mockTreeModel.model as any).headerActions
         }
     })
 

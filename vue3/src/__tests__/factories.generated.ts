@@ -116,6 +116,7 @@ import type {
     UserPreference,
     UserSpace,
     UserSpaceBatchUpdate,
+    UserSpaceCreateUser,
     ViewLog
 } from '@/openapi'
 
@@ -4055,6 +4056,34 @@ export function makeEdgeCaseUserSpaceBatchUpdate(overrides: Partial<UserSpaceBat
         groupSet: [],
         ...overrides,
     } as UserSpaceBatchUpdate
+}
+
+export function makeUserSpaceCreateUser(overrides: Partial<UserSpaceCreateUser> = {}): UserSpaceCreateUser {
+    return {
+        username: 'Test username',
+        password: '',
+        email: undefined as any,
+        group: undefined as any,
+        ...overrides,
+    } as UserSpaceCreateUser
+}
+
+export function makeMinimalUserSpaceCreateUser(overrides: Partial<UserSpaceCreateUser> = {}): UserSpaceCreateUser {
+    return {
+        username: 'Test username',
+        password: '',
+        ...overrides,
+    } as UserSpaceCreateUser
+}
+
+export function makeEdgeCaseUserSpaceCreateUser(overrides: Partial<UserSpaceCreateUser> = {}): UserSpaceCreateUser {
+    return {
+        username: '',
+        password: '',
+        email: undefined as any,
+        group: undefined as any,
+        ...overrides,
+    } as UserSpaceCreateUser
 }
 
 export function makeViewLog(overrides: Partial<ViewLog> = {}): ViewLog {

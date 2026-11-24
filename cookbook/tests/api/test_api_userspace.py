@@ -2,6 +2,7 @@ import json
 
 import pytest
 from django.contrib import auth
+from django.contrib.auth.models import User
 from django.urls import reverse
 from django_scopes import scopes_disabled
 
@@ -9,6 +10,7 @@ from cookbook.models import UserSpace
 
 LIST_URL = 'api:userspace-list'
 DETAIL_URL = 'api:userspace-detail'
+CREATE_USER_URL = 'api:userspace-create-user'
 
 
 @pytest.mark.parametrize("arg", [
@@ -175,3 +177,98 @@ def test_batch_update_sets_household_from_the_same_space(u1_s1, space_1):
     with scopes_disabled():
         user_space.refresh_from_db()
         assert user_space.household_id == household.id
+
+
+STRONG = 'Tr0ub4dor-and-3-horses'
+
+
+def make_owner(space, client):
+    space.created_by = auth.get_user(client)
+    space.save()
+
+
+def post(client, **overrides):
+    data = {'username': 'newcook', 'password': STRONG, 'group': 'user'}
+    data.update(overrides)
+    return client.post(reverse(CREATE_USER_URL), data, content_type='application/json')
+
+
+@pytest.mark.parametrize("arg", [
+    ['a_u', 403],
+    ['g1_s1', 403],
+    ['u1_s1', 403],
+    ['a1_s1', 201],
+])
+def test_create_user_permission(arg, request, space_1, a1_s1, u1_s1, g1_s1):
+    make_owner(space_1, a1_s1)
+    c = request.getfixturevalue(arg[0])
+    assert post(c).status_code == arg[1]
+
+
+def test_created_user_can_log_in_and_joins_the_requesters_space(space_1, space_2, a1_s1, client):
+    make_owner(space_1, a1_s1)
+    response = post(a1_s1, username='newcook', group='user')
+    assert response.status_code == 201
+
+    with scopes_disabled():
+        user = User.objects.get(username='newcook')
+        assert user.check_password(STRONG)
+        user_space = UserSpace.objects.get(user=user)
+        assert user_space.space == space_1
+        assert user_space.active
+        assert list(user_space.groups.values_list('name', flat=True)) == ['user']
+    assert client.login(username='newcook', password=STRONG)
+
+
+def test_admin_of_another_space_cannot_create_into_this_space(space_1, space_2, a1_s1, a1_s2):
+    make_owner(space_1, a1_s1)
+    response = post(a1_s2)
+    assert response.status_code == 201
+    with scopes_disabled():
+        assert UserSpace.objects.get(user__username='newcook').space == space_2
+
+
+@pytest.mark.parametrize("password", [
+    'password',  # common
+    '12345678901',  # numeric only
+    'short1A',  # too short
+    'newcook99',  # too similar to the username
+])
+def test_weak_password_is_rejected_and_nothing_is_created(password, space_1, a1_s1):
+    make_owner(space_1, a1_s1)
+    response = post(a1_s1, password=password)
+    assert response.status_code == 400
+    assert 'password' in json.loads(response.content)
+    with scopes_disabled():
+        assert not User.objects.filter(username='newcook').exists()
+
+
+def test_duplicate_username_is_rejected(space_1, a1_s1, u1_s1):
+    make_owner(space_1, a1_s1)
+    existing = auth.get_user(u1_s1).username
+    response = post(a1_s1, username=existing)
+    assert response.status_code == 400
+    assert 'username' in json.loads(response.content)
+
+
+def test_unknown_group_is_rejected(space_1, a1_s1):
+    make_owner(space_1, a1_s1)
+    assert post(a1_s1, group='superuser').status_code == 400
+
+
+def test_space_user_limit_is_enforced(space_1, a1_s1, u1_s1):
+    make_owner(space_1, a1_s1)
+    with scopes_disabled():
+        space_1.max_users = UserSpace.objects.filter(space=space_1).count()
+        space_1.save()
+    response = post(a1_s1)
+    assert response.status_code == 400
+    with scopes_disabled():
+        assert not User.objects.filter(username='newcook').exists()
+
+
+def test_only_the_space_owner_can_create_an_admin(space_1, a1_s1, a2_s1):
+    make_owner(space_1, a1_s1)
+    assert post(a2_s1, group='admin').status_code == 403
+    assert post(a2_s1, group='user').status_code == 201
+    assert post(a1_s1, username='newadmin', group='admin').status_code == 201

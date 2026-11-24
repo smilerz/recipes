@@ -9,6 +9,8 @@ from drf_spectacular.utils import extend_schema_field
 
 from django.forms.models import model_to_dict
 from django.contrib.auth.models import AnonymousUser, Group, User
+from django.contrib.auth.password_validation import validate_password
+from django.core.exceptions import ValidationError as DjangoValidationError
 from django.core.mail import send_mail
 from django.db.models import Q, QuerySet, Sum
 from django.http import BadHeaderError
@@ -560,6 +562,35 @@ class UserSpaceSerializer(WritableNestedModelSerializer):
         model = UserSpace
         fields = ('id', 'user', 'space', 'groups', 'household', 'active', 'internal_note', 'invite_link', 'created_at', 'updated_at',)
         read_only_fields = ('id', 'invite_link', 'created_at', 'updated_at', 'space')
+
+
+class UserSpaceCreateUserSerializer(serializers.Serializer):
+    """
+    Input for an admin creating a user directly, without an invite. The password has to pass the instance's
+    password validators (AUTH_PASSWORD_VALIDATORS), checked against the new user's own username and email.
+    """
+    username = serializers.CharField(max_length=150, validators=User._meta.get_field('username').validators)
+    password = serializers.CharField(write_only=True, style={'input_type': 'password'})
+    email = serializers.EmailField(required=False, allow_blank=True, default='')
+    group = serializers.ChoiceField(choices=['guest', 'user', 'admin'], default='user')
+
+    def validate_username(self, value):
+        if User.objects.filter(username__iexact=value).exists():
+            raise ValidationError(_('A user with that username already exists.'))
+        return value
+
+    def validate(self, attrs):
+        try:
+            validate_password(attrs['password'], User(username=attrs['username'], email=attrs['email']))
+        except DjangoValidationError as e:
+            raise ValidationError({'password': list(e.messages)})
+        return attrs
+
+    def create(self, validated_data):
+        raise NotImplementedError
+
+    def update(self, instance, validated_data):
+        raise NotImplementedError
 
 
 class SpacedModelSerializer(serializers.ModelSerializer):

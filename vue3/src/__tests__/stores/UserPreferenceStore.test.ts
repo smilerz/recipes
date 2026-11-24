@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { setActivePinia, createPinia } from 'pinia'
-import { makeUserPreference, makeServerSettings, makeSpace, makeUserSpace } from '@/__tests__/factories'
+import { makeUserPreference, makeServerSettings, makeSpace, makeUserSpace, makeUser, makeGroup } from '@/__tests__/factories'
 import { apiMock, resetApiMock } from '@/__tests__/api-mock'
 
 vi.mock('@/openapi', async (importOriginal) => ({
@@ -42,6 +42,48 @@ describe('UserPreferenceStore', () => {
     beforeEach(() => {
         setActivePinia(createPinia())
         resetApiMock()
+    })
+
+    // The roles the backend checks for admin-only actions: has_group_permission (the admin group, superusers always pass) and,
+    // for invite links, additionally that the user created the space.
+    describe('space roles', () => {
+        function asUser({groups = [] as string[], superuser = false, userId = 5, ownerId = 9} = {}) {
+            const store = useUserPreferenceStore()
+            store.userSettings = makeUserPreference({ user: makeUser({ id: userId, isSuperuser: superuser }) }) as any
+            store.activeSpace = makeSpace({ id: 1, createdBy: makeUser({ id: ownerId }) }) as any
+            store.userSpaces = [makeUserSpace({ space: 1, groups: groups.map(name => makeGroup({ name })) })] as any
+            return store
+        }
+
+        it.each([
+            [['admin'], true],
+            [['user'], false],
+            [['guest'], false],
+            [[], false],
+        ])('isSpaceAdmin for the groups %j is %s', (groups, expected) => {
+            expect(asUser({ groups }).isSpaceAdmin).toBe(expected)
+        })
+
+        it('treats a superuser as an admin whatever their groups', () => {
+            expect(asUser({ groups: ['user'], superuser: true }).isSpaceAdmin).toBe(true)
+        })
+
+        it('is not an admin when there is no user space', () => {
+            const store = asUser({ groups: ['admin'] })
+            store.userSpaces = [] as any
+            expect(store.isSpaceAdmin).toBe(false)
+        })
+
+        it('isSpaceOwner is true only for the user who created the space', () => {
+            expect(asUser({ userId: 5, ownerId: 5 }).isSpaceOwner).toBe(true)
+            expect(asUser({ userId: 5, ownerId: 9 }).isSpaceOwner).toBe(false)
+        })
+
+        it('canManageInvites needs the owner to also be an admin, as the invite link endpoint does', () => {
+            expect(asUser({ groups: ['admin'], userId: 5, ownerId: 5 }).canManageInvites).toBe(true)
+            expect(asUser({ groups: ['admin'], userId: 5, ownerId: 9 }).canManageInvites).toBe(false)
+            expect(asUser({ groups: ['user'], userId: 5, ownerId: 5 }).canManageInvites).toBe(false)
+        })
     })
 
     describe('initial state', () => {

@@ -122,7 +122,7 @@ from cookbook.serializer import (AccessTokenSerializer, AutomationSerializer, Au
                                  SupermarketCategoryRelationSerializer, SupermarketCategorySerializer,
                                  SupermarketSerializer, SyncLogSerializer, SyncSerializer,
                                  UnitConversionSerializer, UnitSerializer, UserFileSerializer, UserPreferenceSerializer,
-                                 UserSerializer, UserSpaceSerializer, ViewLogSerializer,
+                                 UserSerializer, UserSpaceCreateUserSerializer, UserSpaceSerializer, ViewLogSerializer,
                                  LocalizationSerializer, ServerSettingsSerializer, RecipeFromSourceResponseSerializer, ShoppingListEntryBulkCreateSerializer, FdcQuerySerializer,
                                  AiImportSerializer, ImportOpenDataSerializer, ImportOpenDataMetaDataSerializer, ImportOpenDataResponseSerializer, ExportRequestSerializer,
                                  RecipeImportSerializer, ConnectorConfigSerializer, SearchPreferenceSerializer, SearchFieldsSerializer, RecipeBatchUpdateSerializer,
@@ -822,7 +822,8 @@ class UserSpaceViewSet(LoggingMixin, viewsets.ModelViewSet):
     queryset = UserSpace.objects
     serializer_class = UserSpaceSerializer
     permission_classes = [(CustomIsSpaceOwner | (IsReadOnlyDRF & CustomIsUser) | CustomIsOwnerReadOnly | CustomIsOwnerDestroyOnly) & CustomTokenHasReadWriteScope]
-    http_method_names = ['get', 'put', 'patch', 'delete']
+    # post: only the create_user action; the plain create route stays refused by UserSpaceSerializer.create
+    http_method_names = ['get', 'put', 'patch', 'post', 'delete']
     pagination_class = DefaultPagination
 
     def destroy(self, request, *args, **kwargs):
@@ -854,6 +855,31 @@ class UserSpaceViewSet(LoggingMixin, viewsets.ModelViewSet):
         with scopes_disabled():
             self.queryset = self.queryset.filter(user=self.request.user)
             return Response(self.serializer_class(self.queryset.all(), many=True, context={'request': self.request}).data)
+
+    @extend_schema(request=UserSpaceCreateUserSerializer, responses={201: UserSpaceSerializer})
+    @decorators.action(detail=False, methods=['POST'], serializer_class=UserSpaceCreateUserSerializer,
+                       permission_classes=[CustomIsAdmin & CustomTokenHasReadWriteScope])
+    def create_user(self, request):
+        """
+        create a user with a username and password in the requesting admin's space, without an invite
+        only the space owner can create admins; the space's user limit applies
+        """
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        data = serializer.validated_data
+
+        space = request.space
+        if data['group'] == 'admin' and space.created_by != request.user:
+            raise PermissionDenied(_('Only the space owner can create admins.'))
+        if space.max_users != 0 and UserSpace.objects.filter(space=space).count() >= space.max_users:
+            raise DRFValidationError({'detail': _('Your space has reached its user limit.')})
+
+        with transaction.atomic():
+            user = User.objects.create_user(username=data['username'], email=data['email'], password=data['password'])
+            user_space = UserSpace.objects.create(user=user, space=space, active=True)
+            user_space.groups.add(Group.objects.get(name=data['group']))
+
+        return Response(UserSpaceSerializer(user_space, context={'request': request}).data, status=status.HTTP_201_CREATED)
 
     @decorators.action(detail=False, methods=['PUT'], serializer_class=UserSpaceBatchUpdateSerializer)
     def batch_update(self, request):

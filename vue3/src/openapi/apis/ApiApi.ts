@@ -182,6 +182,7 @@ import type {
   UserPreference,
   UserSpace,
   UserSpaceBatchUpdate,
+  UserSpaceCreateUser,
   ViewLog,
 } from '../models/index';
 import {
@@ -519,6 +520,8 @@ import {
     UserSpaceToJSON,
     UserSpaceBatchUpdateFromJSON,
     UserSpaceBatchUpdateToJSON,
+    UserSpaceCreateUserFromJSON,
+    UserSpaceCreateUserToJSON,
     ViewLogFromJSON,
     ViewLogToJSON,
 } from '../models/index';
@@ -2432,6 +2435,14 @@ export interface ApiUserRetrieveRequest {
 
 export interface ApiUserSpaceBatchUpdateUpdateRequest {
     userSpaceBatchUpdate: UserSpaceBatchUpdate;
+}
+
+export interface ApiUserSpaceCreateRequest {
+    userSpace: Omit<UserSpace, 'user'|'space'|'inviteLink'|'createdAt'|'updatedAt'>;
+}
+
+export interface ApiUserSpaceCreateUserCreateRequest {
+    userSpaceCreateUser: UserSpaceCreateUser;
 }
 
 export interface ApiUserSpaceDestroyRequest {
@@ -19730,6 +19741,92 @@ export class ApiApi extends runtime.BaseAPI {
      */
     async apiUserSpaceBatchUpdateUpdate(requestParameters: ApiUserSpaceBatchUpdateUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<UserSpaceBatchUpdate> {
         const response = await this.apiUserSpaceBatchUpdateUpdateRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * logs request counts to redis cache total/per user/
+     */
+    async apiUserSpaceCreateRaw(requestParameters: ApiUserSpaceCreateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<UserSpace>> {
+        if (requestParameters['userSpace'] == null) {
+            throw new runtime.RequiredError(
+                'userSpace',
+                'Required parameter "userSpace" was null or undefined when calling apiUserSpaceCreate().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        if (this.configuration && this.configuration.apiKey) {
+            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
+        }
+
+
+        let urlPath = `/api/user-space/`;
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: UserSpaceToJSON(requestParameters['userSpace']),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => UserSpaceFromJSON(jsonValue));
+    }
+
+    /**
+     * logs request counts to redis cache total/per user/
+     */
+    async apiUserSpaceCreate(requestParameters: ApiUserSpaceCreateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<UserSpace> {
+        const response = await this.apiUserSpaceCreateRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * create a user with a username and password in the requesting admin\'s space, without an invite only the space owner can create admins; the space\'s user limit applies
+     */
+    async apiUserSpaceCreateUserCreateRaw(requestParameters: ApiUserSpaceCreateUserCreateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<UserSpace>> {
+        if (requestParameters['userSpaceCreateUser'] == null) {
+            throw new runtime.RequiredError(
+                'userSpaceCreateUser',
+                'Required parameter "userSpaceCreateUser" was null or undefined when calling apiUserSpaceCreateUserCreate().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        if (this.configuration && this.configuration.apiKey) {
+            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
+        }
+
+
+        let urlPath = `/api/user-space/create_user/`;
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: UserSpaceCreateUserToJSON(requestParameters['userSpaceCreateUser']),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => UserSpaceFromJSON(jsonValue));
+    }
+
+    /**
+     * create a user with a username and password in the requesting admin\'s space, without an invite only the space owner can create admins; the space\'s user limit applies
+     */
+    async apiUserSpaceCreateUserCreate(requestParameters: ApiUserSpaceCreateUserCreateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<UserSpace> {
+        const response = await this.apiUserSpaceCreateUserCreateRaw(requestParameters, initOverrides);
         return await response.value();
     }
 

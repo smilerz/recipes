@@ -107,6 +107,23 @@ export const useUserPreferenceStore = defineStore('user_preference_store', () =>
     })
 
     /**
+     * whether the user is an admin of the active space, as the backend decides it: the admin group, and superusers always pass
+     */
+    const isSpaceAdmin = computed(() => userSettings.value.user?.isSuperuser === true
+        || (activeUserSpace.value?.groups ?? []).some(g => g.name === 'admin'))
+
+    /**
+     * whether the user created the active space
+     */
+    const isSpaceOwner = computed(() => activeSpace.value.createdBy?.id != undefined
+        && activeSpace.value.createdBy.id === userSettings.value.user?.id)
+
+    /**
+     * invite links need the owner, who also has to be an admin (the invite link endpoint checks both)
+     */
+    const canManageInvites = computed(() => isSpaceOwner.value && isSpaceAdmin.value)
+
+    /**
      * retrieve user settings from DB
      */
     function loadUserSettings() {
@@ -390,6 +407,9 @@ export const useUserPreferenceStore = defineStore('user_preference_store', () =>
         userSpaces,
         spaces,
         activeUserSpace,
+        isSpaceAdmin,
+        isSpaceOwner,
+        canManageInvites,
         isAuthenticated,
         isPrintMode,
         initCompleted,
