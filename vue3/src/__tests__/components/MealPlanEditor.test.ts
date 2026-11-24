@@ -13,7 +13,7 @@ import {createVuetify} from 'vuetify'
 import * as vuetifyComponents from 'vuetify/components'
 import * as vuetifyDirectives from 'vuetify/directives'
 import {apiMock, resetApiMock} from '@/__tests__/api-mock'
-import {makeMealPlan} from '@/__tests__/factories'
+import {makeMealPlan, makeRecipeOverview} from '@/__tests__/factories'
 import {useMessageStore} from '@/stores/MessageStore'
 import {useMealPlanStore} from '@/stores/MealPlanStore'
 
@@ -65,7 +65,7 @@ function mountEditor(item: any) {
                     emits: ['save'],
                 },
                 ModelSelect: {template: '<div class="stub-model-select"/>'},
-                RecipeCard: {template: '<div class="stub-recipe-card"/>'},
+                RecipeCard: {props: {showOpenButton: Boolean, linkTarget: String}, template: '<div class="stub-recipe-card" :data-open-button="String(showOpenButton)" :data-target="linkTarget"/>'},
                 ClosableHelpAlert: {template: '<div class="stub-help-alert"/>'},
                 RecipeShoppingPreview: {template: '<div class="stub-recipe-shopping-preview"/>'},
             },
@@ -76,6 +76,16 @@ function mountEditor(item: any) {
 describe('MealPlanEditor', () => {
     beforeEach(() => {
         resetApiMock()
+    })
+
+    it('shows the recipe card with a book button that opens the recipe in a new tab', async () => {
+        const w = mountEditor(makeMealPlan({recipe: makeRecipeOverview({id: 7})}))
+        await flushPromises()
+
+        const card = w.find('.stub-recipe-card')
+        expect(card.exists()).toBe(true)
+        expect(card.attributes('data-open-button')).toBe('true')
+        expect(card.attributes('data-target')).toBe('_blank')
     })
 
     it('clearing the date (empty array, not null) does not corrupt fromDate and warns instead of crashing (#21)', async () => {

@@ -17,6 +17,10 @@ import {makeMealPlan, makeMealType, makeRecipeOverview} from '@/__tests__/factor
 
 vi.mock('@/openapi', async (imp) => ({...(await imp<any>()), ApiApi: class { constructor() { return apiMock } }}))
 vi.mock('@vueuse/core', async (imp) => ({...(await imp<any>()), useStorage: (_key: string, defaultValue: any) => ({value: defaultValue})}))
+// the recipe link is resolved by the router; here it only has to build the path and the servings query
+vi.mock('vue-router', () => ({
+    useRouter: () => ({resolve: (to: any) => ({href: `/recipe/${to.params.id}${to.query?.servings ? `?servings=${to.query.servings}` : ''}`})}),
+}))
 
 import MealPlanAgendaList from '@/components/display/MealPlanAgendaList.vue'
 import {useMealPlanStore} from '@/stores/MealPlanStore'
@@ -30,7 +34,7 @@ function mountList() {
         legacy: false, locale: 'en', missingWarn: false, fallbackWarn: false,
         messages: {en: {
             Today: 'Today', load_more: 'Load more', LoadPrevious: 'Load previous', JumpToDate: 'Jump to date',
-            AgendaAddEntryFor: 'Add entry for {date}', AgendaEntryLabel: '{mealType}, {title}',
+            AgendaAddEntryFor: 'Add entry for {date}', AgendaEntryLabel: '{mealType}, {title}', OpenRecipe: 'Open recipe {name}',
         }},
     })
     const vuetify = createVuetify({components: vuetifyComponents, directives: vuetifyDirectives})
@@ -200,6 +204,55 @@ describe('MealPlanAgendaList', () => {
         store.plans.set(1, makeMealPlan({id: 1, fromDate: at('2026-11-24T12:00')}))
         await flushPromises()
         expect(w.find('[data-test="agenda-entry-range"]').exists()).toBe(false)
+    })
+
+    describe('the book button on an entry', () => {
+        const addEntry = async (w: any, overrides: Record<string, unknown> = {}) => {
+            const store = useMealPlanStore()
+            store.plans.set(1, makeMealPlan({id: 1, recipe: makeRecipeOverview({id: 7, name: 'Cider Margarita'}), servings: 4, fromDate: at('2026-11-24T12:00'), ...overrides}))
+            await flushPromises()
+            return days(w)[1].find('[data-test="agenda-entry"]')
+        }
+
+        it('opens the recipe in a new tab, at the planned servings', async () => {
+            const w = mountList()
+            await flushPromises()
+            const entry = await addEntry(w)
+            const link = entry.find('[data-test="agenda-entry-recipe"]')
+
+            expect(link.attributes('href')).toBe('/recipe/7?servings=4')
+            expect(link.attributes('target')).toBe('_blank')
+            expect(link.attributes('aria-label')).toBe('Open recipe Cider Margarita')
+            // the recipe icon alias, which is the book (see RecipeCard.test.ts)
+            expect(entry.findComponent({name: 'VBtn'}).props('icon')).toBe('$recipes')
+        })
+
+        it('is left out when the entry has no recipe', async () => {
+            const w = mountList()
+            await flushPromises()
+            const entry = await addEntry(w, {recipe: undefined, title: 'Eat out'})
+            expect(entry.find('[data-test="agenda-entry-recipe"]').exists()).toBe(false)
+        })
+
+        it('does not also open the entry when it is tapped', async () => {
+            const w = mountList()
+            await flushPromises()
+            const entry = await addEntry(w)
+
+            await entry.find('[data-test="agenda-entry-recipe"]').trigger('click')
+
+            expect(w.emitted('edit')).toBeUndefined()
+        })
+
+        it('does not also open the entry when Enter is pressed on it', async () => {
+            const w = mountList()
+            await flushPromises()
+            const entry = await addEntry(w)
+
+            await entry.find('[data-test="agenda-entry-recipe"]').trigger('keydown.enter')
+
+            expect(w.emitted('edit')).toBeUndefined()
+        })
     })
 
     it('shows an empty day as just its header, with no placeholder text', async () => {

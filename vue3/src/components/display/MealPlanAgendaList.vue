@@ -49,6 +49,9 @@
                     </div>
                 </div>
                 <v-icon v-if="entry.plan.shopping" icon="$shopping" size="small" class="ms-2"></v-icon>
+                <!-- its own target: the row opens the entry, this opens the recipe in a new tab -->
+                <v-btn v-if="entry.plan.recipe" icon="$recipes" variant="text" class="ms-1" :href="recipeHref(entry.plan)" target="_blank" rel="noopener"
+                       :aria-label="$t('OpenRecipe', {name: entry.title})" data-test="agenda-entry-recipe" @click.stop @keydown.enter.stop></v-btn>
             </div>
         </section>
 
@@ -62,6 +65,7 @@
 <script setup lang="ts">
 import {computed, nextTick, onMounted, ref} from "vue";
 import {DateTime} from "luxon";
+import {useRouter} from "vue-router";
 import {MealPlan} from "@/openapi";
 import {useMealPlanStore} from "@/stores/MealPlanStore";
 import {buildAgendaDays} from "@/utils/mealplan_agenda";
@@ -76,6 +80,7 @@ const INITIAL_DAYS = 3
 const PAGE_DAYS = 7
 
 const store = useMealPlanStore()
+const router = useRouter()
 
 const container = ref<HTMLElement | null>(null)
 const windowStart = ref<DateTime>(DateTime.now().startOf('day'))
@@ -95,6 +100,15 @@ function dayLabel(date: Date): string {
 
 function shortDate(date: Date): string {
     return DateTime.fromJSDate(date).toFormat('ccc M/d')
+}
+
+/** where the entry's recipe is, scaled to the servings planned */
+function recipeHref(plan: MealPlan): string {
+    return router.resolve({
+        name: 'RecipeViewPage',
+        params: {id: plan.recipe!.id},
+        query: plan.servings != undefined ? {servings: String(plan.servings)} : undefined,
+    }).href
 }
 
 function scrollToAnchor() {

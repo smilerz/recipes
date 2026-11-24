@@ -29,7 +29,7 @@
                                              @update:modelValue="editingObj.servings = editingObj.recipe ? editingObj.recipe.servings : 1"></ModelSelect>
                                 <!--                                <v-number-input label="Days" control-variant="split" :min="1"></v-number-input>-->
                                 <!--TODO create days input with +/- synced to date -->
-                                <recipe-card :recipe="editingObj.recipe" :servings="editingObj.servings" v-if="editingObj && editingObj.recipe" link-target="_blank"></recipe-card>
+                                <recipe-card :recipe="editingObj.recipe" :servings="editingObj.servings" v-if="editingObj && editingObj.recipe" link-target="_blank" show-open-button></recipe-card>
 
                                 <v-checkbox :label="$t('AddToShopping')" :model-value="editingObj.addshopping" @update:model-value="onAddShoppingToggle" hide-details
                                             data-test="addshopping-checkbox" v-if="editingObj.recipe && !editingObj.shopping"></v-checkbox>

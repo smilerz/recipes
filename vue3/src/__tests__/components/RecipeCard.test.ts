@@ -6,6 +6,7 @@ import { createI18n } from 'vue-i18n'
 import { createVuetify } from 'vuetify'
 import { createRouter, createMemoryHistory } from 'vue-router'
 import { makeRecipeOverview, makeUser, makeUserPreference, makeSpace } from '../factories'
+import { vuetifyOptions } from '@/vuetify'
 
 vi.mock('@/openapi', async (importOriginal) => ({
     ...(await importOriginal<typeof import('@/openapi')>()),
@@ -47,7 +48,7 @@ function mountRecipeCard(props: Record<string, any> = {}, deviceOverrides: Recor
     pinia.use(prePopulate)
     const i18n = createI18n({
         legacy: false, locale: 'en',
-        messages: { en: { by: 'by', New: 'New' } },
+        messages: { en: { by: 'by', New: 'New', OpenRecipe: 'Open recipe {name}' } },
         missingWarn: false, fallbackWarn: false,
     })
     const vuetify = createVuetify()
@@ -174,6 +175,37 @@ describe('RecipeCard preview', () => {
         vi.advanceTimersByTime(600)
         await nextTick()
         expect(w.find('.stub-preview-dialog').exists()).toBe(false)
+    })
+})
+
+describe('RecipeCard open button', () => {
+    afterEach(() => { vi.restoreAllMocks() })
+
+    it('has no open button unless asked for', () => {
+        const wrapper = mountRecipeCard()
+        expect(wrapper.find('[data-test="recipe-card-open"]').exists()).toBe(false)
+    })
+
+    it('shows a book button labelled with the recipe name when asked for', () => {
+        const wrapper = mountRecipeCard({ showOpenButton: true, recipe: makeRecipeOverview({ id: 7, name: 'Cider Margarita' }) })
+        const button = wrapper.find('[data-test="recipe-card-open"]')
+        expect(button.exists()).toBe(true)
+        expect(button.attributes('aria-label')).toBe('Open recipe Cider Margarita')
+        expect(wrapper.findComponent({ name: 'VBtn' }).props('icon')).toBe('$recipes')
+    })
+
+    it('uses the recipe icon, which is the book', () => {
+        expect((vuetifyOptions.icons.aliases as Record<string, string>).recipes).toBe('fa-solid fa-book')
+    })
+
+    it('opens the recipe in a new tab, at the planned servings, once', async () => {
+        const open = vi.spyOn(window, 'open').mockImplementation(() => null)
+        const wrapper = mountRecipeCard({ showOpenButton: true, linkTarget: '_blank', servings: 4, recipe: makeRecipeOverview({ id: 7 }) })
+
+        await wrapper.find('[data-test="recipe-card-open"]').trigger('click')
+
+        expect(open).toHaveBeenCalledTimes(1)
+        expect(open).toHaveBeenCalledWith('/recipe/7?servings=4', '_blank')
     })
 })
 
