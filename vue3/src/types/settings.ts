@@ -15,6 +15,8 @@ export type DeviceSettings = {
     shopping_showFoodImages: boolean
     shopping_show_search: boolean
 
+    // 'auto': the day list on a phone, the calendar elsewhere; 'list' / 'calendar' force one of them on every screen size
+    mealplan_view: 'auto' | 'list' | 'calendar'
     mealplan_displayPeriod: string
     mealplan_displayPeriodCount: number
     // Browser-remembered fast-path: skip the editable add-to-shopping preview and add directly

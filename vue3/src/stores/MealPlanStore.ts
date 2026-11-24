@@ -73,6 +73,15 @@ export const useMealPlanStore = defineStore(_STORE_ID, () => {
         })
     }
 
+    /**
+     * load a date range and add it to the entries already loaded (refreshFromAPI replaces them instead)
+     * used by the phone's day list, which grows in both directions without blanking what is on screen
+     */
+    function loadRange(from_date: Date, to_date: Date) {
+        loading.value = true
+        return recLoadMealPlans(from_date, to_date)
+    }
+
     function recLoadMealPlans(from_date: Date, to_date: Date, page: number = 1): Promise<any> {
         const api = new ApiApi()
         return api.apiMealPlanList({
@@ -160,7 +169,7 @@ export const useMealPlanStore = defineStore(_STORE_ID, () => {
     //         return JSON.parse(s)
     //     }
     // }
-    return {plans, currently_updating, planList, loading, refreshFromAPI, createObject, updateObject, deleteObject, refreshLastUpdatedPeriod, createOrUpdate}
+    return {plans, currently_updating, planList, loading, refreshFromAPI, loadRange, createObject, updateObject, deleteObject, refreshLastUpdatedPeriod, createOrUpdate}
 })
 
 // enable hot reload for store

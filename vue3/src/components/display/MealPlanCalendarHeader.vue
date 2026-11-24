@@ -1,11 +1,15 @@
 <template>
     <div>
-        <v-row class="pa-2">
-            <v-col md="8" cols="12" class="align-center d-none d-md-flex text-h5">
+        <v-row class="pa-2 align-center">
+            <!-- a row of its own on a phone, where beside the date field it squeezes the date; left of the date range from md up -->
+            <v-col cols="12" md="auto" class="py-1">
+                <slot name="actions"></slot>
+            </v-col>
+            <v-col class="align-center d-none d-md-flex text-h5">
                 {{ DateTime.fromJSDate(props.headerProps?.displayFirstDate).toLocaleString(DateTime.DATE_MED) }} -
                 {{ DateTime.fromJSDate(props.headerProps?.displayLastDate).toLocaleString(DateTime.DATE_MED) }}
             </v-col>
-            <v-col md="4" cols="12">
+            <v-col md="4">
                 <v-date-input
                     v-model="date"
                     prepend-icon=""
