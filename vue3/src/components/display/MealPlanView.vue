@@ -4,7 +4,12 @@
             <v-card class="h-100" :loading="useMealPlanStore().loading">
                 <!-- TODO add hint about CTRL key while drag/drop -->
                 <!-- TODO multi selection? date range selection ? -->
-                <calendar-view
+                <meal-plan-agenda-list v-if="showList" @add="addPlanOnDate" @edit="editPlan">
+                    <template #toolbar-start>
+                        <meal-plan-view-toggle :showing-list="true" @select="(view: string) => setView(view === 'list')"></meal-plan-view-toggle>
+                    </template>
+                </meal-plan-agenda-list>
+                <calendar-view v-else
                     :locale="locale"
                     :show-date="calendarDate"
                     :items="(planItems as unknown as ICalendarItem[])"
@@ -20,7 +25,11 @@
                     @click-date="(date : Date, calendarItems: any[], windowEvent: any) => { newPlanDialogDefaultItem.fromDate = date; newPlanDialogDefaultItem.toDate = date; newPlanDialog = true }">
                     <template #header="{ headerProps }">
                         <!--                        <calendar-view-header :header-props="headerProps" @input="(d:Date) => calendarDate = d"></calendar-view-header>-->
-                        <meal-plan-calendar-header :header-props="headerProps" @input="(d:Date) => calendarDate = d"></meal-plan-calendar-header>
+                        <meal-plan-calendar-header :header-props="headerProps" @input="(d:Date) => calendarDate = d">
+                            <template #actions>
+                                <meal-plan-view-toggle :showing-list="false" @select="(view: string) => setView(view === 'list')"></meal-plan-view-toggle>
+                            </template>
+                        </meal-plan-calendar-header>
                     </template>
                     <template #item="{ value, weekStartDate, top }">
                         <meal-plan-calendar-item
@@ -38,6 +47,9 @@
 
             <model-edit-dialog model="MealPlan" v-model="newPlanDialog" :itemDefaults="newPlanDialogDefaultItem" :close-after-create="false"
                                @create="(arg: any) => useMealPlanStore().plans.set(arg.id, arg)"></model-edit-dialog>
+            <!-- the day list's entries are edited here; the calendar's entries carry their own dialog -->
+            <model-edit-dialog v-if="editingPlan" model="MealPlan" :item="editingPlan" v-model="editPlanDialog" :key="editingPlan.id"
+                               @delete="(arg: MealPlan) => useMealPlanStore().plans.delete(arg.id!)"></model-edit-dialog>
         </v-col>
     </v-row>
 </template>
@@ -58,9 +70,11 @@ import ModelEditDialog from "@/components/dialogs/ModelEditDialog.vue";
 import {MealPlan} from "@/openapi";
 import {useUserPreferenceStore} from "@/stores/UserPreferenceStore";
 import MealPlanCalendarHeader from "@/components/display/MealPlanCalendarHeader.vue";
+import MealPlanAgendaList from "@/components/display/MealPlanAgendaList.vue";
+import MealPlanViewToggle from "@/components/display/MealPlanViewToggle.vue";
 import {useI18n} from "vue-i18n";
 
-const {lgAndUp} = useDisplay()
+const {lgAndUp, mobile} = useDisplay()
 const {locale} = useI18n()
 
 const calendarDate = ref(new Date())
@@ -69,6 +83,32 @@ const currentlyDraggedMealplan = ref({} as IMealPlanNormalizedCalendarItem)
 
 const newPlanDialog = ref(false)
 const newPlanDialogDefaultItem = ref({} as MealPlan)
+
+const editPlanDialog = ref(false)
+const editingPlan = ref<MealPlan | null>(null)
+
+/**
+ * the day list on a phone, the calendar elsewhere, unless the device setting forces one of them
+ */
+const showList = computed(() => {
+    const view = useUserPreferenceStore().deviceSettings.mealplan_view
+    return view === 'list' || (view !== 'calendar' && mobile.value)
+})
+
+function setView(list: boolean) {
+    useUserPreferenceStore().deviceSettings.mealplan_view = list ? 'list' : 'calendar'
+}
+
+function addPlanOnDate(date: Date) {
+    newPlanDialogDefaultItem.value.fromDate = date
+    newPlanDialogDefaultItem.value.toDate = date
+    newPlanDialog.value = true
+}
+
+function editPlan(plan: MealPlan) {
+    editingPlan.value = plan
+    editPlanDialog.value = true
+}
 
 /**
  * computed property that converts array of MealPlan object to
@@ -105,8 +145,13 @@ watch(calendarDate, () => {
     refreshVisiblePeriod(false)
 })
 
+// the day list loads the days it shows itself; only the calendar needs its period loaded
 onMounted(() => {
-    refreshVisiblePeriod(true)
+    if (!showList.value) refreshVisiblePeriod(true)
+})
+
+watch(showList, (list) => {
+    if (!list) refreshVisiblePeriod(true)
 })
 
 /**

@@ -41,6 +41,32 @@ describe('MealPlanStore', () => {
         resetApiMock()
     })
 
+    describe('loadRange', () => {
+        it('adds the loaded entries to those already there instead of replacing them', async () => {
+            const store = useMealPlanStore()
+            store.plans.set(1, makeMealPlan({ id: 1 }))
+            apiMock.apiMealPlanList.mockResolvedValue({ results: [makeMealPlan({ id: 2 })], next: null })
+
+            await store.loadRange(new Date('2026-11-26'), new Date('2026-11-29'))
+
+            expect([...store.plans.keys()].sort()).toEqual([1, 2])
+        })
+
+        it('asks the API for the given dates and follows the pages', async () => {
+            const store = useMealPlanStore()
+            apiMock.apiMealPlanList
+                .mockResolvedValueOnce({ results: [makeMealPlan({ id: 1 })], next: 'page2' })
+                .mockResolvedValueOnce({ results: [makeMealPlan({ id: 2 })], next: null })
+
+            await store.loadRange(new Date(2026, 10, 26), new Date(2026, 10, 29))
+
+            expect(apiMock.apiMealPlanList).toHaveBeenCalledTimes(2)
+            expect(apiMock.apiMealPlanList.mock.calls[0][0]).toMatchObject({ fromDate: '2026-11-26', toDate: '2026-11-29', page: 1 })
+            expect(apiMock.apiMealPlanList.mock.calls[1][0]).toMatchObject({ page: 2 })
+            expect([...store.plans.keys()].sort()).toEqual([1, 2])
+        })
+    })
+
     describe('initial state', () => {
         it('starts with empty plans', () => {
             const store = useMealPlanStore()
