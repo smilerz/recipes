@@ -56,14 +56,14 @@ export function buildAgendaDays(plans: MealPlan[], start: Date, dayCount: number
                 || minutesIntoDay(a.fromDate) - minutesIntoDay(b.fromDate)
                 || (a.id ?? 0) - (b.id ?? 0))
             .map(plan => {
-                const spansDays = plan.toDate != undefined
-                    && DateTime.fromJSDate(plan.toDate).startOf('day') > DateTime.fromJSDate(plan.fromDate).startOf('day')
+                const lastDate = plan.toDate ?? plan.fromDate
+                const spansDays = DateTime.fromJSDate(lastDate).startOf('day') > DateTime.fromJSDate(plan.fromDate).startOf('day')
                 return {
                     plan,
                     title: entryTitle(plan),
                     mealTypeName: plan.mealType?.name ?? '',
                     color: plan.mealType?.color || null,
-                    range: spansDays ? {from: plan.fromDate, to: plan.toDate!} : null,
+                    range: spansDays ? {from: plan.fromDate, to: lastDate} : null,
                 } as AgendaEntry
             })
 
