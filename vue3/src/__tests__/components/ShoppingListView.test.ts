@@ -118,6 +118,48 @@ describe('ShoppingListView', () => {
     // The loop re-schedules itself forever (every second while auto sync is off) and was only stopped by leaving the route, so a list
     // that was merely unmounted - the meal plan's Shopping tab when its dialog closes, or a test - kept polling, and in the tests a
     // timer firing after the environment was torn down failed the run with "window is not defined".
+    // The listener that pauses background sync while the tab is hidden was added on every mount and never removed, so each time the
+    // list was opened another one stayed on the window for good.
+    describe('the listener that pauses sync while the tab is hidden', () => {
+        const listenersFor = (spy: any) => spy.mock.calls.filter((c: any[]) => c[0] === 'visibilitychange').map((c: any[]) => c[1])
+
+        it('is removed when the list is unmounted', async () => {
+            const add = vi.spyOn(window, 'addEventListener')
+            const remove = vi.spyOn(window, 'removeEventListener')
+            try {
+                const w = mountView()
+                await flushPromises()
+                w.unmount()
+
+                const added = listenersFor(add)
+                expect(added).toHaveLength(1)
+                expect(listenersFor(remove)).toEqual(added)
+            } finally {
+                add.mockRestore()
+                remove.mockRestore()
+            }
+        })
+
+        it('still pauses sync while the tab is hidden and resumes it when it is visible', async () => {
+            const w = mountView()
+            await flushPromises()
+            const setVisibility = (state: string) => {
+                Object.defineProperty(document, 'visibilityState', {value: state, configurable: true})
+                window.dispatchEvent(new Event('visibilitychange'))
+            }
+
+            try {
+                setVisibility('hidden')
+                expect(useShoppingStore().autoSyncHasFocus).toBe(false)
+                setVisibility('visible')
+                expect(useShoppingStore().autoSyncHasFocus).toBe(true)
+            } finally {
+                delete (document as any).visibilityState
+                w.unmount()
+            }
+        })
+    })
+
     it('stops its auto sync loop when it is unmounted, so no timer outlives it', async () => {
         const pending: Array<() => void> = []
         const realSetTimeout = window.setTimeout.bind(window)
