@@ -45,8 +45,8 @@ function mountList() {
             // the picker itself is Vuetify's; here it only has to hand over a chosen date
             // the menu's content is teleported and only rendered while open; render it in place so its Today button can be reached
             stubs: {
-                VMenu: {template: '<div class="menu-stub"><slot /></div>'},
-                VDatePicker: {props: ['modelValue'], emits: ['update:modelValue'], template: '<div class="date-picker-stub" />'},
+                VMenu: {name: 'VMenu', props: ['modelValue'], emits: ['update:modelValue'], template: '<div class="menu-stub" :data-open="String(modelValue)"><slot /></div>'},
+                VDatePicker: {name: 'VDatePicker', props: ['modelValue'], emits: ['update:modelValue'], template: '<div class="date-picker-stub" />'},
             },
         },
     })
@@ -127,6 +127,42 @@ describe('MealPlanAgendaList', () => {
         expect(dayKeys(w)[0]).toBe('2026-11-16')
         expect(dayKeys(w)).toHaveLength(10)
         expect(apiMock.apiMealPlanList.mock.calls[0][0]).toMatchObject({fromDate: '2026-11-16', toDate: '2026-11-22'})
+    })
+
+    it('shows Load previous as busy while the earlier days load, and ready again afterwards', async () => {
+        const w = mountList()
+        await flushPromises()
+        let finish: (page: unknown) => void = () => {}
+        apiMock.apiMealPlanList.mockImplementationOnce(() => new Promise(resolve => { finish = resolve }))
+        const button = () => w.find('[data-test="agenda-load-previous"]')
+
+        await button().trigger('click')
+        expect(button().classes()).toContain('v-btn--loading')
+
+        finish({results: [], next: null})
+        await flushPromises()
+        expect(button().classes()).not.toContain('v-btn--loading')
+    })
+
+    it('does not fail when the list is closed while the earlier days are still loading', async () => {
+        const w = mountList()
+        await flushPromises()
+        let finish: (page: unknown) => void = () => {}
+        apiMock.apiMealPlanList.mockImplementationOnce(() => new Promise(resolve => { finish = resolve }))
+        const unhandled: unknown[] = []
+        const onUnhandled = (reason: unknown) => { unhandled.push(reason) }
+        process.on('unhandledRejection', onUnhandled)
+
+        try {
+            await w.find('[data-test="agenda-load-previous"]').trigger('click')
+            w.unmount()
+            finish({results: [], next: null})
+            await flushPromises()
+        } finally {
+            process.off('unhandledRejection', onUnhandled)
+        }
+
+        expect(unhandled).toEqual([])
     })
 
     it('keeps the reader in place when earlier days are added above', async () => {
@@ -299,6 +335,63 @@ describe('MealPlanAgendaList', () => {
 
         expect(dayKeys(w)).toEqual(['2026-12-10', '2026-12-11', '2026-12-12'])
         expect(apiMock.apiMealPlanList.mock.calls[0][0]).toMatchObject({fromDate: '2026-12-10', toDate: '2026-12-12'})
+    })
+
+    // the date menu is Vuetify's; the stub lets a test open it and pick a date, and shows whether it is open
+    const openDateMenu = (w: any) => w.findComponent({name: 'VMenu'}).vm.$emit('update:modelValue', true)
+    const pickDate = (w: any, value: unknown) => w.findComponent({name: 'VDatePicker'}).vm.$emit('update:modelValue', value)
+    const dateMenuOpen = (w: any) => w.find('.menu-stub').attributes('data-open')
+
+    it('jumps to a date picked in the date picker and closes the date menu', async () => {
+        const w = mountList()
+        await flushPromises()
+        await openDateMenu(w)
+        expect(dateMenuOpen(w)).toBe('true')
+
+        await pickDate(w, at('2026-12-10T08:00'))
+        await flushPromises()
+
+        expect(dayKeys(w)).toEqual(['2026-12-10', '2026-12-11', '2026-12-12'])
+        expect(dateMenuOpen(w)).toBe('false')
+    })
+
+    it('ignores a value from the date picker that is not a date, but still closes the date menu', async () => {
+        const w = mountList()
+        await flushPromises()
+        await openDateMenu(w)
+        apiMock.apiMealPlanList.mockClear()
+
+        await pickDate(w, null)
+        await flushPromises()
+
+        expect(dayKeys(w)).toEqual(['2026-11-23', '2026-11-24', '2026-11-25'])
+        expect(apiMock.apiMealPlanList).not.toHaveBeenCalled()
+        expect(dateMenuOpen(w)).toBe('false')
+    })
+
+    it("closes the date menu when the picker's Today button is used", async () => {
+        const w = mountList()
+        await flushPromises()
+        await openDateMenu(w)
+
+        await w.find('[data-test="agenda-picker-today"]').trigger('click')
+        await flushPromises()
+
+        expect(dateMenuOpen(w)).toBe('false')
+    })
+
+    it('scrolls the day it jumped to to the top', async () => {
+        const w = mountList()
+        await flushPromises()
+        const scrolls = (Element.prototype.scrollIntoView as any).mock
+        const before = scrolls.calls.length
+
+        ;(w.vm as any).jumpTo(at('2026-12-10T08:00'))
+        await flushPromises()
+
+        expect(scrolls.calls.length).toBe(before + 1)
+        expect(scrolls.instances.at(-1)).toBe(days(w)[0].element)
+        expect(days(w)[0].attributes('data-date')).toBe('2026-12-10')
     })
 
     it('has a Today button inside the date picker that returns to today', async () => {

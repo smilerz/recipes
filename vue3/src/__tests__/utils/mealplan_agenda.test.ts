@@ -67,6 +67,50 @@ describe('buildAgendaDays', () => {
         expect(titles).toEqual(['lunch', 'early dinner', 'late dinner'])
     })
 
+    it('has an empty title when the entry has neither a recipe nor a title', () => {
+        const plan = makeMealPlan({id: 1, recipe: undefined, title: undefined, fromDate: at('2026-11-23T12:00')})
+        expect(buildAgendaDays([plan], TODAY, 1, TODAY)[0].entries[0].title).toBe('')
+    })
+
+    it.each([[[1, 2]], [[2, 1]]])('orders entries of the same meal type and time by id, whatever order they come in (%j)', (ids) => {
+        const plans = ids.map(id => makeMealPlan({id, title: `entry ${id}`, recipe: undefined, fromDate: at('2026-11-23T12:00')}))
+        expect(buildAgendaDays(plans, TODAY, 1, TODAY)[0].entries.map(e => e.plan.id)).toEqual([1, 2])
+    })
+
+    it('orders by the minute within the same hour', () => {
+        // the later minute has the lower id, so only the time can put the earlier one first
+        const plans = [
+            makeMealPlan({id: 1, recipe: undefined, title: 'half past', fromDate: at('2026-11-23T12:30')}),
+            makeMealPlan({id: 2, recipe: undefined, title: 'quarter past', fromDate: at('2026-11-23T12:15')}),
+        ]
+        expect(buildAgendaDays(plans, TODAY, 1, TODAY)[0].entries.map(e => e.title)).toEqual(['quarter past', 'half past'])
+    })
+
+    it('orders by the hour before the minute', () => {
+        // 12:59 has the larger minute but the earlier hour
+        const plans = [
+            makeMealPlan({id: 1, recipe: undefined, title: 'one pm', fromDate: at('2026-11-23T13:00')}),
+            makeMealPlan({id: 2, recipe: undefined, title: 'one minute to one', fromDate: at('2026-11-23T12:59')}),
+        ]
+        expect(buildAgendaDays(plans, TODAY, 1, TODAY)[0].entries.map(e => e.title)).toEqual(['one minute to one', 'one pm'])
+    })
+
+    it('puts entries that have no meal type after those that do, without failing', () => {
+        const plans = [
+            makeMealPlan({id: 1, recipe: undefined, title: 'untyped a', mealType: undefined, fromDate: at('2026-11-23T10:00')}),
+            makeMealPlan({id: 2, recipe: undefined, title: 'typed', mealType: makeMealType({order: 3}), fromDate: at('2026-11-23T11:00')}),
+            makeMealPlan({id: 3, recipe: undefined, title: 'untyped b', mealType: undefined, fromDate: at('2026-11-23T09:00')}),
+        ]
+        const entries = buildAgendaDays(plans, TODAY, 1, TODAY)[0].entries
+        expect(entries.map(e => e.title)).toEqual(['typed', 'untyped b', 'untyped a'])
+        expect(entries[1].mealTypeName).toBe('')
+    })
+
+    it('gives an entry with no end date no range', () => {
+        const plan = makeMealPlan({id: 1, fromDate: at('2026-11-23T12:00'), toDate: undefined})
+        expect(buildAgendaDays([plan], TODAY, 1, TODAY)[0].entries[0].range).toBeNull()
+    })
+
     it("uses the recipe's name, falling back to the entry's own title", () => {
         const withRecipe = makeMealPlan({id: 1, recipe: makeRecipeOverview({name: 'Cider Margarita'}), title: 'ignored', fromDate: at('2026-11-23T12:00')})
         const titleOnly = makeMealPlan({id: 2, recipe: undefined, title: 'Eat out', fromDate: at('2026-11-23T13:00')})
