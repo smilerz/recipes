@@ -8,5 +8,7 @@
   "htmlReporter": {"fileName": "reports/mutation/index.html"},
   "tempDirName": ".stryker-tmp",
   "ignorePatterns": ["reports", ".stryker-tmp", "coverage", "dist"],
+  "plugins": ["@stryker-mutator/*", "./stryker-ignore-vue-macros.mjs"],
+  "ignorers": ["vue-macros"],
   "concurrency": 2
 }
