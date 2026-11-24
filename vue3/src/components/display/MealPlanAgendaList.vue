@@ -19,6 +19,7 @@
                     </v-card>
                 </v-menu>
             </v-btn>
+            <slot name="toolbar-end"></slot>
         </div>
 
         <!-- at least as tall as the list itself, so there is always room to scroll today to the top, even with few days -->

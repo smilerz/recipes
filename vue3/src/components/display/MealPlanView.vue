@@ -8,6 +8,9 @@
                     <template #toolbar-start>
                         <meal-plan-view-toggle :showing-list="true" @select="(view: string) => setView(view === 'list')"></meal-plan-view-toggle>
                     </template>
+                    <template #toolbar-end>
+                        <v-btn icon="$settings" variant="text" :aria-label="$t('Settings')" data-test="mealplan-settings" @click="settingsDrawer = true"></v-btn>
+                    </template>
                 </meal-plan-agenda-list>
                 <calendar-view v-else
                     :locale="locale"
@@ -29,6 +32,9 @@
                             <template #actions>
                                 <meal-plan-view-toggle :showing-list="false" @select="(view: string) => setView(view === 'list')"></meal-plan-view-toggle>
                             </template>
+                            <template #end-actions>
+                                <v-btn icon="$settings" variant="text" :aria-label="$t('Settings')" data-test="mealplan-settings" @click="settingsDrawer = true"></v-btn>
+                            </template>
                         </meal-plan-calendar-header>
                     </template>
                     <template #item="{ value, weekStartDate, top }">
@@ -44,6 +50,7 @@
                 </calendar-view>
             </v-card>
 
+            <meal-plan-settings-drawer v-model="settingsDrawer" :showing-calendar="!showList"></meal-plan-settings-drawer>
 
             <model-edit-dialog model="MealPlan" v-model="newPlanDialog" :itemDefaults="newPlanDialogDefaultItem" :close-after-create="false"
                                @create="(arg: any) => useMealPlanStore().plans.set(arg.id, arg)"></model-edit-dialog>
@@ -72,6 +79,7 @@ import {useUserPreferenceStore} from "@/stores/UserPreferenceStore";
 import MealPlanCalendarHeader from "@/components/display/MealPlanCalendarHeader.vue";
 import MealPlanAgendaList from "@/components/display/MealPlanAgendaList.vue";
 import MealPlanViewToggle from "@/components/display/MealPlanViewToggle.vue";
+import MealPlanSettingsDrawer from "@/components/display/MealPlanSettingsDrawer.vue";
 import {useI18n} from "vue-i18n";
 
 const {lgAndUp, mobile} = useDisplay()
@@ -83,6 +91,8 @@ const currentlyDraggedMealplan = ref({} as IMealPlanNormalizedCalendarItem)
 
 const newPlanDialog = ref(false)
 const newPlanDialogDefaultItem = ref({} as MealPlan)
+
+const settingsDrawer = ref(false)
 
 const editPlanDialog = ref(false)
 const editingPlan = ref<MealPlan | null>(null)

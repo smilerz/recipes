@@ -18,6 +18,20 @@ describe('MealPlanIcalDialog', () => {
         expect(missing, `missing en keys: ${missing.join(', ')}`).toEqual([])
     })
 
+    // "Calendar" is also the meal plan's view toggle, so the feed link is named for what it is: a calendar feed to subscribe to
+    it('labels its menu item and its title "Calendar feed", not "Calendar"', () => {
+        const keys = [...source.matchAll(/\$t\(['"]([^'"]+)['"]\)/g)].map(m => m[1])
+        expect(keys.filter(k => k === 'CalendarFeed')).toHaveLength(2)
+        expect(keys).not.toContain('Calendar')
+        expect((en as Record<string, string>).CalendarFeed).toBe('Calendar feed')
+    })
+
+    it('explains the feed in correctly spelled English', () => {
+        const help = (en as Record<string, string>).CalendarIcsHelp
+        expect(help).not.toMatch(/syncronize/i)
+        expect(help).toBe('Use the following URL to synchronize your meal plan with your calendar.')
+    })
+
     it('uses only defined icon aliases', () => {
         const defined = new Set([...Object.keys(vuetifyFaAliases), ...Object.keys(vuetifyOptions.icons.aliases)])
         const used = [...source.matchAll(/icon[\w-]*="\$(\w+)"/g)].map(m => m[1])
