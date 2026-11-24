@@ -511,10 +511,15 @@ watch(() => useShoppingStore().entriesByGroup, () => {
     selectedLines.value = []
 })
 
+/**
+ * pause auto sync while the tab is hidden (nobody is looking), resume it when it is visible again
+ */
+function onVisibilityChange() {
+    useShoppingStore().autoSyncHasFocus = (document.visibilityState === 'visible')
+}
+
 onMounted(() => {
-    addEventListener("visibilitychange", (event) => {
-        useShoppingStore().autoSyncHasFocus = (document.visibilityState === 'visible')
-    });
+    window.addEventListener("visibilitychange", onVisibilityChange)
 
     // meal-plan-scoped view only needs that plan's entries - loading the whole household
     // list here made a single meal plan's Shopping tab pull every entry, unfiltered.
@@ -593,6 +598,7 @@ onBeforeRouteLeave(() => {
 onBeforeUnmount(() => {
     autoSyncStopped = true
     clearTimeout(useShoppingStore().autoSyncTimeoutId)
+    window.removeEventListener("visibilitychange", onVisibilityChange)
 })
 
 /**
