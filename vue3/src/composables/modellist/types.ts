@@ -170,6 +170,8 @@ export type HeaderAction =
         routeName?: string, routeParams?: Record<string, any>,
         /** opens the dialog the page hosts under this key (see ModelListPage's headerDialog) */
         dialogKey?: string,
+        /** shown only to users the backend lets use it: 'admin' = a space admin, 'owner' = the space owner (who is also an admin) */
+        requires?: 'admin' | 'owner',
         handler?: () => Promise<void> | void }
     | { type: 'widget', component: ReturnType<typeof import('vue').defineAsyncComponent> }
 

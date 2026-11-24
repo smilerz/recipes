@@ -922,8 +922,8 @@ export const TUserSpace = {
         {title: 'Actions', key: 'action', align: 'end'},
     ],
     headerActions: [
-        {type: 'button', key: 'createUser', labelKey: 'CreateUser', icon: 'fa-solid fa-user-plus', color: 'create', dialogKey: 'createUser'},
-        {type: 'button', key: 'invites', labelKey: 'Invites', icon: 'fa-solid fa-link',
+        {type: 'button', key: 'createUser', labelKey: 'CreateUser', icon: 'fa-solid fa-user-plus', color: 'create', dialogKey: 'createUser', requires: 'admin'},
+        {type: 'button', key: 'invites', labelKey: 'Invites', icon: 'fa-solid fa-link', requires: 'owner',
             routeName: 'ModelListPage', routeParams: {model: 'InviteLink'}},
     ],
     actionDefs: [

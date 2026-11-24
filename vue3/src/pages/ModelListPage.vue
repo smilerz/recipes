@@ -49,14 +49,14 @@
                             size="small"
                             @click="showDescription = true"
                         />
-                        <template v-for="ha in genericModel.model.headerActions" :key="ha.type === 'button' ? ha.key : 'widget'">
+                        <template v-for="ha in visibleHeaderActions" :key="ha.type === 'button' ? ha.key : 'widget'">
                             <v-btn v-if="ha.type === 'button'" :prepend-icon="ha.icon" :color="ha.color" :size="ha.size ?? 'small'"
                                    v-bind="ha.routeName ? {to: {name: ha.routeName, params: ha.routeParams}} : {}"
                                    @click="onHeaderAction(ha)">{{ $t(ha.labelKey) }}</v-btn>
                         </template>
                         <model-list-create-button :model="model" :disable-create="genericModel.model.disableCreate" compact @change="loadItems({page: page}); loadStats()" />
                     </v-card-text>
-                    <template v-for="ha in genericModel.model.headerActions" :key="'cw-' + (ha.type === 'button' ? ha.key : 'widget')">
+                    <template v-for="ha in visibleHeaderActions" :key="'cw-' + (ha.type === 'button' ? ha.key : 'widget')">
                         <component v-if="ha.type === 'widget'" :is="ha.component" />
                     </template>
                 </v-card>
@@ -93,7 +93,7 @@
                             <model-list-create-button :model="model" :disable-create="genericModel.model.disableCreate" @change="loadItems({page: page}); loadStats()" />
                         </template>
 
-                        <template v-for="ha in genericModel.model.headerActions" :key="ha.type === 'button' ? ha.key : 'widget'">
+                        <template v-for="ha in visibleHeaderActions" :key="ha.type === 'button' ? ha.key : 'widget'">
                             <v-card-actions v-if="ha.type === 'button'">
                                 <v-btn :prepend-icon="ha.icon" :color="ha.color"
                                        v-bind="ha.routeName ? {to: {name: ha.routeName, params: ha.routeParams}} : {}"
@@ -739,6 +739,13 @@ function loadStats() {
         .catch((err: any) => { useMessageStore().addError(ErrorMessageType.FETCH_ERROR, err) })
         .finally(() => { statsLoading.value = false })
 }
+
+/** the header actions this user may use: some are refused by the backend to anyone but admins or the space owner */
+const visibleHeaderActions = computed(() => (genericModel.value?.model.headerActions ?? []).filter(action => {
+    if (action.type !== 'button' || !action.requires) return true
+    const store = useUserPreferenceStore()
+    return action.requires === 'owner' ? store.canManageInvites : store.isSpaceAdmin
+}))
 
 /** a header button either opens the dialog this page hosts under its key, or runs its handler */
 function onHeaderAction(action: Extract<HeaderAction, {type: 'button'}>) {
