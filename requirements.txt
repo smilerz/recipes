@@ -36,7 +36,7 @@ boto3==1.44.9
 django-prometheus @ git+https://github.com/django-commons/django-prometheus.git@c04929aac027bde8410bde20af6ca864a1e6929d
 python-ldap==3.4.8
 django-auth-ldap==5.4.0
-pytubefix==11.2.1
+pytubefix==11.2.2
 aiohttp==3.14.5
 redis==8.1.0
 hiredis==3.5.0
@@ -44,7 +44,7 @@ requests-oauthlib==2.0.0
 pyjwt==2.15.1
 python3-saml==1.16.0
 django-vite==3.2.0
-litellm==1.110.0
+litellm==1.110.2
 rapidfuzz==3.14.6
 stripe==16.1.0
 regex==2026.11.19
